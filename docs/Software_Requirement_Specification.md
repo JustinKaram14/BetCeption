@@ -1,1 +1,1 @@
-# BetCeption — Software Requirements Specification (SRS)
+# BetCeption:  Software Requirements Specification (SRS)
