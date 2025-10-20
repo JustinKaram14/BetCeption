@@ -8,23 +8,7 @@ Das System prüft, ob die E-Mail bereits registriert ist, validiert die Eingaben
 ---
 
 ## 1.2 Mockup
-**Mockup:**  
-Registrierungsformular mit folgenden Feldern:
-- Benutzername (Textfeld)
-- E-Mail-Adresse (Textfeld)
-- Passwort (Passwortfeld)
-- Passwort bestätigen (Passwortfeld)
-- Button: **„Registrieren“**
-
-
----
-
-## 1.3 Screenshots
-Screenshots:
-- Registrierungsseite (Formular)
-- Erfolgsnachricht „Konto erfolgreich erstellt“
-- Fehlermeldung bei bereits existierender E-Mail
-
+<img width="538" height="511" alt="Screenshot 2025-10-20 193703" src="https://github.com/user-attachments/assets/f194f7e1-a29f-46a2-9040-9a6a36a2de37" />
 
 ---
 
@@ -33,35 +17,26 @@ Screenshots:
 ### 2.1 Basic Flow
 1. Der Benutzer öffnet die **Registrierungsseite**.  
 2. Der Benutzer gibt Benutzername, E-Mail und Passwort ein.  
-3. Das System überprüft die Eingaben auf Vollständigkeit und Gültigkeit.  
-4. Das System prüft, ob bereits ein Konto mit dieser E-Mail existiert.  
-5. Wenn kein Konto vorhanden ist, wird das neue Konto in der Datenbank angelegt.  
-6. Das System zeigt eine Bestätigungsmeldung an: „Registrierung erfolgreich.“  
-7. Der Benutzer kann sich nun anmelden und erhält ggf. seinen ersten Login-Bonus beim nächsten Use Case (UC 3 – Daily Reward).
+3. Das System überprüft die Eingaben auf Vollständigkeit und Gültigkeit.
+4. Wenn Pflichtfelder leer oder E-Mail ungültig sind, zeigt das System eine Fehlermeldung an:  
+  *„Bitte füllen Sie alle Felder korrekt aus.“*   
+5. Liegen korrekte Eingaben vor prüft das System, ob bereits ein Konto mit dieser E-Mail existiert.  
+6. Wenn kein Konto vorhanden ist, wird das neue Konto in der Datenbank angelegt.  
+7. Das System zeigt eine Bestätigungsmeldung an: „Registrierung erfolgreich.“
+8. Ist die E-Mail bereits registriert zeigt das System folgende Fehlermeldung an:
+   *"„Ein Konto mit dieser E-Mail existiert bereits.“* 
+9. Der Benutzer kann sich nun anmelden und erhält ggf. seinen ersten Login-Bonus beim nächsten Use Case (UC 3 – Daily Reward).
 
 ---
 
-### Activity Diagram
-<img width="1226" height="678" alt="2025-10-20_14h13_28" src="https://github.com/user-attachments/assets/65669f2b-a7a8-439f-ac36-dad3aac7febb" />
+### Sequenzdiagramm
+<img width="1110" height="802" alt="unnamed (1)" src="https://github.com/user-attachments/assets/adb4fb2a-31b0-4024-9447-f5a24ffdddd3" />
 
 ---
 
 ### .feature File
 *Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.*
 
----
-
-### 2.2 Alternative Flows
-
-**a) Ungültige Eingaben:**  
-- Wenn Pflichtfelder leer oder E-Mail ungültig sind, zeigt das System eine Fehlermeldung an:  
-  *„Bitte füllen Sie alle Felder korrekt aus.“*  
-- Benutzer bleibt auf der Registrierungsseite.
-
-**b) E-Mail bereits registriert:**  
-- Das System zeigt an:  
-  *„Ein Konto mit dieser E-Mail existiert bereits.“*  
-- Benutzer kann versuchen, sich einzuloggen oder Passwort zurückzusetzen.
 
 ---
 
