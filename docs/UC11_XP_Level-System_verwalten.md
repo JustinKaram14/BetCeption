@@ -11,13 +11,14 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
 
 ---
 
+<!--
 ## 3. Screenshots
 
 ---
+-->
+## 3. Flow of Events
 
-## 4. Flow of Events
-
-### 4.1 Basic Flow
+### 3.1 Basic Flow
 1. Spiel wird beendet.
 2. Das System berechnet die XP auf Grundlage des Ergebnisses.
 3. XP werden zum Spielerprofil hinzugefügt.
@@ -28,12 +29,13 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
    - Eine Benachrichtigung wird angezeigt.
 6. System speichert aktualisierte XP- und Leveldaten in der Datenbank.
 
-**Activity Diagram**
-
+---
+## Sequenzdiagramm
+<img width="1201" height="1048" alt="unnamed_xp" src="https://github.com/user-attachments/assets/99e94b4a-5e93-4c29-8720-943e52d1f229" />
 
 ---
 
-## 4.2 Alternative Flows
+## 3.2 Alternative Flows
 - **Spiel wird abgebrochen:**  
   Es werden keine XP vergeben.
 - **Serverfehler:**  
@@ -41,26 +43,27 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
 
 ---
 
-## 5. Special Requirements
+## 4. Special Requirements
 - XP-Formel muss serverseitig definiert und überprüfbar sein.
 - Level-Grenzen und Belohnungen sollen konfigurierbar sein.
 - Alle Änderungen werden protokolliert.
 
 ---
 
-## 6. Preconditions
+## 5. Preconditions
 - Spieler hat ein Spiel abgeschlossen.
 - Spielerprofil existiert.
 
 ---
 
-## 7. Postconditions
+## 6. Postconditions
 - XP und Level werden aktualisiert.
 - Freischaltbare Power-Ups sind aktiviert.
 - Änderungen sind in der Datenbank gespeichert.
 
 ---
 
+<!--
 ## 8. Save changes / Sync with server
 System synchronisiert XP und Level nach jedem Spielabschluss automatisch mit dem Server.
 
@@ -71,3 +74,6 @@ System synchronisiert XP und Level nach jedem Spielabschluss automatisch mit dem
 - Level-Up-Validierung
 - Belohnungen freischalten
 - Spielerprofil speichern
+
+
+-->
