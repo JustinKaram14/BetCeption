@@ -7,18 +7,11 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 ---
 
 ## 1.2 Mockup
-**Mockup:**  
-- Aktives Spiel mit Tasten:
-  - **Hit** (Karte ziehen)
-  - **Stand** (keine Karte mehr)
-  - **Double** (Einsatz verdoppeln + letzte Karte)
-  - **Split** (bei Paar)
-- Kartenanzeige für Spieler & Dealer
-- Anzeige von Einsatz, Guthaben, aktuellem Status
+(Mockup folgt später)
 
 
 ---
-
+<!--
 ## 1.3 Screenshots
 - Nach Start eines Spiels (Karten sichtbar)
 - Nach „Hit“ → neue Karte erscheint
@@ -29,7 +22,7 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 *(Screenshots folgen später.)*
 
 ---
-
+-->
 ## 2. Flow of Events
 
 ### 2.1 Basic Flow
@@ -51,14 +44,14 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 
 ---
 
-### Activity Diagram
-```
+### Sequenzdiagramm
 
-```
+<img width="1256" height="2338" alt="unnamed_aus" src="https://github.com/user-attachments/assets/019dd95e-0cd0-4216-a6b7-15e0a29314bf" />
 
 ---
 
 ### .feature File
+<!--
 ```
 Feature: Spielzug ausführen
   Scenario: Spieler zieht eine Karte (Hit)
@@ -67,6 +60,9 @@ Feature: Spielzug ausführen
     Then erhält er eine neue Karte
     And das System prüft Bust oder Blackjack
 ```
+-->
+Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
+
 
 ---
 
@@ -93,11 +89,12 @@ Feature: Spielzug ausführen
 ## 3. Special Requirements
 - **Kartenverteilung:** RNG (kryptografisch sicher, deterministisch pro Session).  
 - **Game Engine** führt Blackjack-Regeln korrekt aus (Soft 17, Ace as 1/11).  
-- **Atomicität:** Jeder Spielzug als Transaktion.  
-- **Validierung:** Nur erlaubte Aktionen im aktuellen Zustand.  
+- **Atomicität:** Jeder Spielzug als Transaktion.
 - **XP-/Level-System:** Nach Abschluss XP hinzufügen (UC11).  
 - **Protokollierung:** Jeder Zug wird geloggt (`action`, `card`, `timestamp`).  
 - **Synchronisation:** Spielstatus konsistent zwischen Client und Server.
+- <!-- - **Validierung:** Nur erlaubte Aktionen im aktuellen Zustand.  -->
+
 
 ---
 
@@ -115,7 +112,7 @@ Feature: Spielzug ausführen
 - Änderungen sind persistiert.
 
 ---
-
+<!--
 ### 5.1 Save changes / Sync with server
 **Beispiel-Datenstruktur:**
 ```sql
@@ -148,7 +145,7 @@ Body: { "game_id": 123, "action": "hit" }
 ```
 
 ---
-
+-->
 ## 6. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
@@ -159,7 +156,7 @@ Body: { "game_id": 123, "action": "hit" }
 | **Gesamt** |  | **7 FP** |
 
 ---
-
+<!--
 ## 7. Technische Hinweise
 - **Engine-Methoden:**  
   - `hit()`, `stand()`, `doubleDown()`, `split()`  
@@ -173,4 +170,8 @@ Body: { "game_id": 123, "action": "hit" }
 
 ---
 
+
+
+
+-->
 
