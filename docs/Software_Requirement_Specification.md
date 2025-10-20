@@ -26,4 +26,4 @@
     - [Licensing Requirements](#310-licensing-requirements)
     - [Legal, Copyright And Other Notices](#legal-cpoyright-and-other-notices)
     - [Appicalable Standards](#311-appicable-standards)
-  -[Supporting Information](#4-Supporting-Information)
+  - [Supporting Information](#4-Supporting-Information)
