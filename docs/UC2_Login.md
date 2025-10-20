@@ -15,15 +15,14 @@ Das System überprüft die Anmeldedaten, erstellt eine aktive Sitzung (Session/J
 ## 2. Flow of Events
 
 ### 2.1 Basic Flow
-1. Der Benutzer öffnet die **Login-Seite**.  
-2. Der Benutzer gibt seine E-Mail und sein Passwort ein.  
-3. Das System validiert die Eingaben.  
-4. Das System sucht in der Datenbank nach einem Benutzer mit der angegebenen E-Mail.  
-5. Wenn ein Konto gefunden wird, wird das Passwort überprüft.  
-6. Bei erfolgreicher Authentifizierung wird eine **Session** oder ein **JWT-Token** erstellt.  
-7. Das System leitet den Benutzer zur **Startseite / Lobby** weiter.  
-8. Falls der Benutzer heute zum ersten Mal einloggt, wird **UC 3 – Daily Reward** ausgelöst.
-9. Bei fehlgeschlagener Anmeldung, gibt der Client dann eine Fehlermeldung dann zurück.
+1. Der Benutzer gibt seine E-Mail und sein Passwort ein.  
+2. Das System validiert die Eingaben.  
+3. Das System sucht in der Datenbank nach einem Benutzer mit der angegebenen E-Mail.  
+4. Wenn ein Konto gefunden wird, wird das Passwort überprüft.  
+5. Bei erfolgreicher Authentifizierung wird eine **Session** oder ein **JWT-Token** erstellt.  
+6. Das System leitet den Benutzer zur **Startseite / Lobby** weiter.  
+7. Falls der Benutzer heute zum ersten Mal einloggt, wird **UC 3 – Daily Reward** ausgelöst.
+8. Bei fehlgeschlagener Anmeldung, gibt der Client dann eine Fehlermeldung dann zurück.
 ---
 
 ### Sequenzdiagramm
