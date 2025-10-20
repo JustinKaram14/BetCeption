@@ -3,20 +3,16 @@
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, vor dem Start eines Blackjack-Spiels eine **Hauptwette** (Einsatz) zu platzieren.  
 Das System prüft **Guthaben**, **Einsatzlimits** und **Spielzustand** und reserviert bzw. belastet den Betrag **atomar**.  
-Die Wette ist Grundlage für den weiteren Spielverlauf (UC5 – Spiel starten, UC8 – Spielzug ausführen).
+Die Wette ist Grundlage für den weiteren Spielverlauf (UC5 - Spiel starten, UC8 - Spielzug ausführen).
 
 ---
 
 ## 1.2 Mockup
-**Mockup:**  
-- Einsatzfeld (Zahlen-Input + Chips-Auswahl)  
-- Buttons: **„Setzen“**, **„Zurücksetzen“**  
-- Anzeige: aktuelles Guthaben, Mindest-/Höchsteinsatz  
-- Hinweis bei Fehlern (z. B. „Nicht genügend Guthaben“)  
+**(Mockup folgt später)**
 
 
 ---
-
+<!--
 ## 1.3 Screenshots
 - Wett-Panel vor Spielbeginn  
 - Erfolgsmeldung nach gesetzter Wette  
@@ -25,7 +21,7 @@ Die Wette ist Grundlage für den weiteren Spielverlauf (UC5 – Spiel starten, U
 *(Screenshots folgen.)*
 
 ---
-
+-->
 ## 2. Flow of Events
 
 ### 2.1 Basic Flow
@@ -41,14 +37,15 @@ Die Wette ist Grundlage für den weiteren Spielverlauf (UC5 – Spiel starten, U
 
 ---
 
-### Activity Diagram
-```
+### Sequenzdiagramm
 
-```
+<img width="1456" height="1638" alt="unnamed_a" src="https://github.com/user-attachments/assets/a8fa6099-f6d4-4ef3-a45b-14a076639002" />
+
 
 ---
 
 ### .feature File
+<!--
 ```
 Feature: Hauptwette platzieren
   Scenario: Spieler platziert eine gültige Hauptwette
@@ -58,9 +55,11 @@ Feature: Hauptwette platzieren
     When er die Wette platziert
     Then wird der Einsatz atomar reserviert
     And die Wette ist mit Status "placed" gespeichert
-```
+```-->
+Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
 
 ---
+
 
 ### 2.2 Alternative Flows
 
@@ -112,6 +111,7 @@ Feature: Hauptwette platzieren
 
 ---
 
+<!--
 ### 5.1 Save changes / Sync with server
 **Beispiel-Modelle (MySQL):**
 ```sql
@@ -147,6 +147,7 @@ COMMIT;
 ```
 
 ---
+-->
 
 ## 6. Function Points
 | Komponente | Beschreibung | Punkte |
@@ -159,6 +160,7 @@ COMMIT;
 
 ---
 
+<!--
 ## 7. Technische Hinweise
 **API-Endpoint:**
 ```
@@ -193,4 +195,4 @@ return 200, { bet_id, amount, status:"placed", balance:user.balance - amount }
 ```
 
 ---
-
+-->
