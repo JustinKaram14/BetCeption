@@ -9,26 +9,25 @@ Das Inventar zeigt den aktuellen Bestand, die Effekte der Power-Ups sowie den Ve
 ## 2. Mockup
 
 ---
-
+<!--
 ## 3. Screenshots
-sdadasdas
 ---
+-->
+## 3. Flow of Events
 
-## 4. Flow of Events
-
-### 4.1 Basic Flow
+### 3.1 Basic Flow
 1. Spieler öffnet das Inventar-Menü.
 2. Das System überprüft den Login-Status.
 3. System ruft alle im Besitz befindlichen Power-Ups aus der Datenbank ab.
 4. Power-Ups werden mit Icons, Namen, Effekten und Verfügbarkeit angezeigt.
 5. Spieler kann Details einzelner Power-Ups einsehen.
-
-**Sequenz Diagram**
-
+---
+## Sequenzdiagramm
+<img width="883" height="786" alt="unnamed_inv" src="https://github.com/user-attachments/assets/0edc2b9d-242b-48db-a11b-9e75d8a1ade0" />
 
 ---
 
-## 4.2 Alternative Flows
+## 3.2 Alternative Flows
 - **Kein Power-Up vorhanden:**  
   Das System zeigt eine leere Inventar-Seite mit Hinweis „Keine Power-Ups vorhanden“.
 - **Verbindungsfehler:**  
@@ -36,22 +35,22 @@ sdadasdas
 
 ---
 
-## 5. Special Requirements
+## 4. Special Requirements
 - Anzeige muss in Echtzeit mit der Datenbank synchronisiert sein.
 - Items sollen nach Kategorie oder Level sortierbar sein.
 
 ---
 
-## 6. Preconditions
+## 5. Preconditions
 - Spieler ist eingeloggt.
 
 ---
 
-## 7. Postconditions
+## 6. Postconditions
 - Keine (reine Anzeige).
 
 ---
-
+<!--
 ## 8. Save changes / Sync with server
 Das System ruft regelmäßig Inventardaten vom Server ab und aktualisiert die Anzeige automatisch.
 
@@ -62,3 +61,4 @@ Das System ruft regelmäßig Inventardaten vom Server ab und aktualisiert die An
 - Daten laden
 - Sortieren und filtern
 - Details anzeigen
+-->
