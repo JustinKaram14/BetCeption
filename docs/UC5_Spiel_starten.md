@@ -3,11 +3,12 @@
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, ein neues **Blackjack-Spiel** in **BetCeption** zu starten.  
 Der Spieler wählt seinen Einsatz und das System initialisiert das Spiel mit Dealer, Karten und Spielstatus.  
-Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 – Wette platzieren, UC8 – Spielzug ausführen) fortgesetzt werden.
+Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzieren, UC8 - Spielzug ausführen) fortgesetzt werden.
 
 ---
 
 ## 1.2 Mockup
+<!--
 **Mockup:**  
 - Spielübersicht mit folgenden Elementen:
   - Einsatzfeld (Input)
@@ -16,10 +17,11 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 – Wette platzi
   - Kartenplatzhalter (Dealer + Spieler)
 - Nach dem Start:
   - Zwei Spieler-Karten, eine Dealer-Karte sichtbar
-
+-->
+**(Mockup folgt später.)**
 
 ---
-
+<!--
 ## 1.3 Screenshots
 - Startseite des Spiels mit Einsatzfeld  
 - Nach Start: Tisch mit Karten  
@@ -28,7 +30,7 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 – Wette platzi
 *(Screenshots folgen später.)*
 
 ---
-
+-->
 ## 2. Flow of Events
 
 ### 2.1 Basic Flow
@@ -47,13 +49,12 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 – Wette platzi
 ---
 
 ### Sequenz Diagram
-```
-
-```
+<img width="1553" height="1324" alt="unnamed_s" src="https://github.com/user-attachments/assets/ad209437-e37c-48f0-8cb0-fd5a000dc973" />
 
 ---
 
 ### .feature File
+<!--
 ```
 Feature: Spiel starten (Blackjack)
   Scenario: Spieler startet ein neues Spiel
@@ -63,6 +64,8 @@ Feature: Spiel starten (Blackjack)
     Then wird ein neues Spiel initialisiert
     And die Startkarten werden ausgeteilt
 ```
+-->
+Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
 
 ---
 
@@ -86,19 +89,18 @@ Feature: Spiel starten (Blackjack)
 ## 3. Special Requirements
 - Spiel darf nur gestartet werden, wenn **kein anderes aktives Spiel** besteht.  
 - Einsatzbetrag wird **atomar reserviert** (DB-Transaktion).  
-- Initiale Kartenverteilung erfolgt **zufällig** über RNG.  
-- RNG muss **kryptographisch sicher** sein.  
-- Server synchronisiert Spielstatus mit Client nach jeder Aktion.  
-- Spielstatus wird persistiert in `games`-Tabelle.  
-- Das Spielobjekt enthält:
+- Initiale Kartenverteilung erfolgt **zufällig** über RNG.
+  <!--- RNG muss **kryptographisch sicher** sein.--> 
+- Server synchronisiert Spielstatus mit Client nach jeder Aktion.
+  <!--- Spielstatus wird persistiert in `games`-Tabelle.  -->
+<!--- Das Spielobjekt enthält:
   - game_id  
   - player_id  
   - dealer_cards  
   - player_cards  
   - bet_amount  
   - status ("running", "finished")  
-  - created_at  
-
+  - created_at -->
 ---
 
 ## 4. Preconditions
@@ -115,7 +117,7 @@ Feature: Spiel starten (Blackjack)
 - Karten wurden verteilt.
 
 ---
-
+<!--
 ### 5.1 Save changes / Sync with server
 **Persistente Datenbanktabellen (Beispiel):**
 ```sql
@@ -134,7 +136,7 @@ Server antwortet mit:
   "status": "running"
 }
 ```
-
+-->
 ---
 
 ## 6. Function Points
@@ -147,7 +149,7 @@ Server antwortet mit:
 | **Gesamt** |  | **7 FP** |
 
 ---
-
+<!--
 ## 7. Technische Hinweise
 **API-Endpoint:**
 ```
@@ -184,4 +186,4 @@ return 200, { game_id, player_cards, dealer_cards, balance: user.balance - bet, 
 ```
 
 ---
-
+-->
