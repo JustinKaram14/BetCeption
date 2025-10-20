@@ -8,7 +8,7 @@ Das System überprüft die Anmeldedaten, erstellt eine aktive Sitzung (Session/J
 ---
 
 ## 1.2 Mockup
-<img width="418" height="475" alt="image" src="https://github.com/user-attachments/assets/abcf4683-d9da-479e-8520-4e886ab3bc51" />
+<img width="753" height="606" alt="Screenshot 2025-10-20 201843" src="https://github.com/user-attachments/assets/7db6ebea-19cb-4483-9029-0dd537f0f8c5" />
 
 ---
 
@@ -23,7 +23,7 @@ Das System überprüft die Anmeldedaten, erstellt eine aktive Sitzung (Session/J
 6. Bei erfolgreicher Authentifizierung wird eine **Session** oder ein **JWT-Token** erstellt.  
 7. Das System leitet den Benutzer zur **Startseite / Lobby** weiter.  
 8. Falls der Benutzer heute zum ersten Mal einloggt, wird **UC 3 – Daily Reward** ausgelöst.
-
+9. Bei fehlgeschlagener Anmeldung, gibt der Client dann eine Fehlermeldung dann zurück.
 ---
 
 ### Sequenzdiagramm
@@ -34,22 +34,6 @@ Das System überprüft die Anmeldedaten, erstellt eine aktive Sitzung (Session/J
 ### .feature File
 *Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.*
 
----
-
-### 2.2 Alternative Flows
-
-**a) Ungültige Eingaben:**  
-- Wenn Pflichtfelder leer oder ungültig sind, zeigt das System eine Fehlermeldung:  
-  *„Bitte geben Sie E-Mail und Passwort ein.“*
-
-**b) Falsches Passwort:**  
-- Das System zeigt eine Fehlermeldung:  
-  *„E-Mail oder Passwort ist falsch.“*
-
-**c) Konto existiert nicht:**  
-- Das System zeigt an:  
-  *„Kein Konto mit dieser E-Mail gefunden.“*  
-- Benutzer kann sich registrieren (**UC 1 – Registrieren**).
 
 ---
 
