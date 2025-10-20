@@ -10,25 +10,26 @@ Das System zeigt den Kontostand sowie eine Historie aller Transaktionen (Wetten,
 
 ---
 
+<!--
 ## 3. Screenshots
 
 ---
+-->
+## 3. Flow of Events
 
-## 4. Flow of Events
-
-### 4.1 Basic Flow
+### 3.1 Basic Flow
 1. Spieler öffnet die Guthaben-Seite.
 2. Das System überprüft den Login-Status.
 3. Das System ruft das aktuelle Guthaben aus der Datenbank ab.
 4. Das System zeigt die Guthabenübersicht sowie die letzten Transaktionen an.
 5. Spieler kann Details oder Filteroptionen auswählen (z. B. Zeitraum, Transaktionstyp).
-
-**Activity Diagram**
-
+---
+## Sequenzdiagramm
+<img width="993" height="903" alt="unnamed_gut" src="https://github.com/user-attachments/assets/29463e3b-6779-441a-b62c-4a5c9857cc57" />
 
 ---
 
-## 4.2 Alternative Flows
+## 3.2 Alternative Flows
 - **Serverfehler / Verbindung verloren:**  
   Eine Fehlermeldung wird angezeigt, Daten werden nicht aktualisiert.
 - **Keine Transaktionen vorhanden:**  
@@ -36,24 +37,24 @@ Das System zeigt den Kontostand sowie eine Historie aller Transaktionen (Wetten,
 
 ---
 
-## 5. Special Requirements
+## 4. Special Requirements
 - Guthabenberechnung muss serverseitig erfolgen.
 - Transaktionshistorie muss chronologisch und vollständig sein.
 - Änderungen (z. B. durch neue Spiele) sollen automatisch synchronisiert werden.
 
 ---
 
-## 6. Preconditions
+## 5. Preconditions
 - Spieler ist eingeloggt.
 
 ---
 
-## 7. Postconditions
+## 6. Postconditions
 - Guthaben und Historie wurden korrekt angezeigt.
 
 ---
-
-## 8. Save changes / Sync with server
+<!--
+## 7. Save changes / Sync with server
 Das System synchronisiert die Daten regelmäßig mit dem Server, um aktuelle Werte sicherzustellen.
 
 ---
@@ -62,3 +63,4 @@ Das System synchronisiert die Daten regelmäßig mit dem Server, um aktuelle Wer
 - Guthaben abrufen
 - Transaktionshistorie anzeigen
 - Filterung/Sortierung
+-->
