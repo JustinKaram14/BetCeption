@@ -1,23 +1,17 @@
-# Use Case 7 – Nebenwette platzieren (Karten-Typ, Farbe, Wert)
+# Use Case 7 - Nebenwette platzieren (Karten-Typ, Farbe, Wert)
 
 ## 1.1 Brief Description
-Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, zusätzlich zur Hauptwette **Nebenwetten** auf Ereignisse rund um die nächsten Karten zu platzieren – z. B. auf **Farbe (♠/♣/♥/♦)**, **Rang (2–A)**, **konkrete Karte (z. B. Pik-Bube)** oder **Muster** (z. B. Paar, gleiche Farbe).  
-Nebenwetten können **vor Spielstart** (Pre-Deal) oder **während des Spiels** (In-Game) platziert werden – je nach Regelwerk und Fenster. Das System prüft Einsatz, Limits, Spielstatus und wertet die Nebenwette bei Eintritt des Ereignisses **automatisch** aus.
+Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, zusätzlich zur Hauptwette **Nebenwetten** auf Ereignisse rund um die nächsten Karten zu platzieren - z. B. auf **Farbe (♠/♣/♥/♦)**, **Rang (2-A)**, **konkrete Karte (z. B. Pik-Bube)** oder **Muster** (z. B. Paar, gleiche Farbe).  
+Nebenwetten können **vor Spielstart** (Pre-Deal) oder **während des Spiels** (In-Game) platziert werden - je nach Regelwerk und Fenster. Das System prüft Einsatz, Limits, Spielstatus und wertet die Nebenwette bei Eintritt des Ereignisses **automatisch** aus.
 
 ---
 
 ## 1.2 Mockup
-**Mockup (wird von dir ergänzt):**
-- Panel „Nebenwetten“ mit:
-  - Drop-down **Wetten-Typ** (Farbe, Rang, konkrete Karte, Paar, Suit-Match, etc.)
-  - Eingabe **Wettziel** (z. B. „J♠“, „Herz“, „Ass“, „Paar“)
-  - **Einsatz** (Chips/Amount)
-  - **Quote** (dynamisch aus Server-Response)
-  - Button **„Nebenwette platzieren“**
-- Liste aktiver Nebenwetten mit Status (open/settled/lost) und möglichem Auszahlungsbetrag.
+(Mockup folgt später)
 
 ---
 
+<!--
 ## 1.3 Screenshots
 - Nebenwetten-Panel vor Platzierung
 - Bestätigung nach Platzierung (mit Quote)
@@ -25,7 +19,7 @@ Nebenwetten können **vor Spielstart** (Pre-Deal) oder **während des Spiels** (
 
 
 ---
-
+-->
 ## 2. Flow of Events
 
 ### 2.1 Basic Flow
@@ -41,13 +35,12 @@ Nebenwetten können **vor Spielstart** (Pre-Deal) oder **während des Spiels** (
 ---
 
 ### Sequenz Diagram (Text)
-```
-
-```
+<img width="1713" height="1267" alt="unnamed_n" src="https://github.com/user-attachments/assets/dfe17e6c-f144-4678-adab-c225e48c883e" />
 
 ---
 
 ### .feature File
+<!--
 ```
 Feature: Nebenwette platzieren
   Scenario: Spieler platziert eine gültige Nebenwette auf die nächste Karte
@@ -57,44 +50,48 @@ Feature: Nebenwette platzieren
     Then wird die Nebenwette gespeichert mit Status "open"
     And beim Aufdecken der nächsten Karte wird die Nebenwette ausgewertet
 ```
+ -->
+ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
 
 ---
 
 ### 2.2 Alternative Flows
 **a) Nicht eingeloggt / kein aktives Spiel:**  
-→ 401/409 – Aktion nicht erlaubt, Verweis auf **UC2** bzw. **UC5**.
+→ 401/409 - Aktion nicht erlaubt, Verweis auf **UC2** bzw. **UC5**.
 
 **b) Zeitfenster geschlossen (z. B. während Dealer zieht):**  
-→ 409 – *„Nebenwetten sind derzeit nicht erlaubt.“*
+→ 409 - *„Nebenwetten sind derzeit nicht erlaubt.“*
 
 **c) Ungültiges Ziel / Kombination:**  
-→ 400 – *„Ungültige Wettkonfiguration.“*
+→ 400 - *„Ungültige Wettkonfiguration.“*
 
 **d) Nicht genügend Guthaben / über Limit:**  
-→ 400 – *„Nicht genügend Guthaben“* bzw. *„Einsatz außerhalb des erlaubten Bereichs“*.
+→ 400 - *„Nicht genügend Guthaben“* bzw. *„Einsatz außerhalb des erlaubten Bereichs“*.
 
 **e) Idempotente Doppelabgabe:**  
 → 200 idempotent success mit vorherigem Resultat (Request-Key).
 
 **f) Spiel endet vor Auswertung (z. B. Abbruch/Disconnect):**  
-→ Nebenwette wird regelkonform **storniert** oder **als lost** gewertet – abhängig vom Zeitpunkt; Betrag ggf. **rückerstattet**.
+→ Nebenwette wird regelkonform **storniert** oder **als lost** gewertet - abhängig vom Zeitpunkt; Betrag ggf. **rückerstattet**.
 
 ---
 
+
 ## 3. Special Requirements
-- **Zeitfenstersteuerung**: Server erzwingt Pre-Deal/In-Game-Fenster; keine Bets während „locked“-Phasen.  
+- **Zeitfenstersteuerung**: Server erzwingt Pre-Deal/In-Game-Fenster; keine Bets während „locked“-Phasen.
+<!--
 - **Quotenmodell**: serverseitig berechnet (Fairness + House Edge), Beispiel:  
   - Farbe (rot/schwarz bzw. Suit)  
   - Rang (z. B. Ass)  
   - Konkrete Karte (Suit + Rang)  
-  - Muster (Paar, gleiche Farbe, Straight-Ansatz – wenn regelkonform)  
+  - Muster (Paar, gleiche Farbe, Straight-Ansatz - wenn regelkonform)  
 - **RNG/Integrität**: Kartenfolge bereits deterministisch (Seed/Commit-Reveal) oder CSPRNG; Nebenwetten **beeinflussen** die Karten **nicht**.  
 - **Atomare Transaktionen** für Einsatzabbuchung & Bet-Speicherung.  
 - **Audit-Log** (user_id, game_id, side_bet_id, type, target, odds, stake, created_at, request_id).  
 - **Anzahl paralleler Nebenwetten** pro Spiel begrenzen (Konfiguration).  
 - **Responsible Gaming**: Limits/Abkühlzeiten einhalten.  
 - **Mehrsprachige UI** & Währung als Integer (Coins).
-
+-->
 ---
 
 ## 4. Preconditions
@@ -111,6 +108,7 @@ Feature: Nebenwette platzieren
 
 ---
 
+<!--
 ### 5.1 Save changes / Sync with server
 **Datenbank (Beispiel):**
 ```sql
@@ -165,6 +163,7 @@ GET  /api/side-bets/history?game_id=... -- Historie
 ```
 
 ---
+-->
 
 ## 6. Function Points
 | Komponente | Beschreibung | Punkte |
@@ -177,6 +176,7 @@ GET  /api/side-bets/history?game_id=... -- Historie
 
 ---
 
+<!--
 ## 7. Technische Hinweise
 - **Odds-Engine** kapseln (z. B. Service „OddsService“) mit klarer Schnittstelle.  
 - **Idempotency-Key** für jede Platzierung (Header oder Body).  
@@ -186,4 +186,4 @@ GET  /api/side-bets/history?game_id=... -- Historie
 - **Security**: Alle Requests über HTTPS; JWT-Scopes auf game/side-bet beschränken.
 
 ---
-
+-->
