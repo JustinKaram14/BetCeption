@@ -11,13 +11,14 @@ Jedes Power-Up ist ab einem bestimmten Level verfügbar und kann nur gekauft wer
 
 ---
 
+<!--
 ## 3. Screenshots
 
 ---
+-->
+## 3. Flow of Events
 
-## 4. Flow of Events
-
-### 4.1 Basic Flow
+### 3.1 Basic Flow
 1. Spieler navigiert zum Shop.
 2. Das System zeigt verfügbare Power-Ups mit Preis und Level-Anforderung an.
 3. Spieler wählt ein Power-Up aus.
@@ -29,27 +30,11 @@ Jedes Power-Up ist ab einem bestimmten Level verfügbar und kann nur gekauft wer
    - Das Power-Up wird dem Inventar hinzugefügt.
 6. System zeigt eine Bestätigungsmeldung an.
 
-**Activity Diagram**
-```plantuml
-@startuml
-start
-:Spieler öffnet Shop;
-:System zeigt verfügbare Power-Ups;
-:Spieler wählt Power-Up aus;
-if (Level ausreichend?) then (ja)
-  if (Guthaben ausreichend?) then (ja)
-    :Betrag vom Guthaben abziehen;
-    :Power-Up ins Inventar hinzufügen;
-    :Bestätigung anzeigen;
-  else (nein)
-    :Fehler: Zu wenig Guthaben;
-  endif
-else (nein)
-  :Fehler: Level zu niedrig;
-endif
-stop
-@enduml
-```
+---
+
+## Sequenzdiagramm
+<img width="1370" height="1141" alt="unnamed_po" src="https://github.com/user-attachments/assets/2d26f2e6-b87e-4bda-8557-9bc1ae802381" />
+
 
 ---
 
@@ -81,6 +66,7 @@ stop
 
 ---
 
+<!--
 ## 8. Save changes / Sync with server
 Alle Käufe werden serverseitig validiert und mit der Datenbank synchronisiert.  
 Inventar und Guthaben werden nach erfolgreichem Kauf aktualisiert.
@@ -93,3 +79,5 @@ Inventar und Guthaben werden nach erfolgreichem Kauf aktualisiert.
 - Level- und Guthabenprüfung
 - Power-Up dem Inventar hinzufügen
 - Guthaben anpassen
+
+-->
