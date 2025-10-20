@@ -42,21 +42,7 @@ Screenshots:
 ---
 
 ### Activity Diagram
-```
-Start
- ↓
-Eingaben prüfen
- ↓
-[Konto existiert?]
- ↙             ↘
-Ja              Nein
-↓                ↓
-Fehler anzeigen  Konto anlegen
-↓                ↓
-Eingabe korrigieren   Erfolgsmeldung anzeigen
- ↓
- Ende
-```
+<img width="1226" height="678" alt="2025-10-20_14h13_28" src="https://github.com/user-attachments/assets/65669f2b-a7a8-439f-ac36-dad3aac7febb" />
 
 ---
 
