@@ -8,7 +8,6 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 ---
 
 ## 2. Mockup
-(Mockup folgt später)
 ---
 <!--
 ## 3. Screenshots
