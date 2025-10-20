@@ -8,22 +8,7 @@ Das System überprüft die Anmeldedaten, erstellt eine aktive Sitzung (Session/J
 ---
 
 ## 1.2 Mockup
-**Mockup:**  
-Loginformular mit folgenden Feldern:
-- E-Mail-Adresse (Textfeld)
-- Passwort (Passwortfeld)
-- Button: **„Anmelden“**
-- Link: **„Passwort vergessen?“**
-
-
----
-
-## 1.3 Screenshots
-Screenshots:
-- Login-Seite (Formular)
-- Erfolgreiche Anmeldung → Weiterleitung zur Startseite
-- Fehlermeldung bei falschem Passwort oder nicht existierendem Konto
-
+<img width="538" height="682" alt="Screenshot 2025-10-20 193703" src="https://github.com/user-attachments/assets/9930da30-38d8-4103-95a6-847ef361ba8b" />
 
 ---
 
@@ -41,30 +26,8 @@ Screenshots:
 
 ---
 
-### Activity Diagram
-```
-Start
- ↓
-E-Mail & Passwort eingeben
- ↓
-Validierung
- ↓
-[Benutzer existiert?]
- ↙             ↘
-Nein             Ja
-↓                ↓
-Fehler anzeigen  Passwort prüfen
-↓                ↓
-Eingabe korrigieren  [Passwort korrekt?]
-                     ↙             ↘
-                    Nein            Ja
-                    ↓               ↓
-             Fehlermeldung anzeigen  Session/JWT erstellen
-                                     ↓
-                               Weiterleitung zur Startseite
-                                     ↓
-                                    Ende
-```
+### Sequenzdiagramm
+<img width="1153" height="669" alt="unnamed (2)" src="https://github.com/user-attachments/assets/aa546459-1fbf-406e-b89f-5c709745b1db" />
 
 ---
 
