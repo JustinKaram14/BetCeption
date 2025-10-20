@@ -8,7 +8,7 @@ Das System überprüft die Anmeldedaten, erstellt eine aktive Sitzung (Session/J
 ---
 
 ## 1.2 Mockup
-<img width="538" height="682" alt="Screenshot 2025-10-20 193703" src="https://github.com/user-attachments/assets/9930da30-38d8-4103-95a6-847ef361ba8b" />
+<img width="418" height="475" alt="image" src="https://github.com/user-attachments/assets/abcf4683-d9da-479e-8520-4e886ab3bc51" />
 
 ---
 
