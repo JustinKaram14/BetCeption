@@ -2,55 +2,42 @@
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es dem **eingeloggten Spieler**, die **Bestenliste (Leaderboard)** in **BetCeption** einzusehen.  
-Das Leaderboard zeigt die **Top-Spieler** basierend auf Kriterien wie **Gewinnsumme**, **Level**, oder **XP** an.  
+Das Leaderboard zeigt die **Top-Spieler** basierend auf Kriterien wie **Gewinnsumme** und **DEPTH** an.  
 Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 
 ---
 
 ## 1.2 Mockup
-**Mockup:**  
-- Tabelle oder Kartenansicht mit Spalten:
-  - Rang (#)
-  - Spielername
-  - Level / XP
-  - Gewinnsumme (Coins)
-- Filter / Sortieroptionen:
-  - Sortieren nach: Gewinn, XP, Level
-  - Zeitraum: täglich, wöchentlich, gesamt
-
-
----
-
-## 1.3 Screenshots
-- Leaderboard-Ansicht mit Top-Spielern
-- Filter / Sortier-Menü
-- Ansicht mit eigenem Rang hervorgehoben
-
-*(Screenshots folgen später.)*
+<img width="777" height="772" alt="Screenshot 2025-10-20 210732" src="https://github.com/user-attachments/assets/48b9146b-cad8-4c9d-9773-595836355ed3" />
 
 ---
 
 ## 2. Flow of Events
 
 ### 2.1 Basic Flow
-1. Spieler ist **eingeloggt** (UC2).  
-2. Spieler navigiert zur **Leaderboard-Seite**.  
-3. Das System sendet eine Anfrage an den Server, um die aktuellen Leaderboard-Daten zu laden.  
-4. Server ruft die Top-Spieler aus der Datenbank ab, sortiert nach dem ausgewählten Kriterium.  
-5. Server sendet die Daten an den Client zurück.  
-6. Client zeigt die Daten in einer strukturierten Tabelle an.  
-7. Der eigene Rang des Spielers wird hervorgehoben.
+1. Der Spieler öffnet die **Leaderboard-Seite**.
+2. Der Client sendet GET /api/leaderboard?sort=win_sum&page=1 inklusive JWT.
+3. Das System validiert das JWT.  
+4. Das System lädt die Liste entweder aus dem Cache (Treffer) oder aus der Datenbank (Miss) und aktualisiert danach den Cache.
+5. Optional ermittelt das System den eigenen Rang des Spielers.
+6. Server sendet die Daten an den Client zurück.  
+7. Client zeigt die Daten in einer strukturierten Tabelle an.  
+8. Der eigene Rang des Spielers wird hervorgehoben.
+
+   **Fehlerfälle**
+   - Bei ungültigem oder fehlendem Token sendet das System 401 Unauthorized. Der Client leitet zur Anmeldung weiter.
+   - Bei einem Serverfehler sendet das System 500 Server Error. Der Client zeigt eine Fehlermeldung mit „Erneut versuchen“.
+   - Wenn keine Einträge vorhanden sind, sendet das System 200 OK { items: [] }. Der Client zeigt „Noch keine Einträge“.
 
 ---
 
-### Activity Diagram
-```
+### Sequenzdiagramm
+<img width="1268" height="1078" alt="unnamed (4)" src="https://github.com/user-attachments/assets/ab4db5bf-89f2-477e-b0c3-193cc537b75e" />
 
-```
 
----
 
 ### .feature File
+<!--
 ```
 Feature: Leaderboard anzeigen
   Scenario: Spieler öffnet das Leaderboard
@@ -59,24 +46,8 @@ Feature: Leaderboard anzeigen
     Then werden die Top-Spieler angezeigt
     And sein eigener Rang wird hervorgehoben
 ```
-
----
-
-### 2.2 Alternative Flows
-
-**a) Nicht eingeloggt:**  
-→ System verweigert Zugriff und leitet zu **UC2 – Login** weiter.
-
-**b) Netzwerkfehler / Server nicht erreichbar:**  
-→ Fehlermeldung: „Leaderboard konnte nicht geladen werden.“  
-→ Button: „Erneut versuchen“
-
-**c) Keine Einträge vorhanden (neue Spieler):**  
-→ Anzeige: „Noch keine Einträge verfügbar.“
-
-**d) Serverantwort zu langsam:**  
-→ Ladeanimation / „Loading Spinner“ wird angezeigt, bis Daten eintreffen.
-
+-->
+Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
 ---
 
 ## 3. Special Requirements
@@ -87,8 +58,7 @@ Feature: Leaderboard anzeigen
 - Client sollte **Caching** und **Loading-Indikatoren** unterstützen.  
 - Sortierung nach:
   - Gewinnsumme (default)
-  - Level
-  - XP
+  - DEPTH
 - **Highlighting**: eigener Spieler wird visuell hervorgehoben.
 
 ---
@@ -103,7 +73,7 @@ Feature: Leaderboard anzeigen
 - Keine Datenänderungen am Server nötig.
 
 ---
-
+<!--
 ### 5.1 Save changes / Sync with server
 - Client sendet Anfrage `GET /api/leaderboard?sort=win_sum`  
 - Server antwortet mit JSON-Array der Top-Spieler:  
@@ -117,7 +87,7 @@ Feature: Leaderboard anzeigen
 - Client zeigt eigene Position basierend auf `user_id` zusätzlich an.
 
 ---
-
+-->
 ## 6. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
@@ -128,7 +98,7 @@ Feature: Leaderboard anzeigen
 | **Gesamt** |  | **7 FP** |
 
 ---
-
+<!--
 ## 7. Technische Hinweise
 **API-Endpunkte:**
 ```
@@ -155,4 +125,4 @@ LIMIT 50;
 - Aktualisiert Daten automatisch alle 5 Minuten.
 
 ---
-
+-->
