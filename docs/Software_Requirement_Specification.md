@@ -1,9 +1,29 @@
 # BetCeption:  Software Requirements Specification (SRS)
 
 ## Table of contents
-- [1. Introduction](#1-introduction)
-- [1.1 Purpose](#11-purpose)
-- [1.2 Scope]
-- [1.3 Definitions, Acronyms and Abbreviations]
-- [1.4 References]
-- [1.5 Overview]
+- [Introduction](#1-introduction)
+  - [Purpose](#11-purpose)
+  - [Scope](#12-scope)
+  - [Definitions, Acronyms and Abbreviations](#13-definitions-acronyms-and-abbreviations)
+  - [References](#14-references)
+  - [Overview](#15-overview)
+  - [References](#16-references)
+  - [Overview](#17-overview)
+- [Overall Description](#2-overall-description)
+  - [Vision](#21-vision)
+  - [Use Case Diagram](#22-use-case-diagram)
+  - [Technology Stack](#23-technology-stack)
+- [Specific Requirements](#3-specific-requirements)
+    - [Functionality](#31-functionality)
+    - [Usability](#32-usability)
+    - [Reliability](#33-reliability)
+    - [Performance](#34-performance)
+    - [Supportability](#35-sipportability)
+    - [Desgin Constraints](#36-design-constraints)
+    - [Online User Documentation and Help System Requirements](#37-online-user-documentation-and-help-system-requirements)
+    - [Purchased Compponents](#38-purchased-components)
+    - [Interfaces](#39-interfaces)
+    - [Licensing Requirements](#310-licensing-requirements)
+    - [Legal, Copyright And Other Notices](#legal-cpoyright-and-other-notices)
+    - [Appicalable Standards](#311-appicable-standards)
+  -[Supporting Information](#4-Supporting-Information)
