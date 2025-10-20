@@ -1,0 +1,79 @@
+# Use Case 15 – Daten persistieren
+
+## 1. Brief Description
+Dieser Use Case beschreibt die dauerhafte Speicherung aller wichtigen Spiel- und Benutzerdaten in einer MySQL-Datenbank.  
+Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, Power-Ups, XP und Transaktionen zuverlässig gespeichert und bei Bedarf wiederhergestellt werden können.
+
+---
+
+## 2. Mockup
+
+---
+
+## 3. Screenshots
+
+---
+
+## 4. Flow of Events
+
+### 4.1 Basic Flow
+1. Eine Aktion des Spielers (z. B. Spielstart, Kauf, Level-Up) löst eine Datenänderung aus.
+2. Das System erstellt oder aktualisiert die entsprechenden Einträge im Speicher (temporär).
+3. Die Persistenz-Schicht prüft Datenintegrität und Verknüpfungen (z. B. Fremdschlüssel).
+4. Die Änderungen werden in die MySQL-Datenbank geschrieben.
+5. Das System bestätigt den Erfolg an die Business-Logik.
+
+**Activity Diagram**
+```plantuml
+@startuml
+start
+:Aktion ausführen (z. B. Wette, Kauf);
+:Temporäre Daten aktualisieren;
+:Integritätsprüfung;
+:Daten in MySQL speichern;
+:Erfolg zurückmelden;
+stop
+@enduml
+```
+
+---
+
+## 4.2 Alternative Flows
+- **Fehler beim Schreiben:**  
+  Änderungen werden zurückgerollt, Spieler erhält Fehlermeldung.
+- **Verbindungsfehler:**  
+  Daten werden in einer Queue gepuffert und später synchronisiert.
+
+---
+
+## 5. Special Requirements
+- ACID-konforme Transaktionen in MySQL.
+- Fehlerbehandlung und automatisches Retry-System bei Verbindungsverlust.
+- Verwendung von ORM oder Data Mapper für strukturierte Persistenz.
+
+---
+
+## 6. Preconditions
+- MySQL-Datenbank ist aktiv und erreichbar.
+- Anwendung ist mit Datenbank verbunden.
+
+---
+
+## 7. Postconditions
+- Datenänderungen wurden dauerhaft gespeichert.
+- Inkonsistenzen wurden vermieden.
+
+---
+
+## 8. Save changes / Sync with server
+Alle Änderungen werden asynchron oder sofort (je nach Operation) synchronisiert.  
+Die Daten werden serverseitig regelmäßig gesichert (Backup).
+
+---
+
+## 9. Function Points
+- Daten schreiben
+- Daten aktualisieren
+- Integrität prüfen
+- Fehlerbehandlung / Rollback
+- Synchronisation
