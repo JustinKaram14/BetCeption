@@ -9,36 +9,27 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 ## 2. Mockup
 
 ---
-
+<!--
 ## 3. Screenshots
 
 ---
+-->
+## 3. Flow of Events
 
-## 4. Flow of Events
-
-### 4.1 Basic Flow
+### 3.1 Basic Flow
 1. Eine Aktion des Spielers (z. B. Spielstart, Kauf, Level-Up) löst eine Datenänderung aus.
 2. Das System erstellt oder aktualisiert die entsprechenden Einträge im Speicher (temporär).
 3. Die Persistenz-Schicht prüft Datenintegrität und Verknüpfungen (z. B. Fremdschlüssel).
 4. Die Änderungen werden in die MySQL-Datenbank geschrieben.
 5. Das System bestätigt den Erfolg an die Business-Logik.
 
-**Activity Diagram**
-```plantuml
-@startuml
-start
-:Aktion ausführen (z. B. Wette, Kauf);
-:Temporäre Daten aktualisieren;
-:Integritätsprüfung;
-:Daten in MySQL speichern;
-:Erfolg zurückmelden;
-stop
-@enduml
-```
+---
+## Sequenzdiagramm
+<img width="884" height="598" alt="unnamed_dat" src="https://github.com/user-attachments/assets/dee06c4f-887c-4652-a3da-9b6ac9fd3894" />
 
 ---
 
-## 4.2 Alternative Flows
+## 3.2 Alternative Flows
 - **Fehler beim Schreiben:**  
   Änderungen werden zurückgerollt, Spieler erhält Fehlermeldung.
 - **Verbindungsfehler:**  
@@ -46,25 +37,25 @@ stop
 
 ---
 
-## 5. Special Requirements
+## 4. Special Requirements
 - ACID-konforme Transaktionen in MySQL.
 - Fehlerbehandlung und automatisches Retry-System bei Verbindungsverlust.
 - Verwendung von ORM oder Data Mapper für strukturierte Persistenz.
 
 ---
 
-## 6. Preconditions
+## 5. Preconditions
 - MySQL-Datenbank ist aktiv und erreichbar.
 - Anwendung ist mit Datenbank verbunden.
 
 ---
 
-## 7. Postconditions
+## 6. Postconditions
 - Datenänderungen wurden dauerhaft gespeichert.
 - Inkonsistenzen wurden vermieden.
 
 ---
-
+<!--
 ## 8. Save changes / Sync with server
 Alle Änderungen werden asynchron oder sofort (je nach Operation) synchronisiert.  
 Die Daten werden serverseitig regelmäßig gesichert (Backup).
@@ -77,3 +68,4 @@ Die Daten werden serverseitig regelmäßig gesichert (Backup).
 - Integrität prüfen
 - Fehlerbehandlung / Rollback
 - Synchronisation
+-->
