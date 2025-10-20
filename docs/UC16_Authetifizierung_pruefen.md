@@ -9,38 +9,28 @@ Nur authentifizierte Benutzer dürfen auf spielbezogene Funktionen zugreifen.
 ## 2. Mockup
 
 ---
-
+<!--
 ## 3. Screenshots
 
 ---
+-->
+## 3. Flow of Events
 
-## 4. Flow of Events
-
-### 4.1 Basic Flow
+### 3.1 Basic Flow
 1. Spieler sendet eine Anfrage an das System (z. B. Spiel starten, Wette platzieren).
 2. Middleware fängt die Anfrage ab und extrahiert das Authentifizierungs-Token.
 3. System prüft die Gültigkeit und Ablaufzeit des Tokens.
 4. Wenn das Token gültig ist, wird die Anfrage weitergeleitet.
 5. Wenn ungültig, erhält der Benutzer eine Fehlermeldung und muss sich neu einloggen.
 
-**Activity Diagram**
-```plantuml
-@startuml
-start
-:API-Request empfangen;
-:Token extrahieren;
-if (Token gültig?) then (ja)
-  :Request an Zielservice weiterleiten;
-else (nein)
-  :Fehler 401 Unauthorized;
-endif
-stop
-@enduml
-```
+
+---
+## Sequenzdiagramm
+<img width="1005" height="657" alt="unnamed_auth" src="https://github.com/user-attachments/assets/862751ba-5373-4e20-9aab-7a96dad0fbd2" />
 
 ---
 
-## 4.2 Alternative Flows
+## 3.2 Alternative Flows
 - **Token abgelaufen:**  
   Spieler wird automatisch ausgeloggt und zur Login-Seite weitergeleitet.
 - **Token manipuliert:**  
@@ -48,23 +38,23 @@ stop
 
 ---
 
-## 5. Special Requirements
+## 4. Special Requirements
 - JWT-basierte Authentifizierung mit Ablaufzeit.
 - Middleware muss performant und sicher sein.
 - Token müssen signiert und verifiziert werden.
 
 ---
 
-## 6. Preconditions
+## 5. Preconditions
 - Spieler hat sich erfolgreich eingeloggt und besitzt ein gültiges Token.
 
 ---
 
-## 7. Postconditions
+## 6. Postconditions
 - Zugriff auf geschützte Ressourcen wurde nur bei gültiger Authentifizierung gewährt.
 
 ---
-
+<!--
 ## 8. Save changes / Sync with server
 Sitzungsinformationen und Ablaufdaten werden regelmäßig mit dem Server synchronisiert.
 
@@ -74,3 +64,4 @@ Sitzungsinformationen und Ablaufdaten werden regelmäßig mit dem Server synchro
 - Tokenprüfung
 - Fehlerbehandlung
 - Zugriffskontrolle
+-->
