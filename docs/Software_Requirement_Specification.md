@@ -16,13 +16,13 @@
     - [Benutzerfreundlichkeit](#32-benutzerfreundlichkeit)
     - [Zuverlässigkeit](#33-zuverlässigkeit)
     - [Leistung](#34-leistung)
-    - [Supportability](#35-sipportability)
-    - [Designbeschränkugnen](#36-designbeschränkugnen)
+    - [Supportability](#35-supportability)
+    - [Designbeschränkugnen](#36-designbeschränkungen)
     - [Anforderungen an die Online-Benutzerdokumentation und das Hilfesystem](#37-anforderungen-an-die-online-benutzerdokumentation-und-das-hilfesystem)
-    - [Purchased Compponents](#38-purchased-components)
+    - [Purchased Components](#38-purchased-components)
     - [Schnittstellen](#39-schnittstellen)
     - [Lizenzanforderungen](#310-lizenzanforderungen)
-    - [Rechtliche Hinweise, Urheberrecht und sonstige Hinweise](#311-rechtliche-hinweise-urheberrecht-und-andere-hinweise)
+    - [Rechtliche Hinweise, Urheberrecht und sonstige Hinweise](#311-rechtliche-hinweise-urheberrecht-und-sonstige-hinweise)
     - [Anwendbare Standards](#312-anwendbare-standards)
 - [Begleitende Informationen](#4-begleitende-informationen)
 
@@ -128,6 +128,7 @@ Die Anwendung wird mit folgenden Technologien umgesetzt:
 - GitHub Actions für Linting, Tests und Build
 
 ## 3. Spezifische Anforderungen
+### 3.1 Funktionalität
 Dieser Abschnitt beschreibt die Anwendungsfälle aus dem Use-Case-Diagramm und skizziert ihre Aufgabe im System. Die detaillierten Spezifikationen (Flows, Mockups, Sequenzen, Vor-/Nachbedingungen und Story Points) sind in den verlinkten UC-Dokumenten hinterlegt.
 
 #### Umsetzung im MVP
@@ -197,3 +198,88 @@ Spieler sehen ihre gekauften Power-Ups und deren verbleibende Runden.
 Fortschritt durch gespielte Runden führt zu Erfahrungspunkten und Level-Aufstiegen, die neue Boni freischalten können.  
 [Zur Spezifikation](./UC11_XP_Level-System_verwalten.md)
 
+### 3.2 Benutzerfreundlichkeit
+ie Oberfläche soll ohne Anleitung verständlich sein. Zentrale Aktionen sind jederzeit sichtbar und mit klaren Bezeichnungen versehen. Interaktionen folgen einem einfachen, wiederkehrenden Muster: Einsatz wählen, Runde starten, Entscheidung treffen, Ergebnis sehen. Tooltips und kurze Inline-Hinweise helfen bei Bedarf, ohne den Spielfluss zu stören.
+
+#### 3.2.1 Keine Einarbeitungszeit
+Spieler sollen das Spiel im Browser öffnen und alle Grundfunktionen ohne zusätzliche Erklärungen nutzen können. Die wichtigsten Aktionen sind maximal zwei Klicks entfernt.
+
+#### 3.2.2 Vertraute Muster
+UI-Komponenten orientieren sich an gängigen Web- und Casino-Mustern. Buttons, Chips und Modale verhalten sich konsistent. Tastatur-Shortcuts für Hit und Stand können optional aktiviert werden.
+
+#### 3.2.3 Barrierefreiheit (Basis)
+Kontraste erfüllen WCAG-Basiswerte. Fokus-Reihenfolge ist nachvollziehbar. Alle interaktiven Elemente sind mit der Tastatur erreichbar. Animationen sind dezent und beeinträchtigen die Lesbarkeit nicht.
+
+#### 3.2.4 Responsives Verhalten
+Layout und Bedienelemente passen sich an gängige Auflösungen an. Auf kleineren Displays werden sekundäre Informationen ausgeblendet oder komprimiert, ohne Funktionen zu verlieren.
+
+
+### 3.3 Zuverlässigkeit
+Das System priorisiert eine stabile Spiellogik und konsistente Buchungen. Ausfälle sollen den Spielfortschritt nicht verfälschen. Einsätze und Auszahlungen werden zuverlässig erfasst und nachverfolgbar gespeichert.
+
+#### 3.3.1 Verfügbarkeit
+Die Anwendung ist im Projektkontext zu mindestens **95 %** verfügbar. Geplante Wartungen werden außerhalb typischer Nutzungszeiten durchgeführt. Kurzzeitige Unterbrechungen führen nicht zum Verlust von bereits verbuchten Einsätzen.
+
+#### 3.3.2 Datenkonsistenz
+Buchungen erfolgen atomar. Ein Start einer Runde reserviert den Einsatz, die Auswertung verbucht Gewinn oder Verlust. Doppelte Anfragen werden erkannt und nicht doppelt gebucht. Wallet-Salden bleiben konsistent.
+
+#### 3.3.3 Fehlertoleranz und Wiederaufnahme
+Bei Verbindungsproblemen wird die letzte Spielaktion serverseitig sicher abgeschlossen. Nach einem Reload kann der Spieler den Status der aktuellen oder letzten Runde einsehen. Fehler werden geloggt und mit einer neutralen Fehlermeldung angezeigt, ohne vertrauliche Details offenzulegen.
+
+#### 3.3.4 Datensicherung (Projektumfang)
+Persistente Daten werden regelmäßig gesichert. Bei einem Ausfall können Nutzerkonten und Wallet-Stände wiederhergestellt werden.
+
+### 3.4 Leistung
+Die Anwendung reagiert zügig und bleibt unter Last bedienbar. Angaben beziehen sich auf das MVP.
+
+#### 3.4.1 Kapazität
+Das System verarbeitet dauerhaft viele parallele Anfragen. Ziel sind mindestens 100 gleichzeitige aktive Sitzungen im Testbetrieb. Registrierungen und Logins sind nicht limitiert.
+
+#### 3.4.2 Speicherbedarf
+Das Frontend bleibt schlank. Startbundle möglichst unter 300 kB gzip. Bilder und Assets werden nachgeladen. Serverseitig werden nur notwendige Daten gespeichert.
+
+#### 3.4.3 Antwortzeiten
+API-Aufrufe für Spielaktionen liegen im 95-Perzentil unter 300 ms. Anmelden und Registrieren unter 600 ms. Die erste nutzbare Ansicht wird im Browser innerhalb von 2 Sekunden geladen.
+
+#### 3.4.4 Datenbankzugriffe
+Pro Spielaktion maximal zwei schreibende Transaktionen. Häufige Abfragen sind indiziert und antworten im 95-Perzentil unter 50 ms.
+
+#### 3.4.5 Stabilität bei Verbindungsproblemen
+Kurzzeitige Ausfälle führen nicht zu doppelten Buchungen. Idempotente Requests werden bei Bedarf automatisch wiederholt. Der Spielstatus lässt sich nach einem Reload herstellen.
+
+
+### 3.5 Supportability
+Der Code ist gut wartbar, testbar und nachvollziehbar. Konfiguration und Infrastruktur sind für das Team leicht zu bedienen.
+
+#### 3.5.1 Coding-Standards
+Einheitlicher Stil mit ESLint und Prettier. Aussagekräftige Namen und kleine, gut testbare Funktionen. Trennung von API-Schicht, Geschäftslogik und Datenzugriff. Keine geheimen Werte im Code. Konfiguration über Umgebungsvariablen.
+
+#### 3.5.2 Teststrategie
+Unit-Tests für Blackjack-Logik, Sidebets und Power-Ups. API-Tests für Endpunkte mit Jest und Supertest. Frontend-Unit-Tests mit Jasmine oder Jest. Optional E2E-Tests mit Cypress für den Happy Path. Ziel ist eine hohe Abdeckung der Kernlogik.
+
+#### 3.5.3 Logging und Monitoring
+Server protokolliert Fehler und wichtige Ereignisse strukturiert. Logs enthalten keine sensiblen Daten. Fehler werden dem Nutzer neutral angezeigt. Im Team stehen einfache Auswertungen der Logs bereit.
+
+#### 3.5.4 Build, CI und Container
+Projekt lässt sich mit einem Befehl starten. Docker Compose stellt Backend und Datenbank bereit. GitHub Actions führt Linting, Tests und Build aus. Artefakte sind reproduzierbar.
+
+#### 3.5.5 Dokumentation
+Kurzbeschreibungen zu Setup, Start und häufigen Aufgaben liegen im Repository. API-Routen sind beschrieben. Wichtige Architekturentscheidungen werden knapp festgehalten.
+
+#### 3.5.6 Internationalisierung (Basis)
+Texte sind zentral abgelegt. Eine spätere Übersetzung ist möglich, auch wenn das MVP zunächst deutsch bleibt.
+
+### 3.6 Designbeschränkungen
+
+
+### 3.7 Anforderungen an die Online-Benutzerdokumentation und das Hilfesystem
+
+### 3.8 Purchased Components
+
+### 3.9 Schnittstellen
+
+### 3.10 Lizenzanforderungen
+
+### 3.11 Rechtliche Hinweise, Urheberrecht und sonstige Hinweise
+
+### 3.12 Anwendbare Standards
