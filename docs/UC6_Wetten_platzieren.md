@@ -8,7 +8,8 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 ## 1.2 Mockups
-
+![alt text](mockups/Bet-Bet-Mockup.png)
+![alt text](mockups/Bet-Bet-Mockup2.png)
 ---
 
 ## 2. Akteure
@@ -89,11 +90,11 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ## 7. Sequenzdiagramme (PlantUML, mit Aktivitätsbalken)
 
-### 7.1 Hauptwette (Main Bet)
+### 7.1 Hauptwette
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Hauptwette.png>)
 
-
-### 7.2 Nebenwette (Side Bet)
-
+### 7.2 Nebenwette
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Nebenwette.png>)
 
 ---
 

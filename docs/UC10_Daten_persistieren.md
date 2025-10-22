@@ -1,4 +1,4 @@
-# Use Case 15 – Daten persistieren
+# Use Case – Daten persistieren
 
 ## 1. Brief Description
 Dieser Use Case beschreibt die dauerhafte Speicherung aller wichtigen Spiel- und Benutzerdaten in einer MySQL-Datenbank.  
@@ -31,8 +31,7 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 
 ---
 ## 4. Sequenzdiagramm
-<img width="884" height="598" alt="unnamed_dat" src="https://github.com/user-attachments/assets/dee06c4f-887c-4652-a3da-9b6ac9fd3894" />
-
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Datenpersistieren.png>)
 ---
 
 

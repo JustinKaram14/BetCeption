@@ -10,7 +10,8 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ---
 ## 1.2 Mockups
-
+![alt text](mockups/Pills-Mockup.png)
+![alt text](mockups/Balance-Mockup.png)
 ---
 ## 2. Akteure
 - **Primärer Akteur:** Spieler (eingeloggt)
@@ -74,13 +75,17 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 ---
 
 ## 4. Sequenzdiagramme
+## 4.1 Power-Up kaufen
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Powerups kaufen.png>)
+
+## 4.2 Inventar anzeigen
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Inventar anzeigen.png>)
+
+## 4.3 Guthaben anzeigen
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Guthaben anzeigen-verwalten.png>)
 
 
 
-### Inventar anzeigen
-
-
-### Guthaben anzeigen
 
 
 ---

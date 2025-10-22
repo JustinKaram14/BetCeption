@@ -1,4 +1,4 @@
-# Use Case 3 – Daily Reward abholen
+# Use Case – Daily Reward abholen
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, einmal pro Tag eine **tägliche Belohnung (Coins)** zu erhalten.  
@@ -8,9 +8,7 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 ---
 
 ## 1.2 Mockup
-<img width="346" height="180" alt="image_p" src="https://github.com/user-attachments/assets/95d22483-73fc-43df-a807-186eff178aa5" />
-<br><br>
-<img width="2420" height="1570" alt="image_p2" src="https://github.com/user-attachments/assets/7d76309d-b6bb-4b48-aa60-56d58bf367b6" />
+![alt text](mockups/Daily-Rewards.png)
 
 ---
 <!--
@@ -47,8 +45,7 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 ---
 
 ### 4. Sequenzdiagramm
-<img width="1651" height="1015" alt="unnamed_d" src="https://github.com/user-attachments/assets/8ca04461-5794-4067-9075-f3918730f642" />
-
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Daily-Reward.png>)
 ---
 
 ### 5. .feature File

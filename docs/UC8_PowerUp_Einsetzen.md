@@ -1,4 +1,4 @@
-# Use Case 10 – Power-Up einsetzen
+# Use Case – Power-Up einsetzen
 
 ## 1. Brief Description
 Dieser Use Case beschreibt, wie ein Spieler ein zuvor gekauftes Power-Up im laufenden Spiel einsetzt.  
@@ -8,6 +8,8 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 ---
 
 ## 1.2 Mockup
+![alt text](mockups/Pills-Mockup.png)
+
 ---
 <!--
 ## 3. Screenshots
@@ -35,8 +37,7 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
 ## 4. Sequenzdiagramm
-
-<img width="1468" height="920" alt="unnamed_up" src="https://github.com/user-attachments/assets/c95d1edd-c215-4259-8af3-d084f19b0acf" />
+![alt text](<Sequenzdiagramme/Sequenzdiagramm PowerUpEinsetzen.png>)
 
 ---
 

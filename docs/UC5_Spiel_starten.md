@@ -1,4 +1,4 @@
-# Use Case 5 – Spiel starten (Blackjack)
+# Use Case – Spiel starten (Blackjack)
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, ein neues **Blackjack-Spiel** in **BetCeption** zu starten.  
@@ -8,17 +8,7 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 ---
 
 ## 1.2 Mockup
-<!--
-**Mockup:**  
-- Spielübersicht mit folgenden Elementen:
-  - Einsatzfeld (Input)
-  - Button: **„Spiel starten“**
-  - Anzeige: aktuelles Guthaben
-  - Kartenplatzhalter (Dealer + Spieler)
-- Nach dem Start:
-  - Zwei Spieler-Karten, eine Dealer-Karte sichtbar
--->
-<img width="373" height="106" alt="Enter Betception Button" src="https://github.com/user-attachments/assets/c45e98bb-5f93-4767-9538-badb62843782" />
+![alt text](mockups/Spiel-Starten-Daily-Rewards-Mockup.png)
 
 ---
 <!--
@@ -54,8 +44,7 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 ---
 
 ### 4. Sequenz Diagram
-<img width="1553" height="1324" alt="unnamed_s" src="https://github.com/user-attachments/assets/ad209437-e37c-48f0-8cb0-fd5a000dc973" />
-
+![alt text](<Sequenzdiagramme/Sequenzdiagramm SpielStarten.png>)
 ---
 
 ### 5. .feature File

@@ -1,4 +1,4 @@
-# Use Case 11 – XP und Level-System verwalten
+# Use Case – XP und Level-System verwalten
 
 ## 1. Brief Description
 Dieser Use Case beschreibt das Level- und Erfahrungspunktesystem (XP-System).  
@@ -8,7 +8,7 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
 ---
 
 ## 1.2 Mockup
-
+![alt text](mockups/Level-Bar-Mockup.png)
 ---
 
 <!--
@@ -35,8 +35,7 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
 
 ---
 ## 4. Sequenzdiagramm
-<img width="1201" height="1048" alt="unnamed_xp" src="https://github.com/user-attachments/assets/99e94b4a-5e93-4c29-8720-943e52d1f229" />
-
+![alt text](<Sequenzdiagramme/Sequenzdiagramm XP-Level-System.png>)
 ---
 
 
