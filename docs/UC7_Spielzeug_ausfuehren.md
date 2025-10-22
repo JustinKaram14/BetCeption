@@ -1,4 +1,4 @@
-# Use Case 8 – Spielzug ausführen (Hit, Stand, Double, Split)
+# Use Case – Spielzug ausführen (Hit, Stand, Double, Split)
 
 ## 1.1 Brief Description
 Dieser Use Case beschreibt, wie ein **eingeloggter Spieler** während eines laufenden Blackjack-Spiels (UC5) einen **Spielzug** ausführt – z. B. **Hit (Karte ziehen)**, **Stand (bleiben)**, **Double (Einsatz verdoppeln + 1 Karte)** oder **Split (Hand teilen)**.  
@@ -7,7 +7,6 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 ---
 
 ## 1.2 Mockup
-(Mockup folgt später)
 
 
 ---
@@ -52,8 +51,7 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 ---
 
 ### 4. Sequenzdiagramm
-
-<img width="1256" height="2338" alt="unnamed_aus" src="https://github.com/user-attachments/assets/019dd95e-0cd0-4216-a6b7-15e0a29314bf" />
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Spielzugausfuhren.png>)
 
 ---
 

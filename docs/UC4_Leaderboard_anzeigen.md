@@ -1,4 +1,4 @@
-# Use Case 4 – Leaderboard anzeigen
+# Use Case – Leaderboard anzeigen
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es dem **eingeloggten Spieler**, die **Bestenliste (Leaderboard)** in **BetCeption** einzusehen.  
@@ -8,7 +8,7 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 ---
 
 ## 1.2 Mockup
-<img width="777" height="772" alt="Screenshot 2025-10-20 210732" src="https://github.com/user-attachments/assets/48b9146b-cad8-4c9d-9773-595836355ed3" />
+![alt text](mockups/Leadernoard-MockUp.png)
 
 ---
 **2. Akteure:**  
@@ -36,8 +36,7 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 ---
 
 ### 5. Sequenzdiagramm
-<img width="1268" height="1078" alt="unnamed (4)" src="https://github.com/user-attachments/assets/ab4db5bf-89f2-477e-b0c3-193cc537b75e" />
-
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Leaderboard.png>)
 
 
 ### 6. .feature File

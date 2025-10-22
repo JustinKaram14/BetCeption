@@ -11,8 +11,10 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 ---
 
 ## 1.2 Mockups
-
+![alt text](mockups/Login-Mockup.png)
+![alt text](mockups/Register-Mockup.png)
 ---
+
 ## 2. Akteure
 - **Primärer Akteur:** Spieler (Benutzer)  
 - **Sekundäre Akteure:**  
@@ -83,11 +85,13 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 ---
 
 ## 4. Sequenzdiagramme
+## 4.1 Regestrieren
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
+## 4.2 Login
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Login.png>)
+## 4.3 Logout
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Logout.png>)
 
-### Authentifizierung prüfen (Middleware)
-
-
----
 
 ## 5. Special Requirements
 - Kommunikation ausschließlich über **HTTPS**  
