@@ -31,9 +31,14 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 
 ---
 -->
-## 2. Flow of Events
+**2. Akteure:**  
+- **Spieler:** Startet ein neues Blackjack-Spiel.  
+- **System:** Initialisiert das Spiel, verteilt Karten und verwaltet die Wettsituation.
+---
 
-### 2.1 Basic Flow
+## 3. Flow of Events
+
+### 3.1 Basic Flow
 1. Spieler ist **eingeloggt** (UC2).  
 2. Spieler navigiert zur **Blackjack-Spielseite**.  
 3. Das System zeigt das aktuelle Guthaben an.  
@@ -48,12 +53,12 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 
 ---
 
-### Sequenz Diagram
+### 4. Sequenz Diagram
 <img width="1553" height="1324" alt="unnamed_s" src="https://github.com/user-attachments/assets/ad209437-e37c-48f0-8cb0-fd5a000dc973" />
 
 ---
 
-### .feature File
+### 5. .feature File
 <!--
 ```
 Feature: Spiel starten (Blackjack)
@@ -69,24 +74,8 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
 
 ---
 
-### 2.2 Alternative Flows
 
-**a) Nicht eingeloggt:**  
-→ System leitet zur Login-Seite weiter (**UC2**).
-
-**b) Nicht genügend Guthaben:**  
-→ System zeigt Fehlermeldung: *„Nicht genügend Guthaben für diesen Einsatz.“*  
-→ Spieler bleibt auf der Spielstartseite.
-
-**c) Serverfehler / Timeout:**  
-→ Fehlermeldung: *„Spiel konnte nicht gestartet werden. Bitte erneut versuchen.“*
-
-**d) Spiel bereits aktiv:**  
-→ System prüft, ob ein laufendes Spiel existiert, und lädt dieses stattdessen.
-
----
-
-## 3. Special Requirements
+## 6. Special Requirements
 - Spiel darf nur gestartet werden, wenn **kein anderes aktives Spiel** besteht.  
 - Einsatzbetrag wird **atomar reserviert** (DB-Transaktion).  
 - Initiale Kartenverteilung erfolgt **zufällig** über RNG.
@@ -103,14 +92,14 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
   - created_at -->
 ---
 
-## 4. Preconditions
+## 7. Preconditions
 - Spieler ist **eingeloggt** (UC2).  
 - Kein anderes aktives Spiel läuft.  
 - Spieler hat ausreichend Guthaben.
 
 ---
 
-## 5. Postconditions
+## 8. Postconditions
 - Neues Spielobjekt ist erstellt und gespeichert.  
 - Einsatzbetrag ist vom Guthaben abgezogen.  
 - Spielstatus = *running*.  
@@ -139,7 +128,7 @@ Server antwortet mit:
 -->
 ---
 
-## 6. Function Points
+## 9. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
 | Einsatzprüfung | Guthabenvalidierung | 2 |

@@ -14,6 +14,12 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 
 ---
 -->
+## 2. Akteure:
+- **Entwickler:** Führt Tests zur Datenkonsistenz, API-Kommunikation und Datenbankintegrität durch.  
+- **System:** Simuliert Testfälle und liefert Ergebnisse zur Überprüfung der Datenflüsse.
+
+---
+
 ## 3. Flow of Events
 
 ### 3.1 Basic Flow
@@ -24,33 +30,27 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 5. Das System bestätigt den Erfolg an die Business-Logik.
 
 ---
-## Sequenzdiagramm
+## 4. Sequenzdiagramm
 <img width="884" height="598" alt="unnamed_dat" src="https://github.com/user-attachments/assets/dee06c4f-887c-4652-a3da-9b6ac9fd3894" />
 
 ---
 
-## 3.2 Alternative Flows
-- **Fehler beim Schreiben:**  
-  Änderungen werden zurückgerollt, Spieler erhält Fehlermeldung.
-- **Verbindungsfehler:**  
-  Daten werden in einer Queue gepuffert und später synchronisiert.
 
----
 
-## 4. Special Requirements
+## 5. Special Requirements
 - ACID-konforme Transaktionen in MySQL.
 - Fehlerbehandlung und automatisches Retry-System bei Verbindungsverlust.
 - Verwendung von ORM oder Data Mapper für strukturierte Persistenz.
 
 ---
 
-## 5. Preconditions
+## 6. Preconditions
 - MySQL-Datenbank ist aktiv und erreichbar.
 - Anwendung ist mit Datenbank verbunden.
 
 ---
 
-## 6. Postconditions
+## 7. Postconditions
 - Datenänderungen wurden dauerhaft gespeichert.
 - Inkonsistenzen wurden vermieden.
 
@@ -69,3 +69,13 @@ Die Daten werden serverseitig regelmäßig gesichert (Backup).
 - Fehlerbehandlung / Rollback
 - Synchronisation
 -->
+
+## 8. Function Points
+
+| Kategorie  | Beschreibung                                | Function Points |
+|-------------|----------------------------------------------|-----------------|
+| Eingaben    | Testkonfiguration und Datenbankanfragen      | 2 FP            |
+| Ausgaben    | Testberichte und Fehlerprotokolle            | 2 FP            |
+| Abfragen    | Datenabgleich zwischen API und Datenbank     | 2 FP            |
+| **Gesamt**  |                                              | **6 FP**        |
+---

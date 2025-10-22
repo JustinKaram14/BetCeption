@@ -127,76 +127,51 @@ Die Anwendung wird mit folgenden Technologien umgesetzt:
 **CI/CD:**  
 - GitHub Actions für Linting, Tests und Build
 
-## 3. Spezifische Anforderungen
-### 3.1 Funktionalität
-Dieser Abschnitt beschreibt die Anwendungsfälle aus dem Use-Case-Diagramm und skizziert ihre Aufgabe im System. Die detaillierten Spezifikationen (Flows, Mockups, Sequenzen, Vor-/Nachbedingungen und Story Points) sind in den verlinkten UC-Dokumenten hinterlegt.
-
 #### Umsetzung im MVP
-**3.1.1 Registrieren**  
-Nutzer legen ein Konto an und erhalten nach erfolgreicher Anlage Zugriff auf das Spiel.  
-[Zur Spezifikation](./UC1_Regestrieren.md)
 
-**3.1.2 Anmelden**  
-Bereits registrierte Nutzer melden sich an und erhalten ein JWT zur Autorisierung weiterer Aufrufe.  
-[Zur Spezifikation](./UC2_Login.md)
+**3.1.1 Authentifizierung & Session-Management**  
+Registrieren, Anmelden und Abmelden. Nach erfolgreichem Login erhält der Nutzer ein JWT; geschützte Endpunkte prüfen dieses Token.  
+[Zur Spezifikation](./UC1_Authentifizierung_&_Session_Management.md)
 
-**3.1.3 Spiel starten**  
+**3.1.2 Spiel starten**  
 Der Spieler setzt seinen Haupteinsatz und startet eine neue Blackjack-Runde. Der Dealer gibt aus und die Runde beginnt.  
 [Zur Spezifikation](./UC5_Spiel_starten.md)
 
-**3.1.4 Wette platzieren (Haupteinsatz)**  
-Der Spieler legt die Höhe seines Haupteinsatzes fest. Das System prüft das verfügbare Guthaben und reserviert den Betrag.  
-[Zur Spezifikation](./UC6_Wette_platzieren.md)
+**3.1.3 Wetten platzieren (Haupteinsatz & Sidebet)**  
+Der Spieler legt die Höhe seines Haupteinsatzes fest und kann optional Sidebets setzen (z. B. „Dealer gewinnt“). Guthaben wird geprüft und reserviert; Auswertung am Rundenende.  
+[Zur Spezifikation](./UC6_Wetten_platzieren.md)
 
-**3.1.5 Nebenwette platzieren (Sidebet)**  
-Zusätzlich zum Haupteinsatz kann der Spieler eine Sidebet auswählen und setzen (z. B. „Dealer gewinnt“). Die Bewertung erfolgt am Rundenende.  
-[Zur Spezifikation](./UC7_Nebenwette_platzieren.md)
+**3.1.4 Shop, Inventar & Guthaben verwalten**  
+Spieler kaufen „Pillen“ (Power-Ups) mit virtuellem Guthaben, sehen ihr Inventar und ihr verfügbares Guthaben; Buchungen (Einsatz/Auszahlung) werden geführt.  
+[Zur Spezifikation](./UC2_Shop_Inventag_Guthabeverwaltung.md)
 
-**3.1.6 Power-Ups kaufen**  
-Spieler erwerben „Pillen“ mit virtuellem Guthaben und legen sie in ihr Inventar.  
-[Zur Spezifikation](./UC9_PowerUps_Kaufen.md)
+**3.1.5 Power-Up einsetzen**  
+Ein gekauftes Power-Up wird aktiviert und wirkt für eine definierte Anzahl an Runden; pro Runde entscheidet ein Trigger, ob der Vorteil greift.  
+[Zur Spezifikation](./UC8_PowerUp_Einsetzen.md)
 
-**3.1.7 Power-Up einsetzen**  
-Ein gekauftes Power-Up wird aktiviert und ist für eine definierte Anzahl an Runden wirksam. Pro Runde entscheidet ein Trigger, ob der Vorteil greift.  
-[Zur Spezifikation](./UC10_PowerUp_Einsetzen.md)
-
-**3.1.8 Guthaben anzeigen & verwalten**  
-Das System zeigt das verfügbare virtuelle Guthaben an und verbucht Einsätze sowie Auszahlungen. Optional sind simulierte Einzahlungen möglich.  
-[Zur Spezifikation](./UC13_Guthaben_anzeigen_verwalten.md)
-
-**3.1.9 Abmelden**  
-Der Spieler beendet seine Sitzung und das Token verliert seine Gültigkeit auf Client-Seite.  
-[Zur Spezifikation](./UC14_Abmelden.md)
-
-#### Ergänzende Systemfunktionen im MVP (technisch)
-**3.1.10 Daten persistieren**  
+**3.1.6 Daten persistieren**  
 Spiel- und Nutzungsdaten werden in der Datenbank gespeichert, damit Runden korrekt ausgewertet und Salden konsistent geführt werden.  
-[Zur Spezifikation](./UC15_Daten_persistieren.md)
+[Zur Spezifikation](./UC10_Daten_persistieren.md)
 
-**3.1.11 Authentifizierung prüfen**  
-Geschützte Endpunkte prüfen das JWT und lassen nur autorisierte Zugriffe zu.  
-[Zur Spezifikation](./UC16_Authetifizierung_pruefen.md)
+---
 
 #### Zeitlich offen (außerhalb des MVP)
-**3.1.12 Daily-Reward**  
-Spieler erhalten bei täglichem Login einen Bonus, der zur Progression motiviert.  
+
+**3.1.7 Daily-Reward**  
+Spieler erhalten bei täglichem Login einen Bonus zur Progression.  
 [Zur Spezifikation](./UC3_Daily_Reward.md)
 
-**3.1.13 Leaderboard anzeigen**  
-Das System stellt eine Rangliste mehrerer Spieler dar. Die endgültigen Kriterien (z. B. Gewinnsumme, Siegquote, längste Serie) werden später festgelegt.  
+**3.1.8 Leaderboard anzeigen**  
+Das System stellt eine Rangliste mehrerer Spieler dar (Kriterien wie Gewinnsumme, Siegquote, Serien).  
 [Zur Spezifikation](./UC4_Leaderboard_anzeigen.md)
 
-**3.1.14 Spielzug ausführen**  
+**3.1.9 Spielzug ausführen**  
 Interaktionen innerhalb der Runde (z. B. Hit/Stand) werden als Spielzug modelliert und an die Engine übergeben.  
-[Zur Spezifikation](./UC8_Spielzeug_ausfuehren.md)
+[Zur Spezifikation](./UC7_Spielzeug_ausfuehren.md)
 
-**3.1.15 Inventar anzeigen**  
-Spieler sehen ihre gekauften Power-Ups und deren verbleibende Runden.  
-[Zur Spezifikation](./UC12_Inventar_anzeigen.md)
-
-**3.1.16 XP-/Level-System verwalten**  
+**3.1.10 XP-/Level-System verwalten**  
 Fortschritt durch gespielte Runden führt zu Erfahrungspunkten und Level-Aufstiegen, die neue Boni freischalten können.  
-[Zur Spezifikation](./UC11_XP_Level-System_verwalten.md)
+[Zur Spezifikation](./UC9_XP_Level-System_verwalten.md)
 
 ### 3.2 Benutzerfreundlichkeit
 ie Oberfläche soll ohne Anleitung verständlich sein. Zentrale Aktionen sind jederzeit sichtbar und mit klaren Bezeichnungen versehen. Interaktionen folgen einem einfachen, wiederkehrenden Muster: Einsatz wählen, Runde starten, Entscheidung treffen, Ergebnis sehen. Tooltips und kurze Inline-Hinweise helfen bei Bedarf, ohne den Spielfluss zu stören.
