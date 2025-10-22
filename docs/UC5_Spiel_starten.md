@@ -18,7 +18,7 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 - Nach dem Start:
   - Zwei Spieler-Karten, eine Dealer-Karte sichtbar
 -->
-**(Mockup folgt später.)**
+<img width="373" height="106" alt="Enter Betception Button" src="https://github.com/user-attachments/assets/c45e98bb-5f93-4767-9538-badb62843782" />
 
 ---
 <!--
