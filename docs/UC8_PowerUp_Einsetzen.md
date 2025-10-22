@@ -7,13 +7,18 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
 
-## 2. Mockup
+## 1.2 Mockup
 ---
 <!--
 ## 3. Screenshots
 
 ---
 -->
+## 2. Akteure:
+- **Spieler:** Wählt ein verfügbares Power-Up aus und aktiviert es im laufenden Spiel.  
+- **System:** Überprüft die Verfügbarkeit und wendet den Effekt des Power-Ups an.
+
+---
 ## 3. Flow of Events
 
 ### 3.1 Basic Flow
@@ -29,35 +34,29 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 5. System zeigt eine Bestätigung über die erfolgreiche Nutzung an.
 
 ---
-## Sequenzdiagramm
+## 4. Sequenzdiagramm
 
 <img width="1468" height="920" alt="unnamed_up" src="https://github.com/user-attachments/assets/c95d1edd-c215-4259-8af3-d084f19b0acf" />
 
 ---
 
-## 3.2 Alternative Flows
-- **Power-Up nicht vorhanden:**  
-  Das System zeigt eine Fehlermeldung an und bricht den Vorgang ab.
-- **Nutzung nicht erlaubt:**  
-  Einige Power-Ups dürfen nur in bestimmten Phasen des Spiels verwendet werden.
 
----
 
-## 4. Special Requirements
+## 5. Special Requirements
 - Der Effekt jedes Power-Ups muss klar definiert sein.
 - System muss prüfen, dass Effekte nicht gestapelt oder manipuliert werden können.
 - Die Anwendung muss serverseitig validiert und synchronisiert werden.
 
 ---
 
-## 5. Preconditions
+## 6. Preconditions
 - Spieler ist eingeloggt.
 - Spieler befindet sich in einem aktiven Spiel.
 - Das Power-Up ist im Inventar vorhanden.
 
 ---
 
-## 6. Postconditions
+## 7. Postconditions
 - Effekt des Power-Ups wurde angewendet.
 - Power-Up wurde aus dem Inventar entfernt.
 - Spielstatus wurde aktualisiert.
@@ -81,3 +80,13 @@ Das System synchronisiert nach der Nutzung alle Änderungen (Inventar, Spielstat
 
 
 -->   
+## 8. Function Points
+
+| Kategorie  | Beschreibung                            | Function Points |
+|-------------|------------------------------------------|-----------------|
+| Eingaben    | Auswahl des Power-Ups, Aktivierungsbefehl | 2 FP            |
+| Ausgaben    | Anzeige des aktiven Effekts, Aktualisierung der Spielansicht | 2 FP |
+| Abfragen    | Überprüfung der Power-Up-Verfügbarkeit    | 1 FP            |
+| **Gesamt**  |                                          | **5 FP**        |
+
+---

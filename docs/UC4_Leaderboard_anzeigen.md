@@ -11,10 +11,14 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 <img width="777" height="772" alt="Screenshot 2025-10-20 210732" src="https://github.com/user-attachments/assets/48b9146b-cad8-4c9d-9773-595836355ed3" />
 
 ---
+**2. Akteure:**  
+- **Spieler:** Möchte das aktuelle Leaderboard einsehen.  
+- **System:** Ruft die aktuellen Punktestände aller Spieler aus der Datenbank ab und zeigt sie an.
+---
 
-## 2. Flow of Events
+## 3. Flow of Events
 
-### 2.1 Basic Flow
+### 3.1 Basic Flow
 1. Der Spieler öffnet die **Leaderboard-Seite**.
 2. Der Client sendet GET /api/leaderboard?sort=win_sum&page=1 inklusive JWT.
 3. Das System validiert das JWT.  
@@ -31,12 +35,12 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 
 ---
 
-### Sequenzdiagramm
+### 5. Sequenzdiagramm
 <img width="1268" height="1078" alt="unnamed (4)" src="https://github.com/user-attachments/assets/ab4db5bf-89f2-477e-b0c3-193cc537b75e" />
 
 
 
-### .feature File
+### 6. .feature File
 <!--
 ```
 Feature: Leaderboard anzeigen
@@ -50,7 +54,7 @@ Feature: Leaderboard anzeigen
 Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
 ---
 
-## 3. Special Requirements
+## 7. Special Requirements
 - Leaderboard-Daten werden **serverseitig aggregiert**.  
 - Abfrage ist **paginiert** (z. B. 50 Spieler pro Seite).  
 - Spielername wird **zensiert oder anonymisiert**, wenn Datenschutz aktiviert ist.  
@@ -63,12 +67,12 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
 
 ---
 
-## 4. Preconditions
+## 8. Preconditions
 - Spieler ist **eingeloggt** (UC2).
 
 ---
 
-## 5. Postconditions
+## 9. Postconditions
 - Leaderboard ist erfolgreich geladen und angezeigt.  
 - Keine Datenänderungen am Server nötig.
 
@@ -88,7 +92,7 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
 
 ---
 -->
-## 6. Function Points
+## 10. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
 | Datenabruf | Server-API / DB-Abfrage | 2 |

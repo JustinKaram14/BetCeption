@@ -23,9 +23,14 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 
 ---
 -->
-## 2. Flow of Events
+**2. Akteure:**  
+- **Spieler:** Löst die tägliche Belohnung durch Einloggen aus.  
+- **System:** Überprüft das Datum und gewährt die Belohnung einmal pro Tag.
+---
 
-### 2.1 Basic Flow
+## 3. Flow of Events
+
+### 3.1 Basic Flow
 1. Der Spieler klickt „Claim“.
 2. Das System liest `last_daily_reward_at` aus der Datenbank.  
 3. Das System prüft, ob der Spieler anspruchsberechtigt ist:  
@@ -41,12 +46,12 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 
 ---
 
-### Sequenzdiagramm
+### 4. Sequenzdiagramm
 <img width="1651" height="1015" alt="unnamed_d" src="https://github.com/user-attachments/assets/8ca04461-5794-4067-9075-f3918730f642" />
 
 ---
 
-### .feature File
+### 5. .feature File
 <!--
 ```
 Feature: Daily Reward abholen
@@ -60,25 +65,9 @@ Feature: Daily Reward abholen
 -->
 Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
 
----
 
-### 2.2 Alternative Flows
 
-**a) Nicht eingeloggt:**  
-→ System verweigert Zugriff und leitet zu **UC2 – Login** weiter.
-
-**b) Doppelklick / gleichzeitige Anfrage:**  
-→ Server prüft Idempotenz; Belohnung wird nur einmal vergeben.
-
-**c) Serverzeit ≠ Clientzeit:**  
-→ System prüft ausschließlich **Serverzeit (UTC)**, Countdown ist rein visuell.
-
-**d) Verbindung bricht nach Gutschrift ab:**  
-→ Beim erneuten Öffnen sieht der Spieler den aktualisierten Kontostand.
-
----
-
-## 3. Special Requirements
+## 6. Special Requirements
 - Belohnung kann **fix** (z. B. 250 Coins) oder **zufällig** (z. B. 100–500 Coins) sein.  
 - Zeitprüfung basiert auf **Serverzeit (UTC)**.  
 - Operation ist **atomar und idempotent** (keine Doppelbelohnungen).  
@@ -92,12 +81,12 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
 
 ---
 
-## 4. Preconditions
+## 7. Preconditions
 - Spieler ist **eingeloggt** (UC2).  
 
 ---
 
-## 5. Postconditions
+## 8. Postconditions
 - Bei Erfolg:  
   - Coins wurden gutgeschrieben.  
   - `last_daily_reward_at` wurde aktualisiert.  
@@ -119,7 +108,7 @@ Client erhält `new_balance`, `claimed_amount`, `eligible_at` und aktualisiert d
 
 ---
 -->
-## 6. Function Points
+## 9. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
 | Eligibility-Check | Zeitprüfung 24h / Kalendertag | 2 |

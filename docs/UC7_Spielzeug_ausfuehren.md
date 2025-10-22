@@ -23,9 +23,16 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 
 ---
 -->
-## 2. Flow of Events
+## 2. Use Case – Spielzug ausführen
+**Akteure:**  
+- **Spieler:** Führt Aktionen wie „Hit“, „Stand“ oder „Double Down“ aus.  
+- **System:** Reagiert auf Spieleraktionen, zieht Karten und aktualisiert den Spielstatus.
 
-### 2.1 Basic Flow
+---
+
+## 3. Flow of Events
+
+### 3.1 Basic Flow
 1. Spieler ist **eingeloggt** (UC2) und hat ein **aktives Spiel (UC5)**.  
 2. Spieler wählt eine **Aktion** (Hit, Stand, Double, Split).  
 3. Client sendet den Spielzug an den Server.  
@@ -44,13 +51,13 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 
 ---
 
-### Sequenzdiagramm
+### 4. Sequenzdiagramm
 
 <img width="1256" height="2338" alt="unnamed_aus" src="https://github.com/user-attachments/assets/019dd95e-0cd0-4216-a6b7-15e0a29314bf" />
 
 ---
 
-### .feature File
+### 5. .feature File
 <!--
 ```
 Feature: Spielzug ausführen
@@ -66,27 +73,9 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
 
 ---
 
-### 2.2 Alternative Flows
 
-**a) Ungültige Aktion (falscher Zustand):**  
-→ 409 Conflict { error: "action_not_allowed" }.
 
-**b) Nicht genügend Guthaben (Double/Split):**  
-→ 400 Bad Request { error: "insufficient_balance" }.
-
-**c) Verbindung bricht ab:**  
-→ Spielstatus bleibt auf Server gespeichert, kann fortgesetzt werden.
-
-**d) Bust oder Blackjack:**  
-→ Spiel endet automatisch, Status „finished“.  
-→ Gewinn/Niederlage berechnet, XP vergeben.
-
-**e) Dealer gewinnt nach Stand:**  
-→ Server wertet Ergebnis aus und zieht Karten gemäß Regeln (Dealer ≥ 17).
-
----
-
-## 3. Special Requirements
+## 6. Special Requirements
 - **Kartenverteilung:** RNG (kryptografisch sicher, deterministisch pro Session).  
 - **Game Engine** führt Blackjack-Regeln korrekt aus (Soft 17, Ace as 1/11).  
 - **Atomicität:** Jeder Spielzug als Transaktion.
@@ -98,14 +87,14 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
 
 ---
 
-## 4. Preconditions
+## 7. Preconditions
 - Spieler ist **eingeloggt** (UC2).  
 - **Aktives Spiel** (UC5) mit Status `running`.  
 - Aktion ist laut Spielregeln erlaubt.
 
 ---
 
-## 5. Postconditions
+## 8. Postconditions
 - Spielstatus wurde aktualisiert.  
 - Karten, Einsatz und Balance ggf. angepasst.  
 - Bei Ende: Gewinn/Niederlage & XP berechnet.  
@@ -146,7 +135,7 @@ Body: { "game_id": 123, "action": "hit" }
 
 ---
 -->
-## 6. Function Points
+## 9. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
 | Validierung | Status, Regeln, Guthaben | 2 |

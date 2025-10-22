@@ -10,6 +10,9 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 
+## 1.2 Mockups
+
+---
 ## 2. Akteure
 - **Primärer Akteur:** Spieler (Benutzer)  
 - **Sekundäre Akteure:**  
@@ -79,7 +82,7 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 
-## 4. Sequenzdiagramme (aktualisiert mit Aktivitätsbalken)
+## 4. Sequenzdiagramme
 
 ### Authentifizierung prüfen (Middleware)
 
@@ -156,10 +159,3 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 
-## 12. Zusammenfassung
-Der erweiterte Use Case **„Authentifizierung & Session Management“** umfasst die komplette Authentifizierungslogik inklusive **serverseitiger Token-Prüfung**.  
-Er gewährleistet:
-- Sichere Registrierung, Anmeldung und Sitzungsverwaltung  
-- Prüfung der Authentifizierung bei jeder Anfrage  
-- Schutz sensibler Endpunkte vor unautorisiertem Zugriff  
-- Grundlage für alle spielbezogenen Aktionen (z. B. Wetten, Levelsystem, Daily Reward)

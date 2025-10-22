@@ -9,7 +9,9 @@ Dieser Use Case beschreibt alle Funktionen rund um das **In-Game-Ökosystem von 
 Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, die Verwaltung und die Nutzung seiner Spielressourcen zu bieten.
 
 ---
+## 1.2 Mockups
 
+---
 ## 2. Akteure
 - **Primärer Akteur:** Spieler (eingeloggt)
 - **Sekundäre Akteure:**  
@@ -125,10 +127,3 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ---
 
-## 10. Zusammenfassung
-Dieser kombinierte Use Case vereint die zentralen Spielkomponenten **Shop**, **Inventar** und **Guthabenverwaltung**.  
-Er ermöglicht den vollständigen wirtschaftlichen Kreislauf des Spiels:  
-1. Spieler **verdient Coins** durch Gewinne oder Belohnungen.  
-2. Spieler **kauft Power-Ups** im Shop.  
-3. Spieler **verwaltert** seine Items im Inventar.  
-4. Alle Aktionen werden **automatisch synchronisiert** und **transaktionssicher** gespeichert.

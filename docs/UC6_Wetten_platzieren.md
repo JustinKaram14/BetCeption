@@ -7,6 +7,9 @@ Das System prüft **Guthaben**, **Einsatzlimits**, **Zeitfenster/Spielzustand** 
 Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel starten*, *Spielzug ausführen*), Authentifizierung (Login).
 
 ---
+## 1.2 Mockups
+
+---
 
 ## 2. Akteure
 - **Primär:** Spieler (eingeloggt)
@@ -94,7 +97,7 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 
-## 8. Function Points (konsolidiert)
+## 8. Function Points
 | Bereich | Beschreibung | Punkte |
 |---|---|---|
 | Einsatz-/Konfig-Validierung | Limits, Schrittweiten, Typ/Ziel | 3 |
@@ -107,13 +110,5 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 
-## 9. Hinweise (optional, implementierungsnah)
-- **API (Beispiele):**  
-  - `POST /api/bets/main { amount, request_id }` → 200 `{ bet_id, status:"placed", balance }`  
-  - `GET /api/side-bets/odds?type=...&target=...` → 200 `{ odds: "3:1" }`  
-  - `POST /api/side-bets/place { game_id, type, target, stake, request_id }` → 200 `{ side_bet_id, status:"open", odds, potential_payout, balance }`
-- **Datenbank:** Coins als `BIGINT`, eindeutige `request_id` für Idempotenz.  
-- **Zeitfenstersteuerung:** Serverseitig zentral (Game State Machine).  
-- **Security:** Alle Endpunkte JWT-gesichert; Ratenlimit gegen Spam.
 
 ---
