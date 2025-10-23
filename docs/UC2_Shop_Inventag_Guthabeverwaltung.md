@@ -9,7 +9,10 @@ Dieser Use Case beschreibt alle Funktionen rund um das **In-Game-Ökosystem von 
 Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, die Verwaltung und die Nutzung seiner Spielressourcen zu bieten.
 
 ---
-## 1.2 Mockups
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-pill-wireframe.png)
+![alt text](Wireframe-mockups/Mockup-Balance-wireframe.png)
+## 1.3 Mockups
 ![alt text](mockups/Pills-Mockup.png)
 ![alt text](mockups/Balance-Mockup.png)
 ---
@@ -86,11 +89,16 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 
 
-
-
+## 5. Aktivitätsdiagramm
+## 5.1 Power-Up kaufen
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm power-up.png>)
+## 5.2 Inventar anzeigen
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm inventar-anzeigen.png>)
+## 5.3 Guthaben anzeigen
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Guthaben.png>)
 ---
 
-## 5. Special Requirements
+## 6. Special Requirements
 - **Echtzeit-Synchronisation** zwischen Client und Server.  
 - **Transaktionssicherheit:** Alle Käufe atomar (ACID).  
 - **Sortierung und Filterung** im Inventar und der Transaktionsliste.  
@@ -100,20 +108,20 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ---
 
-## 6. Preconditions
+## 7. Preconditions
 - Spieler ist **eingeloggt**.  
 - Für Käufe: ausreichendes Guthaben und erforderliches Level.  
 
 ---
 
-## 7. Postconditions
+## 8. Postconditions
 - **Nach Kauf:** Power-Up im Inventar, Guthaben reduziert.  
 - **Nach Inventarabruf:** Liste der Items angezeigt.  
 - **Nach Guthabenabruf:** Kontostand & Transaktionshistorie aktualisiert.  
 
 ---
 
-## 8. Function Points
+## 9. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|--------------|--------|
 | Power-Up-Kauf | Level- & Guthabenprüfung, Kauf-Transaktion | 3 |
@@ -124,7 +132,7 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ---
 
-## 9. Abhängigkeiten
+## 10. Abhängigkeiten
 - **Authentifizierung & Session Management** (Tokenprüfung)  
 - **Spiel- & Levelsystem** (Levelanforderungen)  
 - **MySQL-Datenbank** (Inventar, Transaktionen, Guthaben)  

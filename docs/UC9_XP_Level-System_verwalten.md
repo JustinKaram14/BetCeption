@@ -6,8 +6,9 @@ Nach jedem Spiel erhält der Spieler XP abhängig von seiner Leistung, z. B. G
 Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und schaltet neue Power-Ups oder Features frei.
 
 ---
-
-## 1.2 Mockup
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/mockup-XPBar-wireframe.png)
+## 1.3 Mockup
 ![alt text](mockups/Level-Bar-Mockup.png)
 ---
 
@@ -38,44 +39,34 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
 ![alt text](<Sequenzdiagramme/Sequenzdiagramm XP-Level-System.png>)
 ---
 
+## 5. Aktivitätsdiagramm
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm XP-Level.png>)
 
+---
 
-## 5. Special Requirements
+## 6. Special Requirements
 - XP-Formel muss serverseitig definiert und überprüfbar sein.
 - Level-Grenzen und Belohnungen sollen konfigurierbar sein.
 - Alle Änderungen werden protokolliert.
 
 ---
 
-## 6. Preconditions
+## 7. Preconditions
 - Spieler hat ein Spiel abgeschlossen.
 - Spielerprofil existiert.
 
 ---
 
-## 7. Postconditions
+## 8. Postconditions
 - XP und Level werden aktualisiert.
 - Freischaltbare Power-Ups sind aktiviert.
 - Änderungen sind in der Datenbank gespeichert.
 
 ---
 
-<!--
-## 8. Save changes / Sync with server
-System synchronisiert XP und Level nach jedem Spielabschluss automatisch mit dem Server.
 
----
 
 ## 9. Function Points
-- XP-Berechnung
-- Level-Up-Validierung
-- Belohnungen freischalten
-- Spielerprofil speichern
-
-
--->
-
-## 8. Function Points
 
 | Kategorie      | Beschreibung                                           | Function Points |
 |----------------|--------------------------------------------------------|-----------------|

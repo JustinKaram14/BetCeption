@@ -6,8 +6,9 @@ Der Spieler wählt seinen Einsatz und das System initialisiert das Spiel mit Dea
 Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzieren, UC8 - Spielzug ausführen) fortgesetzt werden.
 
 ---
-
-## 1.2 Mockup
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-Spiel_Starten-wirecard.png)
+## 1.3 Mockup
 ![alt text](mockups/Spiel-Starten-Daily-Rewards-Mockup.png)
 
 ---
@@ -47,20 +48,8 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 ![alt text](<Sequenzdiagramme/Sequenzdiagramm SpielStarten.png>)
 ---
 
-### 5. .feature File
-<!--
-```
-Feature: Spiel starten (Blackjack)
-  Scenario: Spieler startet ein neues Spiel
-    Given der Spieler ist eingeloggt
-    And er hat genügend Guthaben
-    When er einen Einsatz eingibt und auf "Spiel starten" klickt
-    Then wird ein neues Spiel initialisiert
-    And die Startkarten werden ausgeteilt
-```
--->
-Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
-
+### 5. Aktivitätsdiagramm
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Spiel-starten.png>)
 ---
 
 

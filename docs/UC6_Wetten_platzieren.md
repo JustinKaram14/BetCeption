@@ -7,7 +7,10 @@ Das System prüft **Guthaben**, **Einsatzlimits**, **Zeitfenster/Spielzustand** 
 Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel starten*, *Spielzug ausführen*), Authentifizierung (Login).
 
 ---
-## 1.2 Mockups
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-Nebenwette-wirecard.jpg)
+![alt text](Wireframe-mockups/Mockup-Nebenwette2-wirecard.jpg)
+## 1.3 Mockups
 ![alt text](mockups/Bet-Bet-Mockup.png)
 ![alt text](mockups/Bet-Bet-Mockup2.png)
 ---
@@ -61,7 +64,25 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 
-## 4. Special Requirements (gemeinsam)
+## 4. Sequenzdiagramme (PlantUML, mit Aktivitätsbalken)
+
+### 4.1 Hauptwette
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Hauptwette.png>)
+
+### 4.2 Nebenwette
+![alt text](<Sequenzdiagramme/Sequenzdiagramm Nebenwette.png>)
+
+---
+
+## 5. Aktivitätsdiagramme
+## 5.1 Hauptwette
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Hauptwette.png>)
+## 5.2 Nebenwette
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm nebenwette.png>)
+
+---
+
+## 6. Special Requirements (gemeinsam)
 - **Einsatzlimits** konfigurierbar (`min_bet`, `max_bet`, `step`) je Wettart.  
 - **Atomare Transaktionen** für Buchung & Persistenz (ACID).  
 - **Idempotenz** via `Idempotency-Key` (Header oder Request-ID).  
@@ -73,7 +94,7 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 
-## 5. Preconditions
+## 7. Preconditions
 - Spieler ist **authentifiziert**.  
 - **Hauptwette**: kein laufendes Spiel mit bereits gesetzter Hauptwette.  
 - **Nebenwette**: aktives Spiel vorhanden und **Fenster offen**.  
@@ -81,24 +102,16 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 
-## 6. Postconditions
+## 8. Postconditions
 - **Hauptwette (Erfolg):** Bet `placed`, Guthaben reduziert/reserviert, UI erlaubt Spielstart.  
 - **Nebenwette (Platzierung):** Side-Bet `open`, Einsatz gebucht; nach Ereignis **won/lost** + ggf. Auszahlung.  
 - **Fehlschlag:** **Keine** Buchungen/Änderungen.
 
 ---
 
-## 7. Sequenzdiagramme (PlantUML, mit Aktivitätsbalken)
 
-### 7.1 Hauptwette
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Hauptwette.png>)
 
-### 7.2 Nebenwette
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Nebenwette.png>)
-
----
-
-## 8. Function Points
+## 9. Function Points
 | Bereich | Beschreibung | Punkte |
 |---|---|---|
 | Einsatz-/Konfig-Validierung | Limits, Schrittweiten, Typ/Ziel | 3 |
@@ -112,4 +125,4 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 ---
 
 
----
+
