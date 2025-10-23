@@ -32,9 +32,13 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 ---
 ## 4. Sequenzdiagramm
 ![alt text](<Sequenzdiagramme/Sequenzdiagramm Datenpersistieren.png>)
+
 ---
 
+## 5. Aktivitätsdiagramm
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm daten-pesistieren.png>)
 
+---
 
 ## 5. Special Requirements
 - ACID-konforme Transaktionen in MySQL.
@@ -54,20 +58,7 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 - Inkonsistenzen wurden vermieden.
 
 ---
-<!--
-## 8. Save changes / Sync with server
-Alle Änderungen werden asynchron oder sofort (je nach Operation) synchronisiert.  
-Die Daten werden serverseitig regelmäßig gesichert (Backup).
 
----
-
-## 9. Function Points
-- Daten schreiben
-- Daten aktualisieren
-- Integrität prüfen
-- Fehlerbehandlung / Rollback
-- Synchronisation
--->
 
 ## 8. Function Points
 
@@ -77,4 +68,5 @@ Die Daten werden serverseitig regelmäßig gesichert (Backup).
 | Ausgaben    | Testberichte und Fehlerprotokolle            | 2 FP            |
 | Abfragen    | Datenabgleich zwischen API und Datenbank     | 2 FP            |
 | **Gesamt**  |                                              | **6 FP**        |
+
 ---

@@ -9,8 +9,10 @@ Die **Middleware** stellt sicher, dass nur authentifizierte Benutzer auf spielbe
 Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Beim ersten Login des Tages wird automatisch der **Daily Reward** aktiviert.
 
 ---
-
-## 1.2 Mockups
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-Login-wireframe.png)
+![alt text](Wireframe-mockups/Mockup-Register-wireframe.png)
+## 1.3 Mockups
 ![alt text](mockups/Login-Mockup.png)
 ![alt text](mockups/Register-Mockup.png)
 ---
@@ -92,8 +94,17 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 ## 4.3 Logout
 ![alt text](<Sequenzdiagramme/Sequenzdiagramm Logout.png>)
 
+---
 
-## 5. Special Requirements
+## 5. Aktivitätsdiagramm
+## 5.1 Registrierung
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Regestrieren.png>)
+## 5.2 Login
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm login.png>)
+## 5.3 Logout
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm abmelden.png>)
+
+## 6. Special Requirements
 - Kommunikation ausschließlich über **HTTPS**  
 - **Passwörter gehasht** (z. B. bcrypt oder Argon2)  
 - **JWT-Token**: signiert, sicher, enthält `user_id`, Ablaufzeit (`exp`)  
@@ -104,14 +115,14 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 
-## 6. Preconditions
+## 7. Preconditions
 - Benutzer besitzt ein **gültiges Token** oder befindet sich auf der **Login-/Registrierungsseite**.  
 - Bei Login: Benutzerkonto existiert.  
 - Bei Logout oder Middlewareprüfung: Benutzer ist (oder war) eingeloggt.
 
 ---
 
-## 7. Postconditions
+## 8. Postconditions
 - **Nach Registrierung:** Konto angelegt.  
 - **Nach Login:** Benutzer authentifiziert, gültige Session/JWT aktiv.  
 - **Während Middleware-Prüfung:** Nur gültige Tokens dürfen zugreifen.  
@@ -119,7 +130,7 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 
-## 8. Daten, die gespeichert oder synchronisiert werden
+## 9. Daten, die gespeichert oder synchronisiert werden
 - Benutzername  
 - E-Mail-Adresse  
 - Passwort (gehasht)  
@@ -131,15 +142,6 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 
-## 9. Mockups
-
-### Registrierung
-<img width="538" height="511" alt="Screenshot 2025-10-20 193703" src="https://github.com/user-attachments/assets/f194f7e1-a29f-46a2-9040-9a6a36a2de37" />
-
-### Login
-<img width="753" height="606" alt="Screenshot 2025-10-20 201843" src="https://github.com/user-attachments/assets/7db6ebea-19cb-4483-9029-0dd537f0f8c5" />
-
----
 
 ## 10. Function Points
 | Komponente               | Beschreibung                              | Punkte |

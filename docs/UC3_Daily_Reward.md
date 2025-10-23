@@ -6,8 +6,9 @@ Beim Login oder beim Aufruf der Reward-Funktion prüft das System das **letzte B
 Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat, wird dem Spieler die Belohnung gutgeschrieben.
 
 ---
-
-## 1.2 Mockup
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-Daily_Rewards-wirecard.png)
+## 1.3 Mockup
 ![alt text](mockups/Daily-Rewards.png)
 
 ---
@@ -48,19 +49,10 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 ![alt text](<Sequenzdiagramme/Sequenzdiagramm Daily-Reward.png>)
 ---
 
-### 5. .feature File
-<!--
-```
-Feature: Daily Reward abholen
-  Scenario: Spieler holt Reward nach 24h ab
-    Given ein Spieler ist eingeloggt
-    And sein letzter Reward war vor mehr als 24 Stunden
-    When er auf "Belohnung abholen" klickt
-    Then werden Coins gutgeschrieben
-    And das Datum wird aktualisiert
-```
--->
-Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
+### 5. Aktivitätsdiagramm
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Daily-Reward.png>)
+---
+
 
 
 

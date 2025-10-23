@@ -6,8 +6,9 @@ Ein Power-Up kann dem Spieler strategische Vorteile bringen, wie z. B. eine zu
 Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
-
-## 1.2 Mockup
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-pill-wireframe.png)
+## 1.3 Mockup
 ![alt text](mockups/Pills-Mockup.png)
 
 ---
@@ -41,47 +42,34 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
 
+## 5. Aktivitätsdiagramm
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm power-up.png>)
 
+---
 
-## 5. Special Requirements
+## 6. Special Requirements
 - Der Effekt jedes Power-Ups muss klar definiert sein.
 - System muss prüfen, dass Effekte nicht gestapelt oder manipuliert werden können.
 - Die Anwendung muss serverseitig validiert und synchronisiert werden.
 
 ---
 
-## 6. Preconditions
+## 7. Preconditions
 - Spieler ist eingeloggt.
 - Spieler befindet sich in einem aktiven Spiel.
 - Das Power-Up ist im Inventar vorhanden.
 
 ---
 
-## 7. Postconditions
+## 8. Postconditions
 - Effekt des Power-Ups wurde angewendet.
 - Power-Up wurde aus dem Inventar entfernt.
 - Spielstatus wurde aktualisiert.
 - Änderungen wurden in der Datenbank gespeichert.
 
 ---
-<!--
-## 8. Save changes / Sync with server
-Das System synchronisiert nach der Nutzung alle Änderungen (Inventar, Spielstatus, XP) mit dem Server, um Datenintegrität sicherzustellen.
-
----
 
 ## 9. Function Points
-- Inventar öffnen
-- Power-Up auswählen
-- Nutzung validieren
-- Effekt anwenden
-- Inventar aktualisieren
-- Spielstatus speichern
-
-
-
--->   
-## 8. Function Points
 
 | Kategorie  | Beschreibung                            | Function Points |
 |-------------|------------------------------------------|-----------------|

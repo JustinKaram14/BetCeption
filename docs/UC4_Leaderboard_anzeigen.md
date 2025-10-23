@@ -6,8 +6,9 @@ Das Leaderboard zeigt die **Top-Spieler** basierend auf Kriterien wie **Gewinnsu
 Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 
 ---
-
-## 1.2 Mockup
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-Leaderboard-wirecard.jpg)
+## 1.3 Mockup
 ![alt text](mockups/Leadernoard-MockUp.png)
 
 ---
@@ -39,18 +40,8 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 ![alt text](<Sequenzdiagramme/Sequenzdiagramm Leaderboard.png>)
 
 
-### 6. .feature File
-<!--
-```
-Feature: Leaderboard anzeigen
-  Scenario: Spieler öffnet das Leaderboard
-    Given der Spieler ist eingeloggt
-    When er die Leaderboard-Seite öffnet
-    Then werden die Top-Spieler angezeigt
-    And sein eigener Rang wird hervorgehoben
-```
--->
-Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
+### 6. Aktivitätsdiagramm
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Leaderboard.png>)
 ---
 
 ## 7. Special Requirements

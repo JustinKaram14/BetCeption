@@ -5,9 +5,10 @@ Dieser Use Case beschreibt, wie ein **eingeloggter Spieler** während eines lauf
 Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, führt den Spielzug aus, aktualisiert Karten, Status und ggf. XP/Gewinne.
 
 ---
-
-## 1.2 Mockup
-
+## 1.2 Wireframe Mockups
+![alt text](Wireframe-mockups/Mockup-spielzug_ausfehrenwireframe.png)
+## 1.3 Mockup
+![alt text](mockups/Spielzug-ausfuehren.png)
 
 ---
 <!--
@@ -55,19 +56,8 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 
 ---
 
-### 5. .feature File
-<!--
-```
-Feature: Spielzug ausführen
-  Scenario: Spieler zieht eine Karte (Hit)
-    Given ein laufendes Blackjack-Spiel
-    When der Spieler auf "Hit" klickt
-    Then erhält er eine neue Karte
-    And das System prüft Bust oder Blackjack
-```
--->
-Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests ergänzt werden.
-
+### 5. Aktivitätsdiagramm
+![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Spielzug-ausführen.png>)
 
 ---
 
@@ -99,40 +89,7 @@ Nicht erforderlich für diesen Use Case, kann später für automatisierte Tests 
 - Änderungen sind persistiert.
 
 ---
-<!--
-### 5.1 Save changes / Sync with server
-**Beispiel-Datenstruktur:**
-```sql
-UPDATE games 
-SET player_cards = :cards, 
-    status = :status, 
-    dealer_cards = :dealer_cards, 
-    result = :result, 
-    updated_at = NOW() 
-WHERE id = :game_id;
-```
 
-**API-Endpunkt:**
-```
-POST /api/game/action
-Authorization: Bearer <JWT>
-Body: { "game_id": 123, "action": "hit" }
-```
-
-**Beispiel-Antwort:**
-```json
-{
-  "game_id": 123,
-  "action": "hit",
-  "player_cards": ["10♠", "7♦", "4♣"],
-  "dealer_cards": ["Q♥", "8♠"],
-  "status": "running",
-  "balance": 900
-}
-```
-
----
--->
 ## 9. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
@@ -143,22 +100,10 @@ Body: { "game_id": 123, "action": "hit" }
 | **Gesamt** |  | **7 FP** |
 
 ---
-<!--
-## 7. Technische Hinweise
-- **Engine-Methoden:**  
-  - `hit()`, `stand()`, `doubleDown()`, `split()`  
-- **Ereignisse:**  
-  - `onGameUpdated`, `onGameFinished`
-- **Logging:**  
-  - `game_actions` Tabelle mit `game_id`, `action`, `cards`, `timestamp`  
-- **API-Fehlercodes:**  
-  - `400` (ungültige Eingabe), `401` (nicht eingeloggt), `409` (ungültiger Zustand).  
-- **Client:** aktualisiert Kartenanzeige, Spielbuttons deaktivieren wenn beendet.
-
----
 
 
 
 
--->
+
+
 
