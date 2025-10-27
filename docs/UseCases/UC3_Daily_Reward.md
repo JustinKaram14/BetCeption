@@ -7,9 +7,9 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-Daily_Rewards-wirecard.png)
+![alt text](../assets/Wireframe-mockups/Mockup-Daily_Rewards-wirecard.png)
 ## 1.3 Mockup
-![alt text](mockups/Daily-Rewards.png)
+![alt text](../assets/mockups/Daily-Rewards.png)
 
 ---
 <!--
@@ -46,11 +46,11 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 ---
 
 ### 4. Sequenzdiagramm
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Daily-Reward.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Daily-Reward.png>)
 ---
 
 ### 5. Aktivitätsdiagramm
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Daily-Reward.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Daily-Reward.png>)
 ---
 
 

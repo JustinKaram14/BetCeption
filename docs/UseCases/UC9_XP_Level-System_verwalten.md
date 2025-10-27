@@ -7,9 +7,9 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/mockup-XPBar-wireframe.png)
+![alt text](../assets/Wireframe-mockups/mockup-XPBar-wireframe.png)
 ## 1.3 Mockup
-![alt text](mockups/Level-Bar-Mockup.png)
+![alt text](../assets/mockups/Level-Bar-Mockup.png)
 ---
 
 <!--
@@ -36,11 +36,11 @@ Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und scha
 
 ---
 ## 4. Sequenzdiagramm
-![alt text](<Sequenzdiagramme/Sequenzdiagramm XP-Level-System.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm XP-Level-System.png>)
 ---
 
 ## 5. Aktivitätsdiagramm
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm XP-Level.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm XP-Level.png>)
 
 ---
 

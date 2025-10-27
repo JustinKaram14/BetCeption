@@ -10,11 +10,11 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-Login-wireframe.png)
-![alt text](Wireframe-mockups/Mockup-Register-wireframe.png)
+![alt text](../assets/Wireframe-mockups/Mockup-Login-wireframe.png)
+![alt text](../assets/Wireframe-mockups/Mockup-Register-wireframe.png)
 ## 1.3 Mockups
-![alt text](mockups/Login-Mockup.png)
-![alt text](mockups/Register-Mockup.png)
+![alt text](../assets/mockups/Login-Mockup.png)
+![alt text](../assets/mockups/Register-Mockup.png)
 ---
 
 ## 2. Akteure
@@ -88,21 +88,21 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ## 4. Sequenzdiagramme
 ## 4.1 Regestrieren
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
 ## 4.2 Login
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Login.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Login.png>)
 ## 4.3 Logout
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Logout.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Logout.png>)
 
 ---
 
 ## 5. Aktivitätsdiagramm
 ## 5.1 Registrierung
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Regestrieren.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Regestrieren.png>)
 ## 5.2 Login
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm login.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm login.png>)
 ## 5.3 Logout
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm abmelden.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm abmelden.png>)
 
 ## 6. Special Requirements
 - Kommunikation ausschließlich über **HTTPS**  

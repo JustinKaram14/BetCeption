@@ -6,9 +6,9 @@ Das System pr체ft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-spielzug_ausfehrenwireframe.png)
+![alt text](../assets/Wireframe-mockups/Mockup-spielzug_ausfehrenwireframe.png)
 ## 1.3 Mockup
-![alt text](mockups/Spielzug-ausfuehren.png)
+![alt text](../assets/mockups/Spielzug-ausfuehren.png)
 
 ---
 <!--
@@ -52,12 +52,12 @@ Das System pr체ft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 ---
 
 ### 4. Sequenzdiagramm
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Spielzugausfuhren.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Spielzugausfuhren.png>)
 
 ---
 
 ### 5. Aktivit채tsdiagramm
-![alt text](<Aktivit채tsdiagramme/Aktivit채tsdiagramm Spielzug-ausf체hren.png>)
+![alt text](<../assets/Aktivit채tsdiagramme/Aktivit채tsdiagramm Spielzug-ausf체hren.png>)
 
 ---
 

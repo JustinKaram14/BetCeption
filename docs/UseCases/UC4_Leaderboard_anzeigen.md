@@ -7,9 +7,9 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-Leaderboard-wirecard.jpg)
+![alt text](../assets/Wireframe-mockups/Mockup-Leaderboard-wirecard.jpg)
 ## 1.3 Mockup
-![alt text](mockups/Leadernoard-MockUp.png)
+![alt text](../assets/mockups/Leadernoard-MockUp.png)
 
 ---
 **2. Akteure:**  
@@ -37,11 +37,11 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 ---
 
 ### 5. Sequenzdiagramm
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Leaderboard.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Leaderboard.png>)
 
 
 ### 6. Aktivitätsdiagramm
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Leaderboard.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Leaderboard.png>)
 ---
 
 ## 7. Special Requirements

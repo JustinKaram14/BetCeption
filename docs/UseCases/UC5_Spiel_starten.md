@@ -7,9 +7,9 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-Spiel_Starten-wirecard.png)
+![alt text](../assets/Wireframe-mockups/Mockup-Spiel_Starten-wirecard.png)
 ## 1.3 Mockup
-![alt text](mockups/Spiel-Starten-Daily-Rewards-Mockup.png)
+![alt text](../assets/mockups/Spiel-Starten-Daily-Rewards-Mockup.png)
 
 ---
 <!--
@@ -45,11 +45,11 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 ---
 
 ### 4. Sequenz Diagram
-![alt text](<Sequenzdiagramme/Sequenzdiagramm SpielStarten.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm SpielStarten.png>)
 ---
 
 ### 5. Aktivitätsdiagramm
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Spiel-starten.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Spiel-starten.png>)
 ---
 
 

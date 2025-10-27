@@ -8,11 +8,11 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-Nebenwette-wirecard.jpg)
-![alt text](Wireframe-mockups/Mockup-Nebenwette2-wirecard.jpg)
+![alt text](../assets/Wireframe-mockups/Mockup-Nebenwette-wirecard.jpg)
+![alt text](../assets/Wireframe-mockups/Mockup-Nebenwette2-wirecard.jpg)
 ## 1.3 Mockups
-![alt text](mockups/Bet-Bet-Mockup.png)
-![alt text](mockups/Bet-Bet-Mockup2.png)
+![alt text](../assets/mockups/Bet-Bet-Mockup.png)
+![alt text](../assets/mockups/Bet-Bet-Mockup2.png)
 ---
 
 ## 2. Akteure
@@ -67,18 +67,18 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 ## 4. Sequenzdiagramme (PlantUML, mit Aktivitätsbalken)
 
 ### 4.1 Hauptwette
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Hauptwette.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Hauptwette.png>)
 
 ### 4.2 Nebenwette
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Nebenwette.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Nebenwette.png>)
 
 ---
 
 ## 5. Aktivitätsdiagramme
 ## 5.1 Hauptwette
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Hauptwette.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Hauptwette.png>)
 ## 5.2 Nebenwette
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm nebenwette.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm nebenwette.png>)
 
 ---
 
