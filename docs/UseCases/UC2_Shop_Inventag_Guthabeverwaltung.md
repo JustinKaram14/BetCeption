@@ -10,11 +10,11 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-pill-wireframe.png)
-![alt text](Wireframe-mockups/Mockup-Balance-wireframe.png)
+![alt text](../assets/Wireframe-mockups/Mockup-pill-wireframe.png)
+![alt text](../assets/Wireframe-mockups/Mockup-Balance-wireframe.png)
 ## 1.3 Mockups
-![alt text](mockups/Pills-Mockup.png)
-![alt text](mockups/Balance-Mockup.png)
+![alt text](../assets/mockups/Pills-Mockup.png)
+![alt text](../assets/mockups/Balance-Mockup.png)
 ---
 ## 2. Akteure
 - **Primärer Akteur:** Spieler (eingeloggt)
@@ -79,23 +79,23 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ## 4. Sequenzdiagramme
 ## 4.1 Power-Up kaufen
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Powerups kaufen.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Powerups kaufen.png>)
 
 ## 4.2 Inventar anzeigen
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Inventar anzeigen.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Inventar anzeigen.png>)
 
 ## 4.3 Guthaben anzeigen
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Guthaben anzeigen-verwalten.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Guthaben anzeigen-verwalten.png>)
 
 
 
 ## 5. Aktivitätsdiagramm
 ## 5.1 Power-Up kaufen
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm power-up.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm power-up.png>)
 ## 5.2 Inventar anzeigen
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm inventar-anzeigen.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm inventar-anzeigen.png>)
 ## 5.3 Guthaben anzeigen
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm Guthaben.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Guthaben.png>)
 ---
 
 ## 6. Special Requirements

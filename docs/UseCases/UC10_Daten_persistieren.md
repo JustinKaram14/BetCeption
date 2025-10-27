@@ -31,12 +31,12 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 
 ---
 ## 4. Sequenzdiagramm
-![alt text](<Sequenzdiagramme/Sequenzdiagramm Datenpersistieren.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Datenpersistieren.png>)
 
 ---
 
 ## 5. Aktivitätsdiagramm
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm daten-pesistieren.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm daten-pesistieren.png>)
 
 ---
 

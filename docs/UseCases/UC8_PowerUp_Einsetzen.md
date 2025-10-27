@@ -7,9 +7,9 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
 ## 1.2 Wireframe Mockups
-![alt text](Wireframe-mockups/Mockup-pill-wireframe.png)
+![alt text](../assets/Wireframe-mockups/Mockup-pill-wireframe.png)
 ## 1.3 Mockup
-![alt text](mockups/Pills-Mockup.png)
+![alt text](../assets/mockups/Pills-Mockup.png)
 
 ---
 <!--
@@ -38,12 +38,12 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
 ## 4. Sequenzdiagramm
-![alt text](<Sequenzdiagramme/Sequenzdiagramm PowerUpEinsetzen.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm PowerUpEinsetzen.png>)
 
 ---
 
 ## 5. Aktivitätsdiagramm
-![alt text](<Aktivitätsdiagramme/Aktivitätsdiagramm power-up.png>)
+![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm power-up.png>)
 
 ---
 

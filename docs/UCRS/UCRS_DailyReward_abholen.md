@@ -68,8 +68,7 @@ Datenbank (MySQL): speichert Zeitstempel last_daily_reward_at, Guthaben, Transak
 8. Frontend zeigt Erfolgsnachricht (+250 Coins erhalten!)  
 
 ### 2.4 Sequence Diagram
-Siehe Sequenzdiagramm „Daily Reward abholen“ (Anhang A).
-
+![alt text](<../Sequenzdiagramme/Sequenzdiagramm Daily-Reward.png>)
 ---
 
 ## 3. Derived Requirements

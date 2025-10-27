@@ -52,10 +52,9 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 8. Bei Fehlern (z. B. E-Mail bereits vergeben) wird eine Fehlermeldung angezeigt.  
 
 **Sequenzdiagramm: Registrierung**  
-![Sequenzdiagramm Registrierung](Sequenzdiagramm%20Regestrieren.png)
 
-**Aktivitätsdiagramm: Registrierung**  
-![Aktivitätsdiagramm Registrierung](Aktivitätsdiagramm%20Regestrieren.png)
+![alt text](<../Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
+
 
 ---
 
@@ -70,11 +69,7 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 8. Beim ersten Login des Tages wird der Daily Reward aktiviert.  
 
 **Sequenzdiagramm: Login**  
-![Sequenzdiagramm Login](Sequenzdiagramm%20Login.png)
-
-**Aktivitätsdiagramm: Login**  
-![Aktivitätsdiagramm Login](Aktivitätsdiagramm%20login.png)
-
+![alt text](<../Sequenzdiagramme/Sequenzdiagramm Login.png>)
 ---
 
 ### 2.3 Authentifizierung (Middleware)
@@ -94,11 +89,7 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 5. Benutzer wird zur Login-Seite weitergeleitet.  
 
 **Sequenzdiagramm: Logout**  
-![Sequenzdiagramm Logout](Sequenzdiagramm%20Abmelden.png)
-
-**Aktivitätsdiagramm: Logout**  
-![Aktivitätsdiagramm Logout](Aktivitätsdiagramm%20abmelden.png)
-
+![alt text](<../Sequenzdiagramme/Sequenzdiagramm Logout.png>)
 ---
 
 ## 3. Derived Requirements
