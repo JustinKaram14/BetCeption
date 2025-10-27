@@ -53,7 +53,7 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 
 **Sequenzdiagramm: Registrierung**  
 
-![alt text](<..assets/Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
 
 ---
 
@@ -68,7 +68,7 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 8. Beim ersten Login des Tages wird der Daily Reward aktiviert.  
 
 **Sequenzdiagramm: Login**  
-![alt text](<..assets/Sequenzdiagramme/Sequenzdiagramm Login.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Login.png>)
 ---
 
 ### 2.3 Authentifizierung (Middleware)
@@ -88,7 +88,7 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 5. Benutzer wird zur Login-Seite weitergeleitet.  
 
 **Sequenzdiagramm: Logout**  
-![alt text](<..assets/Sequenzdiagramme/Sequenzdiagramm Logout.png>)
+![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Logout.png>)
 ---
 
 ## 3. Derived Requirements
