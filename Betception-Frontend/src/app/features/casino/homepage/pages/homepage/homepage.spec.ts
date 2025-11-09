@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 
 import { HomepageComponent } from './homepage';
 
-// Child components, damit wir sie im Test typisieren können:
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
@@ -16,7 +15,6 @@ describe('HomepageComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      // Bei Standalone Components reicht es, die Page zu importieren.
       imports: [HomepageComponent]
     }).compileComponents();
 
@@ -30,23 +28,18 @@ describe('HomepageComponent', () => {
   });
 
   it('renders hero + cards', () => {
-    // Hero vorhanden?
     const hero = fixture.debugElement.query(By.directive(HeroComponent));
     expect(hero).withContext('Hero should exist').toBeTruthy();
 
-    // Mindestens eine Neon-Card-Hülle?
     const cards = fixture.debugElement.queryAll(By.directive(NeonCardComponent));
     expect(cards.length).withContext('Neon cards should render').toBeGreaterThan(0);
 
-    // Leaderboard vorhanden?
     const lb = fixture.debugElement.query(By.directive(LeaderboardComponent));
     expect(lb).withContext('Leaderboard should exist').toBeTruthy();
 
-    // Auth-Panel vorhanden?
     const auth = fixture.debugElement.query(By.directive(AuthPanelComponent));
     expect(auth).withContext('Auth panel should exist').toBeTruthy();
 
-    // CTA-Panel vorhanden?
     const cta = fixture.debugElement.query(By.directive(CtaPanelComponent));
     expect(cta).withContext('CTA panel should exist').toBeTruthy();
   });
