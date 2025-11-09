@@ -1,0 +1,22 @@
+<div class="leaderboard-container">
+  <h2>Top Players</h2>
+
+  <table class="leaderboard-table">
+    <thead>
+    <tr>
+      <th>Rank</th>
+      <th>Player</th>
+      <th>Best Win</th>
+      <th>Depth</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let e of entries">
+      <td class="rank-cell">{{ e.rank }}</td>
+      <td class="name-cell">{{ e.player }}</td>
+      <td class="win-cell">${{ e.bestWin | number:'1.0-0' }}</td>
+      <td class="dimension-cell">{{ e.depth }}</td>
+    </tr>
+    </tbody>
+  </table>
+</div>

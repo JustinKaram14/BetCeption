@@ -1,0 +1,27 @@
+<div class="home-container">
+  <app-hero></app-hero>
+
+  <div class="main-content">
+    <!-- LEFT: Leaderboard -->
+    <app-neon-card>
+      <app-leaderboard [entries]="entries"></app-leaderboard>
+    </app-neon-card>
+
+    <!-- RIGHT: Auth + CTAs -->
+    <div class="right-column">
+      <app-neon-card>
+        <app-auth-panel
+          (login)="onLogin($event)"
+          (register)="onRegister($event)">
+        </app-auth-panel>
+      </app-neon-card>
+
+      <app-neon-card>
+        <app-cta-panel
+          (enter)="onEnter()"
+          (rewards)="onRewards()">
+        </app-cta-panel>
+      </app-neon-card>
+    </div>
+  </div>
+</div>
