@@ -1,0 +1,22 @@
+.play-panel{
+  padding:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px
+}
+.play-panel .play-btn{
+  padding:20px 30px;font-size:1.5rem;font-family:var(--font-display);
+  background:rgba(0,0,0,0.8);
+  border-color:var(--accent-glow);color:var(--accent-glow);
+  box-shadow:0 0 8px var(--accent-glow);animation:play-pulse 2s infinite
+}
+.play-panel .play-btn:hover{
+  background:var(--accent-glow);border-color:var(--accent-glow);
+  box-shadow:0 0 20px var(--accent-glow);transform:translateY(-5px) scale(1.05);color:#fff
+}
+.rewards-btn{
+  padding:12px 25px;font-size:1.2rem;
+  background:rgba(0,0,0,0.8);
+  border-color:var(--push-color);color:var(--push-color);
+  text-shadow:0 0 8px var(--push-color);animation:rewards-glow 3s infinite;
+  max-width:300px;width:100%
+}
+@keyframes play-pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes rewards-glow{0%,100%{box-shadow:0 0 5px var(--push-color)}50%{box-shadow:0 0 15px var(--push-color),0 0 25px var(--push-color)}}

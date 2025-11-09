@@ -1,0 +1,14 @@
+<div class="auth-container">
+  <div class="auth-toggle">
+    <button [class.active]="tab==='login'" (click)="tab='login'">Login</button>
+    <button [class.active]="tab==='register'" (click)="tab='register'">Register</button>
+  </div>
+
+  <form class="auth-form" (ngSubmit)="submit()">
+    <input type="text" placeholder="Username" [(ngModel)]="username" name="u">
+    <input type="password" placeholder="Password" [(ngModel)]="password" name="p">
+    <button class="btn auth-btn" type="submit">
+      {{ tab==='login' ? 'LOGIN' : 'CREATE ACCOUNT' }}
+    </button>
+  </form>
+</div>

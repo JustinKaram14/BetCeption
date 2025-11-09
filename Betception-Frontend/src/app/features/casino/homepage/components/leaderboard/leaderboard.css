@@ -1,0 +1,24 @@
+.leaderboard-container{max-width:600px}
+.leaderboard-container h2{
+  font-family:var(--font-display);
+  font-size:2rem;
+  color:var(--secondary-glow);
+  text-shadow:0 0 8px var(--secondary-glow);
+  margin-bottom:20px;
+  text-align:center;
+}
+.leaderboard-table{width:100%;border-collapse:collapse;text-align:left}
+.leaderboard-table th,.leaderboard-table td{
+  padding:12px 15px;
+  border-bottom:1px solid rgba(0,255,255,0.1);
+}
+.leaderboard-table th{
+  font-size:1rem;text-transform:uppercase;color:var(--secondary-glow);opacity:.8
+}
+.leaderboard-table tbody tr{transition:background-color .3s ease}
+.leaderboard-table tbody tr:hover{background-color:rgba(0,255,255,.05)}
+.leaderboard-table tbody tr:last-child td{border-bottom:none}
+.rank-cell{font-weight:bold;font-family:var(--font-display);color:var(--accent-glow);font-size:1.2rem}
+.name-cell{font-size:1.1rem}
+.win-cell{color:var(--secondary-glow)}
+.dimension-cell{text-align:right;color:#aaa}

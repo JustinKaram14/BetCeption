@@ -1,1 +1,30 @@
-/* You can add global styles to this file, and also import other style files */
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Russo+One&display=swap');
+
+:root{
+  --bg-color:#0a0a0f;
+  --primary-glow:#6a0dad;      /* Purple */
+  --secondary-glow:#00ffff;    /* Cyan */
+  --accent-glow:#ff00ff;       /* Magenta */
+  --red-suit:#ff3b3b;
+  --black-suit:#00ffff;
+  --win-color:#4CAF50;
+  --loss-color:#F44336;
+  --push-color:#FFC107;
+  --font-main:'Orbitron',sans-serif;
+  --font-display:'Russo One',sans-serif;
+}
+
+/* Reset / Base */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-main);
+  color:#fff;
+  background:var(--bg-color);
+  background-image: radial-gradient(circle at 50% 50%, rgba(56, 17, 98, 0.40), var(--bg-color) 70%);
+  overflow:hidden; /* wie im Mockup */
+  user-select:none;
+}
+a{text-decoration:none}
+button{font-family:var(--font-main)}
