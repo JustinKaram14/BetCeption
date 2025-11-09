@@ -1,0 +1,21 @@
+.auth-container{width:100%}
+.auth-toggle{display:flex;border-bottom:1px solid rgba(0,255,255,.2);margin-bottom:20px}
+.auth-toggle button{
+  flex:1;padding:15px;background:none;border:none;color:#fff;
+  font-family:var(--font-main);font-size:1.2rem;cursor:pointer;opacity:.5;
+  transition:all .3s ease;border-bottom:3px solid transparent
+}
+.auth-toggle button.active{opacity:1;color:var(--secondary-glow);border-bottom-color:var(--secondary-glow)}
+.auth-form{display:flex;flex-direction:column;gap:15px}
+.auth-form input{
+  padding:12px;background:rgba(0,0,0,.3);border:1px solid rgba(0,255,255,.3);
+  border-radius:5px;color:#fff;font-size:1rem;transition:all .3s ease
+}
+.auth-form input:focus{outline:none;border-color:var(--secondary-glow);box-shadow:0 0 10px var(--secondary-glow)}
+.btn{
+  padding:12px 25px;font-size:1rem;font-weight:bold;color:var(--secondary-glow);
+  background:transparent;border:2px solid var(--secondary-glow);border-radius:8px;cursor:pointer;
+  text-transform:uppercase;transition:all .3s ease;
+  box-shadow:0 0 5px rgba(0,255,255,.5), inset 0 0 5px rgba(0,255,255,.3)
+}
+.btn:hover{background:var(--secondary-glow);color:var(--bg-color);box-shadow:0 0 15px var(--secondary-glow), inset 0 0 10px var(--secondary-glow);transform:translateY(-2px)}

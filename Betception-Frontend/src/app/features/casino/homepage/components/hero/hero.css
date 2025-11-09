@@ -1,0 +1,31 @@
+.home-hero{
+  text-align:center;
+  margin-top:10px;
+}
+.title{
+  font-family:var(--font-display);
+  font-size:4rem;
+  color:var(--secondary-glow);
+  letter-spacing:4px;
+  text-shadow:0 0 5px var(--secondary-glow),
+  0 0 15px var(--secondary-glow),
+  0 0 30px var(--primary-glow);
+}
+.subtitle{
+  font-size:1.2rem;
+  margin-top:10px;
+  color:var(--accent-glow);
+  text-shadow:0 0 8px var(--accent-glow);
+  animation:flicker 4s infinite alternate;
+}
+@keyframes flicker{
+  0%,18%,22%,25%,53%,57%,100%{
+    text-shadow:
+      0 0 4px var(--accent-glow),
+      0 0 11px var(--accent-glow),
+      0 0 19px var(--accent-glow),
+      0 0 40px var(--primary-glow),
+      0 0 80px var(--primary-glow);
+  }
+  20%,24%,55%{ text-shadow:none; }
+}
