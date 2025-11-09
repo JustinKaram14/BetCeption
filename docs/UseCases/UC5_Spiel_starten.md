@@ -1,7 +1,7 @@
-# Use Case – Spiel starten (Blackjack)
+# Use Case – Spiel starten (Homepage)
 
 ## 1.1 Brief Description
-Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, ein neues **Blackjack-Spiel** in **BetCeption** zu starten.  
+Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, ein neues **Homepage-Spiel** in **BetCeption** zu starten.  
 Der Spieler wählt seinen Einsatz und das System initialisiert das Spiel mit Dealer, Karten und Spielstatus.  
 Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzieren, UC8 - Spielzug ausführen) fortgesetzt werden.
 
@@ -23,7 +23,7 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 ---
 -->
 **2. Akteure:**  
-- **Spieler:** Startet ein neues Blackjack-Spiel.  
+- **Spieler:** Startet ein neues Homepage-Spiel.  
 - **System:** Initialisiert das Spiel, verteilt Karten und verwaltet die Wettsituation.
 ---
 
@@ -31,7 +31,7 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 
 ### 3.1 Basic Flow
 1. Spieler ist **eingeloggt** (UC2).  
-2. Spieler navigiert zur **Blackjack-Spielseite**.  
+2. Spieler navigiert zur **Homepage-Spielseite**.  
 3. Das System zeigt das aktuelle Guthaben an.  
 4. Spieler gibt seinen **Einsatzbetrag** ein.  
 5. System prüft, ob genügend Guthaben vorhanden ist.  

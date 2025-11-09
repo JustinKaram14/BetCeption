@@ -4,7 +4,7 @@
 Dieser Use Case fasst die Platzierung von **Hauptwetten** (Einsatz vor Spielstart) und **Nebenwetten** (Side Bets zu Kartenereignissen) in **BetCeption** zusammen.  
 Das System prüft **Guthaben**, **Einsatzlimits**, **Zeitfenster/Spielzustand** und verarbeitet die Buchungen **atomar**. Nebenwetten können – sofern erlaubt – **vor dem Deal** oder **in definierten In-Game-Fenstern** abgegeben und beim Eintreten des Ereignisses **automatisch ausgewertet** werden.
 
-Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel starten*, *Spielzug ausführen*), Authentifizierung (Login).
+Abhängigkeiten: Start und Fortschritt eines Homepage-Spiels (z. B. *Spiel starten*, *Spielzug ausführen*), Authentifizierung (Login).
 
 ---
 ## 1.2 Wireframe Mockups
@@ -24,7 +24,7 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 ## 3. Flow of Events
 
 ### 3.1 Hauptwette (Main Bet) – vor Spielstart
-1. Spieler ist **eingeloggt** und befindet sich in Lobby oder Blackjack-Ansicht.  
+1. Spieler ist **eingeloggt** und befindet sich in Lobby oder Homepage-Ansicht.  
 2. Spieler wählt **Einsatz** (Chip/Amount).  
 3. Client sendet **„Hauptwette platzieren“** an Server.  
 4. Server validiert: **Einsatzlimits**, **Guthaben**, **kein aktives Spiel mit gesetztem Einsatz**.  

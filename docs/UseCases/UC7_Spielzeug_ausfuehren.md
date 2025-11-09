@@ -1,7 +1,7 @@
 # Use Case – Spielzug ausführen (Hit, Stand, Double, Split)
 
 ## 1.1 Brief Description
-Dieser Use Case beschreibt, wie ein **eingeloggter Spieler** während eines laufenden Blackjack-Spiels (UC5) einen **Spielzug** ausführt – z. B. **Hit (Karte ziehen)**, **Stand (bleiben)**, **Double (Einsatz verdoppeln + 1 Karte)** oder **Split (Hand teilen)**.  
+Dieser Use Case beschreibt, wie ein **eingeloggter Spieler** während eines laufenden Homepage-Spiels (UC5) einen **Spielzug** ausführt – z. B. **Hit (Karte ziehen)**, **Stand (bleiben)**, **Double (Einsatz verdoppeln + 1 Karte)** oder **Split (Hand teilen)**.  
 Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, führt den Spielzug aus, aktualisiert Karten, Status und ggf. XP/Gewinne.
 
 ---
@@ -65,7 +65,7 @@ Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, f�
 
 ## 6. Special Requirements
 - **Kartenverteilung:** RNG (kryptografisch sicher, deterministisch pro Session).  
-- **Game Engine** führt Blackjack-Regeln korrekt aus (Soft 17, Ace as 1/11).  
+- **Game Engine** führt Homepage-Regeln korrekt aus (Soft 17, Ace as 1/11).  
 - **Atomicität:** Jeder Spielzug als Transaktion.
 - **XP-/Level-System:** Nach Abschluss XP hinzufügen (UC11).  
 - **Protokollierung:** Jeder Zug wird geloggt (`action`, `card`, `timestamp`).  
