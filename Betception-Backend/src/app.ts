@@ -7,7 +7,13 @@ import { corsMiddleware } from './config/cors.js';
 import { authRouter } from './modules/auth/auth.router.js';
 import { userRouter } from './modules/user/user.router.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { setupSwagger } from './docs/swagger.js';
+import { walletRouter } from './modules/wallet/wallet.router.js';
+import { shopRouter } from './modules/shop/shop.router.js';
+import { inventoryRouter } from './modules/inventory/inventory.router.js';
+import { rewardsRouter } from './modules/rewards/rewards.router.js';
+import { leaderboardRouter } from './modules/leaderboard/leaderboard.router.js';
 
 export const app = express();
 
@@ -22,7 +28,13 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/auth', authRouter);
 app.use('/users', userRouter);
-
-app.use(errorHandler);
+app.use('/wallet', walletRouter);
+app.use('/shop', shopRouter);
+app.use('/inventory', inventoryRouter);
+app.use('/rewards', rewardsRouter);
+app.use('/leaderboard', leaderboardRouter);
 
 setupSwagger(app);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
