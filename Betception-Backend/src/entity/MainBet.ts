@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { Round } from './Round.js';
 import { Hand } from './Hand.js';
@@ -18,15 +19,15 @@ export class MainBet {
 
   @ManyToOne(() => Round, (round) => round.mainBets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'round_id' })
-  round!: Round;
+  round!: Relation<Round>;
 
   @OneToOne(() => Hand, (hand) => hand.mainBet, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hand_id' })
-  hand!: Hand;
+  hand!: Relation<Hand>;
 
   @ManyToOne(() => User, (user) => user.mainBets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @Column({
     type: 'decimal',

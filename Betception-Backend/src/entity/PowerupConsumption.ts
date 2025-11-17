@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { User } from './User.js';
 import { PowerupType } from './PowerupType.js';
@@ -18,20 +19,20 @@ export class PowerupConsumption {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @ManyToOne(() => PowerupType, (type) => type.powerupConsumptions, {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'type_id' })
-  type!: PowerupType;
+  type!: Relation<PowerupType>;
 
   @ManyToOne(() => Round, (round) => round.powerupConsumptions, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'round_id' })
-  round: Round | null = null;
+  round: Relation<Round> | null = null;
 
   @Column({
     name: 'consumed_at',

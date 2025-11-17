@@ -6,6 +6,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { HandOwnerType, HandStatus } from './enums.js';
 import { Round } from './Round.js';
@@ -20,7 +21,7 @@ export class Hand {
 
   @ManyToOne(() => Round, (round) => round.hands, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'round_id' })
-  round!: Round;
+  round!: Relation<Round>;
 
   @Column({
     name: 'owner_type',
@@ -34,17 +35,17 @@ export class Hand {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'user_id' })
-  user: User | null = null;
+  user: Relation<User> | null = null;
 
   @ManyToOne(() => Hand, (hand) => hand.children, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'parent_hand_id' })
-  parent: Hand | null = null;
+  parent: Relation<Hand> | null = null;
 
   @OneToMany(() => Hand, (hand) => hand.parent)
-  children?: Hand[];
+  children?: Relation<Hand[]>;
 
   @Column({
     type: 'enum',
@@ -64,8 +65,8 @@ export class Hand {
   createdAt!: Date;
 
   @OneToMany(() => Card, (card) => card.hand)
-  cards?: Card[];
+  cards?: Relation<Card[]>;
 
   @OneToOne(() => MainBet, (bet) => bet.hand)
-  mainBet?: MainBet;
+  mainBet?: Relation<MainBet>;
 }

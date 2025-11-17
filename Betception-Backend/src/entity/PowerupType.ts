@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Relation } from 'typeorm';
 import { UserPowerup } from './UserPowerup.js';
 import { PowerupConsumption } from './PowerupConsumption.js';
 
@@ -30,8 +30,8 @@ export class PowerupType {
   effectJson: Record<string, unknown> | null = null;
 
   @OneToMany(() => UserPowerup, (up) => up.type)
-  userPowerups?: UserPowerup[];
+  userPowerups?: Relation<UserPowerup[]>;
 
   @OneToMany(() => PowerupConsumption, (consumption) => consumption.type)
-  powerupConsumptions?: PowerupConsumption[];
+  powerupConsumptions?: Relation<PowerupConsumption[]>;
 }
