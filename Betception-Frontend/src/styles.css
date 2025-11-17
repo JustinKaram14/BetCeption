@@ -3,42 +3,42 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('fonts/Orbitron-400.ttf') format('truetype');
+  src: url('assets/fonts/Orbitron-400.ttf') format('truetype');
 }
 @font-face {
   font-family: 'Orbitron';
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('fonts/Orbitron-600.ttf') format('truetype');
+  src: url('assets/fonts/Orbitron-600.ttf') format('truetype');
 }
 @font-face {
   font-family: 'Orbitron';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('fonts/Orbitron-700.ttf') format('truetype');
+  src: url('assets/fonts/Orbitron-700.ttf') format('truetype');
 }
 @font-face {
   font-family: 'Orbitron';
   font-style: normal;
   font-weight: 800;
   font-display: swap;
-  src: url('fonts/Orbitron-800.ttf') format('truetype');
+  src: url('assets/fonts/Orbitron-800.ttf') format('truetype');
 }
 @font-face {
   font-family: 'Orbitron';
   font-style: normal;
   font-weight: 900;
   font-display: swap;
-  src: url('fonts/Orbitron-900.ttf') format('truetype');
+  src: url('assets/fonts/Orbitron-900.ttf') format('truetype');
 }
 @font-face {
   font-family: 'Russo One';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('fonts/RussoOne-400.ttf') format('truetype');
+  src: url('assets/fonts/RussoOne-400.ttf') format('truetype');
 }
 
 :root{
