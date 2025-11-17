@@ -35,6 +35,10 @@ jobs:
       - name: Build Angular app for GitHub Pages
         run: npm run build:gh
 
+      - name: Create SPA fallback
+        run: |
+          cp dist/Betception-Frontend/browser/index.html dist/Betception-Frontend/browser/404.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
