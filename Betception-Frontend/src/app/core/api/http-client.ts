@@ -5,6 +5,7 @@ import {
   HttpParams,
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 type Primitive = string | number | boolean;
@@ -13,11 +14,13 @@ type ParamValue = Primitive | ReadonlyArray<Primitive> | null | undefined;
 
 export type HttpClientOptions = {
   params?: HttpParams | Record<string, ParamValue>;
-  headers?: HttpHeaders | Record<string, string | string[] | undefined>;
+  headers?: HttpHeaders | Record<string, string | string[]>;
   context?: HttpContext;
   withCredentials?: boolean;
   body?: unknown;
   responseType?: 'json';
+  observe?: 'body';
+  reportProgress?: boolean;
 };
 
 @Injectable({
@@ -52,11 +55,13 @@ export class HttpClient {
     method: string,
     path: string,
     options: HttpClientOptions = {},
-  ) {
+  ): Observable<T> {
     const url = this.resolveUrl(path);
     const { params, headers, body, withCredentials, ...rest } = options;
     const requestOptions: HttpClientOptions = {
       ...rest,
+      observe: 'body',
+      responseType: 'json',
       withCredentials:
         typeof withCredentials === 'boolean'
           ? withCredentials
@@ -74,12 +79,10 @@ export class HttpClient {
 
     if (headers) {
       requestOptions.headers =
-        headers instanceof HttpHeaders
-          ? headers
-          : this.createHeaders(headers as Record<string, string | string[]>);
+        headers instanceof HttpHeaders ? headers : this.createHeaders(headers);
     }
 
-    return this.http.request<T>(method, url, requestOptions);
+    return this.http.request(method, url, requestOptions as any) as Observable<T>;
   }
 
   private resolveUrl(path: string) {
@@ -107,19 +110,13 @@ export class HttpClient {
     return httpParams;
   }
 
-  private createHeaders(headers: Record<string, string | string[] | undefined>) {
+  private createHeaders(headers: Record<string, string | string[]>) {
     let httpHeaders = new HttpHeaders();
     for (const [key, value] of Object.entries(headers)) {
-      if (typeof value === 'undefined' || value === null) {
-        continue;
-      }
-      if (Array.isArray(value)) {
-        value.forEach((entry, idx) => {
-          httpHeaders = idx === 0 ? httpHeaders.set(key, entry) : httpHeaders.append(key, entry);
-        });
-        continue;
-      }
-      httpHeaders = httpHeaders.set(key, value);
+      const list = Array.isArray(value) ? value : [value];
+      list.forEach((entry, idx) => {
+        httpHeaders = idx === 0 ? httpHeaders.set(key, entry) : httpHeaders.append(key, entry);
+      });
     }
     return httpHeaders;
   }

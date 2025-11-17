@@ -1,22 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-
+import { of } from 'rxjs';
 import { HomepageComponent } from './homepage';
-
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { HeroComponent } from '../../components/hero/hero';
 import { NeonCardComponent } from '../../components/neon-card/neon-card';
+import { AuthFacade } from '../../../../auth/services/auth-facade';
 
 describe('HomepageComponent', () => {
   let fixture: ComponentFixture<HomepageComponent>;
   let component: HomepageComponent;
+  const authFacadeMock = {
+    login: jasmine.createSpy('login').and.returnValue(of(null)),
+    register: jasmine.createSpy('register').and.returnValue(of({ message: 'ok' })),
+  } as Partial<AuthFacade>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HomepageComponent]
+      imports: [HomepageComponent],
+      providers: [{ provide: AuthFacade, useValue: authFacadeMock }],
     }).compileComponents();
+
+    authFacadeMock.login!.calls.reset();
+    authFacadeMock.register!.calls.reset();
 
     fixture = TestBed.createComponent(HomepageComponent);
     component = fixture.componentInstance;
@@ -57,13 +65,14 @@ describe('HomepageComponent', () => {
     const loginSpy = spyOn(component, 'onLogin');
     const registerSpy = spyOn(component, 'onRegister');
 
-    const payload = { username: 'neo', password: 'matrix' };
+    const loginPayload = { email: 'neo@matrix.io', password: 'matrix' };
+    const registerPayload = { email: 'neo@matrix.io', username: 'neo', password: 'matrix' };
 
-    auth.login.emit(payload);
-    expect(loginSpy).toHaveBeenCalledWith(payload);
+    auth.login.emit(loginPayload);
+    expect(loginSpy).toHaveBeenCalledWith(loginPayload);
 
-    auth.register.emit(payload);
-    expect(registerSpy).toHaveBeenCalledWith(payload);
+    auth.register.emit(registerPayload);
+    expect(registerSpy).toHaveBeenCalledWith(registerPayload);
   });
 
   it('handles CTA events', () => {
