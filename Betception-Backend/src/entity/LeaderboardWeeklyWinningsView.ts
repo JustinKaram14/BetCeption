@@ -1,10 +1,10 @@
-import { ViewColumn, ViewEntity } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@ViewEntity({ name: 'leaderboard_weekly_winnings' })
+@Entity({ name: 'leaderboard_weekly_winnings' })
 export class LeaderboardWeeklyWinningsView {
-  @ViewColumn({ name: 'user_id' })
+  @PrimaryColumn({ name: 'user_id', type: 'bigint' })
   userId!: string;
 
-  @ViewColumn({ name: 'net_winnings_7d' })
+  @Column({ name: 'net_winnings_7d', type: 'decimal', precision: 18, scale: 2 })
   netWinnings7d!: string;
 }

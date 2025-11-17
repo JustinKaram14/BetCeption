@@ -1,16 +1,16 @@
-import { ViewColumn, ViewEntity } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@ViewEntity({ name: 'leaderboard_level' })
+@Entity({ name: 'leaderboard_level' })
 export class LeaderboardLevelView {
-  @ViewColumn({ name: 'user_id' })
+  @PrimaryColumn({ name: 'user_id', type: 'bigint' })
   userId!: string;
 
-  @ViewColumn()
+  @Column({ type: 'varchar', length: 255 })
   username!: string;
 
-  @ViewColumn()
+  @Column({ type: 'int' })
   level!: number;
 
-  @ViewColumn()
+  @Column({ type: 'int' })
   xp!: number;
 }

@@ -1,13 +1,13 @@
-import { ViewColumn, ViewEntity } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-@ViewEntity({ name: 'leaderboard_balance' })
+@Entity({ name: 'leaderboard_balance' })
 export class LeaderboardBalanceView {
-  @ViewColumn({ name: 'user_id' })
+  @PrimaryColumn({ name: 'user_id', type: 'bigint' })
   userId!: string;
 
-  @ViewColumn()
+  @Column({ type: 'varchar', length: 255 })
   username!: string;
 
-  @ViewColumn()
+  @Column({ type: 'decimal', precision: 18, scale: 2 })
   balance!: string;
 }

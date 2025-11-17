@@ -13,11 +13,6 @@ export const AppDataSource = new DataSource({
   password: env.db.password,
   database: env.db.database,
   ssl: env.db.sslCa ? { ca: env.db.sslCa } : undefined,
-  extra: {
-    sessionVariables: {
-      sql_require_primary_key: 0,
-    },
-  },
   entities: ENTITIES,
   migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001],
   synchronize: false,
