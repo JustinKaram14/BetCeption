@@ -12,6 +12,7 @@ export const AppDataSource = new DataSource({
   username: env.db.user,
   password: env.db.password,
   database: env.db.database,
+  ssl: env.db.sslCa ? { ca: env.db.sslCa } : undefined,
   entities: ENTITIES,
   migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001],
   synchronize: false,

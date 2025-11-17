@@ -17,6 +17,8 @@ By default every newly registered user begins with a wallet balance of `1000.00`
 
 > **Behind a proxy:** Set `TRUST_PROXY=true` (or the number of proxy hops) when deploying behind a load balancer so Express uses the `X-Forwarded-For` chain for logging, rate limiting, and session security features.
 
+> **Managed databases (Render, Aiven, PlanetScale, ...):** set the connection values (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`) to the ones provided by your provider. If the service requires TLS, paste the CA certificate into `DB_SSL_CA` (wrap newline characters as `\n` when storing the value in an env var). The backend automatically loads that certificate for the TypeORM datasource and for the startup health-check in `scripts/wait-for-db.js`.
+
 ### Tests
 
 The project ships with Jest-based unit and integration tests. Secrets required by the runtime are auto-populated through `jest.setup.ts`, so you can run the suite without touching your local `.env`.

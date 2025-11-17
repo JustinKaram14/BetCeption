@@ -8,6 +8,7 @@ const password = process.env.DB_PASSWORD ?? 'betpw';
 const database = process.env.DB_NAME ?? 'betception';
 const retries = Number(process.env.DB_WAIT_RETRIES ?? 30);
 const delayMs = Number(process.env.DB_WAIT_DELAY_MS ?? 2000);
+const sslCa = process.env.DB_SSL_CA ? process.env.DB_SSL_CA.replace(/\\n/g, '\n') : undefined;
 
 async function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -20,6 +21,7 @@ async function checkConnection() {
     user,
     password,
     database,
+    ssl: sslCa ? { ca: sslCa } : undefined,
   });
   await connection.query('SELECT 1');
   await connection.end();

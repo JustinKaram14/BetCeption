@@ -13,6 +13,7 @@ const RawEnvSchema = z.object({
   DB_USER: z.string().min(1).default('root'),
   DB_PASSWORD: z.string().default(''),
   DB_NAME: z.string().min(1).default('betception'),
+  DB_SSL_CA: z.string().optional(),
   ACCESS_TOKEN_SECRET: z.string().min(32, 'ACCESS_TOKEN_SECRET must be at least 32 characters long'),
   REFRESH_TOKEN_SECRET: z.string().min(32, 'REFRESH_TOKEN_SECRET must be at least 32 characters long'),
   ACCESS_TOKEN_TTL_MIN: z.coerce.number().int().positive().default(15),
@@ -85,6 +86,11 @@ const parseBooleanFlag = (value: string | undefined, defaultValue: boolean) => {
   return ['1', 'true', 'yes', 'on'].includes(normalized);
 };
 
+const parseMultilineValue = (value: string | undefined) => {
+  if (!value) return null;
+  return value.replace(/\\n/g, '\n');
+};
+
 if (cookieSameSite === 'none' && !cookieSecure) {
   throw new Error('COOKIE_SAMESITE=none requires COOKIE_SECURE=true for browser compatibility and security.');
 }
@@ -98,6 +104,7 @@ export const env = {
     user: rawEnv.DB_USER,
     password: rawEnv.DB_PASSWORD,
     database: rawEnv.DB_NAME,
+    sslCa: parseMultilineValue(rawEnv.DB_SSL_CA),
   },
   jwt: {
     accessSecret: rawEnv.ACCESS_TOKEN_SECRET,
