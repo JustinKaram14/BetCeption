@@ -36,7 +36,7 @@ export function getBalanceLeaderboard(req, res) {
         mapRow: (row) => ({
             userId: row.userId,
             username: row.username,
-            balance: Number(row.balance),
+            balance: row.balance,
         }),
         getUserId: (row) => row.userId,
     });
@@ -60,7 +60,7 @@ export function getWeeklyWinningsLeaderboard(req, res) {
         order: { netWinnings7d: 'DESC' },
         mapRow: (row) => ({
             userId: row.userId,
-            netWinnings7d: Number(row.netWinnings7d),
+            netWinnings7d: row.netWinnings7d,
         }),
         getUserId: (row) => row.userId,
     });

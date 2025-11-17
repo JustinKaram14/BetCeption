@@ -14,6 +14,7 @@ import { PowerupConsumption } from './PowerupConsumption.js';
 import { LeaderboardBalanceView } from './LeaderboardBalanceView.js';
 import { LeaderboardWeeklyWinningsView } from './LeaderboardWeeklyWinningsView.js';
 import { LeaderboardLevelView } from './LeaderboardLevelView.js';
+import { RateLimitCounter } from './RateLimitCounter.js';
 
 export * from './enums.js';
 export {
@@ -33,6 +34,7 @@ export {
   LeaderboardBalanceView,
   LeaderboardWeeklyWinningsView,
   LeaderboardLevelView,
+  RateLimitCounter,
 };
 
 export const ENTITIES = [
@@ -52,4 +54,5 @@ export const ENTITIES = [
   LeaderboardBalanceView,
   LeaderboardWeeklyWinningsView,
   LeaderboardLevelView,
+  RateLimitCounter,
 ];

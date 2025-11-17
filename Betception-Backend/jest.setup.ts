@@ -1,18 +1,13 @@
 import { TextEncoder, TextDecoder } from 'node:util';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var TextEncoder: typeof TextEncoder | undefined;
-  // eslint-disable-next-line no-var
-  var TextDecoder: typeof TextDecoder | undefined;
+const globalAny = global as any;
+
+if (!globalAny.TextEncoder) {
+  globalAny.TextEncoder = TextEncoder;
 }
 
-if (!global.TextEncoder) {
-  global.TextEncoder = TextEncoder;
-}
-
-if (!global.TextDecoder) {
-  global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder;
+if (!globalAny.TextDecoder) {
+  globalAny.TextDecoder = TextDecoder;
 }
 
 const envDefaults = {
@@ -22,8 +17,8 @@ const envDefaults = {
   DB_USER: 'test-user',
   DB_PASSWORD: 'test-password',
   DB_NAME: 'betception_test',
-  ACCESS_TOKEN_SECRET: 'test-access-secret',
-  REFRESH_TOKEN_SECRET: 'test-refresh-secret',
+  ACCESS_TOKEN_SECRET: 'test-access-secret-12345678901234567890',
+  REFRESH_TOKEN_SECRET: 'test-refresh-secret-098765432109876543210',
   ACCESS_TOKEN_TTL_MIN: '15',
   REFRESH_TOKEN_TTL_DAYS: '7',
   FRONTEND_ORIGIN: 'http://localhost:4200',

@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { z } from 'zod';
-import { validateRequest } from './validateRequest';
+import { validateRequest } from '../../middlewares/validateRequest.js';
 
 describe('validateRequest middleware', () => {
   const bodySchema = z.object({

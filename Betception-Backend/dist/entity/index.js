@@ -14,8 +14,9 @@ import { PowerupConsumption } from './PowerupConsumption.js';
 import { LeaderboardBalanceView } from './LeaderboardBalanceView.js';
 import { LeaderboardWeeklyWinningsView } from './LeaderboardWeeklyWinningsView.js';
 import { LeaderboardLevelView } from './LeaderboardLevelView.js';
+import { RateLimitCounter } from './RateLimitCounter.js';
 export * from './enums.js';
-export { User, Session, Round, Hand, Card, MainBet, SidebetType, SideBet, WalletTransaction, DailyRewardClaim, PowerupType, UserPowerup, PowerupConsumption, LeaderboardBalanceView, LeaderboardWeeklyWinningsView, LeaderboardLevelView, };
+export { User, Session, Round, Hand, Card, MainBet, SidebetType, SideBet, WalletTransaction, DailyRewardClaim, PowerupType, UserPowerup, PowerupConsumption, LeaderboardBalanceView, LeaderboardWeeklyWinningsView, LeaderboardLevelView, RateLimitCounter, };
 export const ENTITIES = [
     User,
     Session,
@@ -33,4 +34,5 @@ export const ENTITIES = [
     LeaderboardBalanceView,
     LeaderboardWeeklyWinningsView,
     LeaderboardLevelView,
+    RateLimitCounter,
 ];
