@@ -22,6 +22,9 @@ async function checkConnection() {
     password,
     database,
     ssl: sslCa ? { ca: sslCa } : undefined,
+    sessionVariables: {
+      sql_require_primary_key: 0,
+    },
   });
   await connection.query('SELECT 1');
   await connection.end();
