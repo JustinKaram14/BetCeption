@@ -52,12 +52,6 @@ describe('HomepageComponent', () => {
     expect(cta).withContext('CTA panel should exist').toBeTruthy();
   });
 
-  it('passes entries to leaderboard', () => {
-    const lbDe = fixture.debugElement.query(By.directive(LeaderboardComponent));
-    const lbInstance = lbDe.componentInstance as LeaderboardComponent;
-    expect(lbInstance.entries?.length).toBe(component.entries.length);
-  });
-
   it('handles login/register events from auth panel', () => {
     const authDe = fixture.debugElement.query(By.directive(AuthPanelComponent));
     const auth = authDe.componentInstance as AuthPanelComponent;

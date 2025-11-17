@@ -1,5 +1,5 @@
+import type { NextFunction, Request, Response } from 'express';
 import { Router } from 'express';
-import { authGuard } from '../../middlewares/authGuard.js';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import { LeaderboardQuerySchema } from './leaderboard.schema.js';
 import {
@@ -7,10 +7,24 @@ import {
   getLevelLeaderboard,
   getWeeklyWinningsLeaderboard,
 } from './leaderboard.controller.js';
+import { verifyAccess } from '../../utils/jwt.js';
 
 export const leaderboardRouter = Router();
 
-leaderboardRouter.use(authGuard);
+leaderboardRouter.use(async (req: Request, _res: Response, next: NextFunction) => {
+  try {
+    const header = req.header('Authorization');
+    if (!header?.startsWith('Bearer ')) {
+      return next();
+    }
+    const token = header.slice(7);
+    const payload = await verifyAccess(token);
+    req.user = payload;
+  } catch {
+    // Ignore invalid tokens since the endpoint is public.
+  }
+  return next();
+});
 leaderboardRouter.get(
   '/balance',
   validateRequest(LeaderboardQuerySchema, 'query'),
