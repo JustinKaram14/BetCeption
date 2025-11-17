@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response, CookieOptions } from 'express';
 import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
 import { Session } from '../../entity/Session.js';
@@ -7,6 +7,28 @@ import { signAccess, signRefresh, verifyRefresh } from '../../utils/jwt.js';
 import { env } from '../../config/env.js';
 import type { RegisterInput, LoginInput } from './auth.schema.js';
 import { hashToken } from '../../utils/tokenHash.js';
+
+const REFRESH_COOKIE_NAME = 'refresh_token';
+const REFRESH_COOKIE_PATH = '/auth/refresh';
+const REFRESH_TTL_MS = env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000;
+
+const refreshCookieDefaults: CookieOptions = {
+  httpOnly: true,
+  secure: env.cookies.secure,
+  sameSite: env.cookies.sameSite,
+  path: REFRESH_COOKIE_PATH,
+};
+
+function setRefreshTokenCookie(res: Response, token: string) {
+  res.cookie(REFRESH_COOKIE_NAME, token, {
+    ...refreshCookieDefaults,
+    maxAge: REFRESH_TTL_MS,
+  });
+}
+
+function clearRefreshTokenCookie(res: Response) {
+  res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
+}
 
 export async function register(
   req: Request<unknown, unknown, RegisterInput>,
@@ -22,7 +44,13 @@ export async function register(
   if (usernameExists) return res.status(409).json({ message: 'Username already in use' });
 
   const pwHash = await hashPassword(password);
-  const user = repo.create({ email, username, passwordHash: pwHash });
+  const startingBalance = Number.isFinite(env.users.initialBalance) ? env.users.initialBalance : 0;
+  const user = repo.create({
+    email,
+    username,
+    passwordHash: pwHash,
+    balance: startingBalance.toFixed(2),
+  });
   await repo.save(user);
 
   return res.status(201).json({ message: 'Registered' });
@@ -35,14 +63,15 @@ export async function login(
   const { email, password } = req.body;
   const repo = AppDataSource.getRepository(User);
   const sessionRepo = AppDataSource.getRepository(Session);
-  // Note: It is generally recommended to use a generic error message for both
-  // invalid email and invalid password to prevent user enumeration attacks.
-  // However, for this specific case, we are returning a more specific message.
   const user = await repo.findOne({ select: ['id', 'email', 'username', 'passwordHash'], where: { email } });
-  if (!user) return res.status(401).json({ message: 'User not found' });
+  if (!user) {
+    return res.status(401).json({ message: 'User not found' });
+  }
 
   const ok = await verifyPassword(password, user.passwordHash);
-  if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
+  if (!ok) {
+    return res.status(401).json({ message: 'Invalid email or password' });
+  }
 
   await repo.update(user.id, { lastLoginAt: new Date() });
 
@@ -51,11 +80,7 @@ export async function login(
   const refreshToken = await signRefresh(subject);
   const refreshExpiresAt = new Date(Date.now() + env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000);
 
-  res.cookie('refresh_token', refreshToken, {
-    httpOnly: true, secure: env.cookies.secure, sameSite: 'lax',
-    path: '/auth/refresh',
-    maxAge: env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000
-  });
+  setRefreshTokenCookie(res, refreshToken);
 
   await sessionRepo.save(sessionRepo.create({
     user,
@@ -104,11 +129,7 @@ export async function refresh(req: Request, res: Response) {
     session.ip = req.ip ?? session.ip;
     await sessionRepo.save(session);
 
-    res.cookie('refresh_token', newRefreshToken, {
-      httpOnly: true, secure: env.cookies.secure, sameSite: 'lax',
-      path: '/auth/refresh',
-      maxAge: env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000
-    });
+    setRefreshTokenCookie(res, newRefreshToken);
 
     return res.json({ accessToken });
   } catch (err) {
@@ -122,6 +143,6 @@ export async function logout(req: Request, res: Response) {
     const sessionRepo = AppDataSource.getRepository(Session);
     await sessionRepo.delete({ refreshToken: hashToken(token) });
   }
-  res.clearCookie('refresh_token', { path: '/auth/refresh' });
+  clearRefreshTokenCookie(res);
   res.status(204).send();
 }

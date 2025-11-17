@@ -6,7 +6,7 @@ import { DailyRewardClaim } from '../../entity/DailyRewardClaim.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
 import { dailyRewardConfig } from '../../config/rewards.js';
-import { centsToDecimal, centsToNumber, decimalToCents } from '../../utils/money.js';
+import { centsToDecimal, decimalToCents } from '../../utils/money.js';
 
 function rollRewardAmount() {
   const { minAmount, maxAmount } = dailyRewardConfig;
@@ -61,13 +61,13 @@ export async function claimDailyReward(req: Request, res: Response) {
 
       return {
         claimedAmount: amount,
-        balance: centsToNumber(decimalToCents(user.balance)),
+        balance: user.balance,
       };
     });
 
     return res.json({
       claimedAmount: result.claimedAmount,
-      balance: result.balance,
+      balance: Number(result.balance),
       eligibleAt: nextEligibleFrom(new Date()),
     });
   } catch (err: any) {

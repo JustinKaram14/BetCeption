@@ -4,10 +4,17 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "tsx src/server.ts",
-    "test": "cross-env NODE_ENV=test jest --runInBand",
-    "test:watch": "cross-env NODE_ENV=test jest --watch",
-    "test:ci": "cross-env NODE_ENV=test jest --ci --coverage"
+    "db:up": "docker compose up -d --force-recreate --remove-orphans db adminer",
+    "start": "node ./scripts/check-docker.js && npm run db:up && cross-env DB_HOST=127.0.0.1 DB_PORT=3307 DB_USER=betuser DB_PASSWORD=betpw DB_NAME=betception node ./scripts/wait-for-db.js && cross-env DB_HOST=127.0.0.1 DB_PORT=3307 DB_USER=betuser DB_PASSWORD=betpw DB_NAME=betception tsx src/server.ts",
+    "test": "cross-env NODE_ENV=test ACCESS_TOKEN_SECRET=test-access-secret-12345678901234567890 REFRESH_TOKEN_SECRET=test-refresh-secret-098765432109876543210 jest --runInBand",
+    "test:watch": "cross-env NODE_ENV=test ACCESS_TOKEN_SECRET=test-access-secret-12345678901234567890 REFRESH_TOKEN_SECRET=test-refresh-secret-098765432109876543210 jest --watch",
+    "test:ci": "cross-env NODE_ENV=test ACCESS_TOKEN_SECRET=test-access-secret-12345678901234567890 REFRESH_TOKEN_SECRET=test-refresh-secret-098765432109876543210 jest --ci --coverage",
+    "migrate": "tsx src/scripts/migrate.ts run",
+    "migrate:revert": "tsx src/scripts/migrate.ts revert",
+    "migrate:show": "tsx src/scripts/migrate.ts show",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down -v",
+    "docker:logs": "docker compose logs -f backend"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -55,11 +62,17 @@
     "extensionsToTreatAsEsm": [
       ".ts"
     ],
-    "globals": {
-      "ts-jest": {
-        "tsconfig": "tsconfig.json",
-        "useESM": true
-      }
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.json",
+          "useESM": true
+        }
+      ]
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
     },
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.ts"

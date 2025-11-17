@@ -5,7 +5,7 @@ import { User } from '../../entity/User.js';
 import { UserPowerup } from '../../entity/UserPowerup.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
-import { decimalToCents, centsToDecimal, centsToNumber } from '../../utils/money.js';
+import { decimalToCents, centsToDecimal } from '../../utils/money.js';
 import type { PurchasePowerupInput } from './shop.schema.js';
 
 export async function listPowerups(_req: Request, res: Response) {
@@ -81,14 +81,14 @@ export async function purchasePowerup(
       await walletRepo.save(walletTx);
 
       return {
-        newBalance: centsToNumber(decimalToCents(user.balance)),
+        newBalance: user.balance,
         inventoryQuantity: userPowerup.quantity,
       };
     });
 
     return res.status(201).json({
       message: 'Power-up purchased',
-      balance: result.newBalance,
+      balance: Number(result.newBalance),
       quantity: result.inventoryQuantity,
     });
   } catch (err: any) {

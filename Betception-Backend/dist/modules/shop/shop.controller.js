@@ -4,7 +4,7 @@ import { User } from '../../entity/User.js';
 import { UserPowerup } from '../../entity/UserPowerup.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
-import { decimalToCents, centsToDecimal, centsToNumber } from '../../utils/money.js';
+import { decimalToCents, centsToDecimal } from '../../utils/money.js';
 export async function listPowerups(_req, res) {
     const repo = AppDataSource.getRepository(PowerupType);
     const powerups = await repo.find({ order: { minLevel: 'ASC', price: 'ASC' } });
@@ -15,7 +15,7 @@ export async function listPowerups(_req, res) {
             title: type.title,
             description: type.description,
             minLevel: type.minLevel,
-            price: Number(type.price),
+            price: type.price,
             effect: type.effectJson,
         })),
     });
@@ -69,7 +69,7 @@ export async function purchasePowerup(req, res) {
             });
             await walletRepo.save(walletTx);
             return {
-                newBalance: centsToNumber(decimalToCents(user.balance)),
+                newBalance: user.balance,
                 inventoryQuantity: userPowerup.quantity,
             };
         });

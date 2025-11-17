@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import { notFoundHandler } from './notFoundHandler';
+import { notFoundHandler } from '../../middlewares/notFoundHandler.js';
 
 describe('notFoundHandler middleware', () => {
   const buildApp = () => {

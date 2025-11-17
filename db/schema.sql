@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS cards (
   id              BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   hand_id         BIGINT UNSIGNED NOT NULL,
   draw_order      TINYINT UNSIGNED NOT NULL,
-  rank            ENUM('2','3','4','5','6','7','8','9','10','J','Q','K','A') NOT NULL,
+  `rank`          ENUM('2','3','4','5','6','7','8','9','10','J','Q','K','A') NOT NULL,
   suit            ENUM('C','D','H','S') NOT NULL,
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_cards_hand FOREIGN KEY (hand_id) REFERENCES hands(id) ON DELETE CASCADE,
