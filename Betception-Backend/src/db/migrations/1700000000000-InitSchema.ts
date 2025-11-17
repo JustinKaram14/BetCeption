@@ -224,6 +224,18 @@ export class InitSchema1700000000000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`
+      CREATE TABLE IF NOT EXISTS typeorm_metadata (
+        id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+        type VARCHAR(255) NOT NULL,
+        \`database\` VARCHAR(255) NULL,
+        \`schema\` VARCHAR(255) NULL,
+        \`table\` VARCHAR(255) NULL,
+        name VARCHAR(255) NULL,
+        value TEXT NULL
+      ) ENGINE=InnoDB;
+    `);
+
+    await queryRunner.query(`
       INSERT INTO sidebet_types (code, title, description, base_odds, config_json) VALUES
         (
           'FIRST_CARD_COLOR',
@@ -315,5 +327,6 @@ export class InitSchema1700000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS rounds;`);
     await queryRunner.query(`DROP TABLE IF EXISTS sessions;`);
     await queryRunner.query(`DROP TABLE IF EXISTS users;`);
+    await queryRunner.query(`DROP TABLE IF EXISTS typeorm_metadata;`);
   }
 }
