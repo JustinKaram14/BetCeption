@@ -5,9 +5,29 @@
   </div>
 
   <form class="auth-form" (ngSubmit)="submit()">
-    <input type="text" placeholder="Username" [(ngModel)]="username" name="u">
-    <input type="password" placeholder="Password" [(ngModel)]="password" name="p">
-    <button class="btn auth-btn" type="submit">
+    <input
+      type="email"
+      placeholder="Email"
+      [(ngModel)]="email"
+      name="email"
+      autocomplete="email">
+
+    <input
+      *ngIf="tab==='register'"
+      type="text"
+      placeholder="Username"
+      [(ngModel)]="username"
+      name="username"
+      autocomplete="nickname">
+
+    <input
+      type="password"
+      placeholder="Password"
+      [(ngModel)]="password"
+      name="password"
+      autocomplete="current-password">
+
+    <button class="btn auth-btn" type="submit" [disabled]="!canSubmit()">
       {{ tab==='login' ? 'LOGIN' : 'CREATE ACCOUNT' }}
     </button>
   </form>

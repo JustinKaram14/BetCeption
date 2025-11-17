@@ -137,7 +137,16 @@ export interface WalletSummary {
 
 export interface WalletSummaryResponse extends WalletSummary {}
 
+export type QueryValue =
+  | string
+  | number
+  | boolean
+  | ReadonlyArray<string | number | boolean>
+  | null
+  | undefined;
+
 export interface WalletTransactionsQuery {
+  [key: string]: QueryValue;
   page?: number;
   limit?: number;
 }
@@ -212,6 +221,7 @@ export interface InventoryResponse {
 }
 
 export interface LeaderboardQuery {
+  [key: string]: QueryValue;
   limit?: number;
   offset?: number;
 }
@@ -350,6 +360,12 @@ export interface ConsumePowerupResponse {
 
 export interface FairnessRoundResponse {
   round: FairnessPayload;
+}
+
+export interface FairnessHistoryQuery {
+  [key: string]: QueryValue;
+  limit?: number;
+  page?: number;
 }
 
 export interface FairnessHistoryResponse {

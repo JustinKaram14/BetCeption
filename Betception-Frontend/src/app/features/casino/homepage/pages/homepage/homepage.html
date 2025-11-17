@@ -14,6 +14,17 @@
           (login)="onLogin($event)"
           (register)="onRegister($event)">
         </app-auth-panel>
+        <div class="auth-status" *ngIf="authLoading || authSuccess || authError">
+          <div *ngIf="authLoading" class="auth-status__message loading">
+            Anmeldung läuft...
+          </div>
+          <div *ngIf="!authLoading && authSuccess" class="auth-status__message success">
+            {{ authSuccess }}
+          </div>
+          <div *ngIf="!authLoading && authError" class="auth-status__message error">
+            {{ authError }}
+          </div>
+        </div>
       </app-neon-card>
 
       <app-neon-card>
