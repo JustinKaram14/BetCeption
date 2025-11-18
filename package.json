@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "node start-stack.js"
+  },
   "devDependencies": {
     "@types/jasmine": "^5.1.9",
     "jasmine-core": "^5.12.0",
