@@ -20,7 +20,7 @@ type LeaderboardColumn = {
 type LeaderboardRow = {
   rank: number;
   username: string;
-  metrics: Record<string, number>;
+  metrics: Partial<Record<string, number>>;
 };
 
 type LeaderboardState = {
