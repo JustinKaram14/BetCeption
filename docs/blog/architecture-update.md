@@ -23,5 +23,3 @@ Alle drei Artefakte sind lebende Dokumente und dienen dem gesamten Kurs als Refe
 ## Nächste Schritte
 - ADRs für neue Features (Daily Reward, Leaderboard) auf Basis der ASR entwerfen.
 - Beobachtbarkeit weiter ausbauen (Tracing, Alarmierung), sobald das Backend produktionsnah läuft.
-
-Fragen oder Ideen? Meldet euch im Teamchat - insbesondere, wenn ihr eigene Taktiken oder Patterns beisteuern wollt.
