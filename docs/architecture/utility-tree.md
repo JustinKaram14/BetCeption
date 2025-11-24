@@ -14,5 +14,3 @@ Dieser Utility Tree fasst die wichtigsten Qualitätsattribute für BetCeption zu
 | UT-P2 | Performance/Skalierung | Leaderboard wird bei 10k Einträgen abgefragt. | Backend liefert Seite `n` in <200 ms mit `pageSize` max. 50. | Pagination <200 ms p95. | Mittel | Mittel | TypeORM Pagination (`findAndCount`), Index auf Score/Balance, limitierte Projektion. |
 | UT-O1 | Beobachtbarkeit | Betriebsteam untersucht Supportticket. | `/metrics` zeigt aktuelle Request-Zähler, Durchschnittslatenzen und Fehlerquote, Logs tragen `X-Request-Id`. | Telemetrie abrufbar ohne Neustart, 100 % Requests mit ID. | Mittel | Niedrig | `observability/metrics.ts`, `requestContext` Middleware, strukturierte Logger. |
 | UT-M1 | Wartbarkeit | PO fordert neue Sidebet-Formel. | Änderung betrifft nur Round-Domäne (Engine + Tests), andere Module bleiben unverändert. | Code-Anpassung <2 Dateien außerhalb Round. | Mittel | Mittel | Feature-Folder-Struktur (`modules/round`), zentrale Services, Jest-Test-Suiten für Engine. |
-
-Mindestens fünf Szenarien sind ausgearbeitet; weitere werden hinzugefügt, sobald neue Risiken auftreten.
