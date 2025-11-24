@@ -1,1 +1,18 @@
-<p>table works!</p>
+<div class="game-table">
+  <div class="betception-orb"></div>
+  <h2 class="title">Betception Blackjack</h2>
+
+  <app-hand
+    label="Dealer"
+    [hand]="dealerHand"
+    [isActive]="activeHand === HandOwnerType.DEALER"
+  ></app-hand>
+
+  <app-hand
+    label="Spieler"
+    [hand]="playerHand"
+    [isActive]="activeHand === HandOwnerType.PLAYER"
+  ></app-hand>
+
+  <div class="blackjack-banner" *ngIf="showBlackjackBanner">BLACKJACK!</div>
+</div>
