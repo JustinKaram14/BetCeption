@@ -21,7 +21,6 @@ Alle drei Artefakte sind lebende Dokumente und dienen dem gesamten Kurs als Refe
 - **DevOps:** Docker-Compose + GitHub Actions stellen sicher, dass Migrationen automatisch laufen. Wer mit unserer DB interagiert, bekommt dadurch reproduzierbare Umgebungen.
 
 ## Nächste Schritte
-- Utility-Tree zyklisch mit echten Messergebnissen anreichern (Metriken an Jira/YouTrack koppeln).
 - ADRs für neue Features (Daily Reward, Leaderboard) auf Basis der ASR entwerfen.
 - Beobachtbarkeit weiter ausbauen (Tracing, Alarmierung), sobald das Backend produktionsnah läuft.
 
