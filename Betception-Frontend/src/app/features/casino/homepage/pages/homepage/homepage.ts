@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Observable, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { HeroComponent } from '../../components/hero/hero';
 import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
@@ -21,6 +22,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 export class HomepageComponent {
   private readonly authFacade = inject(AuthFacade);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   authLoading = false;
   authSuccess: string | null = null;
@@ -42,7 +44,13 @@ export class HomepageComponent {
     );
   }
 
-  onEnter() { console.log('enter betception'); }
+  onEnter() {
+    if (this.authFacade.isAuthenticated()) {
+      this.router.navigate(['/blackjack']);
+      return;
+    }
+    this.authError = 'Bitte logge dich ein, um Betception Blackjack zu spielen.';
+  }
   onRewards() { console.log('daily rewards'); }
 
   private runAuthRequest(
