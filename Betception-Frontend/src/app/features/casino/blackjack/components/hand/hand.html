@@ -1,1 +1,25 @@
-<p>hand works!</p>
+<div class="hand-container" [class.active]="isActive">
+  <div class="hand-label">{{ label }}</div>
+  <div class="score" [ngClass]="{ 'score-updated': scoreAnimated }">
+    {{ displayScore }}
+  </div>
+
+  <div class="hand" *ngIf="cards.length; else emptyHand">
+    <div
+      *ngFor="let card of cards; trackBy: trackByCard"
+      [ngClass]="cardClasses(card)"
+    >
+      <div class="card-face">
+        <div class="card-rank top">{{ card.rank }}</div>
+        <div class="card-suit">{{ suitSymbol(card.suit) }}</div>
+        <div class="card-rank bottom">{{ card.rank }}</div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyHand>
+    <div class="empty-hand">Bereit für die nächste Runde</div>
+  </ng-template>
+
+  <div class="hand-status" *ngIf="statusLabel">{{ statusLabel }}</div>
+</div>

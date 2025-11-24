@@ -1,1 +1,42 @@
-<p>controls works!</p>
+<div class="bottom-ui-container">
+  <div class="controls-panel">
+    <div class="panel-section-left">
+      <div class="info-display">
+        Einsatz:
+        <span>{{ betAmount | number: '1.0-2' }} </span>
+      </div>
+      <div class="info-display" *ngIf="balance !== null">
+        Guthaben:
+        <span>{{ balance | currency:'EUR':'symbol-narrow' }}</span>
+      </div>
+      <div class="info-display">
+        Runde:
+        <span>{{ roundLabel }}</span>
+      </div>
+    </div>
+
+    <div class="center-controls">
+      <div class="action-buttons">
+        <button class="btn" (click)="deal.emit()" [disabled]="!canDeal">Deal</button>
+        <button class="btn" (click)="hit.emit()" [disabled]="!canHit">Hit</button>
+        <button class="btn" (click)="stand.emit()" [disabled]="!canStand">Stand</button>
+        <button class="btn" (click)="settle.emit()" [disabled]="!canSettle">Settle</button>
+      </div>
+    </div>
+
+    <div class="panel-section-right">
+      <div class="betting-controls">
+        <button
+          *ngFor="let chip of chips"
+          class="chip"
+          [ngClass]="'chip-' + chip"
+          (click)="onChip(chip)"
+          [disabled]="isRoundActive || busy"
+        >
+          +{{ chip }}
+        </button>
+        <button class="btn reset-btn" (click)="resetBet.emit()" [disabled]="isRoundActive || busy">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
