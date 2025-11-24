@@ -8,5 +8,11 @@ export const routes: Routes = [
       import('./features/casino/homepage/pages/homepage/homepage')
         .then(m => m.HomepageComponent) // ggf. auf deinen Klassennamen anpassen
   },
+  {
+    path: 'blackjack',
+    loadComponent: () =>
+      import('./features/casino/blackjack/pages/blackjack/blackjack')
+        .then(m => m.Blackjack),
+  },
   { path: '**', redirectTo: 'homepage' }
 ];

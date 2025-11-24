@@ -7,7 +7,7 @@ coverage/
 
 # Environment & secrets
 .env
-.env.*
+.env
 
 # OS / editor noise
 .DS_Store

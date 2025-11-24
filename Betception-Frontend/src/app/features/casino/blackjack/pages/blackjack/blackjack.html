@@ -1,1 +1,29 @@
-<p>blackjack works!</p>
+<div class="page-wrapper">
+  <div class="app-container">
+    <a class="btn home-btn" routerLink="/homepage">Home</a>
+
+    <app-table
+      [dealerHand]="round?.dealerHand ?? null"
+      [playerHand]="round?.playerHand ?? null"
+      [activeHand]="activeHand"
+      [showBlackjackBanner]="showBlackjackBanner"
+    ></app-table>
+
+    <div class="message error" *ngIf="error">{{ error }}</div>
+    <div class="message success" *ngIf="info">{{ info }}</div>
+
+    <app-controls
+      [betAmount]="betAmount"
+      [balance]="balance"
+      [roundStatus]="round?.status ?? null"
+      [playerHandStatus]="playerHandStatus"
+      [busy]="!!busyAction"
+      (placeBet)="onPlaceBet($event)"
+      (resetBet)="onResetBet()"
+      (deal)="onDeal()"
+      (hit)="onHit()"
+      (stand)="onStand()"
+      (settle)="onSettle()"
+    ></app-controls>
+  </div>
+</div>
