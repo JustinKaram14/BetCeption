@@ -2,21 +2,9 @@
 
 Dieser Utility Tree fasst die wichtigsten Qualitaetsattribute fuer BetCeption zusammen. Er basiert auf den Anforderungen aus dem SRS (Kapitel 3) und den ASR aus `asr-3-step.md`. Jede Verzweigung enthaelt priorisierte Szenarien mit Einschaetzung des Risikos.
 
-```
-Utility
-|- Zuverlaessigkeit (BP Hoch, Risiko Mittel)
-|  |- UT-R1: Einsatzbuchung bleibt konsistent, auch wenn Clients wegfallen.
-|  |- UT-R2: ServerSeed und Ergebnisdaten lassen sich jederzeit erneut abrufen.
-|- Sicherheit (BP Hoch, Risiko Hoch)
-|  |- UT-S1: Auth-Routen sind gegen Brute-Force und Token-Diebstahl gehaertet.
-|- Performance (BP Hoch, Risiko Mittel)
-|  |- UT-P1: `/round/start` antwortet unter 300 ms bei 100 Sessions.
-|  |- UT-P2: Leaderboard/Fairness-Listen skalieren per Pagination.
-|- Beobachtbarkeit (BP Mittel, Risiko Niedrig)
-|  |- UT-O1: Telemetrie liefert Request-IDs, Latenzen und Fehlerzaehler.
-|- Wartbarkeit/Modifizierbarkeit (BP Mittel, Risiko Mittel)
-   |- UT-M1: Neue Sidebet-Regeln bleiben lokal und testbar.
-```
+
+docs/assets/Utility/Utility.png
+
 
 ## Szenario-Details
 | ID | Attribut | Stimulus & Umgebung | Erwartete Antwort | Response-Metrik | BP | Risiko | Eingesetzte Taktiken |
