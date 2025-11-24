@@ -3,8 +3,7 @@
 Dieser Utility Tree fasst die wichtigsten Qualitaetsattribute fuer BetCeption zusammen. Er basiert auf den Anforderungen aus dem SRS (Kapitel 3) und den ASR aus `asr-3-step.md`. Jede Verzweigung enthaelt priorisierte Szenarien mit Einschaetzung des Risikos.
 
 
-docs/assets/Utility/Utility.png
-
+![alt text](../assets/Utility/Utility.png)
 
 ## Szenario-Details
 | ID | Attribut | Stimulus & Umgebung | Erwartete Antwort | Response-Metrik | BP | Risiko | Eingesetzte Taktiken |
