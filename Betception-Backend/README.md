@@ -137,3 +137,8 @@ If `npm ci` inside the Docker build cannot reach the npm registry, provide proxy
 2. Run `docker compose build backend --no-cache` (or `npm run docker:up`) again.
 
 The build stage now forwards those proxy variables to the container so `npm ci`/`npm run build` can download dependencies even in restricted networks.
+
+
+Während die Runde läuft, ist nur der Hash sichtbar (Commitment). Erst wenn die Runde abgeschlossen ist (RoundStatus.SETTLED), liefert das Fairness-API (GET /fairness/{roundId} aus fairness.controller.ts) den echten serverSeed plus den Hash und die Zeitstempel zurück.
+Kartenziehung: round.controller.ts baut ein vollständiges 52er-Deck (buildDeck()), kopiert es und wendet für jede gezogene Karte einen Fisher‑Yates‑Shuffle an. Für jeden Schritt i wird ein deterministischer Zufallsindex aus sha256(serverSeed + ':' + counter) berechnet; counter startet bei 0 und erhöht sich pro Karte. Dadurch ist die Reihenfolge der Karten vollständig durch den Seed bestimmt.
+Wenn der Seed nachträglich veröffentlicht wird, kann jede:r offline denselben Shuffle nachprogrammieren: Deck initialisieren, das Hashing-Schema anwenden, Kartenfolge erzeugen. Die zugehörigen Spielzug-APIs geben die Karten in gezogener Reihenfolge aus; man vergleicht einfach, ob die offengelegten Karten den ersten n Einträgen der rekonstruierten Deckliste entsprechen.
