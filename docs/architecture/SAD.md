@@ -1,5 +1,5 @@
 ﻿# BetCeption  
-# Software-Architekturdokument  
+# Software Architecture Document  
 # Version 1.0
 
 ## Revision History
@@ -11,14 +11,14 @@
 
 ---
 
-## 1. Einleitung
-### 1.1 Zweck
+## 1. Introduction
+### 1.1 Purpose
 Dieses Dokument gibt einen vollständigen Überblick über die Software-Architektur von BetCeption anhand des 4+1-Sichtenmodells. Es fasst die architekturrelevanten Entscheidungen, Ziele und Views zusammen und verweist auf Detaildokumente (ASR, Utility Tree, ADRs, Use Cases).
 
-### 1.2 Geltungsbereich
+### 1.2 Scope
 Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles Wallet, Leaderboards, Daily Reward). Betrifft Backend (Node/Express/TypeORM), Frontend (Angular) und Datenbank (MySQL/Docker). Optionale Oberflächen (Docs/Metrics) sind feature-gated.
 
-### 1.3 Definitionen, Akronyme und Abkürzungen
+### 1.3 Definitions, Acronyms, Abbreviations
 - ASR: Architecture Significant Requirement  
 - ADR: Architecture Decision Record  
 - JWT: JSON Web Token  
@@ -27,7 +27,7 @@ Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles W
 - UC: Use Case  
 - DB: Datenbank (MySQL 8)
 
-### 1.4 Referenzen
+### 1.4 References
 - `docs/architecture/asr-3-step.md` (ASR, Szenarien, Taktiken)  
 - `docs/architecture/utility-tree.md` (Utility Tree, priorisierte Szenarien)  
 - `docs/architecture/architecture-decisions.md` (AD-1..9)  
@@ -37,14 +37,14 @@ Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles W
 - `db/schema.sql` (Relationenschema)  
 - Source-Code-Struktur unter `Betception-Backend/src`, `Betception-Frontend/src`
 
-### 1.5 Übersicht
+### 1.5 Overview
 Die folgenden Abschnitte folgen dem RUP-Template: Architekturdarstellung, Ziele/Randbedingungen, Use-Case-Sicht, Logische Sicht, Prozess-Sicht, Einsatzsicht, Implementierungssicht, Datensicht, Größe/Performance, Qualität.
 
-### 1.6 Implementierungsstand (Abgleich)
+### 1.6 Implementation Status (Sync)
 - Backend: Round/Fairness, Wallet/Ledger, Auth mit Refresh-Cookies + Rate-Limits, Leaderboard-Views und Daily-Reward-Transaktion sind implementiert. XP/Level-Progression, Power-Up-Effekte und Double/Split fehlen noch.
 - Frontend: AuthPanel + Blackjack-View (Deal/Hit/Stand/Settle) und Leaderboard-Tabs sind vorhanden. Shop/Inventar/Wallet/Rewards haben kein UI; Login-/Register-Seiten sind Platzhalter.
 
-## 2. Architekturdarstellung
+## 2. Architectural Overview
 Wir nutzen das 4+1-Sichtenmodell:
 - Use-Case-Sicht: zentrale UC1–UC10, Sequenzen/Verhaltensmodellierung (siehe Use-Case-Dokumente, Blog Woche 5/6).  
 - Logische Sicht: Domänenmodelle, Entities, Feature-Folder-Struktur (Backend/Frontend).  
@@ -53,7 +53,7 @@ Wir nutzen das 4+1-Sichtenmodell:
 - Implementierungssicht: Layering, Module, Middlewares, CI/CD.  
 Quellen: Code-Struktur, ASR, Utility Tree, ADRs und Blog-Updates.
 
-## 3. Architekturelle Ziele und Randbedingungen
+## 3. Architectural Goals and Constraints
 - Ziele (ASR-basiert):  
   - ASR-1/4: Deterministische Spielengine, Fairness-API (Server-Seed + SHA-256-Hash + Draw-Order).  
   - ASR-2: Atomare Wallet-Buchungen mit ACID-Transaktionen und Sperren.  
@@ -63,7 +63,7 @@ Quellen: Code-Struktur, ASR, Utility Tree, ADRs und Blog-Updates.
   - ASR-7: Modulare Erweiterbarkeit (Feature-Folder; Backend spiegelt Angular).  
 - Randbedingungen: Docker Compose als Laufzeit, MySQL 8, Node/Express/TypeORM, Angular SPA; CI/CD via GitHub Actions; Secrets per Environment; Feature-Toggles für Docs/Metrics; stabile Use-Case-Schnittstellen.
 
-## 4. Use-Case-Sicht
+## 4. Use Case View
 Zentrale Use Cases (siehe `docs/use-cases`, Realisierung unter `docs/use-case-realisation`):
 - UC1 Authentifizierung & Session-Management  
 - UC2 Shop, Inventar & Wallet  
@@ -78,15 +78,15 @@ Zentrale Use Cases (siehe `docs/use-cases`, Realisierung unter `docs/use-case-re
 
 **Implementierungsabdeckung (Kurz):** Backend deckt UC1/3/4/5/6/8/10 ab; UC7 (Double/Split) und UC9 (XP/Level-Aufstieg) fehlen. Frontend deckt Auth, Leaderboard und Blackjack (ohne Double/Split, ohne Sidebet-UI) ab; Shop/Inventar/Wallet/Reward fehlen.
 
-## 5. Logische Sicht
-### 5.1 Überblick
+## 5. Logical View
+### 5.1 Overview
 Layered Feature-Folder-Architektur: Router/Controller/Schema/Service je Domäne, Entities im separaten Ordner, Cross-Cutting in Middlewares/Observability/Utils. Frontend spiegelt Domänenstruktur (Angular-Module für Auth, Blackjack Table/Hand/Controls, Leaderboard).
 
-### 5.2 Architekturrelevante Design-Pakete
+### 5.2 Architecture-Relevant Design Packages
 - Backend-Domänenmodule: `auth`, `round`, `wallet`, `powerups`, `fairness`, `leaderboard`, `rewards`, `inventory`, `shop`, `user`, `observability`, `middlewares`, `utils`.  
 - Kern-Entities (vgl. `db/schema.sql`, `src/entity/*`): User, Session, Round, Hand, Card, MainBet, SideBet + SidebetType, WalletTransaction, DailyRewardClaim, PowerupType, UserPowerup, PowerupConsumption. RNG-Daten (server_seed, server_seed_hash) hängen an Round; Ledger-Einträge referenzieren Bets/Rounds/Rewards.
 
-### 5.3 Use-Case-Realisationen
+### 5.3 Use Case Realizations
 - UC1: AuthRouter/Controller mit Session-Repo, JWT/Refresh, Rate-Limits, Token-Rotation.  
 - UC5/UC6: RoundRouter → Controller/Service → ACID-Transaktion (Round, Hands, MainBet, WalletTransaction) + RNG/Seed+Hash-Persistenz.  
 - UC4: LeaderboardRouter → DB-Views (`leaderboard_balance|level|winnings`), anonym lesbar, optional persönlicher Rang mit Auth.  
@@ -94,7 +94,7 @@ Layered Feature-Folder-Architektur: Router/Controller/Schema/Service je Domäne,
 - UC3: RewardsRouter → `claimDailyReward` transaktional mit pessimistischer Sperre, Ledger-Eintrag und Idempotenz pro UTC-Tag.  
 Weitere Realisierungen siehe Use-Case-Dokumente.
 
-### 5.4 Klassendiagramm (Backend)
+### 5.4 Class Diagram (Backend)
 Das aktuelle DomAnenmodell (Entities, Beziehungen und Views) wird im folgenden Mermaid-Klassendiagramm dargestellt. Basis sind `db/schema.sql` und die Implementierung unter `Betception-Backend/src/entity`.
 
 ```mermaid
@@ -265,7 +265,7 @@ classDiagram
   }
 ```
 
-## 6. Prozess-Sicht
+## 6. Process View
 - Auth-Flow: Middleware-Kette (CORS → RequestContext → RateLimit) → AuthRouter → Controller → Session-Repo (Hashing, Rotation) → JWT-Ausgabe; Logout/Refresh verwalten Sessions/Cookies.  
 - Round/Bet: Router → Controller/Service → DB-Transaktion (Round+Hands+MainBet+WalletTransaction) → RNG (Seed+Hash) → Response; Idempotenzschlüssel verhindern Doppelbuchungen.  
 - Sidebet/Power-Up: Router → Controller → Transaktion über Sidebet/Wallet oder Inventory/Consumption; Effekte werden im Round-Service berücksichtigt.  
@@ -273,15 +273,15 @@ classDiagram
 - Daily Reward: Router → `claimDailyReward` → Transaktion mit pessimistic lock auf User, Aktualisierung `last_daily_reward_at`, Claim- und Wallet-Eintrag; erneute Claims am gleichen UTC-Tag liefern 409.  
 - Observability: RequestContext vergibt IDs, Logger schreibt JSON, `/metrics` liefert Snapshots; Feature-Toggle/API-Key schützt Docs/Metrics.
 
-## 7. Einsatzsicht
+## 7. Deployment View
 - Typische Topologie: Browser (SPA) → optional Nginx/API-Gateway → Node/Express-Container → MySQL-Container.  
 - Laufzeit: `docker-compose` für Dev/CI/Prod-Parität; DB im internen Netzwerk isoliert; REST über HTTPS; Secrets via Environment; Migrationslauf beim Start.
 
-## 8. Implementierungssicht
-### 8.1 Überblick
+## 8. Implementation View
+### 8.1 Overview
 Implementierung folgt Layering: Middleware/Router/Controller/Service/Entity, plus Utilities und Observability. CI/CD automatisiert Build, Tests und Migrationen.
 
-### 8.2 Schichten
+### 8.2 Layers
 - Transport/HTTP: Express, Router + Middlewares (CORS, Rate-Limit, RequestContext).  
 - API/Controller: Orchestriert Use-Case-Flows, validiert mit Zod-Schemata.  
 - Service/Domain: Geschäftslogik, Transaktionen, RNG, Power-Up-Effekte, Daily-Reward-Logik.  
@@ -289,16 +289,16 @@ Implementierung folgt Layering: Middleware/Router/Controller/Service/Entity, plu
 - Frontend: Angular-Module (Auth, Table/Hand/Controls, Leaderboard), HttpClient-Wrapper (`withCredentials`), Interceptor/Guard.  
 - CI/CD & Ops: GitHub Actions, Dockerfiles/Compose, optional API-Key-Guards für Swagger/Metrics.
 
-## 9. Datensicht
+## 9. Data View
 - Relationenschema: `db/schema.sql` mit Tabellen für Users, Sessions, Rounds, Hands, Cards, MainBets, SideBets, SidebetTypes, WalletTransactions, DailyRewardClaims, PowerupTypes, UserPowerups, PowerupConsumptions; Views für Leaderboards (Balance, Weekly Winnings, Level).  
 - Eigenschaften: deterministische RNG-Attribute pro Round, Ledger-Referenzen (`ref_table`/`ref_id`), Indizes auf Round/User/Wallet; ACID-Transaktionen sichern Konsistenz.
 
-## 10. Größe und Performance
+## 10. Size and Performance
 - Zielwerte: Round-Start p95 < 300 ms; Auth p95 < 600 ms; `/fairness` und Leaderboard-Reads < 300 ms.  
 - Dimensionierung: ~100 gleichzeitige Sessions im Testbetrieb; zwei schreibende Transaktionen pro Spielaktion; Startbundle Frontend < 300 kB gzip (Ziel).  
 - Maßnahmen: Async I/O, Connection-Pooling, Pagination, Indizes, reduzierte DTOs, Caching über DB-Views für Leaderboard.
 
-## 11. Qualität
+## 11. Quality
 - Zuverlässigkeit: ACID-Transaktionen, pessimistic locking, Idempotenz-Schlüssel.  
 - Sicherheit: bcrypt/SHA-256, Token-Hardening, Rate-Limits, HttpOnly/SameSite-Cookies, API-Key-Guards, Feature-Toggles für sensible Routen.  
 - Wartbarkeit/Erweiterbarkeit: Feature-Folder, klare Modulgrenzen, Zod-Validierung, parallele Angular-Struktur, ADRs/ASR als Leitplanken.  

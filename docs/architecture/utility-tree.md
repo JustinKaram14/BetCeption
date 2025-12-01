@@ -1,23 +1,10 @@
-﻿## Revision History
-| Datum | Version | Beschreibung | Autor |
-| --- | --- | --- | --- |
-| 2025-11-25 | 0.4 | small changes | c |
-| 2025-11-25 | 0.3 | Utility Diagramm update | Team Betception |
-| 2025-11-25 | 0.2 | utility tree verbessert | Team Betception |
-| 2025-11-25 | 0.1 | Docs update | Team Betception |
-| 2025-11-24 | 0.0 | Update utility-tree.md | JustinKaram14 |
-| 01.12.2025 | 0.5 | Abgleich Implementierungsstand (Umsetzungs-Status/Gaps) | Team BetCeption |
-| 01.12.2025 | 0.6 | Mermaid Utility-Diagramm hinzugefügt | Team BetCeption |
+## Utility Tree
 
-# Utility Tree
+Der Utility Tree folgt der Struktur aus den Vorlesungsfolien (Quality Attribute → Refinement → Quality Attribute Scenario → Business Value → Technical Risk). Alle Szenarien sind in der 6-Part-Form beschrieben und referenzieren das Diagramm.
 
-Der Utility Tree folgt exakt der Struktur aus den Vorlesungsfolien (Quality Attribute -> Refinement -> Quality Attribute Scenario -> Business Value -> Technical Risk). Alle Szenarien sind in der 6-Part Form beschrieben und referenzieren das Diagramm 
-
-
-Mermaid-Variante (aus `docs/assets/Utility/utility-diagram.md`):
 ```mermaid
 flowchart TD
-  U[Utility] --> R[Zuverlaessigkeit]
+  U[Utility] --> R[Zuverlässigkeit]
   U --> S[Sicherheit]
   U --> P[Performance]
   U --> M[Wartbarkeit]
@@ -39,18 +26,14 @@ flowchart TD
   P1 --> P1a[p95 < 300ms]
   P1 --> P1b[Async I/O, Indizes, Pagination]
 
-  M --> M1[Modularitaet/Sidebet-Anpassung]
+  M --> M1[Modularität/Sidebet-Anpassung]
   M1 --> M1a[Feature-Module]
   M1 --> M1b[Zod-Validierung, Tests]
 
-  O --> O1[Telemetrie & Verfuegbarkeit]
+  O --> O1[Telemetrie & Verfügbarkeit]
   O1 --> O1a[X-Request-Id]
   O1 --> O1b["/metrics per Toggle/API-Key"]
 ```
-
-### Implementierungsstand (Abgleich)
-- Umgesetzt: ACID-Transaktionen mit Locks fuer Round/Wallet/Shop/Powerup/Daily-Reward; deterministische RNG + Fairness-API; Auth mit Rate-Limits + Refresh-Cookies; Metrics/Docs per Feature-Flag/API-Key.
-- Teilweise/offen: XP/Level-Aufstieg nicht umgesetzt; Power-Up-Effekte und Double/Split fehlen; Frontend nutzt nur Auth/Blackjack/Leaderboard, kein Wallet/Shop/Reward-UI.
 
 | Quality attribute | Refinement | Quality attribute scenario (6-Part Form) | Business value | Technical risk |
 | --- | --- | --- | --- | --- |
@@ -61,7 +44,4 @@ flowchart TD
 | Wartbarkeit | Lokale Anpassung der Sidebet-Engine | **Quelle:** Entwickler:in. **Stimulus:** Neue Sidebet-Regel wird implementiert. **Artefakt:** Round-Modul (Engine + Tests). **Umgebung:** Design-/Implementierungsphase. **Reaktion:** Änderung bleibt auf Domäne beschränkt und ist testbar. **Messung:** < 2 Dateien außerhalb `modules/round` betroffen, Tests grün. | Mittel | Mittel |
 | Verfügbarkeit & Beobachtbarkeit | Telemetrie für Incident Response | **Quelle:** On-Call. **Stimulus:** Supportticket verlangt Ursachenanalyse. **Artefakt:** `/metrics` + strukturierte Logs. **Umgebung:** Produktion mit Monitoring. **Reaktion:** Telemetrie & Logs liefern Request-IDs, Fehler- & Latenzwerte. **Messung:** 100 % Requests mit `X-Request-Id`, `/metrics` antwortet <1 s. | Mittel | Niedrig |
 
-Bei neuen Architekturtreibern wird der Baum erweitert, priorisiert und anschließend wieder in Schritt 2 (Taktiken) sowie Schritt 3 (ASR) überführt.
-
-
-
+- Umgesetzt: ACID-Transaktionen mit Locks für Round/Wallet/Shop/Powerup/Daily-Reward; deterministische RNG + Fairness-API; Auth mit Rate-Limits + Refresh-Cookies; Metrics/Docs per Feature-Flag/API-Key.
