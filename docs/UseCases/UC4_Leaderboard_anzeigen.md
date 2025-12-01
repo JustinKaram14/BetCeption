@@ -4,7 +4,7 @@
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (Balance/Level/Winnings-Views, public GET) | Team BetCeption |
 
-# Use Case â€“ Leaderboard anzeigen
+# Use Case 4: Leaderboard anzeigen
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es dem **eingeloggten Spieler**, die **Bestenliste (Leaderboard)** in **BetCeption** einzusehen.  
@@ -77,7 +77,7 @@ sequenceDiagram
 ```mermaid
 flowchart TD
   A[Start] --> B[Tab Balance/Level/Winnings waehlen]
-  B --> C[GET /leaderboard/{tab}?limit=10]
+  B --> C["GET /leaderboard/{tab}?limit=10"]
   C --> D{Token vorhanden?}
   D -->|Ja| E[currentUserRank ermitteln]
   D -->|Nein| F[Token ignorieren]
@@ -85,6 +85,7 @@ flowchart TD
   F --> G[200 items]
   G --> H[UI Tabelle rendern]
   H --> I[Ende]
+
 ```
 
 ## 7. Special Requirements
