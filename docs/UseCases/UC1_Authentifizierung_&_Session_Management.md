@@ -196,11 +196,11 @@ flowchart TD
 ```mermaid
 flowchart TD
   NA[Start] --> NB[Logout ausloesen]
-  NB --> NC[POST /auth/logout (Cookie)]
-  NC --> ND[Session per Refresh-Hash loeschen]
-  ND --> NE[Clear-Cookie refresh_token]
-  NE --> NF[Access-Token lokal loeschen]
-  NF --> NG[Weiterleitung Login]
+  NB --> NC["POST /auth/logout (Cookie)"]
+  NC --> ND["Session per Refresh-Hash loeschen"]
+  ND --> NE["Clear-Cookie refresh_token"]
+  NE --> NF["Access-Token lokal loeschen"]
+  NF --> NG["Weiterleitung Login"]
   NG --> NH[Ende]
 ```
 
