@@ -33,7 +33,7 @@ flowchart TD
   S1 --> S1b[HttpOnly Refresh, gehashte Tokens]
   S --> S2[Auditierbare Fairness]
   S2 --> S2a[Seed+Hash pro Runde]
-  S2 --> S2b[GET /fairness/{roundId}]
+  S2 --> S2b["GET /fairness/{roundId}"]
 
   P --> P1[Round-Start Latenz]
   P1 --> P1a[p95 < 300ms]
@@ -45,7 +45,7 @@ flowchart TD
 
   O --> O1[Telemetrie & Verfuegbarkeit]
   O1 --> O1a[X-Request-Id]
-  O1 --> O1b[/metrics per Toggle/API-Key]
+  O1 --> O1b["/metrics per Toggle/API-Key"]
 ```
 
 ### Implementierungsstand (Abgleich)
