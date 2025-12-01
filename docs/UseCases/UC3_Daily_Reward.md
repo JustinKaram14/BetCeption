@@ -4,7 +4,7 @@
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (UTC-Tag, Claim-Endpoint, kein Auto-Login-Claim) | Team BetCeption |
 
-# Use Case â€“ Daily Reward abholen
+# Use Case 2: Daily Reward abholen
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, einmal pro Tag eine **tägliche Belohnung (Coins)** zu erhalten.  
@@ -76,15 +76,16 @@ flowchart TD
   A[Start] --> B[Claim Button]
   B --> C[POST /rewards/daily/claim]
   C --> D{Heute schon beansprucht?}
-  D -->|Ja| E[409 {eligibleAt} anzeigen]
-  D -->|Nein| F[Reward bestimmen (min..max)]
+  D -->|Ja| E["409 {eligibleAt} anzeigen"]
+  D -->|Nein| F["Reward bestimmen (min..max)"]
   F --> G[Balance + last_daily_reward_at aktualisieren]
   G --> H[Claim + Wallet-Tx speichern]
-  H --> I[200 {claimedAmount,balance,eligibleAt}]
+  H --> I["200 {claimedAmount,balance,eligibleAt}"]
   E --> J[UI Countdown]
   I --> K[UI Erfolg + Countdown]
   J --> L[Ende]
   K --> L
+
 ```
 
 ## 6. Special Requirements
