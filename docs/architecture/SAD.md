@@ -16,7 +16,7 @@
 Dieses Dokument gibt einen vollständigen Überblick über die Software-Architektur von BetCeption anhand des 4+1-Sichtenmodells. Es fasst die architekturrelevanten Entscheidungen, Ziele und Views zusammen und verweist auf Detaildokumente (ASR, Utility Tree, ADRs, Use Cases).
 
 ### 1.2 Scope
-Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles Wallet, Leaderboards, Daily Reward). Betrifft Backend (Node/Express/TypeORM), Frontend (Angular) und Datenbank (MySQL/Docker). Optionale Oberflächen (Docs/Metrics) sind feature-gated.
+Gilt für die initiale Auslieferung von BetCeption: Blackjack mit Sidebets/Power-Ups, virtuelles Wallet, Leaderboards, Daily Reward. Betrifft Backend (Node/Express/TypeORM), Frontend (Angular) und Datenbank (MySQL/Docker). Optionale Oberflächen (Docs/Metrics) sind per Feature-Flag zuschaltbar; Erweiterungen darüber hinaus liegen außerhalb des aktuellen Scopes.
 
 ### 1.3 Definitions, Acronyms, Abbreviations
 - ASR: Architecture Significant Requirement  
@@ -28,14 +28,14 @@ Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles W
 - DB: Datenbank (MySQL 8)
 
 ### 1.4 References
-- `docs/architecture/asr-3-step.md` (ASR, Szenarien, Taktiken)  
-- `docs/architecture/utility-tree.md` (Utility Tree, priorisierte Szenarien)  
-- `docs/architecture/architecture-decisions.md` (AD-1..9)  
-- `docs/architecture/weekly-blog.md` (Woche 6-8)  
-- `docs/use-cases/*.md` (UC1-UC10)  
-- `docs/use-case-realisation/*.md` (Use-Case-Realisierungen mit Sequenz-/Aktivitätsdiagrammen)  
-- `db/schema.sql` (Relationenschema)  
-- Source-Code-Struktur unter `Betception-Backend/src`, `Betception-Frontend/src`
+- [`docs/architecture/asr-3-step.md`](./asr-3-step.md) (ASR, Szenarien, Taktiken)  
+- [`docs/architecture/utility-tree.md`](./utility-tree.md) (Utility Tree, priorisierte Szenarien)  
+- [`docs/architecture/architecture-decisions.md`](./architecture-decisions.md) (AD-1..9)  
+- [`docs/architecture/weekly-blog.md`](./weekly-blog.md) (Woche 6-8)  
+- [`docs/use-cases/*.md`](../use-cases/) (UC1-UC10)  
+- [`docs/use-case-realisation/*.md`](../use-case-realisation/) (Use-Case-Realisierungen mit Sequenz-/Aktivitätsdiagrammen)  
+- [`db/schema.sql`](../db/schema.sql) (Relationenschema)  
+- Source-Code-Struktur unter [`Betception-Backend/src`](../../Betception-Backend/src), [`Betception-Frontend/src`](../../Betception-Frontend/src)
 
 ### 1.5 Overview
 Die folgenden Abschnitte folgen dem RUP-Template: Architekturdarstellung, Ziele/Randbedingungen, Use-Case-Sicht, Logische Sicht, Prozess-Sicht, Einsatzsicht, Implementierungssicht, Datensicht, Größe/Performance, Qualität.
@@ -65,16 +65,16 @@ Quellen: Code-Struktur, ASR, Utility Tree, ADRs und Blog-Updates.
 
 ## 4. Use Case View
 Zentrale Use Cases (siehe `docs/use-cases`, Realisierung unter `docs/use-case-realisation`):
-- UC1 Authentifizierung & Session-Management  
-- UC2 Shop, Inventar & Wallet  
-- UC3 Daily Reward  
-- UC4 Leaderboard anzeigen  
-- UC5 Spiel starten (Blackjack)  
-- UC6 Wetten platzieren (Haupt- & Nebenwetten)  
-- UC7 Spielzug ausführen (Hit/Stand/Double/Split)  
-- UC8 Power-Up einsetzen  
-- UC9 XP-/Level-System verwalten  
-- UC10 Daten persistieren  
+- [UC1 Authentifizierung & Session-Management](../use-cases/uc1-authentifizierung-session-management.md)  
+- [UC2 Shop, Inventar & Wallet](../use-cases/uc2-shop-inventar-guthabeverwaltung.md)  
+- [UC3 Daily Reward](../use-cases/uc3-daily-reward.md)  
+- [UC4 Leaderboard anzeigen](../use-cases/uc4-leaderboard-anzeigen.md)  
+- [UC5 Spiel starten (Blackjack)](../use-cases/uc5-spiel-starten.md)  
+- [UC6 Wetten platzieren (Haupt- & Nebenwetten)](../use-cases/uc6-wetten-platzieren.md)  
+- [UC7 Spielzug ausführen (Hit/Stand/Double/Split)](../use-cases/uc7-spielzug-ausfuehren.md)  
+- [UC8 Power-Up einsetzen](../use-cases/uc8-powerup-einsetzen.md)  
+- [UC9 XP-/Level-System verwalten](../use-cases/uc9-xp-level-system-verwalten.md)  
+- [UC10 Daten persistieren](../use-cases/uc10-daten-persistieren.md)  
 
 **Implementierungsabdeckung (Kurz):** Backend deckt UC1/3/4/5/6/8/10 ab; UC7 (Double/Split) und UC9 (XP/Level-Aufstieg) fehlen. Frontend deckt Auth, Leaderboard und Blackjack (ohne Double/Split, ohne Sidebet-UI) ab; Shop/Inventar/Wallet/Reward fehlen.
 
