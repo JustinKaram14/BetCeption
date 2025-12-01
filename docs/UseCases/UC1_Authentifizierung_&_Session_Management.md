@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Access/Refresh, Sessions, Daily Reward Hinweis) | Team BetCeption |
+
 # Use Case – Authentifizierung & Session Management
 
 ## 1. Brief Description
@@ -9,6 +15,38 @@ Die **Middleware** stellt sicher, dass nur authentifizierte Benutzer auf spielbe
 Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Beim ersten Login des Tages wird automatisch der **Daily Reward** aktiviert.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** `/auth/register` legt Nutzer mit gehashtem Passwort und Startbalance an. `/auth/login` prA�ft Hash, setzt `lastLoginAt`, erstellt Access-Token (Response Body) plus Refresh-Token als HttpOnly-Cookie (`/auth/refresh`), speichert gehashten Refresh-Token in `sessions`. `/auth/refresh` erneuert Access-Token und Refresh-Token (gleiche Cookie-Strategie) nach Validierung des gespeicherten Hashes. `/auth/logout` lA�scht den gespeicherten Refresh-Token und das Cookie. Auth-Middleware erwartet `Authorization: Bearer <access>`, GET `/leaderboard/*` darf ohne Token passieren.
+- **Frontend:** Startseite besitzt ein Auth-Panel fA�r Login/Registrierung und nutzt `AuthFacade` mit LocalStorage fA�r Access-Token und Cookies fA�r Refresh. Dedizierte Login-/Register-Seiten sind Platzhalter. Token-Refresh wird clientseitig auf Bedarf aufgerufen, automatische Daily-Reward-Aktivierung existiert nicht.
+- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelA�st (muss per `/rewards/daily/claim` erfolgen). Kein Account-Lockout, MFA oder Device-Bindung implementiert. Logout invalidiert nur Refresh-Cookie/Session, Access-Token lA�uft aus oder wird clientseitig gelA�scht.
+
+## Aktueller Ablauf (Backend)
+1. Register: Client sendet `{email, username, password}` an `/auth/register`; Backend verweigert bei doppelter Mail/Username und vergibt Startguthaben (`env.users.initialBalance`).
+2. Login: Client sendet `{email, password}` an `/auth/login`; bei Erfolg `accessToken` im Body, Refresh-Cookie mit `httpOnly`, `secure`, `sameSite` auf `/auth/refresh`; `lastLoginAt` wird gesetzt.
+3. GeschA�tzte Routen: Access-Token im `Authorization`-Header; Refresh bei Ablauf via `/auth/refresh` (benutzt gespeicherten Refresh-Hash).
+4. Logout: Client POST `/auth/logout`; Refresh-Session wird gelA�scht, Cookie entfernt, Access-Token bleibt clientseitig zu lA�schen/ablaufen.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (AuthFacade)
+  participant API as Backend Auth
+  participant DB as DB
+  FE->>API: POST /auth/register {email, username, password}
+  API->>DB: Create user (hash pw, start balance)
+  API-->>FE: 201 Registered
+  FE->>API: POST /auth/login {email, password}
+  API->>DB: Verify user + password
+  API-->>FE: 200 {accessToken} + Set-Cookie refresh_token
+  FE->>API: GET/POST protected with Authorization: Bearer access
+  FE->>API: POST /auth/refresh (sends refresh cookie)
+  API->>DB: Verify hashed refresh, rotate token
+  API-->>FE: 200 {accessToken} + new refresh cookie
+  FE->>API: POST /auth/logout
+  API->>DB: Delete session by refresh hash
+  API-->>FE: 204 No Content
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Login-wireframe.png)
 ![alt text](../assets/Wireframe-mockups/Mockup-Register-wireframe.png)

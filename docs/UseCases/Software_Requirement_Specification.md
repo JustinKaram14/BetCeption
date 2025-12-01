@@ -1,3 +1,8 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale SRS (Neue Ordnerstruktur) | Team BetCeption|
+
 # BetCeption:  Software Requirements Specification (SRS)
 
 ## Table of contents

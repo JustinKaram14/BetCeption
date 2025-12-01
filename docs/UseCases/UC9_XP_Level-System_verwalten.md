@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (XP/Level derzeit read-only) | Team BetCeption |
+
 # Use Case – XP und Level-System verwalten
 
 ## 1. Brief Description
@@ -6,6 +12,23 @@ Nach jedem Spiel erhält der Spieler XP abhängig von seiner Leistung, z. B. G
 Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und schaltet neue Power-Ups oder Features frei.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** `users` besitzen Felder `xp` (int) und `level` (int), werden aber nirgends erhA�ht. Weder Rundenauswertung noch Rewards aktualisieren XP/Level. APIs geben Werte nur aus (`/wallet`, `/users/:id`, `/leaderboard/level`). Power-Up-Kauf prA�ft nur `level >= minLevel`.
+- **Frontend:** Zeigt XP/Level in Wallet-Summary (nur intern genutzt) und im Leaderboard. Keine Fortschrittsanzeige, keine Level-Up-Logik.
+- **Abweichungen:** XP-Berechnung, Level-Grenzen, Freischaltungen und Benachrichtigungen fehlen komplett. Sequenzdiagramm und Flow gelten aktuell nur als Zielbild.
+
+## Sequenzdiagramm (aktuell - Read only)
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as User/Wallet/Leaderboard
+  participant DB as DB
+  FE->>API: GET /wallet (Bearer)
+  API-->>FE: 200 {balance, xp, level}
+  FE->>API: GET /leaderboard/level?limit=10
+  API-->>FE: 200 {items:[{level,xp}], currentUserRank}
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/mockup-XPBar-wireframe.png)
 ## 1.3 Mockup

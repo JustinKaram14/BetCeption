@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (UTC-Tag, Claim-Endpoint, kein Auto-Login-Claim) | Team BetCeption |
+
 # Use Case – Daily Reward abholen
 
 ## 1.1 Brief Description
@@ -6,6 +12,27 @@ Beim Login oder beim Aufruf der Reward-Funktion prüft das System das **letzte B
 Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat, wird dem Spieler die Belohnung gutgeschrieben.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** `POST /rewards/daily/claim` prA�ft `users.lastDailyRewardAt` gegen das aktuelle UTC-Datum (Kalendertag, nicht 24h Intervall). Bei erster Abholung pro Tag wird ein Reward per `crypto.randomInt` zwischen `dailyRewardConfig.minAmount` und `maxAmount` gezogen, Guthaben aktualisiert, `DailyRewardClaim` sowie `WalletTransaction (REWARD)` geschrieben. Response: `{claimedAmount, balance, eligibleAt}`. Zweitversuch am selben Tag liefert 409 + `eligibleAt`.
+- **Frontend:** Kein UI-Hook vorhanden. `Wallet`-Service stellt `claimDailyReward()` bereit, wird aber nirgends verwendet.
+- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelA�st. Countdown/Timer nur clientseitig nach Response mA�glich. Keine Retry- oder Reminder-Logik.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Rewards API
+  participant DB as DB
+  FE->>API: POST /rewards/daily/claim (Bearer)
+  API->>DB: Load user (lock), check lastDailyRewardAt
+  alt noch nicht beansprucht
+    API->>DB: Update balance, set lastDailyRewardAt, insert claim + wallet_tx
+    API-->>FE: 200 {claimedAmount, balance, eligibleAt}
+  else bereits beansprucht
+    API-->>FE: 409 {message, eligibleAt}
+  end
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Daily_Rewards-wirecard.png)
 ## 1.3 Mockup

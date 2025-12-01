@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Main+Side Bets via Round-Start, keine Idempotency/Double) | Team BetCeption |
+
 # Use Case – Wetten platzieren (Haupt- **und** Nebenwetten)
 
 ## 1. Brief Description
@@ -7,6 +13,24 @@ Das System prüft **Guthaben**, **Einsatzlimits**, **Zeitfenster/Spielzustand** 
 Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel starten*, *Spielzug ausführen*), Authentifizierung (Login).
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** Haupt- und Nebenwetten werden gemeinsam in `POST /round/start` abgewickelt (kein separater Platzierungs-Endpoint). Main Bet = `betAmount`; Side Bets optional A�ber `sideBets[]` (Codes `FIRST_CARD_COLOR|SUIT|RANK`, Zielkontext Dealer/Player-First-Card). Backend prA�ft eine aktive Runde (verbietet zweite), validiert EinsA�tze > 0, Side-Bet-Payload und Guthaben, bucht Wallet-Txs (`BET_PLACE`), legt `main_bets`/`side_bets` an. Odds kommen aus `sidebet_types.baseOdds`, keine dynamische Quote.
+- **Frontend:** Nur Feld fA�r `betAmount` auf der Blackjack-Seite; keine UI fA�r Side Bets, Odds, Limits oder Validierung vorab. Kein eigener Flow fA�r Hauptwette ohne Spielstart.
+- **Abweichungen:** Keine In-Game-Zeitfenster oder Idempotency-Key-UnterstA�tzung. Einsatzlimits sind serverseitig (max 100000 pro Bet-Validierung), aber nicht visuell kommuniziert. Kein Pre-Deal-Caching oder Bet-Panel wie beschrieben.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (Blackjack)
+  participant API as Round/Bets API
+  participant DB as DB
+  FE->>API: POST /round/start {betAmount, sideBets?} (Bearer)
+  API->>DB: Check active round, validate sideBet types/payload
+  API->>DB: Lock user, check balance >= total bet
+  API->>DB: Create round, hands, main_bet, side_bets, wallet_txs (-bets)
+  API-->>FE: 201 {round with bets + fairness}
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Nebenwette-wirecard.jpg)
 ![alt text](../assets/Wireframe-mockups/Mockup-Nebenwette2-wirecard.jpg)

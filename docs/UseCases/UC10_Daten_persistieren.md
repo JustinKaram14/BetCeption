@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Transaktionen/Locks, fehlende XP-Updates) | Team BetCeption |
+
 # Use Case – Daten persistieren
 
 ## 1. Brief Description
@@ -5,6 +11,24 @@ Dieser Use Case beschreibt die dauerhafte Speicherung aller wichtigen Spiel- und
 Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, Power-Ups, XP und Transaktionen zuverlässig gespeichert und bei Bedarf wiederhergestellt werden können.
 
 ---
+
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** MySQL + TypeORM (`synchronize=false`). Migrations: Initialschema (Users, Sessions, Rounds, Bets, WalletTransactions, Powerups, Views) und Rate-Limit-Counter. Kritische Flows laufen in DB-Transaktionen mit pessimistischen Locks (User-Balance, Powerups, Runde/Hand), u. a. fA�r Round-Start/Hit/Stand/Settle, Daily-Reward, Wallet-Adjustments, Powerup-Kauf/-Verbrauch. Keine generische Retry-Logik oder Event-Sourcing.
+- **Frontend:** Keine Client-Persistenz; konsumiert nur API-Responses.
+- **Abweichungen:** Keine mehrstufigen Backups, kein Circuit-Breaker bei DB-Ausfall. XP-Level-Updates fehlen (siehe UC9).
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Backend Service
+  participant DB as MySQL (TypeORM)
+  FE->>API: Domain-Request (z.B. /round/start)
+  API->>DB: Begin transaction, lock affected rows
+  API->>DB: Insert/Update domain rows (users, bets, txs, etc.)
+  API->>DB: Commit transaction
+  API-->>FE: Response mit persistierten Daten
+```
 
 ## 2. Mockup
 

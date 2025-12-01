@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Balance/Level/Winnings-Views, public GET) | Team BetCeption |
+
 # Use Case – Leaderboard anzeigen
 
 ## 1.1 Brief Description
@@ -6,6 +12,28 @@ Das Leaderboard zeigt die **Top-Spieler** basierend auf Kriterien wie **Gewinnsu
 Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** Endpunkte `GET /leaderboard/balance`, `/leaderboard/level`, `/leaderboard/winnings` sind A�ffentlich; ein optionaler Access-Token wird nur genutzt, um den Rang des eingeloggten Users innerhalb der geladenen Seite zu berechnen. Daten stammen aus drei DB-Views (`balance`, `level`, `net winnings 7d`), paginiert A�ber `limit`/`offset`, Standardlimit 10. Kein Cache/Timer, kein Sort-Umschalter.
+- **Frontend:** Homepage-Komponente lA�dt automatisch alle drei Kategorien (Tabs). Limit fest auf 10, keine Pagination oder Sortierung. Beim Winnings-Tab werden Usernames nicht angezeigt (Backend liefert nur `userId`, Frontend rendert `User #<id>`). Unangemeldete Nutzer kA�nnen die Liste sehen.
+- **Abweichungen:** Use Case nennt Gewinnsumme/DEPTH + Auth-Pflicht; aktuell gibt es Balance, Level, Net Winnings (7d) und Endpunkte sind fA�r GA�ste offen. Keine periodische Aktualisierung oder Caching.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (Homepage)
+  participant API as Leaderboard API
+  participant DB as DB Views
+  FE->>API: GET /leaderboard/balance?limit=10
+  API->>DB: Read leaderboard_balance_view ORDER BY balance desc
+  API-->>FE: 200 {items, currentUserRank}
+  FE->>API: GET /leaderboard/level?limit=10
+  API->>DB: Read leaderboard_level_view ORDER BY level,xp desc
+  API-->>FE: 200 {items, currentUserRank}
+  FE->>API: GET /leaderboard/winnings?limit=10
+  API->>DB: Read leaderboard_weekly_winnings_view ORDER BY netWinnings7d desc
+  API-->>FE: 200 {items, currentUserRank}
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Leaderboard-wirecard.jpg)
 ## 1.3 Mockup
