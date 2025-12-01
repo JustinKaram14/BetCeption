@@ -4,7 +4,7 @@
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (Shop/Inventar/Wallet Backend, fehlendes Frontend) | Team BetCeption |
 
-# Use Case â€“ Shop, Inventar & Guthabenverwaltung
+# Use Case 2: Shop, Inventar & Guthabenverwaltung
 
 ## 1. Brief Description
 Dieser Use Case beschreibt alle Funktionen rund um das **In-Game-Ökosystem von BetCeption**, bestehend aus:
@@ -157,13 +157,14 @@ flowchart TD
   G --> H{Level/Budget ok?}
   H -->|Nein| I[400/403 Meldung]
   H -->|Ja| J[Inventar aktualisieren, Wallet-Tx - Betrag]
-  J --> K[201 {balance, quantity}]
+  J --> K["201 {balance, quantity}"]
   K --> L[Inventar laden GET /inventory/powerups]
   L --> M[Wallet laden GET /wallet + /wallet/transactions]
   M --> N[UI aktualisieren]
   I --> O[Ende]
   N --> O
   F --> O
+
 ```
 
 ## 6. Special Requirements
