@@ -26,7 +26,7 @@ Zuverlässige, transaktionssichere Persistenz für Runden, Wetten, Wallet-Buchun
 - **WalletTx:** Eintrag in `wallet_transactions`.
 
 ### 1.4 References
-- UC10_Daten_persistieren.md  
+- ../use-cases/uc10-daten-persistieren.md  
 - db/schema.sql (alle Tabellen/Views)  
 - Backend: Round-, Wallet-, Rewards-, Powerups-, Auth-Routen
 
@@ -152,5 +152,7 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 4.  
 - Flows Abschnitt 3.1.
+
+
 
 

@@ -26,7 +26,7 @@ Power-Ups sicher verbrauchen, Bestand konsistent reduzieren und (zukünftig) Eff
 - **Consumption:** Pro Verbrauchseinheit ein Eintrag in `powerup_consumptions`.
 
 ### 1.4 References
-- UC8_PowerUp_Einsetzen.md  
+- ../use-cases/uc8-powerup-einsetzen.md  
 - db/schema.sql (powerup_types, user_powerups, powerup_consumptions)  
 - Backend-Route `powerups/consume`
 
@@ -148,5 +148,6 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm in Abschnitt 4.  
 - Flows und Constraints in Abschnitt 3.1/5 zusammengefasst.
+
 
 

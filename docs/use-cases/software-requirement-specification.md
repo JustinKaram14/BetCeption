@@ -136,27 +136,27 @@ Die Anwendung wird mit folgenden Technologien umgesetzt:
 
 **3.1.1 Authentifizierung & Session-Management**  
 Registrieren, Anmelden und Abmelden. Nach erfolgreichem Login erhält der Nutzer ein JWT; geschützte Endpunkte prüfen dieses Token.  
-[Zur Spezifikation](./UC1_Authentifizierung_&_Session_Management.md)
+[Zur Spezifikation](./uc1-authentifizierung-session-management.md)
 
 **3.1.2 Spiel starten**  
 Der Spieler setzt seinen Haupteinsatz und startet eine neue Blackjack-Runde. Der Dealer gibt aus und die Runde beginnt.  
-[Zur Spezifikation](./UC5_Spiel_starten.md)
+[Zur Spezifikation](./uc5-spiel-starten.md)
 
 **3.1.3 Wetten platzieren (Haupteinsatz & Sidebet)**  
 Der Spieler legt die Höhe seines Haupteinsatzes fest und kann optional Sidebets setzen (z. B. „Dealer gewinnt“). Guthaben wird geprüft und reserviert; Auswertung am Rundenende.  
-[Zur Spezifikation](./UC6_Wetten_platzieren.md)
+[Zur Spezifikation](./uc6-wetten-platzieren.md)
 
 **3.1.4 Shop, Inventar & Guthaben verwalten**  
 Spieler kaufen „Pillen“ (Power-Ups) mit virtuellem Guthaben, sehen ihr Inventar und ihr verfügbares Guthaben; Buchungen (Einsatz/Auszahlung) werden geführt.  
-[Zur Spezifikation](./UC2_Shop_Inventag_Guthabeverwaltung.md)
+[Zur Spezifikation](./uc2-shop-inventar-guthabeverwaltung.md)
 
 **3.1.5 Power-Up einsetzen**  
 Ein gekauftes Power-Up wird aktiviert und wirkt für eine definierte Anzahl an Runden; pro Runde entscheidet ein Trigger, ob der Vorteil greift.  
-[Zur Spezifikation](./UC8_PowerUp_Einsetzen.md)
+[Zur Spezifikation](./uc8-powerup-einsetzen.md)
 
 **3.1.6 Daten persistieren**  
 Spiel- und Nutzungsdaten werden in der Datenbank gespeichert, damit Runden korrekt ausgewertet und Salden konsistent geführt werden.  
-[Zur Spezifikation](./UC10_Daten_persistieren.md)
+[Zur Spezifikation](./uc10-daten-persistieren.md)
 
 ---
 
@@ -164,19 +164,19 @@ Spiel- und Nutzungsdaten werden in der Datenbank gespeichert, damit Runden korre
 
 **3.1.7 Daily-Reward**  
 Spieler erhalten bei täglichem Login einen Bonus zur Progression.  
-[Zur Spezifikation](./UC3_Daily_Reward.md)
+[Zur Spezifikation](./uc3-daily-reward.md)
 
 **3.1.8 Leaderboard anzeigen**  
 Das System stellt eine Rangliste mehrerer Spieler dar (Kriterien wie Gewinnsumme, Siegquote, Serien).  
-[Zur Spezifikation](./UC4_Leaderboard_anzeigen.md)
+[Zur Spezifikation](./uc4-leaderboard-anzeigen.md)
 
 **3.1.9 Spielzug ausführen**  
 Interaktionen innerhalb der Runde (z. B. Hit/Stand) werden als Spielzug modelliert und an die Engine übergeben.  
-[Zur Spezifikation](./UC7_Spielzeug_ausfuehren.md)
+[Zur Spezifikation](./uc7-spielzug-ausfuehren.md)
 
 **3.1.10 XP-/Level-System verwalten**  
 Fortschritt durch gespielte Runden führt zu Erfahrungspunkten und Level-Aufstiegen, die neue Boni freischalten können.  
-[Zur Spezifikation](./UC9_XP_Level-System_verwalten.md)
+[Zur Spezifikation](./uc9-xp-level-system-verwalten.md)
 
 ### 3.2 Benutzerfreundlichkeit
 ie Oberfläche soll ohne Anleitung verständlich sein. Zentrale Aktionen sind jederzeit sichtbar und mit klaren Bezeichnungen versehen. Interaktionen folgen einem einfachen, wiederkehrenden Muster: Einsatz wählen, Runde starten, Entscheidung treffen, Ergebnis sehen. Tooltips und kurze Inline-Hinweise helfen bei Bedarf, ohne den Spielfluss zu stören.
@@ -286,10 +286,12 @@ Texte sind zentral abgelegt. Eine spätere Übersetzung ist möglich, auch wenn 
 - Accessibility: WCAG-Basis (Kontrast, Fokus).
 
 ## 4. Begleitende Informationen
-- Vollstaendige Use-Case-Spezifikationen: `docs/UseCases/UC1..UC10*.md`.
-- Use-Case-Realization (UCRS) mit Sequenz- und Aktivitaetsdiagrammen: `docs/UCRS/*.md`.
+- Vollstaendige Use-Case-Spezifikationen: `docs/use-cases/uc1-...-uc10-*.md`.
+- Use-Case-Realization (UCRS) mit Sequenz- und Aktivitaetsdiagrammen: `docs/use-case-realisation/*.md`.
 - Architektur- und Qualitaetsartefakte: `docs/architecture/*.md`, Utility-Tree und Klassendiagramm.
 - Glossar/Definitionen siehe Abschnitt 1.3 und UCRS-Referenzen.
+
+
 
 
 

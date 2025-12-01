@@ -27,7 +27,7 @@ Spielzüge regelkonform, deterministisch und transaktionssicher durchführen sow
 - **RoundStatus:** `IN_PROGRESS`, `SETTLED`.
 
 ### 1.4 References
-- UC7_Spielzeug_ausfuehren.md  
+- ../use-cases/uc7-spielzug-ausfuehren.md  
 - db/schema.sql (rounds, hands, cards, main_bets, side_bets, wallet_transactions)  
 - Backend-Routen `round/hit`, `round/stand`, `round/settle`
 
@@ -156,5 +156,6 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 4.  
 - Aktivitäten Abschnitt 5.
+
 
 

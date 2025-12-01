@@ -36,7 +36,7 @@ DB: MySQL-Datenbank
 eligibleAt: Zeitstempel (UTC), ab wann der Spieler erneut berechtigt ist  
 
 ### 1.4 References
-Use Case Specification: UC3_DailyReward.md  
+Use Case Specification: ../use-cases/uc3-daily-reward.md  
 UML-Sequenzdiagramm "Daily Reward abholen"  
 Projektarchitektur BetCeption-System  
 
@@ -163,6 +163,7 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 2.4.  
 - Flow in 2.3.
+
 
 
 

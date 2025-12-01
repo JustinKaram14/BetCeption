@@ -27,7 +27,7 @@ Sicherer und konsistenter Kauf von Power-Ups, Verwaltung der Bestände im Invent
 - **Bearer:** JWT im Authorization-Header.
 
 ### 1.4 References
-- UC2_Shop_Inventag_Guthabeverwaltung.md  
+- ../use-cases/uc2-shop-inventar-guthabeverwaltung.md  
 - db/schema.sql (Tabellen `powerup_types`, `user_powerups`, `wallet_transactions`)  
 - Backend-Routen `shop`, `inventory`, `wallet`
 
@@ -228,5 +228,6 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramme Abschnitt 4.  
 - Aktivitäten Abschnitt 5.
+
 
 
