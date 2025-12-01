@@ -1,10 +1,10 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (UTC-Tag, Claim-Endpoint, kein Auto-Login-Claim) | Team BetCeption |
 
-# Use Case – Daily Reward abholen
+# Use Case â€“ Daily Reward abholen
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, einmal pro Tag eine **tägliche Belohnung (Coins)** zu erhalten.  
@@ -13,25 +13,10 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `POST /rewards/daily/claim` prA�ft `users.lastDailyRewardAt` gegen das aktuelle UTC-Datum (Kalendertag, nicht 24h Intervall). Bei erster Abholung pro Tag wird ein Reward per `crypto.randomInt` zwischen `dailyRewardConfig.minAmount` und `maxAmount` gezogen, Guthaben aktualisiert, `DailyRewardClaim` sowie `WalletTransaction (REWARD)` geschrieben. Response: `{claimedAmount, balance, eligibleAt}`. Zweitversuch am selben Tag liefert 409 + `eligibleAt`.
+- **Backend:** `POST /rewards/daily/claim` prAï¿½ft `users.lastDailyRewardAt` gegen das aktuelle UTC-Datum (Kalendertag, nicht 24h Intervall). Bei erster Abholung pro Tag wird ein Reward per `crypto.randomInt` zwischen `dailyRewardConfig.minAmount` und `maxAmount` gezogen, Guthaben aktualisiert, `DailyRewardClaim` sowie `WalletTransaction (REWARD)` geschrieben. Response: `{claimedAmount, balance, eligibleAt}`. Zweitversuch am selben Tag liefert 409 + `eligibleAt`.
 - **Frontend:** Kein UI-Hook vorhanden. `Wallet`-Service stellt `claimDailyReward()` bereit, wird aber nirgends verwendet.
-- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelA�st. Countdown/Timer nur clientseitig nach Response mA�glich. Keine Retry- oder Reminder-Logik.
+- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelAï¿½st. Countdown/Timer nur clientseitig nach Response mAï¿½glich. Keine Retry- oder Reminder-Logik.
 
-## Sequenzdiagramm
-```mermaid
-sequenceDiagram
-  participant FE as Frontend
-  participant API as Rewards API
-  participant DB as DB
-  FE->>API: POST /rewards/daily/claim (Bearer)
-  API->>DB: Load user (lock), check lastDailyRewardAt
-  alt noch nicht beansprucht
-    API->>DB: Update balance, set lastDailyRewardAt, insert claim + wallet_tx
-    API-->>FE: 200 {claimedAmount, balance, eligibleAt}
-  else bereits beansprucht
-    API-->>FE: 409 {message, eligibleAt}
-  end
-```
 
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Daily_Rewards-wirecard.png)
@@ -39,16 +24,7 @@ sequenceDiagram
 ![alt text](../assets/mockups/Daily-Rewards.png)
 
 ---
-<!--
-## 1.3 Screenshots
-- Lobby mit Daily Reward Button  
-- Erfolgsmeldung nach Abholung  
-- Countdown-Ansicht, wenn Belohnung noch nicht verfügbar ist  
 
-*(Screenshots folgen.)*
-
----
--->
 **2. Akteure:**  
 - **Spieler:** Löst die tägliche Belohnung durch Einloggen aus.  
 - **System:** Überprüft das Datum und gewährt die Belohnung einmal pro Tag.
@@ -57,7 +33,7 @@ sequenceDiagram
 ## 3. Flow of Events
 
 ### 3.1 Basic Flow
-1. Der Spieler klickt „Claim“.
+1. Der Spieler klickt â€žClaimâ€œ.
 2. Das System liest `last_daily_reward_at` aus der Datenbank.  
 3. Das System prüft, ob der Spieler anspruchsberechtigt ist:  
    - mehr als 24 Stunden seit letzter Belohnung **oder**  
@@ -73,18 +49,46 @@ sequenceDiagram
 ---
 
 ### 4. Sequenzdiagramm
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Daily-Reward.png>)
----
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Rewards API
+  participant DB as DB
 
-### 5. Aktivitätsdiagramm
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Daily-Reward.png>)
----
+  FE->>API: POST /rewards/daily/claim (Bearer)
+  API->>DB: Lock user row
+  API->>DB: Check last_daily_reward_at vs today (UTC)
+  alt Anspruch vorhanden
+    API->>DB: Roll random reward between min..max
+    API->>DB: Update user.balance, set last_daily_reward_at=today
+    API->>DB: Insert daily_reward_claim + wallet_tx (kind:REWARD)
+    API-->>FE: 200 {claimedAmount,balance,eligibleAt}
+  else bereits beansprucht
+    API-->>FE: 409 {message,eligibleAt}
+  end
 
+  Note over FE: UI kann Countdown aus eligibleAt berechnen
+```
 
-
+## 5. AktivitAtsdiagramm (aktuell)
+```mermaid
+flowchart TD
+  A[Start] --> B[Claim Button]
+  B --> C[POST /rewards/daily/claim]
+  C --> D{Heute schon beansprucht?}
+  D -->|Ja| E[409 {eligibleAt} anzeigen]
+  D -->|Nein| F[Reward bestimmen (min..max)]
+  F --> G[Balance + last_daily_reward_at aktualisieren]
+  G --> H[Claim + Wallet-Tx speichern]
+  H --> I[200 {claimedAmount,balance,eligibleAt}]
+  E --> J[UI Countdown]
+  I --> K[UI Erfolg + Countdown]
+  J --> L[Ende]
+  K --> L
+```
 
 ## 6. Special Requirements
-- Belohnung kann **fix** (z. B. 250 Coins) oder **zufällig** (z. B. 100–500 Coins) sein.  
+- Belohnung kann **fix** (z. B. 250 Coins) oder **zufällig** (z. B. 100â€“500 Coins) sein.  
 - Zeitprüfung basiert auf **Serverzeit (UTC)**.  
 - Operation ist **atomar und idempotent** (keine Doppelbelohnungen).  
 - Audit-Log wird erstellt mit:
@@ -112,18 +116,7 @@ sequenceDiagram
   - Countdown wird angezeigt.
 
 ---
-<!--
-### 5.1 Save changes / Sync with server
-**Persistente Felder (MySQL):**
-- `users.last_daily_reward_at`
-- `users.balance`
-- `wallet_transactions` (user_id, amount, type='credit', reason='daily_reward')
 
-**Synchronisation:**  
-Client erhält `new_balance`, `claimed_amount`, `eligible_at` und aktualisiert die Anzeige.
-
----
--->
 ## 9. Function Points
 | Komponente | Beschreibung | Punkte |
 |-------------|---------------|--------|
@@ -134,32 +127,6 @@ Client erhält `new_balance`, `claimed_amount`, `eligible_at` und aktualisiert d
 | **Gesamt** |  | **7 FP** |
 
 ---
-<!--
-## 7. Technische Hinweise
-**API-Endpoint:**
-```
-POST /api/rewards/daily/claim
-Authorization: Bearer <JWT>
-```
 
-**Antworten:**
-```
-200 OK { claimed_amount, new_balance, eligible_at }
-409 Conflict { error: "not_eligible", eligible_at }
-```
 
-**Pseudo-Code (Server):**
-```pseudo
-if !isEligible(user.last_daily_reward_at):
-    return 409, { eligible_at: nextTime() }
 
-amount = randomBetween(min, max)
-with transaction:
-    user.balance += amount
-    user.last_daily_reward_at = nowUTC()
-    insert(wallet_transactions, user, amount, "daily_reward")
-return 200, { claimed_amount: amount, new_balance: user.balance }
-```
-
----
--->

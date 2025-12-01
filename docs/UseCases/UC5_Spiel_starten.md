@@ -1,10 +1,10 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (Round-Start, Seeds, Sidebets optional, keine Lobby-Weiterleitung) | Team BetCeption |
 
-# Use Case – Spiel starten (Blackjack)
+# Use Case â€“ Spiel starten (Blackjack)
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, ein neues **Blackjack-Spiel** in **BetCeption** zu starten.  
@@ -13,23 +13,10 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `POST /round/start` (auth) nimmt `{betAmount, sideBets?}` entgegen. Backend prA�ft, ob fA�r den User bereits eine aktive Runde existiert, sperrt User-Balance, prA�ft Einsatz > 0, prA�ft optionale Side-Bets, zieht Gesamteinsatz ab, erstellt Runde mit Server-Seed/Hash, teilt initial 4 Karten (Player/Dealer alternierend), legt MainBet + Wallet-Tx an, setzt Status `IN_PROGRESS` und liefert den kompletten Round-State inkl. Fairness-Payload zurA�ck.
-- **Frontend:** Blackjack-Seite ruft `startRound` nur mit `betAmount` auf, zeigt Karten, Status und einen Banner bei Blackjack an. Kein UI fA�r Side-Bets, kein Round-Guard; 401 wird als Fehlertext angezeigt. Balance wird nach Deal/Settle neu geladen.
-- **Abweichungen:** Keine separaten Schritte fA�r Einsatzreservierung oder Lobby-Weiterleitung; Start funktioniert nur, wenn keine aktive Runde existiert (`ROUND_IN_PROGRESS`-Fehler). RNG ist deterministisch A�ber Server-Seed, Client bekommt direkt Hash + Seed im Response.
+- **Backend:** `POST /round/start` (auth) nimmt `{betAmount, sideBets?}` entgegen. Backend prAï¿½ft, ob fAï¿½r den User bereits eine aktive Runde existiert, sperrt User-Balance, prAï¿½ft Einsatz > 0, prAï¿½ft optionale Side-Bets, zieht Gesamteinsatz ab, erstellt Runde mit Server-Seed/Hash, teilt initial 4 Karten (Player/Dealer alternierend), legt MainBet + Wallet-Tx an, setzt Status `IN_PROGRESS` und liefert den kompletten Round-State inkl. Fairness-Payload zurAï¿½ck.
+- **Frontend:** Blackjack-Seite ruft `startRound` nur mit `betAmount` auf, zeigt Karten, Status und einen Banner bei Blackjack an. Kein UI fAï¿½r Side-Bets, kein Round-Guard; 401 wird als Fehlertext angezeigt. Balance wird nach Deal/Settle neu geladen.
+- **Abweichungen:** Keine separaten Schritte fAï¿½r Einsatzreservierung oder Lobby-Weiterleitung; Start funktioniert nur, wenn keine aktive Runde existiert (`ROUND_IN_PROGRESS`-Fehler). RNG ist deterministisch Aï¿½ber Server-Seed, Client bekommt direkt Hash + Seed im Response.
 
-## Sequenzdiagramm
-```mermaid
-sequenceDiagram
-  participant FE as Frontend (Blackjack)
-  participant API as Round API
-  participant DB as DB
-  FE->>API: POST /round/start {betAmount[, sideBets]} (Bearer)
-  API->>DB: Check no active round for user
-  API->>DB: Lock user, validate balance >= bet+sidebets
-  API->>DB: Create round (serverSeed+hash), dealer/player hands, main bet, wallet_tx (-bet)
-  API-->>FE: 201 {round:{status, hands, mainBet, fairness}}
-  FE-->>API: subsequent actions via UC7 (hit/stand/settle)
-```
 
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Spiel_Starten-wirecard.png)
@@ -37,16 +24,7 @@ sequenceDiagram
 ![alt text](../assets/mockups/Spiel-Starten-Daily-Rewards-Mockup.png)
 
 ---
-<!--
-## 1.3 Screenshots
-- Startseite des Spiels mit Einsatzfeld  
-- Nach Start: Tisch mit Karten  
-- Anzeige von Einsatz und Guthaben  
 
-*(Screenshots folgen später.)*
-
----
--->
 **2. Akteure:**  
 - **Spieler:** Startet ein neues Blackjack-Spiel.  
 - **System:** Initialisiert das Spiel, verteilt Karten und verwaltet die Wettsituation.
@@ -69,30 +47,65 @@ sequenceDiagram
 
 ---
 
+
 ### 4. Sequenz Diagram
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm SpielStarten.png>)
----
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (Blackjack)
+  participant API as Round API
+  participant DB as DB
 
-### 5. Aktivitätsdiagramm
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Spiel-starten.png>)
----
+  FE->>API: POST /round/start {betAmount, sideBets?} (Bearer)
+  API->>DB: Check active round for user
+  alt Runde aktiv
+    API-->>FE: 409 {code:ROUND_IN_PROGRESS}
+  else keine aktive Runde
+    API->>DB: Lock user; validate bet>0
+    API->>DB: Validate sideBets types/payload (max 5)
+    API->>DB: Check balance >= bet + sum(sideBets)
+    alt Guthaben ok
+      API->>DB: Create round (serverSeed+hash, status=DEALING)
+      API->>DB: Insert dealer+player hands; deal 4 cards deterministisch
+      API->>DB: Insert main_bet (PLACED) + wallet_tx (BET_PLACE -bet)
+      API->>DB: Insert side_bets + wallet_txs (falls vorhanden)
+      API->>DB: Update round status=IN_PROGRESS
+      API-->>FE: 201 {round with hands, bets, fairness}
+    else zu wenig Guthaben
+      API-->>FE: 400 {code:INSUFFICIENT_FUNDS}
+    end
+  end
 
+  Note over FE: Weitere Aktionen siehe UC7 (hit/stand/settle)
+```
+
+### 5. AktivitAtsdiagramm (aktuell)
+```mermaid
+flowchart TD
+  A[Start] --> B[User setzt Einsatz + optionale Sidebets]
+  B --> C{Bereits aktive Runde?}
+  C -->|Ja| D[409 ROUND_IN_PROGRESS]
+  C -->|Nein| E[POST /round/start]
+  E --> F[Validierung Einsatz/Sidebets]
+  F --> G{Guthaben ausreichend?}
+  G -->|Nein| H[400 INSUFFICIENT_FUNDS]
+  G -->|Ja| I[Sperre User, Round anlegen (Seed/Hash)]
+  I --> J[Haende erstellen + Karten austeilen]
+  J --> K[MainBet speichern, Wallet-Tx -Einsatz]
+  K --> L[Sidebets speichern + Wallet-Tx]
+  L --> M[Rundenstatus IN_PROGRESS, Antwort 201]
+  D --> N[Ende]
+  H --> N
+  M --> N
+```
+
+---
 
 ## 6. Special Requirements
 - Spiel darf nur gestartet werden, wenn **kein anderes aktives Spiel** besteht.  
 - Einsatzbetrag wird **atomar reserviert** (DB-Transaktion).  
 - Initiale Kartenverteilung erfolgt **zufällig** über RNG.
-  <!--- RNG muss **kryptographisch sicher** sein.--> 
 - Server synchronisiert Spielstatus mit Client nach jeder Aktion.
-  <!--- Spielstatus wird persistiert in `games`-Tabelle.  -->
-<!--- Das Spielobjekt enthält:
-  - game_id  
-  - player_id  
-  - dealer_cards  
-  - player_cards  
-  - bet_amount  
-  - status ("running", "finished")  
-  - created_at -->
+
 ---
 
 ## 7. Preconditions
@@ -109,27 +122,6 @@ sequenceDiagram
 - Karten wurden verteilt.
 
 ---
-<!--
-### 5.1 Save changes / Sync with server
-**Persistente Datenbanktabellen (Beispiel):**
-```sql
-INSERT INTO games (player_id, bet_amount, dealer_cards, player_cards, status, created_at)
-VALUES (:player_id, :bet, :dealer_cards, :player_cards, 'running', NOW());
-UPDATE users SET balance = balance - :bet WHERE id = :player_id;
-```
-
-Server antwortet mit:
-```json
-{
-  "game_id": 123,
-  "player_cards": ["10♠", "A♥"],
-  "dealer_cards": ["7♣"],
-  "balance": 950,
-  "status": "running"
-}
-```
--->
----
 
 ## 9. Function Points
 | Komponente | Beschreibung | Punkte |
@@ -141,41 +133,9 @@ Server antwortet mit:
 | **Gesamt** |  | **7 FP** |
 
 ---
-<!--
-## 7. Technische Hinweise
-**API-Endpoint:**
-```
-POST /api/game/start
-Authorization: Bearer <JWT>
-Body: { "bet_amount": 50 }
-```
 
-**Antworten:**
-```
-200 OK { game_id, player_cards, dealer_cards, balance, status }
-400 Bad Request { error: "insufficient_balance" }
-409 Conflict { error: "active_game_exists" }
-500 Internal Server Error { error: "server_error" }
-```
 
-**Serverlogik (Pseudocode):**
-```pseudo
-if user.balance < bet:
-    return 400, { error: "insufficient_balance" }
-if existsActiveGame(user.id):
-    return 409, { error: "active_game_exists" }
 
-cards = shuffleDeck()
-player_cards = draw(cards, 2)
-dealer_cards = draw(cards, 1)
 
-transaction:
-  insertGame(user.id, bet, player_cards, dealer_cards, "running")
-  updateBalance(user.id, -bet)
-commit
 
-return 200, { game_id, player_cards, dealer_cards, balance: user.balance - bet, status: "running" }
-```
 
----
--->

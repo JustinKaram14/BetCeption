@@ -1,35 +1,24 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (Main+Side Bets via Round-Start, keine Idempotency/Double) | Team BetCeption |
 
-# Use Case – Wetten platzieren (Haupt- **und** Nebenwetten)
+# Use Case â€“ Wetten platzieren (Haupt- **und** Nebenwetten)
 
 ## 1. Brief Description
 Dieser Use Case fasst die Platzierung von **Hauptwetten** (Einsatz vor Spielstart) und **Nebenwetten** (Side Bets zu Kartenereignissen) in **BetCeption** zusammen.  
-Das System prüft **Guthaben**, **Einsatzlimits**, **Zeitfenster/Spielzustand** und verarbeitet die Buchungen **atomar**. Nebenwetten können – sofern erlaubt – **vor dem Deal** oder **in definierten In-Game-Fenstern** abgegeben und beim Eintreten des Ereignisses **automatisch ausgewertet** werden.
+Das System prüft **Guthaben**, **Einsatzlimits**, **Zeitfenster/Spielzustand** und verarbeitet die Buchungen **atomar**. Nebenwetten können â€“ sofern erlaubt â€“ **vor dem Deal** oder **in definierten In-Game-Fenstern** abgegeben und beim Eintreten des Ereignisses **automatisch ausgewertet** werden.
 
-Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel starten*, *Spielzug ausführen*), Authentifizierung (Login).
+Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z.â€¯B. *Spiel starten*, *Spielzug ausführen*), Authentifizierung (Login).
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** Haupt- und Nebenwetten werden gemeinsam in `POST /round/start` abgewickelt (kein separater Platzierungs-Endpoint). Main Bet = `betAmount`; Side Bets optional A�ber `sideBets[]` (Codes `FIRST_CARD_COLOR|SUIT|RANK`, Zielkontext Dealer/Player-First-Card). Backend prA�ft eine aktive Runde (verbietet zweite), validiert EinsA�tze > 0, Side-Bet-Payload und Guthaben, bucht Wallet-Txs (`BET_PLACE`), legt `main_bets`/`side_bets` an. Odds kommen aus `sidebet_types.baseOdds`, keine dynamische Quote.
-- **Frontend:** Nur Feld fA�r `betAmount` auf der Blackjack-Seite; keine UI fA�r Side Bets, Odds, Limits oder Validierung vorab. Kein eigener Flow fA�r Hauptwette ohne Spielstart.
-- **Abweichungen:** Keine In-Game-Zeitfenster oder Idempotency-Key-UnterstA�tzung. Einsatzlimits sind serverseitig (max 100000 pro Bet-Validierung), aber nicht visuell kommuniziert. Kein Pre-Deal-Caching oder Bet-Panel wie beschrieben.
+- **Backend:** Haupt- und Nebenwetten werden gemeinsam in `POST /round/start` abgewickelt (kein separater Platzierungs-Endpoint). Main Bet = `betAmount`; Side Bets optional über `sideBets[]` (Codes `FIRST_CARD_COLOR|SUIT|RANK`, Zielkontext Dealer/Player-First-Card). Backend prüft eine aktive Runde (verbietet zweite), validiert Einsätze > 0, Side-Bet-Payload und Guthaben, bucht Wallet-Txs (`BET_PLACE`), legt `main_bets`/`side_bets` an. Odds kommen aus `sidebet_types.baseOdds`, keine dynamische Quote.
+- **Frontend:** Nur Feld für `betAmount` auf der Blackjack-Seite; keine UI für Side Bets, Odds, Limits oder Validierung vorab. Kein eigener Flow für Hauptwette ohne Spielstart.
+- **Abweichungen:** Keine In-Game-Zeitfenster oder Idempotency-Key-Unterstützung. Einsatzlimits sind serverseitig (max 100000 pro Bet-Validierung), aber nicht visuell kommuniziert. Kein Pre-Deal-Caching oder Bet-Panel wie beschrieben.
 
-## Sequenzdiagramm
-```mermaid
-sequenceDiagram
-  participant FE as Frontend (Blackjack)
-  participant API as Round/Bets API
-  participant DB as DB
-  FE->>API: POST /round/start {betAmount, sideBets?} (Bearer)
-  API->>DB: Check active round, validate sideBet types/payload
-  API->>DB: Lock user, check balance >= total bet
-  API->>DB: Create round, hands, main_bet, side_bets, wallet_txs (-bets)
-  API-->>FE: 201 {round with bets + fairness}
-```
+
 
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Nebenwette-wirecard.jpg)
@@ -47,64 +36,88 @@ sequenceDiagram
 
 ## 3. Flow of Events
 
-### 3.1 Hauptwette (Main Bet) – vor Spielstart
+### 3.1 Hauptwette (Main Bet) â€“ vor Spielstart
 1. Spieler ist **eingeloggt** und befindet sich in Lobby oder Blackjack-Ansicht.  
 2. Spieler wählt **Einsatz** (Chip/Amount).  
-3. Client sendet **„Hauptwette platzieren“** an Server.  
+3. Client sendet **â€žHauptwette platzierenâ€œ** an Server.  
 4. Server validiert: **Einsatzlimits**, **Guthaben**, **kein aktives Spiel mit gesetztem Einsatz**.  
 5. Bei Erfolg (in **atomarer Transaktion**):  
    - Betrag wird **reserviert/abgezogen**.  
    - **Bet-Record** wird mit Status `placed` gespeichert.  
    - **Aktueller Kontostand** wird zurückgegeben.  
-6. UI bestätigt und erlaubt **„Spiel starten“**.
+6. UI bestätigt und erlaubt **â€žSpiel startenâ€œ**.
 
 **Alternative Flows (Hauptwette):**  
-- Nicht eingeloggt → **401**; Verweis auf Login.  
-- Einsatz < min oder > max → **400** *„Einsatz liegt nicht im erlaubten Bereich.“*  
-- Unzureichendes Guthaben → **400** *„Nicht genügend Guthaben.“*  
-- Bereits aktive Wette/Spiel → **409** *„Aktive Wette/Spiel existiert bereits.“*  
-- Doppelanfrage/Race → **idempotent success** via **Idempotency-Key**.  
-- Server-/DB-Fehler → **500**, keine Buchung.
+- Nicht eingeloggt â†’ **401**; Verweis auf Login.  
+- Einsatz < min oder > max â†’ **400** *â€žEinsatz liegt nicht im erlaubten Bereich.â€œ*  
+- Unzureichendes Guthaben â†’ **400** *â€žNicht genügend Guthaben.â€œ*  
+- Bereits aktive Wette/Spiel â†’ **409** *â€žAktive Wette/Spiel existiert bereits.â€œ*  
+- Doppelanfrage/Race â†’ **idempotent success** via **Idempotency-Key**.  
+- Server-/DB-Fehler â†’ **500**, keine Buchung.
 
 ---
 
-### 3.2 Nebenwette (Side Bet) – pre-deal oder in definierten Fenstern
+### 3.2 Nebenwette (Side Bet) â€“ pre-deal oder in definierten Fenstern
 1. Spieler ist **eingeloggt** und hat ein **aktives Spiel**.  
 2. Spieler öffnet **Nebenwetten-Panel**.  
-3. Spieler wählt **Typ** (z. B. Suit/Farbe, Rang, konkrete Karte, Muster), **Ziel** und **Einsatz**.  
+3. Spieler wählt **Typ** (z.â€¯B. Suit/Farbe, Rang, konkrete Karte, Muster), **Ziel** und **Einsatz**.  
 4. Client fragt beim Server die **Quote (odds)** an.  
 5. Spieler bestätigt die Nebenwette.  
-6. Server validiert **Guthaben**, **Limits**, **Zeitfenster** (pre-deal/next-card), keine „locked“-Phase.  
+6. Server validiert **Guthaben**, **Limits**, **Zeitfenster** (pre-deal/next-card), keine â€žlockedâ€œ-Phase.  
 7. Bei Erfolg (atomar): **Einsatz buchen**, **Side-Bet** mit `status=open` speichern, **Quote** & **potenzielle Auszahlung** zurückgeben.  
-8. Beim **Ereigniszeitpunkt** (z. B. „nächste Karte aufgedeckt“) **wertet** der Server die Nebenwette aus → `status=won|lost`, ggf. **Auszahlung** gutschreiben.
+8. Beim **Ereigniszeitpunkt** (z.â€¯B. â€žnächste Karte aufgedecktâ€œ) **wertet** der Server die Nebenwette aus â†’ `status=won|lost`, ggf. **Auszahlung** gutschreiben.
 
 **Alternative Flows (Nebenwette):**  
-- Nicht eingeloggt / **kein aktives Spiel** → **401/409**.  
-- **Zeitfenster geschlossen** → **409** *„Nebenwetten sind derzeit nicht erlaubt.“*  
-- **Ungültige Wettkonfiguration** → **400**.  
-- **Nicht genügend Guthaben / Limit verletzt** → **400**.  
-- **Idempotente Doppelabgabe** → **200** mit vorherigem Resultat.  
-- **Spielende vor Auswertung** → Storno oder lost gemäß Regelwerk, ggf. **Rückerstattung**.
+- Nicht eingeloggt / **kein aktives Spiel** â†’ **401/409**.  
+- **Zeitfenster geschlossen** â†’ **409** *â€žNebenwetten sind derzeit nicht erlaubt.â€œ*  
+- **Ungültige Wettkonfiguration** â†’ **400**.  
+- **Nicht genügend Guthaben / Limit verletzt** â†’ **400**.  
+- **Idempotente Doppelabgabe** â†’ **200** mit vorherigem Resultat.  
+- **Spielende vor Auswertung** â†’ Storno oder lost gemäß Regelwerk, ggf. **Rückerstattung**.
 
 ---
 
-## 4. Sequenzdiagramme (PlantUML, mit Aktivitätsbalken)
+## 4. Sequenzdiagramme
+### 4.1 Haupt- und Nebenwetten (Round-Start)
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (Blackjack)
+  participant API as Round/Bets API
+  participant DB as DB
 
-### 4.1 Hauptwette
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Hauptwette.png>)
+  FE->>API: POST /round/start {betAmount, sideBets[]} (Bearer)
+  API->>DB: Check no active round for user
+  API->>DB: Validate main bet >0; validate sideBet codes/targets/amounts
+  API->>DB: Lock user; check balance >= bet + sideBets
+  alt Validierung ok
+    API->>DB: Create round + hands + serverSeed/hash
+    API->>DB: Insert main_bet (PLACED) + wallet_tx (BET_PLACE -bet)
+    API->>DB: For each sideBet: insert side_bet (PLACED) + wallet_tx (-amount)
+    API->>DB: Update round status=IN_PROGRESS
+    API-->>FE: 201 {round incl. mainBet, sideBets, fairness}
+  else Fehler (invalid side bet / insufficient funds)
+    API-->>FE: 400/409 {code, message}
+  end
 
-### 4.2 Nebenwette
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Nebenwette.png>)
+  Note over FE: SideBets optional; keine Idempotency-Keys, Schutz via Locks/Status
+```
 
----
-
-## 5. Aktivitätsdiagramme
-## 5.1 Hauptwette
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Hauptwette.png>)
-## 5.2 Nebenwette
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm nebenwette.png>)
-
----
+## 5. AktivitAtsdiagramm (aktuell)
+```mermaid
+flowchart TD
+  A[Start] --> B[User waehlt Einsatz + Sidebets]
+  B --> C[POST /round/start]
+  C --> D{Validierung + Guthaben ok?}
+  D -->|Nein| E[Fehler 400/409]
+  D -->|Ja| F[Round/Haende anlegen, Seed setzen]
+  F --> G[MainBet + Wallet-Tx -Einsatz]
+  G --> H[Sidebets + Wallet-Tx -Einsaetze]
+  H --> I[Round status IN_PROGRESS]
+  I --> J[Antwort mit Fairness + Bets]
+  J --> K[UI: Spiel starten]
+  E --> L[Ende]
+  K --> L
+```
 
 ## 6. Special Requirements (gemeinsam)
 - **Einsatzlimits** konfigurierbar (`min_bet`, `max_bet`, `step`) je Wettart.  
@@ -147,6 +160,4 @@ sequenceDiagram
 | **Gesamt** |  | **19 FP** |
 
 ---
-
-
 
