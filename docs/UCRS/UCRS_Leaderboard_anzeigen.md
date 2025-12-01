@@ -37,7 +37,7 @@ Kapitel 2 beschreibt den Implementierungsstand, Kapitel 3 die Flows und Kapitel 
 ## 2. Implementierungsstand (aktueller Code)
 - **Backend:** `GET /leaderboard/balance|level|winnings` sind öffentlich; ein optionaler Access-Token wird nur genutzt, um `currentUserRank` zu berechnen. Daten stammen aus den drei DB-Views, sortiert, paginiert per `limit`/`offset` (Default: 10). Kein Cache, kein Perioden-Switch, keine Sortier-Umschaltung.  
 - **Frontend:** Homepage lädt alle drei Kategorien (Tabs) mit Limit 10. Keine Pagination, kein Polling oder Caching. Im Winnings-Tab werden Usernames derzeit anonymisiert (`User #<id>`).  
-- **Abweichungen zum UC:** Use Case nannte Auth-Pflicht und â€žGewinnsumme/DEPTHâ€œ; umgesetzt sind Balance/Level/Net Winnings und die Endpunkte sind für Gäste offen.
+- **Abweichungen zum UC:** Use Case nannte Auth-Pflicht und „Gewinnsumme/DEPTH“; umgesetzt sind Balance/Level/Net Winnings und die Endpunkte sind für Gäste offen.
 
 ---
 
@@ -150,4 +150,5 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 4.  
 - Flows in 3.1.
+
 

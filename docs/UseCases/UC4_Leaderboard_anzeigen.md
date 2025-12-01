@@ -1,8 +1,8 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (Balance/Level/Winnings-Views, public GET) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (Balance/Level/Winnings-Views, public GET) | Team BetCeption |
 
 # Use Case 4: Leaderboard anzeigen
 
@@ -13,9 +13,9 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** Endpunkte `GET /leaderboard/balance`, `/leaderboard/level`, `/leaderboard/winnings` sind Aï¿½ffentlich; ein optionaler Access-Token wird nur genutzt, um den Rang des eingeloggten Users innerhalb der geladenen Seite zu berechnen. Daten stammen aus drei DB-Views (`balance`, `level`, `net winnings 7d`), paginiert Aï¿½ber `limit`/`offset`, Standardlimit 10. Kein Cache/Timer, kein Sort-Umschalter.
-- **Frontend:** Homepage-Komponente lAï¿½dt automatisch alle drei Kategorien (Tabs). Limit fest auf 10, keine Pagination oder Sortierung. Beim Winnings-Tab werden Usernames nicht angezeigt (Backend liefert nur `userId`, Frontend rendert `User #<id>`). Unangemeldete Nutzer kAï¿½nnen die Liste sehen.
-- **Abweichungen:** Use Case nennt Gewinnsumme/DEPTH + Auth-Pflicht; aktuell gibt es Balance, Level, Net Winnings (7d) und Endpunkte sind fAï¿½r GAï¿½ste offen. Keine periodische Aktualisierung oder Caching.
+- **Backend:** Endpunkte `GET /leaderboard/balance`, `/leaderboard/level`, `/leaderboard/winnings` sind üffentlich; ein optionaler Access-Token wird nur genutzt, um den Rang des eingeloggten Users innerhalb der geladenen Seite zu berechnen. Daten stammen aus drei DB-Views (`balance`, `level`, `net winnings 7d`), paginiert über `limit`/`offset`, Standardlimit 10. Kein Cache/Timer, kein Sort-Umschalter.
+- **Frontend:** Homepage-Komponente lüdt automatisch alle drei Kategorien (Tabs). Limit fest auf 10, keine Pagination oder Sortierung. Beim Winnings-Tab werden Usernames nicht angezeigt (Backend liefert nur `userId`, Frontend rendert `User #<id>`). Unangemeldete Nutzer künnen die Liste sehen.
+- **Abweichungen:** Use Case nennt Gewinnsumme/DEPTH + Auth-Pflicht; aktuell gibt es Balance, Level, Net Winnings (7d) und Endpunkte sind für Güste offen. Keine periodische Aktualisierung oder Caching.
 
 
 ## 1.2 Wireframe Mockups
@@ -43,8 +43,8 @@ Die Daten werden vom Server geladen und regelmäßig aktualisiert.
 
    **Fehlerfälle**
    - Bei ungültigem oder fehlendem Token sendet das System 401 Unauthorized. Der Client leitet zur Anmeldung weiter.
-   - Bei einem Serverfehler sendet das System 500 Server Error. Der Client zeigt eine Fehlermeldung mit â€žErneut versuchenâ€œ.
-   - Wenn keine Einträge vorhanden sind, sendet das System 200 OK { items: [] }. Der Client zeigt â€žNoch keine Einträgeâ€œ.
+   - Bei einem Serverfehler sendet das System 500 Server Error. Der Client zeigt eine Fehlermeldung mit „Erneut versuchen“.
+   - Wenn keine Einträge vorhanden sind, sendet das System 200 OK { items: [] }. Der Client zeigt „Noch keine Einträge“.
 
 ---
 
@@ -76,13 +76,13 @@ sequenceDiagram
 ## 6. AktivitAtsdiagramm (aktuell)
 ```mermaid
 flowchart TD
-  A[Start] --> B[Tab Balance/Level/Winnings waehlen]
-  B --> C["GET /leaderboard/{tab}?limit=10"]
+  A[Start] --> B[Tab wählen (Balance/Level/Winnings)]
+  B --> C[GET /leaderboard/{tab}?limit=10]
   C --> D{Token vorhanden?}
-  D -->|Ja| E[currentUserRank ermitteln]
-  D -->|Nein| F[Token ignorieren]
-  E --> G[200 items + currentUserRank]
-  F --> G[200 items]
+  D -->|Ja| E[currentUserRank berechnen]
+  D -->|Nein| F[currentUserRank auslassen]
+  E --> G[200 mit Rank]
+  F --> G[200 ohne Rank]
   G --> H[UI Tabelle rendern]
   H --> I[Ende]
 
@@ -129,6 +129,8 @@ flowchart TD
 
 ---
 -->
+
+
 
 
 

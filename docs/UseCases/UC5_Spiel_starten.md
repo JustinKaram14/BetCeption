@@ -1,10 +1,10 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (Round-Start, Seeds, Sidebets optional, keine Lobby-Weiterleitung) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (Round-Start, Seeds, Sidebets optional, keine Lobby-Weiterleitung) | Team BetCeption |
 
-# Use Case â€“ Spiel starten (Blackjack)
+# Use Case 5: Spiel starten (Blackjack)
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, ein neues **Blackjack-Spiel** in **BetCeption** zu starten.  
@@ -13,9 +13,9 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `POST /round/start` (auth) nimmt `{betAmount, sideBets?}` entgegen. Backend prAï¿½ft, ob fAï¿½r den User bereits eine aktive Runde existiert, sperrt User-Balance, prAï¿½ft Einsatz > 0, prAï¿½ft optionale Side-Bets, zieht Gesamteinsatz ab, erstellt Runde mit Server-Seed/Hash, teilt initial 4 Karten (Player/Dealer alternierend), legt MainBet + Wallet-Tx an, setzt Status `IN_PROGRESS` und liefert den kompletten Round-State inkl. Fairness-Payload zurAï¿½ck.
-- **Frontend:** Blackjack-Seite ruft `startRound` nur mit `betAmount` auf, zeigt Karten, Status und einen Banner bei Blackjack an. Kein UI fAï¿½r Side-Bets, kein Round-Guard; 401 wird als Fehlertext angezeigt. Balance wird nach Deal/Settle neu geladen.
-- **Abweichungen:** Keine separaten Schritte fAï¿½r Einsatzreservierung oder Lobby-Weiterleitung; Start funktioniert nur, wenn keine aktive Runde existiert (`ROUND_IN_PROGRESS`-Fehler). RNG ist deterministisch Aï¿½ber Server-Seed, Client bekommt direkt Hash + Seed im Response.
+- **Backend:** `POST /round/start` (auth) nimmt `{betAmount, sideBets?}` entgegen. Backend prüft, ob für den User bereits eine aktive Runde existiert, sperrt User-Balance, prüft Einsatz > 0, prüft optionale Side-Bets, zieht Gesamteinsatz ab, erstellt Runde mit Server-Seed/Hash, teilt initial 4 Karten (Player/Dealer alternierend), legt MainBet + Wallet-Tx an, setzt Status `IN_PROGRESS` und liefert den kompletten Round-State inkl. Fairness-Payload zurück.
+- **Frontend:** Blackjack-Seite ruft `startRound` nur mit `betAmount` auf, zeigt Karten, Status und einen Banner bei Blackjack an. Kein UI für Side-Bets, kein Round-Guard; 401 wird als Fehlertext angezeigt. Balance wird nach Deal/Settle neu geladen.
+- **Abweichungen:** Keine separaten Schritte für Einsatzreservierung oder Lobby-Weiterleitung; Start funktioniert nur, wenn keine aktive Runde existiert (`ROUND_IN_PROGRESS`-Fehler). RNG ist deterministisch über Server-Seed, Client bekommt direkt Hash + Seed im Response.
 
 
 ## 1.2 Wireframe Mockups
@@ -81,18 +81,18 @@ sequenceDiagram
 ### 5. AktivitAtsdiagramm (aktuell)
 ```mermaid
 flowchart TD
-  A[Start] --> B[User setzt Einsatz + optionale Sidebets]
-  B --> C{Bereits aktive Runde?}
+  A[Start] --> B[Einsatz und Sidebets eingeben]
+  B --> C{Aktive Runde vorhanden?}
   C -->|Ja| D[409 ROUND_IN_PROGRESS]
   C -->|Nein| E[POST /round/start]
-  E --> F[Validierung Einsatz/Sidebets]
-  F --> G{Guthaben ausreichend?}
+  E --> F[Einsatz/Sidebets validieren]
+  F --> G{Guthaben ok?}
   G -->|Nein| H[400 INSUFFICIENT_FUNDS]
-  G -->|Ja| I[Sperre User, Round anlegen (Seed/Hash)]
-  I --> J[Haende erstellen + Karten austeilen]
-  J --> K[MainBet speichern, Wallet-Tx -Einsatz]
-  K --> L[Sidebets speichern + Wallet-Tx]
-  L --> M[Rundenstatus IN_PROGRESS, Antwort 201]
+  G -->|Ja| I[User sperren, Round anlegen (Seed/Hash)]
+  I --> J[Haende erzeugen, 4 Karten austeilen]
+  J --> K[MainBet + Wallet-Tx buchen]
+  K --> L[Sidebets + Wallet-Tx buchen]
+  L --> M[Status IN_PROGRESS, Antwort 201]
   D --> N[Ende]
   H --> N
   M --> N
@@ -133,6 +133,8 @@ flowchart TD
 | **Gesamt** |  | **7 FP** |
 
 ---
+
+
 
 
 

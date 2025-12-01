@@ -1,4 +1,4 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-11-25 | 0.4 | small changes | Team Betception |
@@ -6,7 +6,7 @@
 | 2025-11-25 | 0.2 | Docs update | Team Betception |
 | 2025-11-24 | 0.1 | small changes | Team Betception |
 | 2025-11-24 | 0.0 | Update asr-3-step.md | JustinKaram14 |
-| 2025-12-01 | 1.1 | Abgleich mit aktuellem Code (Status/Gaps) | Team BetCeption |
+| 01.12.2025 | 1.1 | Abgleich mit aktuellem Code (Status/Gaps) | Team BetCeption |
 
 # Architecture Significant Requirements (ASR)
 
@@ -98,3 +98,5 @@ flowchart TD
 | ASR-7 Modular ausbaubare Domaenen | Neue Features (Leaderboard, Rewards, XP) beruehren bestehende Module minimal. | Wartbarkeitsszenario + Teamziel. | Ordner pro Modul, Zod-Schemata, Entities pro Aggregat, parallele Angular-Struktur. |
 
 Vor groesseren Aenderungen pruefen wir, welche Utility-Tree-Szenarien bzw. ASR betroffen sind und ob zusaetzliche Taktiken angewendet werden muessen.
+
+

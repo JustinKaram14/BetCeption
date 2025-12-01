@@ -39,7 +39,7 @@ Kapitel 2 fasst den Implementierungsstand, Kapitel 3 den Flow, Kapitel 4 das Seq
 ## 2. Implementierungsstand (aktueller Code)
 - **Backend:**  
   - `POST /round/hit/:roundId`: prüft Eigentum/Status `IN_PROGRESS`, zieht nächste Karte aus deterministischem Deck, aktualisiert Hand.  
-  - `POST /round/stand/:roundId`: markiert Player-Hand als â€žstoodâ€œ, lässt Dealer bis Regel (>=17) ziehen.  
+  - `POST /round/stand/:roundId`: markiert Player-Hand als „stood“, lässt Dealer bis Regel (>=17) ziehen.  
   - `POST /round/settle/:roundId`: vervollständigt Dealer falls nötig, löst Main-/Sidebets auf, schreibt Wallet-Txs, setzt Round `SETTLED`.  
   - `GET /round/:roundId`: liefert aktuellen Stand. Double/Split fehlen.  
 - **Frontend:** Buttons für Deal (UC5), Hit, Stand, Settle; kein Double/Split. Fehler werden angezeigt, Round/Balance werden nach Aktionen neu geladen.  
@@ -156,4 +156,5 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 4.  
 - Aktivitäten Abschnitt 5.
+
 

@@ -1,13 +1,13 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (Access/Refresh, Sessions, Daily Reward Hinweis) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (Access/Refresh, Sessions, Daily Reward Hinweis) | Team BetCeption |
 
-# Use Case â€“ Authentifizierung & Session Management
+# Use Case 1: Authentifizierung & Session Management
 
 ## 1. Brief Description
-Dieser Use Case beschreibt die gesamte Benutzerverwaltung in **BetCeption** â€“ von der **Registrierung** neuer Spieler, über den **Login** bestehender Konten bis hin zum **Logout** (Sitzungsende) **und die laufende Prüfung der Authentifizierung** bei allen weiteren Aktionen.  
+Dieser Use Case beschreibt die gesamte Benutzerverwaltung in **BetCeption** von der **Registrierung** neuer Spieler, über den **Login** bestehender Konten bis hin zum **Logout** (Sitzungsende) **und die laufende Prüfung der Authentifizierung** bei allen weiteren Aktionen.  
 
 Das Ziel ist die sichere Authentifizierung, Verwaltung von Sitzungen (Session/JWT-Token) und die Kontrolle des Zugriffs auf geschützte Bereiche der Anwendung.  
 Die **Middleware** stellt sicher, dass nur authentifizierte Benutzer auf spielbezogene Ressourcen zugreifen können.  
@@ -16,15 +16,15 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `/auth/register` legt Nutzer mit gehashtem Passwort und Startbalance an. `/auth/login` prAï¿½ft Hash, setzt `lastLoginAt`, erstellt Access-Token (Response Body) plus Refresh-Token als HttpOnly-Cookie (`/auth/refresh`), speichert gehashten Refresh-Token in `sessions`. `/auth/refresh` erneuert Access-Token und Refresh-Token (gleiche Cookie-Strategie) nach Validierung des gespeicherten Hashes. `/auth/logout` lAï¿½scht den gespeicherten Refresh-Token und das Cookie. Auth-Middleware erwartet `Authorization: Bearer <access>`, GET `/leaderboard/*` darf ohne Token passieren.
-- **Frontend:** Startseite besitzt ein Auth-Panel fAï¿½r Login/Registrierung und nutzt `AuthFacade` mit LocalStorage fAï¿½r Access-Token und Cookies fAï¿½r Refresh. Dedizierte Login-/Register-Seiten sind Platzhalter. Token-Refresh wird clientseitig auf Bedarf aufgerufen, automatische Daily-Reward-Aktivierung existiert nicht.
-- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelAï¿½st (muss per `/rewards/daily/claim` erfolgen). Kein Account-Lockout, MFA oder Device-Bindung implementiert. Logout invalidiert nur Refresh-Cookie/Session, Access-Token lAï¿½uft aus oder wird clientseitig gelAï¿½scht.
+- **Backend:** `/auth/register` legt Nutzer mit gehashtem Passwort und Startbalance an. `/auth/login` prüft Hash, setzt `lastLoginAt`, erstellt Access-Token (Response Body) plus Refresh-Token als HttpOnly-Cookie (`/auth/refresh`), speichert gehashten Refresh-Token in `sessions`. `/auth/refresh` erneuert Access-Token und Refresh-Token (gleiche Cookie-Strategie) nach Validierung des gespeicherten Hashes. `/auth/logout` lüscht den gespeicherten Refresh-Token und das Cookie. Auth-Middleware erwartet `Authorization: Bearer <access>`, GET `/leaderboard/*` darf ohne Token passieren.
+- **Frontend:** Startseite besitzt ein Auth-Panel für Login/Registrierung und nutzt `AuthFacade` mit LocalStorage für Access-Token und Cookies für Refresh. Dedizierte Login-/Register-Seiten sind Platzhalter. Token-Refresh wird clientseitig auf Bedarf aufgerufen, automatische Daily-Reward-Aktivierung existiert nicht.
+- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelüst (muss per `/rewards/daily/claim` erfolgen). Kein Account-Lockout, MFA oder Device-Bindung implementiert. Logout invalidiert nur Refresh-Cookie/Session, Access-Token lüuft aus oder wird clientseitig gelüscht.
 
 ## Aktueller Ablauf (Backend)
 1. Register: Client sendet `{email, username, password}` an `/auth/register`; Backend verweigert bei doppelter Mail/Username und vergibt Startguthaben (`env.users.initialBalance`).
 2. Login: Client sendet `{email, password}` an `/auth/login`; bei Erfolg `accessToken` im Body, Refresh-Cookie mit `httpOnly`, `secure`, `sameSite` auf `/auth/refresh`; `lastLoginAt` wird gesetzt.
-3. GeschAï¿½tzte Routen: Access-Token im `Authorization`-Header; Refresh bei Ablauf via `/auth/refresh` (benutzt gespeicherten Refresh-Hash).
-4. Logout: Client POST `/auth/logout`; Refresh-Session wird gelAï¿½scht, Cookie entfernt, Access-Token bleibt clientseitig zu lAï¿½schen/ablaufen.
+3. Geschützte Routen: Access-Token im `Authorization`-Header; Refresh bei Ablauf via `/auth/refresh` (benutzt gespeicherten Refresh-Hash).
+4. Logout: Client POST `/auth/logout`; Refresh-Session wird gelüscht, Cookie entfernt, Access-Token bleibt clientseitig zu lüschen/ablaufen.
 
 ja
 ## 1.2 Wireframe Mockups
@@ -52,13 +52,13 @@ ja
 2. Er gibt **Benutzername**, **E-Mail** und **Passwort** ein.  
 3. Das System prüft die Eingaben auf Vollständigkeit und Format.  
 4. Wenn Felder leer sind oder E-Mail ungültig ist, wird eine Fehlermeldung angezeigt:  
-   *â€žBitte füllen Sie alle Felder korrekt aus.â€œ*  
+   *„Bitte füllen Sie alle Felder korrekt aus.“*  
 5. Das System prüft, ob die E-Mail bereits registriert ist.  
 6. Wenn nicht vorhanden, wird das Konto angelegt, das Passwort **gehasht** gespeichert und ein Startguthaben vergeben (z. B. 1000 Coins).  
 7. Das System zeigt eine Bestätigungsmeldung:  
-   *â€žRegistrierung erfolgreich.â€œ*  
+   *„Registrierung erfolgreich.“*  
 8. Bei bereits registrierter E-Mail erscheint:  
-   *â€žEin Konto mit dieser E-Mail existiert bereits.â€œ*  
+   *„Ein Konto mit dieser E-Mail existiert bereits.“*  
 9. Nach erfolgreicher Registrierung kann der Benutzer sich einloggen.
 
 ---
@@ -91,16 +91,16 @@ ja
 ---
 
 ### 3.4 Logout
-1. Der Benutzer klickt auf **â€žLogoutâ€œ**.  
+1. Der Benutzer klickt auf **„Logout“**.  
 2. (Optional) Das System fragt nach einer Bestätigung.  
 3. Nach Bestätigung wird das **Session-/JWT-Token ungültig gemacht**.  
 4. Der Benutzer wird zur **Login-Seite** weitergeleitet.  
 5. Das System zeigt eine Meldung:  
-   *â€žErfolgreich abgemeldet.â€œ*  
+   *„Erfolgreich abgemeldet.“*  
 
 **Alternative Flows:**  
 - **Abbruch:** Benutzer bleibt eingeloggt.  
-- **Token bereits abgelaufen:** Hinweis *â€žSitzung abgelaufenâ€œ* und automatische Weiterleitung zum Login.
+- **Token bereits abgelaufen:** Hinweis *„Sitzung abgelaufen“* und automatische Weiterleitung zum Login.
 
 ---
 
@@ -264,6 +264,8 @@ flowchart TD
 - **MySQL** für Benutzerdaten und Sessions  
 
 ---
+
+
 
 
 

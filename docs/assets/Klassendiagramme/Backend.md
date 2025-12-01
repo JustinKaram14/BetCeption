@@ -1,4 +1,4 @@
-```mermaid
+﻿```mermaid
 classDiagram
   direction LR
 
@@ -165,3 +165,4 @@ classDiagram
     +string netWinnings7d
   }
 ```
+
