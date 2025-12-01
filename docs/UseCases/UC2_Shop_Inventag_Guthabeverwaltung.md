@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Shop/Inventar/Wallet Backend, fehlendes Frontend) | Team BetCeption |
+
 # Use Case – Shop, Inventar & Guthabenverwaltung
 
 ## 1. Brief Description
@@ -9,6 +15,34 @@ Dieser Use Case beschreibt alle Funktionen rund um das **In-Game-Ökosystem von 
 Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, die Verwaltung und die Nutzung seiner Spielressourcen zu bieten.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** `GET /shop/powerups` ist A�ffentlich; `POST /shop/powerups/purchase` prA�ft Level, Guthaben und fA�hrt Kauf + Wallet-Transaktion in einer DB-Transaktion aus. `GET /inventory/powerups` liefert Bestand des eingeloggten Users. `GET /wallet`, `GET /wallet/transactions`, `POST /wallet/deposit|withdraw` liefern Kontostand, Historie bzw. buchen Ein-/Auszahlungen (Validierung auf zwei Nachkommastellen, pessimistic locks auf User-Balance). Daten werden als Decimal gespeichert, in Cent berechnet.
+- **Frontend:** Kein dediziertes Shop-/Inventar-/Wallet-UI. Einzig der Blackjack-Screen lädt per `Wallet.getSummary()` den Kontostand. Keine Transaktionshistorie, kein Kauf- oder Inventar-Flow implementiert.
+- **Abweichungen:** Kein Realtime-Sync oder Filter/Sortierung im Frontend. Keine Anzeige/Bedienung fA�r Kauf oder Transaktionen. Level-Sperren/Guthaben werden backendseitig erzwungen; Client validiert nicht vorab.
+
+## Aktueller Ablauf (Backend)
+1. Shop anzeigen: Client ruft `GET /shop/powerups`; Backend liefert Power-Ups inkl. Preis, Level-Anforderung und Effekt.
+2. Kauf: Authentifizierter Client sendet `POST /shop/powerups/purchase {typeId, quantity}`; Backend sperrt User, prA�ft Level & Balance, zieht Betrag ab, erhA�ht Inventar (`user_powerups`), schreibt Wallet-Tx (`kind=ADJUSTMENT`).
+3. Inventar: Authentifizierter Client ruft `GET /inventory/powerups`; Backend liefert Liste mit Typ-Details und Restbestand.
+4. Wallet: Authentifizierter Client ruft `GET /wallet` (Saldo, XP/Level, `lastDailyRewardAt`) und `GET /wallet/transactions` (paginiert); `POST /wallet/deposit|withdraw` passen das Guthaben an und loggen Transaktionen.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Shop/Wallet API
+  participant DB as DB
+  FE->>API: GET /shop/powerups
+  API-->>FE: 200 {items:[...]}
+  FE->>API: POST /shop/powerups/purchase {typeId, quantity} (Bearer)
+  API->>DB: Lock user, check level/balance, update user_powerups + wallet_tx
+  API-->>FE: 201 {balance, quantity}
+  FE->>API: GET /inventory/powerups (Bearer)
+  API-->>FE: 200 {items:[{type, quantity}]}
+  FE->>API: GET /wallet /transactions (Bearer)
+  API-->>FE: 200 {balance, xp, level, items}
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-pill-wireframe.png)
 ![alt text](../assets/Wireframe-mockups/Mockup-Balance-wireframe.png)

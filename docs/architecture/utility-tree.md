@@ -1,8 +1,22 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-11-25 | 0.4 | small changes | c |
+| 2025-11-25 | 0.3 | Utility Diagramm update | Team Betception |
+| 2025-11-25 | 0.2 | utility tree verbessert | Team Betception |
+| 2025-11-25 | 0.1 | Docs update | Team Betception |
+| 2025-11-24 | 0.0 | Update utility-tree.md | JustinKaram14 |
+| 2025-12-01 | 0.5 | Abgleich Implementierungsstand (Umsetzungs-Status/Gaps) | Team BetCeption |
+
 # Utility Tree
 
 Der Utility Tree folgt exakt der Struktur aus den Vorlesungsfolien (Quality Attribute -> Refinement -> Quality Attribute Scenario -> Business Value -> Technical Risk). Alle Szenarien sind in der 6-Part Form beschrieben und referenzieren das Diagramm `docs/assets/Utility/Utility.png`.
 
 ![Utility Tree](../assets/Utility/Utility.png)
+
+### Implementierungsstand (Abgleich)
+- Umgesetzt: ACID-Transaktionen mit Locks fuer Round/Wallet/Shop/Powerup/Daily-Reward; deterministische RNG + Fairness-API; Auth mit Rate-Limits + Refresh-Cookies; Metrics/Docs per Feature-Flag/API-Key.
+- Teilweise/offen: XP/Level-Aufstieg nicht umgesetzt; Power-Up-Effekte und Double/Split fehlen; Frontend nutzt nur Auth/Blackjack/Leaderboard, kein Wallet/Shop/Reward-UI.
 
 | Quality attribute | Refinement | Quality attribute scenario (6-Part Form) | Business value | Technical risk |
 | --- | --- | --- | --- | --- |

@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Hit/Stand/Settle nur, kein Double/Split) | Team BetCeption |
+
 # Use Case – Spielzug ausführen (Hit, Stand, Double, Split)
 
 ## 1.1 Brief Description
@@ -5,6 +11,28 @@ Dieser Use Case beschreibt, wie ein **eingeloggter Spieler** während eines lauf
 Das System prüft den **aktuellen Spielstatus**, **Regeln** und **Guthaben**, führt den Spielzug aus, aktualisiert Karten, Status und ggf. XP/Gewinne.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** UnterstA�tzt `POST /round/hit/:roundId`, `POST /round/stand/:roundId`, `POST /round/settle/:roundId`, `GET /round/:roundId` (alle auth). Aktionen prA�fen, ob Runde dem User gehA�rt, Status `IN_PROGRESS`, Kartenwerte usw. Dealer wird beim Stand/Settle nachgezogen, danach AuflA�sung von Main- und Side-Bets; Wallet-Gutschrift bei Gewinn/Refund, Runde auf `SETTLED`. Double/Split sind nicht implementiert.
+- **Frontend:** Blackjack-UI bietet Buttons fA�r Deal (UC5), Hit, Stand, Settle. Double/Split gibt es nicht. Fehler werden als Text angezeigt; Rundendaten werden nach jeder Aktion geladen. Balance wird nur nach Deal/Settle neu geholt.
+- **Abweichungen:** Kein Log oder XP-Update nach Zugalternative. Nur eine Spielerhand, kein Multi-Hand/Split. Aktionen sind nicht zeitlich begrenzt.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (Blackjack)
+  participant API as Round API
+  participant DB as DB
+  FE->>API: POST /round/hit/:id (Bearer)
+  API->>DB: Load round+hands, validate ownership/status, draw card via seeded deck
+  API-->>FE: 200 {round}
+  FE->>API: POST /round/stand/:id (Bearer)
+  API->>DB: Mark player hand stood, complete dealer hand
+  API-->>FE: 200 {round}
+  FE->>API: POST /round/settle/:id (Bearer)
+  API->>DB: Complete dealer, resolve main bet + side bets, write wallet txs, set round=SETTLED
+  API-->>FE: 200 {round}
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-spielzug_ausfehrenwireframe.png)
 ## 1.3 Mockup

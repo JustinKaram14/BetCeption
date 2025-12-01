@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Round-Start, Seeds, Sidebets optional, keine Lobby-Weiterleitung) | Team BetCeption |
+
 # Use Case – Spiel starten (Blackjack)
 
 ## 1.1 Brief Description
@@ -6,6 +12,25 @@ Der Spieler wählt seinen Einsatz und das System initialisiert das Spiel mit Dea
 Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzieren, UC8 - Spielzug ausführen) fortgesetzt werden.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** `POST /round/start` (auth) nimmt `{betAmount, sideBets?}` entgegen. Backend prA�ft, ob fA�r den User bereits eine aktive Runde existiert, sperrt User-Balance, prA�ft Einsatz > 0, prA�ft optionale Side-Bets, zieht Gesamteinsatz ab, erstellt Runde mit Server-Seed/Hash, teilt initial 4 Karten (Player/Dealer alternierend), legt MainBet + Wallet-Tx an, setzt Status `IN_PROGRESS` und liefert den kompletten Round-State inkl. Fairness-Payload zurA�ck.
+- **Frontend:** Blackjack-Seite ruft `startRound` nur mit `betAmount` auf, zeigt Karten, Status und einen Banner bei Blackjack an. Kein UI fA�r Side-Bets, kein Round-Guard; 401 wird als Fehlertext angezeigt. Balance wird nach Deal/Settle neu geladen.
+- **Abweichungen:** Keine separaten Schritte fA�r Einsatzreservierung oder Lobby-Weiterleitung; Start funktioniert nur, wenn keine aktive Runde existiert (`ROUND_IN_PROGRESS`-Fehler). RNG ist deterministisch A�ber Server-Seed, Client bekommt direkt Hash + Seed im Response.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (Blackjack)
+  participant API as Round API
+  participant DB as DB
+  FE->>API: POST /round/start {betAmount[, sideBets]} (Bearer)
+  API->>DB: Check no active round for user
+  API->>DB: Lock user, validate balance >= bet+sidebets
+  API->>DB: Create round (serverSeed+hash), dealer/player hands, main bet, wallet_tx (-bet)
+  API-->>FE: 201 {round:{status, hands, mainBet, fairness}}
+  FE-->>API: subsequent actions via UC7 (hit/stand/settle)
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Spiel_Starten-wirecard.png)
 ## 1.3 Mockup

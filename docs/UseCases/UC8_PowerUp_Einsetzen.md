@@ -1,3 +1,9 @@
+## Revision History
+| Datum | Version | Beschreibung | Autor |
+| --- | --- | --- | --- |
+| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 2025-12-01 | 1.1 | Abgleich Implementierung (Consume-Endpoint ohne Effekte, fehlendes UI) | Team BetCeption |
+
 # Use Case – Power-Up einsetzen
 
 ## 1. Brief Description
@@ -6,6 +12,23 @@ Ein Power-Up kann dem Spieler strategische Vorteile bringen, wie z. B. eine zu
 Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
+## Abgleich Implementierung (Stand aktueller Code)
+- **Backend:** `POST /powerups/consume` (auth) erwartet `{typeId, quantity, roundId?}`. Backend prA�ft Besitz und Menge (`user_powerups`), optional Runde (gehA�rt zum User, nicht settled), reduziert Bestand, legt fA�r jede Einheit einen `powerup_consumptions`-Eintrag an. Keine Effekte werden aktuell auf das Spiel angewandt; die Response meldet nur Verbrauch und Restbestand.
+- **Frontend:** Keine UI fA�r Power-Ups. Service-Aufruf `Rng.consumePowerup()` existiert, wird aber nicht genutzt.
+- **Abweichungen:** Beschriebene Effekte (z.�?_B. Karte, Schutz, Multiplikator) sind noch nicht implementiert. Keine Synchronisation mit laufender Runde auA�er BesitzprA�fung.
+
+## Sequenzdiagramm
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Powerups API
+  participant DB as DB
+  FE->>API: POST /powerups/consume {typeId, quantity[, roundId]} (Bearer)
+  API->>DB: Lock user_powerup, validate stock and optional round ownership/status
+  API->>DB: Decrement quantity, insert powerup_consumptions rows
+  API-->>FE: 201 {consumed, remaining, powerup, roundId}
+```
+
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-pill-wireframe.png)
 ## 1.3 Mockup
