@@ -1,13 +1,13 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (Access/Refresh, Sessions, Daily Reward Hinweis) | Team BetCeption |
 
-# Use Case – Authentifizierung & Session Management
+# Use Case â€“ Authentifizierung & Session Management
 
 ## 1. Brief Description
-Dieser Use Case beschreibt die gesamte Benutzerverwaltung in **BetCeption** – von der **Registrierung** neuer Spieler, über den **Login** bestehender Konten bis hin zum **Logout** (Sitzungsende) **und die laufende Prüfung der Authentifizierung** bei allen weiteren Aktionen.  
+Dieser Use Case beschreibt die gesamte Benutzerverwaltung in **BetCeption** â€“ von der **Registrierung** neuer Spieler, über den **Login** bestehender Konten bis hin zum **Logout** (Sitzungsende) **und die laufende Prüfung der Authentifizierung** bei allen weiteren Aktionen.  
 
 Das Ziel ist die sichere Authentifizierung, Verwaltung von Sitzungen (Session/JWT-Token) und die Kontrolle des Zugriffs auf geschützte Bereiche der Anwendung.  
 Die **Middleware** stellt sicher, dass nur authentifizierte Benutzer auf spielbezogene Ressourcen zugreifen können.  
@@ -16,37 +16,17 @@ Nach erfolgreicher Anmeldung wird der Benutzer zur **Lobby** weitergeleitet. Bei
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `/auth/register` legt Nutzer mit gehashtem Passwort und Startbalance an. `/auth/login` prA�ft Hash, setzt `lastLoginAt`, erstellt Access-Token (Response Body) plus Refresh-Token als HttpOnly-Cookie (`/auth/refresh`), speichert gehashten Refresh-Token in `sessions`. `/auth/refresh` erneuert Access-Token und Refresh-Token (gleiche Cookie-Strategie) nach Validierung des gespeicherten Hashes. `/auth/logout` lA�scht den gespeicherten Refresh-Token und das Cookie. Auth-Middleware erwartet `Authorization: Bearer <access>`, GET `/leaderboard/*` darf ohne Token passieren.
-- **Frontend:** Startseite besitzt ein Auth-Panel fA�r Login/Registrierung und nutzt `AuthFacade` mit LocalStorage fA�r Access-Token und Cookies fA�r Refresh. Dedizierte Login-/Register-Seiten sind Platzhalter. Token-Refresh wird clientseitig auf Bedarf aufgerufen, automatische Daily-Reward-Aktivierung existiert nicht.
-- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelA�st (muss per `/rewards/daily/claim` erfolgen). Kein Account-Lockout, MFA oder Device-Bindung implementiert. Logout invalidiert nur Refresh-Cookie/Session, Access-Token lA�uft aus oder wird clientseitig gelA�scht.
+- **Backend:** `/auth/register` legt Nutzer mit gehashtem Passwort und Startbalance an. `/auth/login` prAï¿½ft Hash, setzt `lastLoginAt`, erstellt Access-Token (Response Body) plus Refresh-Token als HttpOnly-Cookie (`/auth/refresh`), speichert gehashten Refresh-Token in `sessions`. `/auth/refresh` erneuert Access-Token und Refresh-Token (gleiche Cookie-Strategie) nach Validierung des gespeicherten Hashes. `/auth/logout` lAï¿½scht den gespeicherten Refresh-Token und das Cookie. Auth-Middleware erwartet `Authorization: Bearer <access>`, GET `/leaderboard/*` darf ohne Token passieren.
+- **Frontend:** Startseite besitzt ein Auth-Panel fAï¿½r Login/Registrierung und nutzt `AuthFacade` mit LocalStorage fAï¿½r Access-Token und Cookies fAï¿½r Refresh. Dedizierte Login-/Register-Seiten sind Platzhalter. Token-Refresh wird clientseitig auf Bedarf aufgerufen, automatische Daily-Reward-Aktivierung existiert nicht.
+- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelAï¿½st (muss per `/rewards/daily/claim` erfolgen). Kein Account-Lockout, MFA oder Device-Bindung implementiert. Logout invalidiert nur Refresh-Cookie/Session, Access-Token lAï¿½uft aus oder wird clientseitig gelAï¿½scht.
 
 ## Aktueller Ablauf (Backend)
 1. Register: Client sendet `{email, username, password}` an `/auth/register`; Backend verweigert bei doppelter Mail/Username und vergibt Startguthaben (`env.users.initialBalance`).
 2. Login: Client sendet `{email, password}` an `/auth/login`; bei Erfolg `accessToken` im Body, Refresh-Cookie mit `httpOnly`, `secure`, `sameSite` auf `/auth/refresh`; `lastLoginAt` wird gesetzt.
-3. GeschA�tzte Routen: Access-Token im `Authorization`-Header; Refresh bei Ablauf via `/auth/refresh` (benutzt gespeicherten Refresh-Hash).
-4. Logout: Client POST `/auth/logout`; Refresh-Session wird gelA�scht, Cookie entfernt, Access-Token bleibt clientseitig zu lA�schen/ablaufen.
+3. GeschAï¿½tzte Routen: Access-Token im `Authorization`-Header; Refresh bei Ablauf via `/auth/refresh` (benutzt gespeicherten Refresh-Hash).
+4. Logout: Client POST `/auth/logout`; Refresh-Session wird gelAï¿½scht, Cookie entfernt, Access-Token bleibt clientseitig zu lAï¿½schen/ablaufen.
 
-## Sequenzdiagramm
-```mermaid
-sequenceDiagram
-  participant FE as Frontend (AuthFacade)
-  participant API as Backend Auth
-  participant DB as DB
-  FE->>API: POST /auth/register {email, username, password}
-  API->>DB: Create user (hash pw, start balance)
-  API-->>FE: 201 Registered
-  FE->>API: POST /auth/login {email, password}
-  API->>DB: Verify user + password
-  API-->>FE: 200 {accessToken} + Set-Cookie refresh_token
-  FE->>API: GET/POST protected with Authorization: Bearer access
-  FE->>API: POST /auth/refresh (sends refresh cookie)
-  API->>DB: Verify hashed refresh, rotate token
-  API-->>FE: 200 {accessToken} + new refresh cookie
-  FE->>API: POST /auth/logout
-  API->>DB: Delete session by refresh hash
-  API-->>FE: 204 No Content
-```
-
+ja
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-Login-wireframe.png)
 ![alt text](../assets/Wireframe-mockups/Mockup-Register-wireframe.png)
@@ -72,13 +52,13 @@ sequenceDiagram
 2. Er gibt **Benutzername**, **E-Mail** und **Passwort** ein.  
 3. Das System prüft die Eingaben auf Vollständigkeit und Format.  
 4. Wenn Felder leer sind oder E-Mail ungültig ist, wird eine Fehlermeldung angezeigt:  
-   *„Bitte füllen Sie alle Felder korrekt aus.“*  
+   *â€žBitte füllen Sie alle Felder korrekt aus.â€œ*  
 5. Das System prüft, ob die E-Mail bereits registriert ist.  
 6. Wenn nicht vorhanden, wird das Konto angelegt, das Passwort **gehasht** gespeichert und ein Startguthaben vergeben (z. B. 1000 Coins).  
 7. Das System zeigt eine Bestätigungsmeldung:  
-   *„Registrierung erfolgreich.“*  
+   *â€žRegistrierung erfolgreich.â€œ*  
 8. Bei bereits registrierter E-Mail erscheint:  
-   *„Ein Konto mit dieser E-Mail existiert bereits.“*  
+   *â€žEin Konto mit dieser E-Mail existiert bereits.â€œ*  
 9. Nach erfolgreicher Registrierung kann der Benutzer sich einloggen.
 
 ---
@@ -111,36 +91,118 @@ sequenceDiagram
 ---
 
 ### 3.4 Logout
-1. Der Benutzer klickt auf **„Logout“**.  
+1. Der Benutzer klickt auf **â€žLogoutâ€œ**.  
 2. (Optional) Das System fragt nach einer Bestätigung.  
 3. Nach Bestätigung wird das **Session-/JWT-Token ungültig gemacht**.  
 4. Der Benutzer wird zur **Login-Seite** weitergeleitet.  
 5. Das System zeigt eine Meldung:  
-   *„Erfolgreich abgemeldet.“*  
+   *â€žErfolgreich abgemeldet.â€œ*  
 
 **Alternative Flows:**  
 - **Abbruch:** Benutzer bleibt eingeloggt.  
-- **Token bereits abgelaufen:** Hinweis *„Sitzung abgelaufen“* und automatische Weiterleitung zum Login.
+- **Token bereits abgelaufen:** Hinweis *â€žSitzung abgelaufenâ€œ* und automatische Weiterleitung zum Login.
 
 ---
 
 ## 4. Sequenzdiagramme
-## 4.1 Regestrieren
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
-## 4.2 Login
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Login.png>)
-## 4.3 Logout
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Logout.png>)
+### 4.1 Registrieren
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (AuthFacade)
+  participant API as Auth API
+  participant DB as DB (users/sessions)
+
+  FE->>API: POST /auth/register {email, username, password}
+  alt E-Mail/Username frei
+    API->>DB: Insert user (hash pw, start balance)
+    API-->>FE: 201 {message:"Registered"}
+  else bereits vorhanden
+    API-->>FE: 409 {message:"Email/Username in use"}
+  end
+```
+### 4.2 Login
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (AuthFacade)
+  participant API as Auth API
+  participant DB as DB (users/sessions)
+
+  FE->>API: POST /auth/login {email, password}
+  API->>DB: Load user by email
+  alt Nutzer gefunden + Passwort korrekt
+    API->>DB: Update lastLoginAt
+    API->>DB: Insert session (refresh_hash, ua/ip, exp)
+    API-->>FE: 200 {accessToken}+Set-Cookie refresh_token
+  else Nutzer fehlt/Passwort falsch
+    API-->>FE: 401 {message}
+  end
+```
+### 4.3 Refresh/Logout
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (AuthFacade)
+  participant API as Auth API
+  participant DB as DB (users/sessions)
+
+  FE->>API: POST /auth/refresh (Cookie)
+  API->>DB: Find session by refresh_hash
+  alt Session gueltig
+    API-->>FE: 200 {accessToken}+Set new refresh cookie
+  else ungueltig/abgelaufen
+    API-->>FE: 401 {message}
+  end
+
+  FE->>API: POST /auth/logout
+  API->>DB: Delete session by refresh hash
+  API-->>FE: 204 No Content
+```
+
 
 ---
 
-## 5. Aktivitätsdiagramm
-## 5.1 Registrierung
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Regestrieren.png>)
-## 5.2 Login
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm login.png>)
-## 5.3 Logout
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm abmelden.png>)
+## 5. AktivitAtsdiagramm
+### 5.1 Registrierung
+```mermaid
+flowchart TD
+  RA[Start] --> RB[Form Email/Username/Passwort]
+  RB --> RC{Eingabe valide?}
+  RC -->|Nein| RD[Fehler anzeigen]
+  RC -->|Ja| RE[POST /auth/register]
+  RE --> RF{Email/Username frei?}
+  RF -->|Nein| RG[409 Conflict]
+  RF -->|Ja| RH[Hash PW, Startguthaben, User speichern]
+  RG --> RI[Ende]
+  RH --> RI
+  RD --> RI
+```
+### 5.2 Login
+```mermaid
+flowchart TD
+  LA[Start] --> LB[Form Email/Passwort]
+  LB --> LC{Eingabe valide?}
+  LC -->|Nein| LD[Fehler anzeigen]
+  LC -->|Ja| LE[POST /auth/login]
+  LE --> LF{User+PW korrekt?}
+  LF -->|Nein| LG[401 Meldung]
+  LF -->|Ja| LH[Session mit Refresh-Hash speichern, lastLoginAt]
+  LH --> LI[Set-Cookie refresh_token]
+  LI --> LJ[Access-Token speichern]
+  LJ --> LK[Weiter zur Lobby]
+  LD --> LL[Ende]
+  LG --> LL
+  LK --> LL
+```
+### 5.3 Logout
+```mermaid
+flowchart TD
+  NA[Start] --> NB[Logout ausloesen]
+  NB --> NC[POST /auth/logout (Cookie)]
+  NC --> ND[Session per Refresh-Hash loeschen]
+  ND --> NE[Clear-Cookie refresh_token]
+  NE --> NF[Access-Token lokal loeschen]
+  NF --> NG[Weiterleitung Login]
+  NG --> NH[Ende]
+```
 
 ## 6. Special Requirements
 - Kommunikation ausschließlich über **HTTPS**  
@@ -202,4 +264,9 @@ sequenceDiagram
 - **MySQL** für Benutzerdaten und Sessions  
 
 ---
+
+
+
+
+
 

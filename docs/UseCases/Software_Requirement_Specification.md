@@ -1,4 +1,4 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale SRS (Neue Ordnerstruktur) | Team BetCeption|
@@ -50,10 +50,10 @@ Das System verwaltet virtuelles Guthaben ohne Echtgeldbezug. Einsätze werden vo
 Serverseitige Karten- und Auswertelogik für Deal, Hit und Stand. Der Dealer spielt regelbasiert bis mindestens 17, dabei gilt **S17** (Dealer steht bei Soft-17).
 
 **Sidebets:**  
-Pro Runde können zusätzlich zur Hauptwette Sidebets platziert werden, zum Beispiel „Dealer gewinnt“. Die Engine bewertet Sidebets am Rundenende und verbucht die zugehörigen Auszahlungen.
+Pro Runde können zusätzlich zur Hauptwette Sidebets platziert werden, zum Beispiel â€žDealer gewinntâ€œ. Die Engine bewertet Sidebets am Rundenende und verbucht die zugehörigen Auszahlungen.
 
-**Power-Ups („Pillen“):**  
-Spieler können optionale, zeitlich begrenzte Boni aktivieren, zum Beispiel **Red Pill** mit Chance auf eine x3-Auszahlung bei Gewinnen oder **Blue Pill** mit Chance auf eine „Safe-Round“ ohne Verlust. Es ist immer nur ein Power-Up gleichzeitig aktiv. Der Bonus gilt für eine definierte Anzahl von Runden.
+**Power-Ups (â€žPillenâ€œ):**  
+Spieler können optionale, zeitlich begrenzte Boni aktivieren, zum Beispiel **Red Pill** mit Chance auf eine x3-Auszahlung bei Gewinnen oder **Blue Pill** mit Chance auf eine â€žSafe-Roundâ€œ ohne Verlust. Es ist immer nur ein Power-Up gleichzeitig aktiv. Der Bonus gilt für eine definierte Anzahl von Runden.
 
 #### Außerhalb des MVP (zeitlich offen)
 **History/Verlauf:**  
@@ -74,8 +74,8 @@ Zusätzliche Casinospiele neben Blackjack sowie Administrationsfunktionen (Moder
 | MVP | Minimum Viable Product. Minimaler, nutzbarer Funktionsumfang, der im Projekt verbindlich geliefert wird. |
 | JWT | JSON Web Token. Signiertes Token für die Anmeldung und Autorisierung von API-Aufrufen (Bearer-Token). |
 | Wallet | Virtuelles Guthaben der Spieler. Kein Echtgeld. Einsätze und Auszahlungen werden dort verbucht. |
-| Sidebet | Zusatzwette auf ein Ereignis innerhalb einer Blackjack-Runde, zum Beispiel „Dealer gewinnt“. |
-| Power-Up („Pille“) | Zeitlich begrenzter Vorteil, der vor einer Runde aktiviert wird, zum Beispiel *Red Pill* (Chance auf x3-Auszahlung) oder *Blue Pill* (Chance auf „Safe-Round“ ohne Verlust). |
+| Sidebet | Zusatzwette auf ein Ereignis innerhalb einer Blackjack-Runde, zum Beispiel â€žDealer gewinntâ€œ. |
+| Power-Up (â€žPilleâ€œ) | Zeitlich begrenzter Vorteil, der vor einer Runde aktiviert wird, zum Beispiel *Red Pill* (Chance auf x3-Auszahlung) oder *Blue Pill* (Chance auf â€žSafe-Roundâ€œ ohne Verlust). |
 | Dealer | Bank im Blackjack. Spielt nach festen Regeln und nicht frei wie der Spieler. |
 | Soft-17 (S17) | Dealer-Regel: Handwert 17 mit Ass als 11. Bei **S17** steht der Dealer bei Soft-17. |
 | Push | Unentschieden zwischen Spieler und Dealer. Einsatz wird zurückgegeben. |
@@ -96,7 +96,7 @@ Das folgende Kapitel gibt einen Überblick über das Projekt mit Vision, Produkt
 
 ## 2. Gesamtbeschreibung
 ### 2.1 Vision
-BetCeption bietet ein schnelles und zugängliches Blackjack-Erlebnis im Browser. Spieler setzen mit virtuellem Guthaben und können pro Runde Sidebets platzieren, um zusätzliche Spannung zu erzeugen. Optional aktivierbare Power-Ups („Pillen“) geben zeitlich begrenzte Vorteile und schaffen kurze, taktische Entscheidungen. Das System wertet jede Runde serverseitig nach festen Regeln aus und stellt damit ein faires, nachvollziehbares Spiel sicher. Der Fokus des MVP liegt auf einer stabilen Kernmechanik, einer klaren Benutzerführung und einer reibungslosen Interaktion zwischen Frontend und Backend. Erweiterungen wie History/Verlauf und Leaderboard bleiben bewusst außerhalb des MVP und können zu einem späteren Zeitpunkt ergänzt werden.
+BetCeption bietet ein schnelles und zugängliches Blackjack-Erlebnis im Browser. Spieler setzen mit virtuellem Guthaben und können pro Runde Sidebets platzieren, um zusätzliche Spannung zu erzeugen. Optional aktivierbare Power-Ups (â€žPillenâ€œ) geben zeitlich begrenzte Vorteile und schaffen kurze, taktische Entscheidungen. Das System wertet jede Runde serverseitig nach festen Regeln aus und stellt damit ein faires, nachvollziehbares Spiel sicher. Der Fokus des MVP liegt auf einer stabilen Kernmechanik, einer klaren Benutzerführung und einer reibungslosen Interaktion zwischen Frontend und Backend. Erweiterungen wie History/Verlauf und Leaderboard bleiben bewusst außerhalb des MVP und können zu einem späteren Zeitpunkt ergänzt werden.
 
 ### 2.2 Use Case Diagram
 <img width="1682" height="1911" alt="unnamed__usssss" src="https://github.com/user-attachments/assets/e8e5eded-eec0-4e66-9a2c-068eeb8ba0d8" />
@@ -143,11 +143,11 @@ Der Spieler setzt seinen Haupteinsatz und startet eine neue Blackjack-Runde. Der
 [Zur Spezifikation](./UC5_Spiel_starten.md)
 
 **3.1.3 Wetten platzieren (Haupteinsatz & Sidebet)**  
-Der Spieler legt die Höhe seines Haupteinsatzes fest und kann optional Sidebets setzen (z. B. „Dealer gewinnt“). Guthaben wird geprüft und reserviert; Auswertung am Rundenende.  
+Der Spieler legt die Höhe seines Haupteinsatzes fest und kann optional Sidebets setzen (z. B. â€žDealer gewinntâ€œ). Guthaben wird geprüft und reserviert; Auswertung am Rundenende.  
 [Zur Spezifikation](./UC6_Wetten_platzieren.md)
 
 **3.1.4 Shop, Inventar & Guthaben verwalten**  
-Spieler kaufen „Pillen“ (Power-Ups) mit virtuellem Guthaben, sehen ihr Inventar und ihr verfügbares Guthaben; Buchungen (Einsatz/Auszahlung) werden geführt.  
+Spieler kaufen â€žPillenâ€œ (Power-Ups) mit virtuellem Guthaben, sehen ihr Inventar und ihr verfügbares Guthaben; Buchungen (Einsatz/Auszahlung) werden geführt.  
 [Zur Spezifikation](./UC2_Shop_Inventag_Guthabeverwaltung.md)
 
 **3.1.5 Power-Up einsetzen**  
@@ -249,17 +249,45 @@ Kurzbeschreibungen zu Setup, Start und häufigen Aufgaben liegen im Repository. 
 #### 3.5.6 Internationalisierung (Basis)
 Texte sind zentral abgelegt. Eine spätere Übersetzung ist möglich, auch wenn das MVP zunächst deutsch bleibt.
 
-### 3.6 Designbeschränkungen
-
+### 3.6 DesignbeschrAnkungen
+- Frontend: Angular/TypeScript SPA, REST-only (kein WebSocket im MVP).
+- Backend: Node/Express mit TypeORM auf MySQL 8; Decimal fuer Geldbetraege, int fuer XP/Level.
+- Auth: JWT + HttpOnly Refresh-Cookie; HTTPS Pflicht.
+- Keine Echtgeldeinzahlungen, kein Dritt-Payment; virtuelle Coins nur im System.
 
 ### 3.7 Anforderungen an die Online-Benutzerdokumentation und das Hilfesystem
+- Kurze In-App-Hinweise zu Einsatz, Hit/Stand, Sidebets.
+- FAQ/Onboarding als statische Seite verlinkbar.
+- API-Doku (Swagger o.ä.) fuer Auth, Round, Bets, Wallet, Powerups, Leaderboard, Rewards.
 
 ### 3.8 Purchased Components
+- Keine lizenzierten Drittkomponenten ausser ueblicher OSS (Node, Angular, MySQL).
+- Keine externen Payment- oder RNG-Dienste.
 
 ### 3.9 Schnittstellen
+- User Interfaces: Browser-UI (Angular), responsive; optionale Tastaturkuerzel fuer Hit/Stand.
+- Hardware Interfaces: keine speziellen Anforderungen.
+- Software Interfaces: REST/JSON Endpunkte (Auth, Round, Bets, Wallet, Shop/Inventory, Powerups, Rewards, Leaderboard); DB MySQL 8 per TypeORM.
+- Communications Interfaces: HTTPS, Bearer-JWT, HttpOnly Refresh-Cookie.
 
 ### 3.10 Lizenzanforderungen
+- Interne Nutzung; OSS-Lizenzen der Abhaengigkeiten beachten (MIT/Apache u.a.).
+- Keine proprietaeren Runtime-Lizenzen noetig.
 
 ### 3.11 Rechtliche Hinweise, Urheberrecht und sonstige Hinweise
+- Keine Echtgeld-Transaktionen; nur virtuelles Guthaben.
+- Datenschutz: nur noetige personenbezogene Daten (E-Mail, Username, Hash) speichern; keine Passwoerter im Klartext, keine sensiblen Daten in Logs.
+- Branding/Assets: interne Nutzung; fremde Marken nicht verwenden.
 
 ### 3.12 Anwendbare Standards
+- OWASP ASVS (Auth, Session, Input-Validation) als Leitlinie.
+- JWT Best Practices (Signatur, Ablauf, Rotation).
+- ACID-Transaktionen fuer Geld- und Spielbuchungen.
+- Accessibility: WCAG-Basis (Kontrast, Fokus).
+
+## 4. Begleitende Informationen
+- Vollstaendige Use-Case-Spezifikationen: `docs/UseCases/UC1..UC10*.md`.
+- Use-Case-Realization (UCRS) mit Sequenz- und Aktivitaetsdiagrammen: `docs/UCRS/*.md`.
+- Architektur- und Qualitaetsartefakte: `docs/architecture/*.md`, Utility-Tree und Klassendiagramm.
+- Glossar/Definitionen siehe Abschnitt 1.3 und UCRS-Referenzen.
+

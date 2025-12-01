@@ -1,45 +1,30 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (XP/Level derzeit read-only) | Team BetCeption |
 
-# Use Case – XP und Level-System verwalten
+# Use Case â€“ XP und Level-System verwalten
 
 ## 1. Brief Description
 Dieser Use Case beschreibt das Level- und Erfahrungspunktesystem (XP-System).  
-Nach jedem Spiel erhält der Spieler XP abhängig von seiner Leistung, z. B. Gewinnhöhe, Wetteinsatz oder besonderen Aktionen.  
+Nach jedem Spiel erhält der Spieler XP abhängig von seiner Leistung, z.â€¯B. Gewinnhöhe, Wetteinsatz oder besonderen Aktionen.  
 Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und schaltet neue Power-Ups oder Features frei.
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `users` besitzen Felder `xp` (int) und `level` (int), werden aber nirgends erhA�ht. Weder Rundenauswertung noch Rewards aktualisieren XP/Level. APIs geben Werte nur aus (`/wallet`, `/users/:id`, `/leaderboard/level`). Power-Up-Kauf prA�ft nur `level >= minLevel`.
+- **Backend:** `users` besitzen Felder `xp` (int) und `level` (int), werden aber nirgends erhöht. Weder Rundenauswertung noch Rewards aktualisieren XP/Level. APIs geben Werte nur aus (`/wallet`, `/users/:id`, `/leaderboard/level`). Power-Up-Kauf prüft nur `level >= minLevel`.
 - **Frontend:** Zeigt XP/Level in Wallet-Summary (nur intern genutzt) und im Leaderboard. Keine Fortschrittsanzeige, keine Level-Up-Logik.
 - **Abweichungen:** XP-Berechnung, Level-Grenzen, Freischaltungen und Benachrichtigungen fehlen komplett. Sequenzdiagramm und Flow gelten aktuell nur als Zielbild.
 
-## Sequenzdiagramm (aktuell - Read only)
-```mermaid
-sequenceDiagram
-  participant FE as Frontend
-  participant API as User/Wallet/Leaderboard
-  participant DB as DB
-  FE->>API: GET /wallet (Bearer)
-  API-->>FE: 200 {balance, xp, level}
-  FE->>API: GET /leaderboard/level?limit=10
-  API-->>FE: 200 {items:[{level,xp}], currentUserRank}
-```
-
+---
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/mockup-XPBar-wireframe.png)
 ## 1.3 Mockup
 ![alt text](../assets/mockups/Level-Bar-Mockup.png)
 ---
 
-<!--
-## 3. Screenshots
 
----
--->
 ## 2. Akteure:
 - **System:** Berechnet und speichert die Erfahrungspunkte (XP) nach Spielende.  
 - **Datenbank:** Speichert Spielerlevel, Fortschritt und XP-Daten dauerhaft.
@@ -58,15 +43,39 @@ sequenceDiagram
 6. System speichert aktualisierte XP- und Leveldaten in der Datenbank.
 
 ---
-## 4. Sequenzdiagramm
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm XP-Level-System.png>)
+## 4. Sequenzdiagramm (aktuell: Read-only)
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as User/Wallet/Leaderboard
+  participant DB as DB
+
+  FE->>API: GET /wallet (Bearer)
+  API->>DB: Read user {balance,xp,level,lastDailyRewardAt}
+  API-->>FE: 200 {balance,xp,level}
+
+  FE->>API: GET /leaderboard/level?limit=10
+  API->>DB: Query leaderboard_level_view
+  API-->>FE: 200 {items:[{rank,user,level,xp}], currentUserRank}
+
+  Note over FE,API: XP/Level werden aktuell nicht erhöht; Werte sind read-only
+```
+
 ---
-
-## 5. Aktivitätsdiagramm
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm XP-Level.png>)
+## 5. AktivitAtsdiagramm (aktuell: Read-only)
+```mermaid
+flowchart TD
+  A[Start] --> B[UI ruft GET /wallet]
+  B --> C[Server liefert balance,xp,level]
+  C --> D[UI zeigt Werte]
+  D --> E[GET /leaderboard/level?limit=10]
+  E --> F[Server liefert Rangliste + optional currentUserRank]
+  F --> G[UI rendert Tabelle]
+  G --> H[Ende]
+  note right of G: XP/Level werden derzeit nicht erhoeht
+```
 
 ---
-
 ## 6. Special Requirements
 - XP-Formel muss serverseitig definiert und überprüfbar sein.
 - Level-Grenzen und Belohnungen sollen konfigurierbar sein.
@@ -88,7 +97,6 @@ sequenceDiagram
 ---
 
 
-
 ## 9. Function Points
 
 | Kategorie      | Beschreibung                                           | Function Points |
@@ -100,3 +108,4 @@ sequenceDiagram
 | **Gesamt**     |                                                        | **7 FP**        |
 
 ---
+

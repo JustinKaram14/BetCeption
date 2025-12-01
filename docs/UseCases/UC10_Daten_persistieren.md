@@ -1,10 +1,10 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (Transaktionen/Locks, fehlende XP-Updates) | Team BetCeption |
 
-# Use Case – Daten persistieren
+# Use Case â€“ Daten persistieren
 
 ## 1. Brief Description
 Dieser Use Case beschreibt die dauerhafte Speicherung aller wichtigen Spiel- und Benutzerdaten in einer MySQL-Datenbank.  
@@ -12,32 +12,8 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 
 ---
 
-## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** MySQL + TypeORM (`synchronize=false`). Migrations: Initialschema (Users, Sessions, Rounds, Bets, WalletTransactions, Powerups, Views) und Rate-Limit-Counter. Kritische Flows laufen in DB-Transaktionen mit pessimistischen Locks (User-Balance, Powerups, Runde/Hand), u. a. fA�r Round-Start/Hit/Stand/Settle, Daily-Reward, Wallet-Adjustments, Powerup-Kauf/-Verbrauch. Keine generische Retry-Logik oder Event-Sourcing.
-- **Frontend:** Keine Client-Persistenz; konsumiert nur API-Responses.
-- **Abweichungen:** Keine mehrstufigen Backups, kein Circuit-Breaker bei DB-Ausfall. XP-Level-Updates fehlen (siehe UC9).
 
-## Sequenzdiagramm
-```mermaid
-sequenceDiagram
-  participant FE as Frontend
-  participant API as Backend Service
-  participant DB as MySQL (TypeORM)
-  FE->>API: Domain-Request (z.B. /round/start)
-  API->>DB: Begin transaction, lock affected rows
-  API->>DB: Insert/Update domain rows (users, bets, txs, etc.)
-  API->>DB: Commit transaction
-  API-->>FE: Response mit persistierten Daten
-```
 
-## 2. Mockup
-
----
-<!--
-## 3. Screenshots
-
----
--->
 ## 2. Akteure:
 - **Entwickler:** Führt Tests zur Datenkonsistenz, API-Kommunikation und Datenbankintegrität durch.  
 - **System:** Simuliert Testfälle und liefert Ergebnisse zur Überprüfung der Datenflüsse.
@@ -47,20 +23,49 @@ sequenceDiagram
 ## 3. Flow of Events
 
 ### 3.1 Basic Flow
-1. Eine Aktion des Spielers (z. B. Spielstart, Kauf, Level-Up) löst eine Datenänderung aus.
+1. Eine Aktion des Spielers (z.â€¯B. Spielstart, Kauf, Level-Up) löst eine Datenänderung aus.
 2. Das System erstellt oder aktualisiert die entsprechenden Einträge im Speicher (temporär).
-3. Die Persistenz-Schicht prüft Datenintegrität und Verknüpfungen (z. B. Fremdschlüssel).
+3. Die Persistenz-Schicht prüft Datenintegrität und Verknüpfungen (z.â€¯B. Fremdschlüssel).
 4. Die Änderungen werden in die MySQL-Datenbank geschrieben.
 5. Das System bestätigt den Erfolg an die Business-Logik.
 
 ---
 ## 4. Sequenzdiagramm
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Datenpersistieren.png>)
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Backend Service
+  participant DB as MySQL (TypeORM)
+
+  FE->>API: Domain-Request (z.B. /round/start)
+  API->>DB: Begin transaction
+  API->>DB: Sperre betroffene Rows
+  alt Operation erfolgreich
+    API->>DB: Insert/Update Entities (bets, hands, wallet_txs, claims, powerups)
+    API->>DB: Commit transaction
+    API-->>FE: 200/201 {persisted state}
+  else Fehler
+    API->>DB: Rollback transaction
+    API-->>FE: 4xx/5xx {message}
+  end
+```
 
 ---
 
-## 5. Aktivitätsdiagramm
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm daten-pesistieren.png>)
+## 5. AktivitAtsdiagramm (aktuell)
+```mermaid
+flowchart TD
+  A[Start] --> B[Domain-Request z.B. /round/start]
+  B --> C[Begin Transaction]
+  C --> D[Sperren betroffene Rows]
+  D --> E{Operation valide?}
+  E -->|Nein| F[Rollback, 4xx/5xx]
+  E -->|Ja| G[Entities schreiben/aktualisieren]
+  G --> H[Commit]
+  H --> I[Response mit persistiertem Zustand]
+  F --> J[Ende]
+  I --> J
+```
 
 ---
 
@@ -83,7 +88,6 @@ sequenceDiagram
 
 ---
 
-
 ## 8. Function Points
 
 | Kategorie  | Beschreibung                                | Function Points |
@@ -94,3 +98,4 @@ sequenceDiagram
 | **Gesamt**  |                                              | **6 FP**        |
 
 ---
+

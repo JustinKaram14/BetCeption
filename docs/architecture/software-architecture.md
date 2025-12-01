@@ -1,4 +1,4 @@
-# BetCeption  
+﻿# BetCeption  
 # Software-Architekturdokument  
 # Version 1.0
 
@@ -7,6 +7,7 @@
 | --- | --- | --- | --- |
 | 2025-12-01 | 0.0 | Neu erstellt | Team BetCeption |
 | 2025-12-01 | 0.1 | Abgleich Implementierungsstand (Backend/Frontend) | Team BetCeption |
+| 2025-12-02 | 0.2 | Klassendiagramm (Backend) eingebettet | Team BetCeption |
 
 ---
 
@@ -30,8 +31,8 @@ Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles W
 - `docs/architecture/asr-3-step.md` (ASR, Szenarien, Taktiken)  
 - `docs/architecture/utility-tree.md` (Utility Tree, priorisierte Szenarien)  
 - `docs/architecture/architecture-decisions.md` (AD-1..9)  
-- `docs/architecture/weekly-blog.md` (Woche 6–8)  
-- `docs/UseCases/*.md` (UC1–UC10)  
+- `docs/architecture/weekly-blog.md` (Woche 6â€“8)  
+- `docs/UseCases/*.md` (UC1â€“UC10)  
 - `db/schema.sql` (Relationenschema)  
 - Source-Code-Struktur unter `Betception-Backend/src`, `Betception-Frontend/src`
 
@@ -44,10 +45,10 @@ Die folgenden Abschnitte folgen dem RUP-Template: Architekturdarstellung, Ziele/
 
 ## 2. Architekturdarstellung
 Wir nutzen das 4+1-Sichtenmodell:
-- Use-Case-Sicht: zentrale UC1–UC10, Sequenzen/Verhaltensmodellierung (siehe Use-Case-Dokumente, Blog Woche 5/6).  
+- Use-Case-Sicht: zentrale UC1â€“UC10, Sequenzen/Verhaltensmodellierung (siehe Use-Case-Dokumente, Blog Woche 5/6).  
 - Logische Sicht: Domänenmodelle, Entities, Feature-Folder-Struktur (Backend/Frontend).  
 - Prozess-Sicht: Laufzeitflüsse (Auth, Round/Bet, Power-Up, Leaderboard, Observability).  
-- Einsatzsicht: Container-Topologie (Browser → Proxy → Node/Express → MySQL).  
+- Einsatzsicht: Container-Topologie (Browser â†’ Proxy â†’ Node/Express â†’ MySQL).  
 - Implementierungssicht: Layering, Module, Middlewares, CI/CD.  
 Quellen: Code-Struktur, ASR, Utility Tree, ADRs und Blog-Updates.
 
@@ -73,7 +74,7 @@ Zentrale Use Cases (siehe `docs/UseCases`):
 - UC8 Power-Up einsetzen  
 - UC9 XP-/Level-System verwalten  
 - UC10 Daten persistieren  
-Sequenz- und Aktivitätsdiagramme sind in den UC-Dokumenten beschrieben (vgl. Blogeintrag „Verhaltensmodellierung“, Woche 5/6). Architekturrelevante Pfade: Auth-Flows, Round-Start/Wetten (ACID), Fairness-Auskunft, Leaderboard-Reads (Views), Power-Up-Aktivierung, Daily-Reward.
+Sequenz- und Aktivitätsdiagramme sind in den UC-Dokumenten beschrieben (vgl. Blogeintrag â€žVerhaltensmodellierungâ€œ, Woche 5/6). Architekturrelevante Pfade: Auth-Flows, Round-Start/Wetten (ACID), Fairness-Auskunft, Leaderboard-Reads (Views), Power-Up-Aktivierung, Daily-Reward.
 
 **Implementierungsabdeckung (Kurz):** Backend deckt UC1/3/4/5/6/8/10 ab; UC7 (Double/Split) und UC9 (XP/Level-Aufstieg) fehlen. Frontend deckt Auth, Leaderboard und Blackjack (ohne Double/Split, ohne Sidebet-UI) ab; Shop/Inventar/Wallet/Reward fehlen.
 
@@ -87,22 +88,193 @@ Layered Feature-Folder-Architektur: Router/Controller/Schema/Service je Domäne,
 
 ### 5.3 Use-Case-Realisationen
 - UC1: AuthRouter/Controller mit Session-Repo, JWT/Refresh, Rate-Limits, Token-Rotation.  
-- UC5/UC6: RoundRouter → Controller/Service → ACID-Transaktion (Round, Hands, MainBet, WalletTransaction) + RNG/Seed+Hash-Persistenz.  
-- UC4: LeaderboardRouter → DB-Views (`leaderboard_balance|level|winnings`), anonym lesbar, optional persönlicher Rang mit Auth.  
-- UC8: PowerupsRouter → Inventory/Consumption + optional Round-Verknüpfung; Wallet-Belastung transaktional.  
-- UC3: RewardsRouter → `claimDailyReward` transaktional mit pessimistischer Sperre, Ledger-Eintrag und Idempotenz pro UTC-Tag.  
+- UC5/UC6: RoundRouter â†’ Controller/Service â†’ ACID-Transaktion (Round, Hands, MainBet, WalletTransaction) + RNG/Seed+Hash-Persistenz.  
+- UC4: LeaderboardRouter â†’ DB-Views (`leaderboard_balance|level|winnings`), anonym lesbar, optional persönlicher Rang mit Auth.  
+- UC8: PowerupsRouter â†’ Inventory/Consumption + optional Round-Verknüpfung; Wallet-Belastung transaktional.  
+- UC3: RewardsRouter â†’ `claimDailyReward` transaktional mit pessimistischer Sperre, Ledger-Eintrag und Idempotenz pro UTC-Tag.  
 Weitere Realisierungen siehe Use-Case-Dokumente.
 
+### 5.4 Klassendiagramm (Backend)
+Das aktuelle DomAnenmodell (Entities, Beziehungen und Views) wird im folgenden Mermaid-Klassendiagramm dargestellt. Basis sind `db/schema.sql` und die Implementierung unter `Betception-Backend/src/entity`.
+
+```mermaid
+classDiagram
+  direction LR
+
+  class User {
+    +string id
+    +string username
+    +string email
+    +string passwordHash
+    +string balance
+    +int xp
+    +int level
+    +Date lastLoginAt?
+    +string lastDailyRewardAt?
+    +Date createdAt
+  }
+
+  class Session {
+    +string id
+    +User user
+    +string refreshToken  // hashed
+    +string userAgent?
+    +string ip?
+    +Date expiresAt
+    +Date createdAt
+  }
+  User "1" o-- "*" Session
+
+  class Round {
+    +string id
+    +RoundStatus status
+    +string serverSeed
+    +string serverSeedHash
+    +Date startedAt
+    +Date endedAt?
+    +Date createdAt
+  }
+
+  class Hand {
+    +string id
+    +Round round
+    +HandOwnerType ownerType
+    +HandStatus status
+    +int handValue?
+  }
+  Round "1" o-- "*" Hand
+  User "1" o-- "*" Hand
+
+  class Card {
+    +string id
+    +Hand hand
+    +CardRank rank
+    +CardSuit suit
+    +int drawOrder
+    +Date createdAt
+  }
+  Hand "1" o-- "*" Card
+
+  class MainBet {
+    +string id
+    +Round round
+    +Hand hand
+    +User user
+    +string amount  // decimal
+    +MainBetStatus status
+    +string payoutMultiplier?
+    +string settledAmount?
+    +Date settledAt?
+    +Date createdAt
+  }
+  Round "1" o-- "1" MainBet
+  User "1" o-- "*" MainBet
+
+  class SidebetType {
+    +int id
+    +string code
+    +string title
+    +string description?
+    +string baseOdds
+  }
+
+  class SideBet {
+    +string id
+    +Round round
+    +User user
+    +SidebetType type
+    +string amount
+    +SideBetStatus status
+    +string odds?
+    +SideBetColor predictedColor?
+    +CardSuit predictedSuit?
+    +CardRank predictedRank?
+    +SideBetTargetContext targetContext
+    +string settledAmount?
+    +Date settledAt?
+    +Date createdAt
+  }
+  Round "1" o-- "*" SideBet
+  User "1" o-- "*" SideBet
+  SidebetType "1" o-- "*" SideBet
+
+  class WalletTransaction {
+    +string id
+    +User user
+    +WalletTransactionKind kind
+    +string amount
+    +string refTable
+    +string refId?
+    +Date createdAt
+  }
+  User "1" o-- "*" WalletTransaction
+
+  class DailyRewardClaim {
+    +string id
+    +User user
+    +string claimDate
+    +string amount
+    +Date createdAt
+  }
+  User "1" o-- "*" DailyRewardClaim
+
+  class PowerupType {
+    +int id
+    +string code
+    +string title
+    +string description?
+    +int minLevel
+    +string price
+    +json effectJson
+  }
+
+  class UserPowerup {
+    +string id
+    +User user
+    +PowerupType type
+    +int quantity
+    +Date acquiredAt
+  }
+  User "1" o-- "*" UserPowerup
+  PowerupType "1" o-- "*" UserPowerup
+
+  class PowerupConsumption {
+    +string id
+    +User user
+    +PowerupType type
+    +Round round?
+    +Date createdAt
+  }
+  User "1" o-- "*" PowerupConsumption
+  PowerupType "1" o-- "*" PowerupConsumption
+  Round "1" o-- "*" PowerupConsumption
+
+  class LeaderboardBalanceView {
+    +string userId
+    +string username
+    +string balance
+  }
+  class LeaderboardLevelView {
+    +string userId
+    +int level
+    +int xp
+  }
+  class LeaderboardWeeklyWinningsView {
+    +string userId
+    +string netWinnings7d
+  }
+```
+
 ## 6. Prozess-Sicht
-- Auth-Flow: Middleware-Kette (CORS → RequestContext → RateLimit) → AuthRouter → Controller → Session-Repo (Hashing, Rotation) → JWT-Ausgabe; Logout/Refresh verwalten Sessions/Cookies.  
-- Round/Bet: Router → Controller/Service → DB-Transaktion (Round+Hands+MainBet+WalletTransaction) → RNG (Seed+Hash) → Response; Idempotenzschlüssel verhindern Doppelbuchungen.  
-- Sidebet/Power-Up: Router → Controller → Transaktion über Sidebet/Wallet oder Inventory/Consumption; Effekte werden im Round-Service berücksichtigt.  
-- Leaderboards: Router → Views → Response; Auth optional für persönlichen Rang (anonyme GETs erlaubt).  
-- Daily Reward: Router → `claimDailyReward` → Transaktion mit pessimistic lock auf User, Aktualisierung `last_daily_reward_at`, Claim- und Wallet-Eintrag; erneute Claims am gleichen UTC-Tag liefern 409.  
+- Auth-Flow: Middleware-Kette (CORS â†’ RequestContext â†’ RateLimit) â†’ AuthRouter â†’ Controller â†’ Session-Repo (Hashing, Rotation) â†’ JWT-Ausgabe; Logout/Refresh verwalten Sessions/Cookies.  
+- Round/Bet: Router â†’ Controller/Service â†’ DB-Transaktion (Round+Hands+MainBet+WalletTransaction) â†’ RNG (Seed+Hash) â†’ Response; Idempotenzschlüssel verhindern Doppelbuchungen.  
+- Sidebet/Power-Up: Router â†’ Controller â†’ Transaktion über Sidebet/Wallet oder Inventory/Consumption; Effekte werden im Round-Service berücksichtigt.  
+- Leaderboards: Router â†’ Views â†’ Response; Auth optional für persönlichen Rang (anonyme GETs erlaubt).  
+- Daily Reward: Router â†’ `claimDailyReward` â†’ Transaktion mit pessimistic lock auf User, Aktualisierung `last_daily_reward_at`, Claim- und Wallet-Eintrag; erneute Claims am gleichen UTC-Tag liefern 409.  
 - Observability: RequestContext vergibt IDs, Logger schreibt JSON, `/metrics` liefert Snapshots; Feature-Toggle/API-Key schützt Docs/Metrics.
 
 ## 7. Einsatzsicht
-- Typische Topologie: Browser (SPA) → optional Nginx/API-Gateway → Node/Express-Container → MySQL-Container.  
+- Typische Topologie: Browser (SPA) â†’ optional Nginx/API-Gateway â†’ Node/Express-Container â†’ MySQL-Container.  
 - Laufzeit: `docker-compose` für Dev/CI/Prod-Parität; DB im internen Netzwerk isoliert; REST über HTTPS; Secrets via Environment; Migrationslauf beim Start.
 
 ## 8. Implementierungssicht
@@ -133,3 +305,4 @@ Implementierung folgt Layering: Middleware/Router/Controller/Service/Entity, plu
 - Beobachtbarkeit: Request-IDs, strukturierte Logs, `/metrics` Snapshots, optionale API-Key-Absicherung.  
 - Deployment/Portabilität: Docker Compose, automatisierte Migrationen, CI/CD; reproduzierbare Umgebungen.  
 - Fairness/Prüfbarkeit: RNG-Commitment (Seed+Hash) und `/fairness`-API erlauben Offline-Verifikation jeder Runde.
+

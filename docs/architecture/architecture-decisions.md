@@ -1,4 +1,4 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-11-25 | 0.4 | Docs update | Team Betception |
@@ -13,9 +13,9 @@
 Dieses Dokument sammelt die wichtigsten Architekturentscheidungen für BetCeption. Es referenziert die ASR (`asr-3-step.md`) und beschreibt, welche Taktiken und konkreten Muster wir einsetzen.
 
 ## Implementierungsstand (Abgleich)
-- Backend: Entscheidungen AD-1..AD-9 sind umgesetzt (deterministische Round-Engine, Ledger, JWT/Refresh mit Session-Store, DB-Views f�r Leaderboards, Daily-Reward-Transaktion).  
+- Backend: Entscheidungen AD-1..AD-9 sind umgesetzt (deterministische Round-Engine, Ledger, JWT/Refresh mit Session-Store, DB-Views fï¿½r Leaderboards, Daily-Reward-Transaktion).  
 - Frontend: Blackjack-Table, Auth-Panel und Leaderboard-Tabs vorhanden; Shop/Inventar/Wallet-UI und Power-Up-Flows fehlen; Daily-Reward-Call wird nicht verwendet.  
-- Offene L�cken: XP/Level werden nicht erh�ht, Power-Up-Effekte greifen noch nicht in der Runde, Double/Split fehlen, Winnings-Leaderboard liefert nur `userId` (kein Username).
+- Offene Lï¿½cken: XP/Level werden nicht erhï¿½ht, Power-Up-Effekte greifen noch nicht in der Runde, Double/Split fehlen, Winnings-Leaderboard liefert nur `userId` (kein Username).
 
 ## 1. Entscheidungsportfolio
 | ID | Entscheidung | Motivation & betroffene ASR | Taktiken & Muster | Status |
@@ -27,7 +27,7 @@ Dieses Dokument sammelt die wichtigsten Architekturentscheidungen für BetCeptio
 | AD-5 | Feature-Folder-Struktur: Jede Domäne hat Router, Controller, Schema, Entity. Validierung läuft mit Zod-Schemata pro Modul. | Treiber: Wartbarkeit & Testbarkeit (ASR-7, UT-M1). | Taktiken: Separation of Concerns, Input Validation; Muster: Layered Architecture, DTO/Schema Pattern (`modules/*/*.schema.ts`). | umgesetzt |
 | AD-6 | GitHub Actions + Docker Compose definieren einheitliche Laufzeit für Backend & DB. | Treiber: Deployment-Parität & schnelles Onboarding. | Taktiken: Automatisierung, Environment Parity; Muster: Infrastructure-as-Code (`docker-compose.yml`, `.github/workflows/*`). | umgesetzt |
 | AD-7 | Rate Limiting & Request-Kontext sind Cross-Cutting Concerns, die über Middlewares injiziert werden. | Treiber: Sicherheit & Observability (ASR-3, ASR-6). | Taktiken: Throttling, Correlation IDs; Muster: Express Middleware Chain (`middlewares/rateLimiters.ts`, `middlewares/requestContext.ts`). | umgesetzt |
-| AD-8 | Daily Reward wird transaktional mit pessimistischer Sperre und Ledger-Eintrag verbucht; Anspruch max. 1× pro UTC-Tag. | Treiber: Konsistenz & Missbrauchsvermeidung (ASR-2); Daily-Reward-Feature. | Taktiken: ACID-Transaktion, pessimistic locking auf User, Idempotenz über `last_daily_reward_at`; Muster: Transaction Script (`rewards.controller.ts`), Ledger-Pattern (`WalletTransaction` mit `ref_table = daily_reward_claims`). | umgesetzt |
+| AD-8 | Daily Reward wird transaktional mit pessimistischer Sperre und Ledger-Eintrag verbucht; Anspruch max. 1Ã— pro UTC-Tag. | Treiber: Konsistenz & Missbrauchsvermeidung (ASR-2); Daily-Reward-Feature. | Taktiken: ACID-Transaktion, pessimistic locking auf User, Idempotenz über `last_daily_reward_at`; Muster: Transaction Script (`rewards.controller.ts`), Ledger-Pattern (`WalletTransaction` mit `ref_table = daily_reward_claims`). | umgesetzt |
 | AD-9 | Leaderboards basieren auf DB-Views und sind per GET anonym lesbar; personalisierter Rang optional mit Auth. | Treiber: Performance & Einfachheit (ASR-5/ASR-7), Security (kein Write). | Taktiken: Read-Only Views, Pagination, minimale Projektion; Muster: Thin Controller + View-Entities (`Leaderboard*View`), anonyme GETs mit optionalem User-Ranking. | umgesetzt |
 
 ## 2. Übersicht der eingesetzten Taktiken
@@ -37,7 +37,7 @@ Dieses Dokument sammelt die wichtigsten Architekturentscheidungen für BetCeptio
 | Sicherheit | Hashing (bcrypt, SHA-256), Token-Minimierung, Rate-Limiting, Principle of Least Privilege | `hashPassword`, `hashToken`, globale und Auth-spezifische Limiter, getrennte Secrets für Access/Refresh, optionale API-Key-Guards für Swagger/Metrics. |
 | Performance | Pagination, limitierte Projektion, asynchrone I/O, vorvalidierte Payloads | `leaderboard`- und `fairness`-Routen paginieren `findAndCount`; Express verwendet `express.json()` + Zod-Schemata, um invalide Payloads früh zu droppen. |
 | Beobachtbarkeit & Verfügbarkeit | Structured Logging, Request-IDs, Metrics-Snapshot | `requestContext` generiert IDs & legt sie in `res.locals`, Logger in `utils/logger.ts` schreibt JSON; `observability/metrics.ts` zählt Requests, Fehler, Latenzen; Feature-Toggles schützen `/metrics`. |
-| Wartbarkeit | Feature Modules, DTO/Schema-Layer, klare Boundaries zwischen Router/Controller/Service | Jede Domäne (`auth`, `round`, `wallet`, …) besitzt eigene Router und Schemata; Tests können Module isoliert importieren; Angular spiegelt dieselbe Struktur im Frontend. |
+| Wartbarkeit | Feature Modules, DTO/Schema-Layer, klare Boundaries zwischen Router/Controller/Service | Jede Domäne (`auth`, `round`, `wallet`, â€¦) besitzt eigene Router und Schemata; Tests können Module isoliert importieren; Angular spiegelt dieselbe Struktur im Frontend. |
 | Deployment | Automatismen für Build/Test/Migrate, Container-Orchestrierung | `docker-entrypoint.sh` führt `npm run migrate` aus; GitHub Actions starten `npm test` + Linting bei jedem Push. |
 
 ## 3. Eingesetzte Entwurfsmuster
@@ -52,3 +52,4 @@ Dieses Dokument sammelt die wichtigsten Architekturentscheidungen für BetCeptio
 | Domain-spezifische Errors | Kontrollierte Fehlercodes beschleunigen Debugging und sichern API-Kontrakte. | `RoundFlowError`, `PowerupConsumptionError`, Reward-spezifische Fehlercodes (`NOT_ELIGIBLE`). |
 
 Die Entscheidungen, Taktiken und Muster bilden die Grundlage für spätere ADRs. Neue Architekturentscheidungen werden anhand der ASR bewertet und in diesem Dokument ergänzt.
+

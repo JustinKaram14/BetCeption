@@ -1,4 +1,4 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.0 | UCRS erstellt | Team BetCeption|
@@ -63,7 +63,20 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 8. Bei Fehlern (z. B. E-Mail bereits vergeben) wird eine Fehlermeldung angezeigt.  
 
 **Sequenzdiagramm: Registrierung**  
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Regestrieren.png>)
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (AuthFacade)
+  participant API as Auth API
+  participant DB as DB (users/sessions)
+
+  FE->>API: POST /auth/register {email, username, password}
+  alt E-Mail/Username frei
+    API->>DB: Insert user (hash pw, start balance)
+    API-->>FE: 201 {message:"Registered"}
+  else bereits vorhanden
+    API-->>FE: 409 {message:"Email/Username in use"}
+  end
+```
 
 ---
 
@@ -77,8 +90,31 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 7. Benutzer wird zur Lobby weitergeleitet.  
 8. Daily Reward wird **nicht** automatisch aktiviert (separater Call `/rewards/daily/claim`).  
 
-**Sequenzdiagramm: Login**  
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Login.png>)
+**Sequenzdiagramm: Login / Refresh**  
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (AuthFacade)
+  participant API as Auth API
+  participant DB as DB (users/sessions)
+
+  FE->>API: POST /auth/login {email, password}
+  API->>DB: Load user by email
+  alt Nutzer gefunden + Passwort korrekt
+    API->>DB: Update lastLoginAt
+    API->>DB: Insert session (refresh_hash, ua/ip, exp)
+    API-->>FE: 200 {accessToken}+Set-Cookie refresh_token
+  else Nutzer fehlt/Passwort falsch
+    API-->>FE: 401 {message}
+  end
+
+  FE->>API: POST /auth/refresh (Cookie)
+  API->>DB: Find session by refresh_hash
+  alt Session gueltig
+    API-->>FE: 200 {accessToken}+Set new refresh cookie
+  else ungueltig/abgelaufen
+    API-->>FE: 401 {message}
+  end
+```
 
 ---
 
@@ -99,7 +135,16 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 5. Benutzer wird zur Login-Seite weitergeleitet.  
 
 **Sequenzdiagramm: Logout**  
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Logout.png>)
+```mermaid
+sequenceDiagram
+  participant FE as Frontend (AuthFacade)
+  participant API as Auth API
+  participant DB as DB (users/sessions)
+
+  FE->>API: POST /auth/logout (Cookie)
+  API->>DB: Delete session by refresh hash
+  API-->>FE: 204 No Content + Clear-Cookie refresh_token
+```
 
 ---
 
@@ -111,3 +156,68 @@ Der Fokus liegt auf der technischen Sequenz und den kollaborierenden Komponenten
 - Refresh-Tokens werden gehasht gespeichert und nach Logout entfernt.  
 - UI-Fehler-Feedback fuer alle Authentifizierungsschritte.  
 - Optional: Account-Lockout bei zu vielen Fehlversuchen.  
+
+---
+
+## 2. Overall Description
+- **Product Perspective:** Auth-/Session-Komponente des Backends; Grundlage für alle geschützten Routen.  
+- **Product Functions:** Registrierung, Login, Refresh, Logout, JWT-Validierung.  
+- **User Characteristics:** Spieler mit E-Mail/Username/Passwort; Browser-Client mit Cookies.  
+- **Constraints:** HTTPS, HttpOnly Refresh-Cookie, SameSite/Secure, Rate-Limits.  
+- **Assumptions/Dependencies:** DB `users`/`sessions`; UC1/UC2/UC5+ benötigen Auth; JWT Secret/Expiry konfiguriert.  
+- **Requirements Subset:** Keine MFA/Lockout implementiert.
+
+## 3. Specific Requirements
+### 3.1 Functionality
+- FR1: Registrierung mit Unique Email/Username, Passwort-Hashing, Startguthaben.  
+- FR2: Login verifiziert Credentials, setzt Access-JWT + HttpOnly Refresh-Cookie, speichert Session (Refresh-Hash, UA/IP, Exp).  
+- FR3: Refresh rotiert Refresh-Token/Hash und gibt neues Access-JWT.  
+- FR4: Logout löscht gespeicherten Refresh-Hash, leert Cookie.  
+- FR5: Middleware validiert Access-JWT für geschützte Routen; Leaderboard-GETs sind öffentlich.  
+- FR6: Fehlercodes: 401 bei falschen Credentials/ungültigem Token, 409 bei Dup-Registrierung.
+
+### 3.2 Usability
+- U1: Fehlermeldungen klar (falsches Passwort, Email schon vergeben).  
+- U2: Tokens transparent gehandhabt (Access im Body, Refresh im Cookie).
+
+### 3.3 Reliability
+- R1: Refresh-Hash Speicherung verhindert Token-Diebstahl; Rotation bei jedem Refresh.  
+- R2: Rate-Limits auf Auth-Routen (Brute-Force-Schutz).
+
+### 3.4 Performance
+- P1: Login/Refresh Antwortzeit < 600 ms p95.  
+- P2: Hashing-Kosten konfigurierbar (bcrypt/argon2).
+
+### 3.5 Supportability
+- S1: Logging von `userId`, `sessionId`, `ip`, `ua`, `requestId`.  
+- S2: Konfigurierbare Token-Lifetimes und SameSite/Secure-Flags.
+
+### 3.6 Design Constraints
+- DC1: HTTPS Pflicht; HttpOnly/SameSite/Secure Cookies.  
+- DC2: JWT-Signatur mit serverseitigem Secret; Passwort-Hashing (bcrypt/argon2).
+
+### 3.7 Online User Documentation and Help System Requirements
+- H1: API-Doku für `/auth/register|login|refresh|logout`.
+
+### 3.8 Purchased Components
+- PC1: Keine.
+
+### 3.9 Interfaces
+- **User Interfaces:** AuthPanel/Forms; nutzt JSON-Body + Cookies.  
+- **Hardware Interfaces:** Keine.  
+- **Software Interfaces:** REST-APIs; DB-Tabellen `users`, `sessions`.  
+- **Communications Interfaces:** HTTPS, JSON, JWT, HttpOnly-Cookies.
+
+### 3.10 Licensing Requirements
+- Keine.
+
+### 3.11 Legal, Copyright, and Other Notices
+- Datenschutz: Minimale Ausgabe; keine Passwörter/Hashes in Logs/Responses.
+
+### 3.12 Applicable Standards
+- HTTPS, JWT Best Practices, OWASP AuthN/Session Hardening.
+
+## 4. Supporting Information
+- Sequenzdiagramme Abschnitt 2.  
+- Flows in 2.1â€“2.4.
+

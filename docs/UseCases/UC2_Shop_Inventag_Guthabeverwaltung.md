@@ -1,10 +1,10 @@
-## Revision History
+﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
 | 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
 | 2025-12-01 | 1.1 | Abgleich Implementierung (Shop/Inventar/Wallet Backend, fehlendes Frontend) | Team BetCeption |
 
-# Use Case – Shop, Inventar & Guthabenverwaltung
+# Use Case â€“ Shop, Inventar & Guthabenverwaltung
 
 ## 1. Brief Description
 Dieser Use Case beschreibt alle Funktionen rund um das **In-Game-Ökosystem von BetCeption**, bestehend aus:
@@ -16,32 +16,16 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `GET /shop/powerups` ist A�ffentlich; `POST /shop/powerups/purchase` prA�ft Level, Guthaben und fA�hrt Kauf + Wallet-Transaktion in einer DB-Transaktion aus. `GET /inventory/powerups` liefert Bestand des eingeloggten Users. `GET /wallet`, `GET /wallet/transactions`, `POST /wallet/deposit|withdraw` liefern Kontostand, Historie bzw. buchen Ein-/Auszahlungen (Validierung auf zwei Nachkommastellen, pessimistic locks auf User-Balance). Daten werden als Decimal gespeichert, in Cent berechnet.
+- **Backend:** `GET /shop/powerups` ist Aï¿½ffentlich; `POST /shop/powerups/purchase` prAï¿½ft Level, Guthaben und fAï¿½hrt Kauf + Wallet-Transaktion in einer DB-Transaktion aus. `GET /inventory/powerups` liefert Bestand des eingeloggten Users. `GET /wallet`, `GET /wallet/transactions`, `POST /wallet/deposit|withdraw` liefern Kontostand, Historie bzw. buchen Ein-/Auszahlungen (Validierung auf zwei Nachkommastellen, pessimistic locks auf User-Balance). Daten werden als Decimal gespeichert, in Cent berechnet.
 - **Frontend:** Kein dediziertes Shop-/Inventar-/Wallet-UI. Einzig der Blackjack-Screen lädt per `Wallet.getSummary()` den Kontostand. Keine Transaktionshistorie, kein Kauf- oder Inventar-Flow implementiert.
-- **Abweichungen:** Kein Realtime-Sync oder Filter/Sortierung im Frontend. Keine Anzeige/Bedienung fA�r Kauf oder Transaktionen. Level-Sperren/Guthaben werden backendseitig erzwungen; Client validiert nicht vorab.
+- **Abweichungen:** Kein Realtime-Sync oder Filter/Sortierung im Frontend. Keine Anzeige/Bedienung fAï¿½r Kauf oder Transaktionen. Level-Sperren/Guthaben werden backendseitig erzwungen; Client validiert nicht vorab.
 
 ## Aktueller Ablauf (Backend)
 1. Shop anzeigen: Client ruft `GET /shop/powerups`; Backend liefert Power-Ups inkl. Preis, Level-Anforderung und Effekt.
-2. Kauf: Authentifizierter Client sendet `POST /shop/powerups/purchase {typeId, quantity}`; Backend sperrt User, prA�ft Level & Balance, zieht Betrag ab, erhA�ht Inventar (`user_powerups`), schreibt Wallet-Tx (`kind=ADJUSTMENT`).
+2. Kauf: Authentifizierter Client sendet `POST /shop/powerups/purchase {typeId, quantity}`; Backend sperrt User, prAï¿½ft Level & Balance, zieht Betrag ab, erhAï¿½ht Inventar (`user_powerups`), schreibt Wallet-Tx (`kind=ADJUSTMENT`).
 3. Inventar: Authentifizierter Client ruft `GET /inventory/powerups`; Backend liefert Liste mit Typ-Details und Restbestand.
 4. Wallet: Authentifizierter Client ruft `GET /wallet` (Saldo, XP/Level, `lastDailyRewardAt`) und `GET /wallet/transactions` (paginiert); `POST /wallet/deposit|withdraw` passen das Guthaben an und loggen Transaktionen.
 
-## Sequenzdiagramm
-```mermaid
-sequenceDiagram
-  participant FE as Frontend
-  participant API as Shop/Wallet API
-  participant DB as DB
-  FE->>API: GET /shop/powerups
-  API-->>FE: 200 {items:[...]}
-  FE->>API: POST /shop/powerups/purchase {typeId, quantity} (Bearer)
-  API->>DB: Lock user, check level/balance, update user_powerups + wallet_tx
-  API-->>FE: 201 {balance, quantity}
-  FE->>API: GET /inventory/powerups (Bearer)
-  API-->>FE: 200 {items:[{type, quantity}]}
-  FE->>API: GET /wallet /transactions (Bearer)
-  API-->>FE: 200 {balance, xp, level, items}
-```
 
 ## 1.2 Wireframe Mockups
 ![alt text](../assets/Wireframe-mockups/Mockup-pill-wireframe.png)
@@ -75,7 +59,7 @@ sequenceDiagram
 6. System zeigt eine Bestätigungsmeldung an.  
 
 **Alternative Flows:**  
-- **Nicht genügend Guthaben:** Fehlermeldung *„Nicht genügend Coins“*.  
+- **Nicht genügend Guthaben:** Fehlermeldung *â€žNicht genügend Coinsâ€œ*.  
 - **Level zu niedrig:** Power-Up bleibt gesperrt mit Hinweis auf benötigtes Level.  
 - **Serverfehler:** Kauf wird abgebrochen, keine Transaktion.  
 
@@ -91,8 +75,8 @@ sequenceDiagram
 5. Spieler kann Details zu einzelnen Power-Ups einsehen.  
 
 **Alternative Flows:**  
-- Kein Power-Up vorhanden → leere Anzeige mit *„Keine Power-Ups vorhanden“*.  
-- Verbindungsfehler → Fehlermeldung, Inventar bleibt leer.  
+- Kein Power-Up vorhanden â†’ leere Anzeige mit *â€žKeine Power-Ups vorhandenâ€œ*.  
+- Verbindungsfehler â†’ Fehlermeldung, Inventar bleibt leer.  
 
 ---
 
@@ -103,34 +87,84 @@ sequenceDiagram
 4. System zeigt:  
    - **Gesamtguthaben**,  
    - **Transaktionshistorie** (Wetten, Gewinne, Käufe, Belohnungen).  
-5. Spieler kann Filter und Details anzeigen (z. B. Zeitraum oder Transaktionstyp).  
+5. Spieler kann Filter und Details anzeigen (z.â€¯B. Zeitraum oder Transaktionstyp).  
 
 **Alternative Flows:**  
 - **Verbindungsfehler / Serverfehler:** Fehlermeldung, Daten nicht aktualisiert.  
-- **Keine Transaktionen vorhanden:** Hinweis *„Keine Transaktionen verfügbar“*.  
+- **Keine Transaktionen vorhanden:** Hinweis *â€žKeine Transaktionen verfügbarâ€œ*.  
 
 ---
 
 ## 4. Sequenzdiagramme
-## 4.1 Power-Up kaufen
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Powerups kaufen.png>)
+### 4.1 Power-Up kaufen
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Shop/Wallet API
+  participant DB as DB
 
-## 4.2 Inventar anzeigen
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Inventar anzeigen.png>)
+  FE->>API: GET /shop/powerups
+  API-->>FE: 200 {items:[id,price,minLevel,effect]}
 
-## 4.3 Guthaben anzeigen
-![alt text](<../assets/Sequenzdiagramme/Sequenzdiagramm Guthaben anzeigen-verwalten.png>)
+  FE->>API: POST /shop/powerups/purchase {typeId, quantity} (Bearer)
+  API->>DB: Lock user row (pessimistic)
+  API->>DB: Check level>=minLevel
+  API->>DB: Check balance >= quantity*price
+  alt Guthaben+Level ok
+    API->>DB: Upsert user_powerups (+quantity)
+    API->>DB: Insert wallet_tx {kind:ADJUSTMENT, amount:-price*qty}
+    API-->>FE: 201 {balance, quantity}
+  else Fehler
+    API-->>FE: 400/403/404 {message}
+  end
+```
+### 4.2 Inventar anzeigen
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Inventory API
+  participant DB as DB
 
+  FE->>API: GET /inventory/powerups (Bearer)
+  API->>DB: Query user_powerups with type
+  API-->>FE: 200 {items:[{type, quantity, acquiredAt}]}
+```
+### 4.3 Guthaben anzeigen
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant API as Wallet API
+  participant DB as DB
 
+  FE->>API: GET /wallet (Bearer)
+  API->>DB: Read user {balance,xp,level,lastDailyRewardAt}
+  API-->>FE: 200 {balance, xp, level, lastDailyRewardAt}
 
-## 5. Aktivitätsdiagramm
-## 5.1 Power-Up kaufen
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm power-up.png>)
-## 5.2 Inventar anzeigen
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm inventar-anzeigen.png>)
-## 5.3 Guthaben anzeigen
-![alt text](<../assets/Aktivitätsdiagramme/Aktivitätsdiagramm Guthaben.png>)
----
+  FE->>API: GET /wallet/transactions?page=1&limit=20 (Bearer)
+  API->>DB: Query wallet_transactions (order DESC)
+  API-->>FE: 200 {items:[{kind,amount,refTable,refId}]}
+```
+
+## 5. AktivitAtsdiagramm (aktuell)
+```mermaid
+flowchart TD
+  A[Start] --> B[Shop: GET /shop/powerups]
+  B --> C[Liste anzeigen]
+  C --> D[User waehlt Power-Up + Menge]
+  D --> E{Eingabe valide?}
+  E -->|Nein| F[Fehler anzeigen]
+  E -->|Ja| G[POST /shop/powerups/purchase]
+  G --> H{Level/Budget ok?}
+  H -->|Nein| I[400/403 Meldung]
+  H -->|Ja| J[Inventar aktualisieren, Wallet-Tx - Betrag]
+  J --> K[201 {balance, quantity}]
+  K --> L[Inventar laden GET /inventory/powerups]
+  L --> M[Wallet laden GET /wallet + /wallet/transactions]
+  M --> N[UI aktualisieren]
+  I --> O[Ende]
+  N --> O
+  F --> O
+```
 
 ## 6. Special Requirements
 - **Echtzeit-Synchronisation** zwischen Client und Server.  
@@ -173,4 +207,6 @@ sequenceDiagram
 - **Frontend-Komponenten** (Shop-, Inventar- und Wallet-Views)
 
 ---
+
+
 
