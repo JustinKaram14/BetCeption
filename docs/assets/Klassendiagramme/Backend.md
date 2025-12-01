@@ -1,200 +1,168 @@
-```mermaid
-%% BetCeption Backend Domain Model (reworked: wallet, odds, round)
+﻿```mermaid
 classDiagram
-direction LR
+  direction LR
 
-class User {
-  +UUID id
-  +string username
-  +string email
-  +string passwordHash
-  +int xp
-  +int level
-  +datetime lastLoginAt
-  +bool privacyEnabled
-  +datetime createdAt
-  +datetime updatedAt
-}
+  class User {
+    +string id
+    +string username
+    +string email
+    +string passwordHash
+    +string balance
+    +int xp
+    +int level
+    +Date lastLoginAt?
+    +string lastDailyRewardAt?
+    +Date createdAt
+  }
 
-class Session {
-  +UUID id
-  +UUID userId
-  +string refreshTokenHash
-  +datetime expiresAt
-  +string userAgent
-  +string ip
-  +datetime createdAt
-}
-User "1" o-- "*" Session
+  class Session {
+    +string id
+    +User user
+    +string refreshToken  // hashed
+    +string userAgent?
+    +string ip?
+    +Date expiresAt
+    +Date createdAt
+  }
+  User "1" o-- "*" Session
 
-class Wallet {
-  +UUID userId
-  +int balanceCents
-  +string currency
-  +datetime updatedAt
-}
-User "1" o-- "1" Wallet
+  class Round {
+    +string id
+    +RoundStatus status
+    +string serverSeed
+    +string serverSeedHash
+    +Date startedAt
+    +Date endedAt?
+    +Date createdAt
+  }
 
-class WalletTransaction {
-  +UUID id
-  +UUID userId
-  +int amountCents
-  +TransactionType type
-  +string reason
-  +UUID? sessionId
-  +UUID? roundId
-  +UUID? betId
-  +UUID? sideBetId
-  +datetime createdAt
-}
-User "1" o-- "*" WalletTransaction
+  class Hand {
+    +string id
+    +Round round
+    +HandOwnerType ownerType
+    +HandStatus status
+    +int handValue?
+  }
+  Round "1" o-- "*" Hand
+  User "1" o-- "*" Hand
 
-class TransactionType {
-  <<enum>>
-  bet
-  win
-  purchase
-  refund
-  daily_reward
-  payout
-  reserve
-  release
-}
+  class Card {
+    +string id
+    +Hand hand
+    +CardRank rank
+    +CardSuit suit
+    +int drawOrder
+    +Date createdAt
+  }
+  Hand "1" o-- "*" Card
 
-class PowerUp {
-  +UUID id
-  +string key
-  +string name
-  +string description
-  +int minLevel
-  +PowerUpEffect effectType
-  +int effectValue
-  +bool stackable
-}
-class InventoryItem {
-  +UUID id
-  +UUID userId
-  +UUID powerUpId
-  +ItemStatus status
-  +UUID? consumedInRoundId
-  +datetime acquiredAt
-  +datetime? consumedAt
-}
-User "1" o-- "*" InventoryItem
-PowerUp "1" o-- "*" InventoryItem
+  class MainBet {
+    +string id
+    +Round round
+    +Hand hand
+    +User user
+    +string amount  // decimal
+    +MainBetStatus status
+    +string payoutMultiplier?
+    +string settledAmount?
+    +Date settledAt?
+    +Date createdAt
+  }
+  Round "1" o-- "1" MainBet
+  User "1" o-- "*" MainBet
 
-class ItemStatus { <<enum>> available consumed }
-class PowerUpEffect { <<enum>> extra_card double_win loss_protection custom }
+  class SidebetType {
+    +int id
+    +string code
+    +string title
+    +string description?
+    +string baseOdds
+  }
 
-class GameSession {
-  +UUID id
-  +UUID userId
-  +GameStatus status
-  +datetime startedAt
-  +datetime? endedAt
-}
-User "1" o-- "*" GameSession
+  class SideBet {
+    +string id
+    +Round round
+    +User user
+    +SidebetType type
+    +string amount
+    +SideBetStatus status
+    +string odds?
+    +SideBetColor predictedColor?
+    +CardSuit predictedSuit?
+    +CardRank predictedRank?
+    +SideBetTargetContext targetContext
+    +string settledAmount?
+    +Date settledAt?
+    +Date createdAt
+  }
+  Round "1" o-- "*" SideBet
+  User "1" o-- "*" SideBet
+  SidebetType "1" o-- "*" SideBet
 
-class Round {
-  +UUID id
-  +UUID sessionId
-  +int roundNo
-  +RoundStatus status
-  +int mainBetAmountCents
-  +string outcomeSnapshot  %% JSON: playerTotal,dealerTotal,firstCardSuit,blackjack,...
-  +datetime startedAt
-  +datetime? endedAt
-}
-GameSession "1" o-- "*" Round
+  class WalletTransaction {
+    +string id
+    +User user
+    +WalletTransactionKind kind
+    +string amount
+    +string refTable
+    +string refId?
+    +Date createdAt
+  }
+  User "1" o-- "*" WalletTransaction
 
-class Bet {
-  +UUID id
-  +UUID roundId
-  +UUID userId
-  +int amountCents
-  +BetStatus status
-  +int payoutCents
-  +datetime createdAt
-}
-Round "1" o-- "0..1" Bet
+  class DailyRewardClaim {
+    +string id
+    +User user
+    +string claimDate
+    +string amount
+    +Date createdAt
+  }
+  User "1" o-- "*" DailyRewardClaim
 
-class OddsMarket {
-  +string marketKey   %% e.g. "FIRST_CARD_COLOR"
-  +string name
-  +bool active
-}
-class OddsSelection {
-  +string marketKey
-  +string selectionKey  %% e.g. "RED" | "BLACK"
-  +int oddsBp           %% 17500 = 1.75x
-  +bool active
-}
-OddsMarket "1" o-- "*" OddsSelection
+  class PowerupType {
+    +int id
+    +string code
+    +string title
+    +string description?
+    +int minLevel
+    +string price
+    +json effectJson
+  }
 
-class SideBet {
-  +UUID id
-  +UUID roundId
-  +UUID userId
-  +string marketKey
-  +string selectionKey
-  +int stakeCents
-  +SideBetStatus status
-  +SideBetWindow window
-  +int payoutCents
-  +datetime createdAt
-}
-Round "1" o-- "*" SideBet
-SideBet --> OddsSelection : references
+  class UserPowerup {
+    +string id
+    +User user
+    +PowerupType type
+    +int quantity
+    +Date acquiredAt
+  }
+  User "1" o-- "*" UserPowerup
+  PowerupType "1" o-- "*" UserPowerup
 
-class GameStatus { <<enum>> pending running finished cancelled }
-class RoundStatus { <<enum>> pending running settled cancelled }
-class BetStatus { <<enum>> placed settled_win settled_loss refunded cancelled }
-class SideBetStatus { <<enum>> placed won lost void cancelled }
-class SideBetWindow { <<enum>> pre_deal first_card next_card }
+  class PowerupConsumption {
+    +string id
+    +User user
+    +PowerupType type
+    +Round round?
+    +Date createdAt
+  }
+  User "1" o-- "*" PowerupConsumption
+  PowerupType "1" o-- "*" PowerupConsumption
+  Round "1" o-- "*" PowerupConsumption
 
-class XPEvent {
-  +UUID id
-  +UUID userId
-  +UUID? roundId
-  +int delta
-  +string reason
-  +datetime createdAt
-}
-User "1" o-- "*" XPEvent
-
-class LevelConfig {
-  +int level
-  +int xpThreshold
-}
-LevelConfig <.. User
-
-class DailyRewardClaim {
-  +UUID id
-  +UUID userId
-  +int amountCents
-  +date claimedOn
-  +datetime claimedAt
-}
-User "1" o-- "*" DailyRewardClaim
-
-class LeaderboardEntry {
-  +int rank
-  +UUID userId
-  +int profitCents
-  +int xp
-  +int level
-  +datetime scopeStart
-  +string scope   %% daily|weekly|all
-}
-LeaderboardEntry <.. User
-
-class AuditLog {
-  +UUID id
-  +string entity
-  +UUID entityId
-  +string action
-  +string payloadHash
-  +string payloadShort
-  +datetime createdAt
-}
+  class LeaderboardBalanceView {
+    +string userId
+    +string username
+    +string balance
+  }
+  class LeaderboardLevelView {
+    +string userId
+    +int level
+    +int xp
+  }
+  class LeaderboardWeeklyWinningsView {
+    +string userId
+    +string netWinnings7d
+  }
 ```
+
