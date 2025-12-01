@@ -1,14 +1,14 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (XP/Level derzeit read-only) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (XP/Level derzeit read-only) | Team BetCeption |
 
-# Use Case â€“ XP und Level-System verwalten
+# Use Case 9: XP und Level-System verwalten
 
 ## 1. Brief Description
 Dieser Use Case beschreibt das Level- und Erfahrungspunktesystem (XP-System).  
-Nach jedem Spiel erhält der Spieler XP abhängig von seiner Leistung, z.â€¯B. Gewinnhöhe, Wetteinsatz oder besonderen Aktionen.  
+Nach jedem Spiel erhält der Spieler XP abhängig von seiner Leistung, z. B. Gewinnhöhe, Wetteinsatz oder besonderen Aktionen.  
 Erreicht der Spieler eine bestimmte XP-Schwelle, steigt er im Level auf und schaltet neue Power-Ups oder Features frei.
 
 ---
@@ -108,4 +108,6 @@ flowchart TD
 | **Gesamt**     |                                                        | **7 FP**        |
 
 ---
+
+
 

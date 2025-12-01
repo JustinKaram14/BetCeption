@@ -1,8 +1,8 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.0 | UCRS erstellt | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich mit aktuellem Code (JWT/Refresh, Sessions) | Team BetCeption |
+| 27.10.2025 | 0.0 | UCRS erstellt | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich mit aktuellem Code (JWT/Refresh, Sessions) | Team BetCeption |
 
 # BetCeption  
 ## Use-Case-Realization Specification: Authentifizierung & Session Management  
@@ -219,5 +219,7 @@ sequenceDiagram
 
 ## 4. Supporting Information
 - Sequenzdiagramme Abschnitt 2.  
-- Flows in 2.1â€“2.4.
+- Flows in 2.1–2.4.
+
+
 

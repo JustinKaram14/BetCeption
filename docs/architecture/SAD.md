@@ -5,9 +5,9 @@
 ## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-12-01 | 0.0 | Neu erstellt | Team BetCeption |
-| 2025-12-01 | 0.1 | Abgleich Implementierungsstand (Backend/Frontend) | Team BetCeption |
-| 2025-12-02 | 0.2 | Klassendiagramm (Backend) eingebettet | Team BetCeption |
+| 01.12.2025 | 0.0 | Neu erstellt | Team BetCeption |
+| 01.12.2025 | 0.1 | Abgleich Implementierungsstand (Backend/Frontend) | Team BetCeption |
+| 02.12.2025 | 0.2 | Klassendiagramm (Backend) eingebettet | Team BetCeption |
 
 ---
 
@@ -31,8 +31,8 @@ Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles W
 - `docs/architecture/asr-3-step.md` (ASR, Szenarien, Taktiken)  
 - `docs/architecture/utility-tree.md` (Utility Tree, priorisierte Szenarien)  
 - `docs/architecture/architecture-decisions.md` (AD-1..9)  
-- `docs/architecture/weekly-blog.md` (Woche 6â€“8)  
-- `docs/UseCases/*.md` (UC1â€“UC10)  
+- `docs/architecture/weekly-blog.md` (Woche 6–8)  
+- `docs/UseCases/*.md` (UC1–UC10)  
 - `db/schema.sql` (Relationenschema)  
 - Source-Code-Struktur unter `Betception-Backend/src`, `Betception-Frontend/src`
 
@@ -45,10 +45,10 @@ Die folgenden Abschnitte folgen dem RUP-Template: Architekturdarstellung, Ziele/
 
 ## 2. Architekturdarstellung
 Wir nutzen das 4+1-Sichtenmodell:
-- Use-Case-Sicht: zentrale UC1â€“UC10, Sequenzen/Verhaltensmodellierung (siehe Use-Case-Dokumente, Blog Woche 5/6).  
+- Use-Case-Sicht: zentrale UC1–UC10, Sequenzen/Verhaltensmodellierung (siehe Use-Case-Dokumente, Blog Woche 5/6).  
 - Logische Sicht: Domänenmodelle, Entities, Feature-Folder-Struktur (Backend/Frontend).  
 - Prozess-Sicht: Laufzeitflüsse (Auth, Round/Bet, Power-Up, Leaderboard, Observability).  
-- Einsatzsicht: Container-Topologie (Browser â†’ Proxy â†’ Node/Express â†’ MySQL).  
+- Einsatzsicht: Container-Topologie (Browser → Proxy → Node/Express → MySQL).  
 - Implementierungssicht: Layering, Module, Middlewares, CI/CD.  
 Quellen: Code-Struktur, ASR, Utility Tree, ADRs und Blog-Updates.
 
@@ -74,7 +74,6 @@ Zentrale Use Cases (siehe `docs/UseCases`):
 - UC8 Power-Up einsetzen  
 - UC9 XP-/Level-System verwalten  
 - UC10 Daten persistieren  
-Sequenz- und Aktivitätsdiagramme sind in den UC-Dokumenten beschrieben (vgl. Blogeintrag â€žVerhaltensmodellierungâ€œ, Woche 5/6). Architekturrelevante Pfade: Auth-Flows, Round-Start/Wetten (ACID), Fairness-Auskunft, Leaderboard-Reads (Views), Power-Up-Aktivierung, Daily-Reward.
 
 **Implementierungsabdeckung (Kurz):** Backend deckt UC1/3/4/5/6/8/10 ab; UC7 (Double/Split) und UC9 (XP/Level-Aufstieg) fehlen. Frontend deckt Auth, Leaderboard und Blackjack (ohne Double/Split, ohne Sidebet-UI) ab; Shop/Inventar/Wallet/Reward fehlen.
 
@@ -88,10 +87,10 @@ Layered Feature-Folder-Architektur: Router/Controller/Schema/Service je Domäne,
 
 ### 5.3 Use-Case-Realisationen
 - UC1: AuthRouter/Controller mit Session-Repo, JWT/Refresh, Rate-Limits, Token-Rotation.  
-- UC5/UC6: RoundRouter â†’ Controller/Service â†’ ACID-Transaktion (Round, Hands, MainBet, WalletTransaction) + RNG/Seed+Hash-Persistenz.  
-- UC4: LeaderboardRouter â†’ DB-Views (`leaderboard_balance|level|winnings`), anonym lesbar, optional persönlicher Rang mit Auth.  
-- UC8: PowerupsRouter â†’ Inventory/Consumption + optional Round-Verknüpfung; Wallet-Belastung transaktional.  
-- UC3: RewardsRouter â†’ `claimDailyReward` transaktional mit pessimistischer Sperre, Ledger-Eintrag und Idempotenz pro UTC-Tag.  
+- UC5/UC6: RoundRouter → Controller/Service → ACID-Transaktion (Round, Hands, MainBet, WalletTransaction) + RNG/Seed+Hash-Persistenz.  
+- UC4: LeaderboardRouter → DB-Views (`leaderboard_balance|level|winnings`), anonym lesbar, optional persönlicher Rang mit Auth.  
+- UC8: PowerupsRouter → Inventory/Consumption + optional Round-Verknüpfung; Wallet-Belastung transaktional.  
+- UC3: RewardsRouter → `claimDailyReward` transaktional mit pessimistischer Sperre, Ledger-Eintrag und Idempotenz pro UTC-Tag.  
 Weitere Realisierungen siehe Use-Case-Dokumente.
 
 ### 5.4 Klassendiagramm (Backend)
@@ -266,15 +265,15 @@ classDiagram
 ```
 
 ## 6. Prozess-Sicht
-- Auth-Flow: Middleware-Kette (CORS â†’ RequestContext â†’ RateLimit) â†’ AuthRouter â†’ Controller â†’ Session-Repo (Hashing, Rotation) â†’ JWT-Ausgabe; Logout/Refresh verwalten Sessions/Cookies.  
-- Round/Bet: Router â†’ Controller/Service â†’ DB-Transaktion (Round+Hands+MainBet+WalletTransaction) â†’ RNG (Seed+Hash) â†’ Response; Idempotenzschlüssel verhindern Doppelbuchungen.  
-- Sidebet/Power-Up: Router â†’ Controller â†’ Transaktion über Sidebet/Wallet oder Inventory/Consumption; Effekte werden im Round-Service berücksichtigt.  
-- Leaderboards: Router â†’ Views â†’ Response; Auth optional für persönlichen Rang (anonyme GETs erlaubt).  
-- Daily Reward: Router â†’ `claimDailyReward` â†’ Transaktion mit pessimistic lock auf User, Aktualisierung `last_daily_reward_at`, Claim- und Wallet-Eintrag; erneute Claims am gleichen UTC-Tag liefern 409.  
+- Auth-Flow: Middleware-Kette (CORS → RequestContext → RateLimit) → AuthRouter → Controller → Session-Repo (Hashing, Rotation) → JWT-Ausgabe; Logout/Refresh verwalten Sessions/Cookies.  
+- Round/Bet: Router → Controller/Service → DB-Transaktion (Round+Hands+MainBet+WalletTransaction) → RNG (Seed+Hash) → Response; Idempotenzschlüssel verhindern Doppelbuchungen.  
+- Sidebet/Power-Up: Router → Controller → Transaktion über Sidebet/Wallet oder Inventory/Consumption; Effekte werden im Round-Service berücksichtigt.  
+- Leaderboards: Router → Views → Response; Auth optional für persönlichen Rang (anonyme GETs erlaubt).  
+- Daily Reward: Router → `claimDailyReward` → Transaktion mit pessimistic lock auf User, Aktualisierung `last_daily_reward_at`, Claim- und Wallet-Eintrag; erneute Claims am gleichen UTC-Tag liefern 409.  
 - Observability: RequestContext vergibt IDs, Logger schreibt JSON, `/metrics` liefert Snapshots; Feature-Toggle/API-Key schützt Docs/Metrics.
 
 ## 7. Einsatzsicht
-- Typische Topologie: Browser (SPA) â†’ optional Nginx/API-Gateway â†’ Node/Express-Container â†’ MySQL-Container.  
+- Typische Topologie: Browser (SPA) → optional Nginx/API-Gateway → Node/Express-Container → MySQL-Container.  
 - Laufzeit: `docker-compose` für Dev/CI/Prod-Parität; DB im internen Netzwerk isoliert; REST über HTTPS; Secrets via Environment; Migrationslauf beim Start.
 
 ## 8. Implementierungssicht
@@ -305,4 +304,6 @@ Implementierung folgt Layering: Middleware/Router/Controller/Service/Entity, plu
 - Beobachtbarkeit: Request-IDs, strukturierte Logs, `/metrics` Snapshots, optionale API-Key-Absicherung.  
 - Deployment/Portabilität: Docker Compose, automatisierte Migrationen, CI/CD; reproduzierbare Umgebungen.  
 - Fairness/Prüfbarkeit: RNG-Commitment (Seed+Hash) und `/fairness`-API erlauben Offline-Verifikation jeder Runde.
+
+
 

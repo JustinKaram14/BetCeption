@@ -1,10 +1,10 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (UTC-Tag, Claim-Endpoint, kein Auto-Login-Claim) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (UTC-Tag, Claim-Endpoint, kein Auto-Login-Claim) | Team BetCeption |
 
-# Use Case 2: Daily Reward abholen
+# Use Case 3: Daily Reward abholen
 
 ## 1.1 Brief Description
 Dieser Use Case ermöglicht es einem **eingeloggten Spieler**, einmal pro Tag eine **tägliche Belohnung (Coins)** zu erhalten.  
@@ -13,9 +13,9 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `POST /rewards/daily/claim` prAï¿½ft `users.lastDailyRewardAt` gegen das aktuelle UTC-Datum (Kalendertag, nicht 24h Intervall). Bei erster Abholung pro Tag wird ein Reward per `crypto.randomInt` zwischen `dailyRewardConfig.minAmount` und `maxAmount` gezogen, Guthaben aktualisiert, `DailyRewardClaim` sowie `WalletTransaction (REWARD)` geschrieben. Response: `{claimedAmount, balance, eligibleAt}`. Zweitversuch am selben Tag liefert 409 + `eligibleAt`.
+- **Backend:** `POST /rewards/daily/claim` prüft `users.lastDailyRewardAt` gegen das aktuelle UTC-Datum (Kalendertag, nicht 24h Intervall). Bei erster Abholung pro Tag wird ein Reward per `crypto.randomInt` zwischen `dailyRewardConfig.minAmount` und `maxAmount` gezogen, Guthaben aktualisiert, `DailyRewardClaim` sowie `WalletTransaction (REWARD)` geschrieben. Response: `{claimedAmount, balance, eligibleAt}`. Zweitversuch am selben Tag liefert 409 + `eligibleAt`.
 - **Frontend:** Kein UI-Hook vorhanden. `Wallet`-Service stellt `claimDailyReward()` bereit, wird aber nirgends verwendet.
-- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelAï¿½st. Countdown/Timer nur clientseitig nach Response mAï¿½glich. Keine Retry- oder Reminder-Logik.
+- **Abweichungen:** Daily Reward wird **nicht** automatisch beim Login ausgelüst. Countdown/Timer nur clientseitig nach Response müglich. Keine Retry- oder Reminder-Logik.
 
 
 ## 1.2 Wireframe Mockups
@@ -33,7 +33,7 @@ Wenn mehr als 24 Stunden vergangen sind oder ein neuer Kalendertag begonnen hat,
 ## 3. Flow of Events
 
 ### 3.1 Basic Flow
-1. Der Spieler klickt â€žClaimâ€œ.
+1. Der Spieler klickt „Claim“.
 2. Das System liest `last_daily_reward_at` aus der Datenbank.  
 3. Das System prüft, ob der Spieler anspruchsberechtigt ist:  
    - mehr als 24 Stunden seit letzter Belohnung **oder**  
@@ -89,7 +89,7 @@ flowchart TD
 ```
 
 ## 6. Special Requirements
-- Belohnung kann **fix** (z. B. 250 Coins) oder **zufällig** (z. B. 100â€“500 Coins) sein.  
+- Belohnung kann **fix** (z. B. 250 Coins) oder **zufällig** (z. B. 100–500 Coins) sein.  
 - Zeitprüfung basiert auf **Serverzeit (UTC)**.  
 - Operation ist **atomar und idempotent** (keine Doppelbelohnungen).  
 - Audit-Log wird erstellt mit:
@@ -128,6 +128,8 @@ flowchart TD
 | **Gesamt** |  | **7 FP** |
 
 ---
+
+
 
 
 

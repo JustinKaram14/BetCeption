@@ -1,4 +1,4 @@
-```mermaid
+﻿```mermaid
 flowchart TD
   U[Utility] --> R[Zuverlaessigkeit]
   U --> S[Sicherheit]
@@ -30,3 +30,4 @@ flowchart TD
   O1 --> O1a[X-Request-Id]
   O1 --> O1b[/metrics per Toggle/API-Key]
 ```
+

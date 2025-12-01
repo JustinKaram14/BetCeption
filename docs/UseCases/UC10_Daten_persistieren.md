@@ -1,10 +1,10 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (Transaktionen/Locks, fehlende XP-Updates) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (Transaktionen/Locks, fehlende XP-Updates) | Team BetCeption |
 
-# Use Case â€“ Daten persistieren
+# Use Case 10: Daten persistieren
 
 ## 1. Brief Description
 Dieser Use Case beschreibt die dauerhafte Speicherung aller wichtigen Spiel- und Benutzerdaten in einer MySQL-Datenbank.  
@@ -23,9 +23,9 @@ Das System stellt sicher, dass Spielerprofile, Wetten, Spielstände, Inventar, P
 ## 3. Flow of Events
 
 ### 3.1 Basic Flow
-1. Eine Aktion des Spielers (z.â€¯B. Spielstart, Kauf, Level-Up) löst eine Datenänderung aus.
+1. Eine Aktion des Spielers (z. B. Spielstart, Kauf, Level-Up) löst eine Datenänderung aus.
 2. Das System erstellt oder aktualisiert die entsprechenden Einträge im Speicher (temporär).
-3. Die Persistenz-Schicht prüft Datenintegrität und Verknüpfungen (z.â€¯B. Fremdschlüssel).
+3. Die Persistenz-Schicht prüft Datenintegrität und Verknüpfungen (z. B. Fremdschlüssel).
 4. Die Änderungen werden in die MySQL-Datenbank geschrieben.
 5. Das System bestätigt den Erfolg an die Business-Logik.
 
@@ -98,4 +98,6 @@ flowchart TD
 | **Gesamt**  |                                              | **6 FP**        |
 
 ---
+
+
 

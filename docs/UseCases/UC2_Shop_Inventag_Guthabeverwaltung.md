@@ -1,8 +1,8 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (Shop/Inventar/Wallet Backend, fehlendes Frontend) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (Shop/Inventar/Wallet Backend, fehlendes Frontend) | Team BetCeption |
 
 # Use Case 2: Shop, Inventar & Guthabenverwaltung
 
@@ -16,13 +16,13 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
-- **Backend:** `GET /shop/powerups` ist Aï¿½ffentlich; `POST /shop/powerups/purchase` prAï¿½ft Level, Guthaben und fAï¿½hrt Kauf + Wallet-Transaktion in einer DB-Transaktion aus. `GET /inventory/powerups` liefert Bestand des eingeloggten Users. `GET /wallet`, `GET /wallet/transactions`, `POST /wallet/deposit|withdraw` liefern Kontostand, Historie bzw. buchen Ein-/Auszahlungen (Validierung auf zwei Nachkommastellen, pessimistic locks auf User-Balance). Daten werden als Decimal gespeichert, in Cent berechnet.
+- **Backend:** `GET /shop/powerups` ist üffentlich; `POST /shop/powerups/purchase` prüft Level, Guthaben und führt Kauf + Wallet-Transaktion in einer DB-Transaktion aus. `GET /inventory/powerups` liefert Bestand des eingeloggten Users. `GET /wallet`, `GET /wallet/transactions`, `POST /wallet/deposit|withdraw` liefern Kontostand, Historie bzw. buchen Ein-/Auszahlungen (Validierung auf zwei Nachkommastellen, pessimistic locks auf User-Balance). Daten werden als Decimal gespeichert, in Cent berechnet.
 - **Frontend:** Kein dediziertes Shop-/Inventar-/Wallet-UI. Einzig der Blackjack-Screen lädt per `Wallet.getSummary()` den Kontostand. Keine Transaktionshistorie, kein Kauf- oder Inventar-Flow implementiert.
-- **Abweichungen:** Kein Realtime-Sync oder Filter/Sortierung im Frontend. Keine Anzeige/Bedienung fAï¿½r Kauf oder Transaktionen. Level-Sperren/Guthaben werden backendseitig erzwungen; Client validiert nicht vorab.
+- **Abweichungen:** Kein Realtime-Sync oder Filter/Sortierung im Frontend. Keine Anzeige/Bedienung für Kauf oder Transaktionen. Level-Sperren/Guthaben werden backendseitig erzwungen; Client validiert nicht vorab.
 
 ## Aktueller Ablauf (Backend)
 1. Shop anzeigen: Client ruft `GET /shop/powerups`; Backend liefert Power-Ups inkl. Preis, Level-Anforderung und Effekt.
-2. Kauf: Authentifizierter Client sendet `POST /shop/powerups/purchase {typeId, quantity}`; Backend sperrt User, prAï¿½ft Level & Balance, zieht Betrag ab, erhAï¿½ht Inventar (`user_powerups`), schreibt Wallet-Tx (`kind=ADJUSTMENT`).
+2. Kauf: Authentifizierter Client sendet `POST /shop/powerups/purchase {typeId, quantity}`; Backend sperrt User, prüft Level & Balance, zieht Betrag ab, erhüht Inventar (`user_powerups`), schreibt Wallet-Tx (`kind=ADJUSTMENT`).
 3. Inventar: Authentifizierter Client ruft `GET /inventory/powerups`; Backend liefert Liste mit Typ-Details und Restbestand.
 4. Wallet: Authentifizierter Client ruft `GET /wallet` (Saldo, XP/Level, `lastDailyRewardAt`) und `GET /wallet/transactions` (paginiert); `POST /wallet/deposit|withdraw` passen das Guthaben an und loggen Transaktionen.
 
@@ -59,7 +59,7 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 6. System zeigt eine Bestätigungsmeldung an.  
 
 **Alternative Flows:**  
-- **Nicht genügend Guthaben:** Fehlermeldung *â€žNicht genügend Coinsâ€œ*.  
+- **Nicht genügend Guthaben:** Fehlermeldung *„Nicht genügend Coins“*.  
 - **Level zu niedrig:** Power-Up bleibt gesperrt mit Hinweis auf benötigtes Level.  
 - **Serverfehler:** Kauf wird abgebrochen, keine Transaktion.  
 
@@ -75,8 +75,8 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 5. Spieler kann Details zu einzelnen Power-Ups einsehen.  
 
 **Alternative Flows:**  
-- Kein Power-Up vorhanden â†’ leere Anzeige mit *â€žKeine Power-Ups vorhandenâ€œ*.  
-- Verbindungsfehler â†’ Fehlermeldung, Inventar bleibt leer.  
+- Kein Power-Up vorhanden → leere Anzeige mit *„Keine Power-Ups vorhanden“*.  
+- Verbindungsfehler → Fehlermeldung, Inventar bleibt leer.  
 
 ---
 
@@ -87,11 +87,11 @@ Ziel ist es, dem Spieler eine durchgängige Benutzererfahrung für den Erwerb, d
 4. System zeigt:  
    - **Gesamtguthaben**,  
    - **Transaktionshistorie** (Wetten, Gewinne, Käufe, Belohnungen).  
-5. Spieler kann Filter und Details anzeigen (z.â€¯B. Zeitraum oder Transaktionstyp).  
+5. Spieler kann Filter und Details anzeigen (z. B. Zeitraum oder Transaktionstyp).  
 
 **Alternative Flows:**  
 - **Verbindungsfehler / Serverfehler:** Fehlermeldung, Daten nicht aktualisiert.  
-- **Keine Transaktionen vorhanden:** Hinweis *â€žKeine Transaktionen verfügbarâ€œ*.  
+- **Keine Transaktionen vorhanden:** Hinweis *„Keine Transaktionen verfügbar“*.  
 
 ---
 
@@ -208,6 +208,8 @@ flowchart TD
 - **Frontend-Komponenten** (Shop-, Inventar- und Wallet-Views)
 
 ---
+
+
 
 
 

@@ -1,8 +1,8 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.0 | UCRS erstellt | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich mit aktuellem Code (UTC-Tag, Konflikt 409) | Team BetCeption |
+| 27.10.2025 | 0.0 | UCRS erstellt | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich mit aktuellem Code (UTC-Tag, Konflikt 409) | Team BetCeption |
 
 # BetCeption  
 ## Use-Case-Realization Specification: Daily Reward abholen
@@ -26,7 +26,7 @@ Ziel ist es, den Ablauf zwischen Frontend, Backend und Datenbank zu dokumentiere
 Ein System bereitstellen, das Spielern einmal pro Kalendertag (UTC) eine Belohnung gewaehrt und Mehrfachabholungen sicher verhindert.
 
 ### 1.2 Scope
-Der Use Case deckt den Ablauf des taeglichen Belohnungsvorgangs ab â€“ vom Klick im Frontend ueber die Backend-Logik bis zur Speicherung in der Datenbank, inklusive Fehlerfaellen bei Nicht-Berechtigung.
+Der Use Case deckt den Ablauf des taeglichen Belohnungsvorgangs ab – vom Klick im Frontend ueber die Backend-Logik bis zur Speicherung in der Datenbank, inklusive Fehlerfaellen bei Nicht-Berechtigung.
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 Spieler: Endnutzer, der eine Belohnung beansprucht  
@@ -163,5 +163,7 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 2.4.  
 - Flow in 2.3.
+
+
 
 

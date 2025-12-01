@@ -1,21 +1,21 @@
 ﻿## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 2025-10-27 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
-| 2025-12-01 | 1.1 | Abgleich Implementierung (Consume-Endpoint ohne Effekte, fehlendes UI) | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale UC-Dokumentation (Neue Ordnerstruktur) | Team BetCeption|
+| 01.12.2025 | 1.1 | Abgleich Implementierung (Consume-Endpoint ohne Effekte, fehlendes UI) | Team BetCeption |
 
-# Use Case â€“ Power-Up einsetzen
+# Use Case 8: Power-Up einsetzen
 
 ## 1. Brief Description
 Dieser Use Case beschreibt, wie ein Spieler ein zuvor gekauftes Power-Up im laufenden Spiel einsetzt.  
-Ein Power-Up kann dem Spieler strategische Vorteile bringen, wie z.â€¯B. eine zusätzliche Karte, verdoppelte Gewinne oder Schutz vor Verlusten.  
+Ein Power-Up kann dem Spieler strategische Vorteile bringen, wie z. B. eine zusätzliche Karte, verdoppelte Gewinne oder Schutz vor Verlusten.  
 Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 
 ---
 ## Abgleich Implementierung (Stand aktueller Code)
 - **Backend:** `POST /powerups/consume` (auth) erwartet `{typeId, quantity, roundId?}`. Backend prüft Besitz und Menge (`user_powerups`), optional Runde (gehört zum User, nicht settled), reduziert Bestand, legt für jede Einheit einen `powerup_consumptions`-Eintrag an. Keine Effekte werden aktuell auf das Spiel angewandt; die Response meldet nur Verbrauch und Restbestand.
 - **Frontend:** Keine UI für Power-Ups. Service-Aufruf `Rng.consumePowerup()` existiert, wird aber nicht genutzt.
-- **Abweichungen:** Beschriebene Effekte (z.â€¯B. Karte, Schutz, Multiplikator) sind noch nicht implementiert. Keine Synchronisation mit laufender Runde außer Besitzprüfung.
+- **Abweichungen:** Beschriebene Effekte (z. B. Karte, Schutz, Multiplikator) sind noch nicht implementiert. Keine Synchronisation mit laufender Runde außer Besitzprüfung.
 
 ---
 ## 1.2 Wireframe Mockups
@@ -41,7 +41,7 @@ Nach der Nutzung wird das Power-Up aus dem Inventar entfernt.
 4. Wenn ja:
    - Effekt des Power-Ups wird angewendet.
    - Power-Up wird aus dem Inventar entfernt.
-   - Spielstatus wird aktualisiert (z.â€¯B. Karte hinzugefügt, Gewinn verdoppelt etc.).
+   - Spielstatus wird aktualisiert (z. B. Karte hinzugefügt, Gewinn verdoppelt etc.).
 5. System zeigt eine Bestätigung über die erfolgreiche Nutzung an.
 
 ---
@@ -122,4 +122,6 @@ flowchart TD
 | **Gesamt**  |                                          | **5 FP**        |
 
 ---
+
+
 

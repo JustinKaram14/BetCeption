@@ -6,8 +6,8 @@
 | 2025-11-25 | 0.2 | utility tree verbessert | Team Betception |
 | 2025-11-25 | 0.1 | Docs update | Team Betception |
 | 2025-11-24 | 0.0 | Update utility-tree.md | JustinKaram14 |
-| 2025-12-01 | 0.5 | Abgleich Implementierungsstand (Umsetzungs-Status/Gaps) | Team BetCeption |
-| 2025-12-01 | 0.6 | Mermaid Utility-Diagramm hinzugefügt | Team BetCeption |
+| 01.12.2025 | 0.5 | Abgleich Implementierungsstand (Umsetzungs-Status/Gaps) | Team BetCeption |
+| 01.12.2025 | 0.6 | Mermaid Utility-Diagramm hinzugefügt | Team BetCeption |
 
 # Utility Tree
 
@@ -62,4 +62,6 @@ flowchart TD
 | Verfügbarkeit & Beobachtbarkeit | Telemetrie für Incident Response | **Quelle:** On-Call. **Stimulus:** Supportticket verlangt Ursachenanalyse. **Artefakt:** `/metrics` + strukturierte Logs. **Umgebung:** Produktion mit Monitoring. **Reaktion:** Telemetrie & Logs liefern Request-IDs, Fehler- & Latenzwerte. **Messung:** 100 % Requests mit `X-Request-Id`, `/metrics` antwortet <1 s. | Mittel | Niedrig |
 
 Bei neuen Architekturtreibern wird der Baum erweitert, priorisiert und anschließend wieder in Schritt 2 (Taktiken) sowie Schritt 3 (ASR) überführt.
+
+
 
