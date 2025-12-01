@@ -31,15 +31,16 @@ Gilt für das MVP von BetCeption (Blackjack mit Sidebets/Power-Ups, virtuelles W
 - `docs/architecture/asr-3-step.md` (ASR, Szenarien, Taktiken)  
 - `docs/architecture/utility-tree.md` (Utility Tree, priorisierte Szenarien)  
 - `docs/architecture/architecture-decisions.md` (AD-1..9)  
-- `docs/architecture/weekly-blog.md` (Woche 6–8)  
-- `docs/UseCases/*.md` (UC1–UC10)  
+- `docs/architecture/weekly-blog.md` (Woche 6-8)  
+- `docs/use-cases/*.md` (UC1-UC10)  
+- `docs/use-case-realisation/*.md` (Use-Case-Realisierungen mit Sequenz-/Aktivitätsdiagrammen)  
 - `db/schema.sql` (Relationenschema)  
 - Source-Code-Struktur unter `Betception-Backend/src`, `Betception-Frontend/src`
 
 ### 1.5 Übersicht
 Die folgenden Abschnitte folgen dem RUP-Template: Architekturdarstellung, Ziele/Randbedingungen, Use-Case-Sicht, Logische Sicht, Prozess-Sicht, Einsatzsicht, Implementierungssicht, Datensicht, Größe/Performance, Qualität.
 
-### 1.5 Implementierungsstand (Abgleich)
+### 1.6 Implementierungsstand (Abgleich)
 - Backend: Round/Fairness, Wallet/Ledger, Auth mit Refresh-Cookies + Rate-Limits, Leaderboard-Views und Daily-Reward-Transaktion sind implementiert. XP/Level-Progression, Power-Up-Effekte und Double/Split fehlen noch.
 - Frontend: AuthPanel + Blackjack-View (Deal/Hit/Stand/Settle) und Leaderboard-Tabs sind vorhanden. Shop/Inventar/Wallet/Rewards haben kein UI; Login-/Register-Seiten sind Platzhalter.
 
@@ -63,7 +64,7 @@ Quellen: Code-Struktur, ASR, Utility Tree, ADRs und Blog-Updates.
 - Randbedingungen: Docker Compose als Laufzeit, MySQL 8, Node/Express/TypeORM, Angular SPA; CI/CD via GitHub Actions; Secrets per Environment; Feature-Toggles für Docs/Metrics; stabile Use-Case-Schnittstellen.
 
 ## 4. Use-Case-Sicht
-Zentrale Use Cases (siehe `docs/UseCases`):
+Zentrale Use Cases (siehe `docs/use-cases`, Realisierung unter `docs/use-case-realisation`):
 - UC1 Authentifizierung & Session-Management  
 - UC2 Shop, Inventar & Wallet  
 - UC3 Daily Reward  
@@ -304,6 +305,3 @@ Implementierung folgt Layering: Middleware/Router/Controller/Service/Entity, plu
 - Beobachtbarkeit: Request-IDs, strukturierte Logs, `/metrics` Snapshots, optionale API-Key-Absicherung.  
 - Deployment/Portabilität: Docker Compose, automatisierte Migrationen, CI/CD; reproduzierbare Umgebungen.  
 - Fairness/Prüfbarkeit: RNG-Commitment (Seed+Hash) und `/fairness`-API erlauben Offline-Verifikation jeder Runde.
-
-
-

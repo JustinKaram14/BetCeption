@@ -26,7 +26,7 @@ Eine neue Blackjack-Runde sicher und deterministisch starten, den Einsatz verbuc
 - **Fairness-Payload:** `serverSeed`, `serverSeedHash`, `drawOrder`.
 
 ### 1.4 References
-- UC5_Spiel_starten.md  
+- ../use-cases/uc5-spiel-starten.md  
 - db/schema.sql (Rounds, Hands, Cards, MainBets, SideBets, WalletTransactions)  
 - Backend-Route `round/start`
 
@@ -159,5 +159,6 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 4.  
 - Aktivitäten Abschnitt 5.
+
 
 

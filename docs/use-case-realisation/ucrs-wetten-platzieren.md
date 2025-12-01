@@ -26,7 +26,7 @@ Einsätze sicher und atomar buchen, Haupt- und optionale Nebenwetten erfassen un
 - **Fairness-Payload:** `serverSeed`, `serverSeedHash`, deterministische `drawOrder`.
 
 ### 1.4 References
-- UC6_Wetten_platzieren.md  
+- ../use-cases/uc6-wetten-platzieren.md  
 - db/schema.sql (main_bets, side_bets, wallet_transactions, rounds)  
 - Backend-Route `round/start`
 
@@ -158,5 +158,6 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm in Abschnitt 4.  
 - Aktivitaten und Anforderungen in Abschnitt 3.1/5 beschrieben.
+
 
 

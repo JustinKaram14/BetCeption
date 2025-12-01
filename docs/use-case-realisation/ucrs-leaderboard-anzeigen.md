@@ -25,7 +25,7 @@ Spielern die aktuellen Ranglisten performant bereitstellen, optional mit Hervorh
 - **Views:** `leaderboard_balance_view`, `leaderboard_level_view`, `leaderboard_weekly_winnings_view`.
 
 ### 1.4 References
-- UC4_Leaderboard_anzeigen.md  
+- ../use-cases/uc4-leaderboard-anzeigen.md  
 - db/schema.sql (Leaderboards-Views)  
 - Backend-Route `leaderboard`
 
@@ -150,5 +150,6 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 4.  
 - Flows in 3.1.
+
 
 

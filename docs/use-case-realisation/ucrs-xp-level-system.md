@@ -26,7 +26,7 @@ XP/Level konsistent bereitstellen, zukünftige Aufstiegslogik vorbereiten und ak
 - **Leaderboard Level:** View mit Level/Xp pro User.
 
 ### 1.4 References
-- UC9_XP_Level-System_verwalten.md  
+- ../use-cases/uc9-xp-level-system-verwalten.md  
 - db/schema.sql (users.xp/level, leaderboard_level_view)  
 - Backend-Routen `wallet`, `leaderboard/level`
 
@@ -139,5 +139,6 @@ sequenceDiagram
 ## 4. Supporting Information
 - Sequenzdiagramm Abschnitt 4.  
 - Flows Abschnitt 3.1.
+
 
 
