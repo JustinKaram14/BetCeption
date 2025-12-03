@@ -22,7 +22,7 @@
     - [Zuverlässigkeit](#33-zuverlässigkeit)
     - [Leistung](#34-leistung)
     - [Supportability](#35-supportability)
-    - [Designbeschränkugnen](#36-designbeschränkungen)
+    - [Designbeschränkungen](#36-designbeschränkungen)
     - [Anforderungen an die Online-Benutzerdokumentation und das Hilfesystem](#37-anforderungen-an-die-online-benutzerdokumentation-und-das-hilfesystem)
     - [Purchased Components](#38-purchased-components)
     - [Schnittstellen](#39-schnittstellen)
@@ -99,7 +99,46 @@ Das folgende Kapitel gibt einen Überblick über das Projekt mit Vision, Produkt
 BetCeption bietet ein schnelles und zugängliches Blackjack-Erlebnis im Browser. Spieler setzen mit virtuellem Guthaben und können pro Runde Sidebets platzieren, um zusätzliche Spannung zu erzeugen. Optional aktivierbare Power-Ups („Pillen“) geben zeitlich begrenzte Vorteile und schaffen kurze, taktische Entscheidungen. Das System wertet jede Runde serverseitig nach festen Regeln aus und stellt damit ein faires, nachvollziehbares Spiel sicher. Der Fokus des MVP liegt auf einer stabilen Kernmechanik, einer klaren Benutzerführung und einer reibungslosen Interaktion zwischen Frontend und Backend. Erweiterungen wie History/Verlauf und Leaderboard bleiben bewusst außerhalb des MVP und können zu einem späteren Zeitpunkt ergänzt werden.
 
 ### 2.2 Use Case Diagram
-<img width="1682" height="1911" alt="unnamed__usssss" src="https://github.com/user-attachments/assets/e8e5eded-eec0-4e66-9a2c-068eeb8ba0d8" />
+```mermaid
+flowchart LR
+  actor(Player)
+  actor(Admin)
+
+  subgraph Gameplay
+    UC5[UC5: Spiel starten]
+    UC6[UC6: Wetten platzieren]
+    UC7[UC7: Spielzug ausführen]
+    UC8[UC8: Power-Up einsetzen]
+  end
+
+  subgraph Account & Wallet
+    UC1[UC1: Authentifizierung/Session]
+    UC2[UC2: Shop/Inventar/Guthaben]
+    UC3[UC3: Daily Reward]
+    UC4[UC4: Leaderboard anzeigen]
+    UC9[UC9: XP/Level verwalten]
+  end
+
+  subgraph System
+    UC10[UC10: Daten persistieren]
+  end
+
+  Player --> UC1
+  Player --> UC5 --> UC6 --> UC7
+  Player --> UC8
+  Player --> UC2
+  Player --> UC3
+  Player --> UC4
+  Player --> UC9
+  Admin --> UC4
+  UC5 --> UC10
+  UC6 --> UC10
+  UC7 --> UC10
+  UC8 --> UC10
+  UC2 --> UC10
+  UC3 --> UC10
+  UC9 --> UC10
+```
 
 ### 2.3 Technologie-Stack
 Die Anwendung wird mit folgenden Technologien umgesetzt:
@@ -249,45 +288,45 @@ Kurzbeschreibungen zu Setup, Start und häufigen Aufgaben liegen im Repository. 
 #### 3.5.6 Internationalisierung (Basis)
 Texte sind zentral abgelegt. Eine spätere Übersetzung ist möglich, auch wenn das MVP zunächst deutsch bleibt.
 
-### 3.6 DesignbeschrAnkungen
+### 3.6 Designbeschreibungen
 - Frontend: Angular/TypeScript SPA, REST-only (kein WebSocket im MVP).
-- Backend: Node/Express mit TypeORM auf MySQL 8; Decimal fuer Geldbetraege, int fuer XP/Level.
+- Backend: Node/Express mit TypeORM auf MySQL 8; Decimal für Geldbeträge, int für XP/Level.
 - Auth: JWT + HttpOnly Refresh-Cookie; HTTPS Pflicht.
 - Keine Echtgeldeinzahlungen, kein Dritt-Payment; virtuelle Coins nur im System.
 
 ### 3.7 Anforderungen an die Online-Benutzerdokumentation und das Hilfesystem
 - Kurze In-App-Hinweise zu Einsatz, Hit/Stand, Sidebets.
 - FAQ/Onboarding als statische Seite verlinkbar.
-- API-Doku (Swagger o.ä.) fuer Auth, Round, Bets, Wallet, Powerups, Leaderboard, Rewards.
+- API-Doku (Swagger o.ä.) für Auth, Round, Bets, Wallet, Powerups, Leaderboard, Rewards.
 
 ### 3.8 Purchased Components
-- Keine lizenzierten Drittkomponenten ausser ueblicher OSS (Node, Angular, MySQL).
+- Keine lizenzierten Drittkomponenten außer üblicher OSS (Node, Angular, MySQL).
 - Keine externen Payment- oder RNG-Dienste.
 
 ### 3.9 Schnittstellen
-- User Interfaces: Browser-UI (Angular), responsive; optionale Tastaturkuerzel fuer Hit/Stand.
+- User Interfaces: Browser-UI (Angular), responsive; optionale Tastaturkürzel für Hit/Stand.
 - Hardware Interfaces: keine speziellen Anforderungen.
 - Software Interfaces: REST/JSON Endpunkte (Auth, Round, Bets, Wallet, Shop/Inventory, Powerups, Rewards, Leaderboard); DB MySQL 8 per TypeORM.
 - Communications Interfaces: HTTPS, Bearer-JWT, HttpOnly Refresh-Cookie.
 
 ### 3.10 Lizenzanforderungen
-- Interne Nutzung; OSS-Lizenzen der Abhaengigkeiten beachten (MIT/Apache u.a.).
-- Keine proprietaeren Runtime-Lizenzen noetig.
+- Interne Nutzung; OSS-Lizenzen der Abhängigkeiten beachten (MIT/Apache u.a.).
+- Keine proprietären Runtime-Lizenzen nötig.
 
 ### 3.11 Rechtliche Hinweise, Urheberrecht und sonstige Hinweise
 - Keine Echtgeld-Transaktionen; nur virtuelles Guthaben.
-- Datenschutz: nur noetige personenbezogene Daten (E-Mail, Username, Hash) speichern; keine Passwoerter im Klartext, keine sensiblen Daten in Logs.
+- Datenschutz: nur nötige personenbezogene Daten (E-Mail, Username, Hash) speichern; keine Passwörter im Klartext, keine sensiblen Daten in Logs.
 - Branding/Assets: interne Nutzung; fremde Marken nicht verwenden.
 
 ### 3.12 Anwendbare Standards
 - OWASP ASVS (Auth, Session, Input-Validation) als Leitlinie.
 - JWT Best Practices (Signatur, Ablauf, Rotation).
-- ACID-Transaktionen fuer Geld- und Spielbuchungen.
+- ACID-Transaktionen für Geld- und Spielbuchungen.
 - Accessibility: WCAG-Basis (Kontrast, Fokus).
 
 ## 4. Begleitende Informationen
-- Vollstaendige Use-Case-Spezifikationen: `docs/use-cases/uc1-...-uc10-*.md`.
-- Use-Case-Realization (UCRS) mit Sequenz- und Aktivitaetsdiagrammen: `docs/use-case-realisation/*.md`.
+- Vollständige Use-Case-Spezifikationen: `docs/use-cases/uc1-...-uc10-*.md`.
+- Use-Case-Realization (UCRS) mit Sequenz- und Aktivitätsdiagrammen: `docs/use-case-realisation/*.md`.
 - Architektur- und Qualitaetsartefakte: `docs/architecture/*.md`, Utility-Tree und Klassendiagramm.
 - Glossar/Definitionen siehe Abschnitt 1.3 und UCRS-Referenzen.
 
