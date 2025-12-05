@@ -5,7 +5,11 @@
   <app-hand
     label="Dealer"
     [hand]="dealerHand"
+    [isDealer]="true"
     [isActive]="activeHand === HandOwnerType.DEALER"
+    [revealDealerCards]="
+      activeHand === HandOwnerType.DEALER || dealerHand?.status !== HandStatus.ACTIVE
+    "
   ></app-hand>
 
   <app-hand

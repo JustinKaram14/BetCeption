@@ -34,7 +34,7 @@ export class Controls {
       case RoundStatus.CREATED:
         return 'Gestartet';
       case RoundStatus.SETTLED:
-        return 'Abgeschlossen';
+        return 'Fertig';
       case RoundStatus.ABORTED:
         return 'Abgebrochen';
       default:

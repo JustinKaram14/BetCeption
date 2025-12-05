@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { NgIf } from '@angular/common';
-import { HandOwnerType, RoundHand } from '../../../../../core/api/api.types';
+import { HandOwnerType, RoundHand, HandStatus } from '../../../../../core/api/api.types';
 import { Hand } from '../hand/hand';
 
 @Component({
@@ -17,4 +17,5 @@ export class Table {
   @Input() showBlackjackBanner = false;
 
   protected readonly HandOwnerType = HandOwnerType;
+  protected readonly HandStatus = HandStatus;
 }
