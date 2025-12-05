@@ -3,29 +3,26 @@ import { verifyAccess } from '../utils/jwt.js';
 
 export async function authGuard(req: Request, res: Response, next: NextFunction) {
   try {
+    const allowGuest =
+      req.method === 'GET' && typeof req.baseUrl === 'string' && req.baseUrl.startsWith('/leaderboard');
+
     if (req.user) {
       return next();
     }
     const header = req.header('Authorization');
-    const allowGuest =
-      req.method === 'GET' && typeof req.baseUrl === 'string' && req.baseUrl.startsWith('/leaderboard');
 
     if (!header?.startsWith('Bearer ')) {
       if (allowGuest) {
         return next();
       }
-      return res.status(401).json({ message: 'Missing token' });
+      throw new Error('Missing token');
     }
     const token = header.substring(7);
     const payload = await verifyAccess(token);
     req.user = payload;
     next();
-  } catch {
-    const allowGuest =
-      req.method === 'GET' && typeof req.baseUrl === 'string' && req.baseUrl.startsWith('/leaderboard');
-    if (allowGuest) {
-      return next();
-    }
-    return res.status(401).json({ message: 'Invalid or expired token' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid or expired token';
+    return res.status(401).json({ message });
   }
 }
