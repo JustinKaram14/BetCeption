@@ -83,7 +83,6 @@ flowchart LR
   - Database: ~ 7 h
   - Frontend: ~ 45 h
   - Projektmanagement: ~ 22 h
-  - (Rest ggf. nachtragen)
 
 ## 6. Rollen & Hauptbeiträge im Team
 - Justin
