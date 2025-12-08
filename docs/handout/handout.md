@@ -29,7 +29,7 @@
 - Frontend: Angular, RxJS, HttpClient/Interceptor/Guards, CSS
 - CI/PM: GitHub, GitHub Actions, YouTrack/Board
 
-## 4. Overall Use Case (Mermaid)
+## 4. Overall Use Case
 ```mermaid
 flowchart LR
   actor(Player)
@@ -71,7 +71,7 @@ flowchart LR
   UC9 --> UC10
 ```
 
-## 5. Aufwandsstatistik (Jira-Auswertung)
+## 5. Aufwandsstatistik
 - Gesamt erfasster Aufwand (Team): ca. 108 h (≈ 6.500 Minuten)
 - Verteilung nach Personen (gerundet):
   - Justin: ~ 50 h
