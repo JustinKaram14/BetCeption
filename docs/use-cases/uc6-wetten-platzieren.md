@@ -77,7 +77,7 @@ Abhängigkeiten: Start und Fortschritt eines Blackjack-Spiels (z. B. *Spiel st
 
 ---
 
-## 4. Sequenzdiagramme
+## 4. Sequenzdiagramm
 ### 4.1 Haupt- und Nebenwetten (Round-Start)
 ```mermaid
 sequenceDiagram
@@ -102,7 +102,7 @@ sequenceDiagram
   Note over FE: SideBets optional; keine Idempotency-Keys, Schutz via Locks/Status
 ```
 
-## 5. AktivitAtsdiagramm (aktuell)
+## 5. Aktivitätsdiagramm (aktuell)
 ```mermaid
 flowchart TD
   A[Start] --> B[User waehlt Einsatz + Sidebets]

@@ -48,7 +48,7 @@ Das Spiel kann anschließend über weitere Use Cases (z. B. UC6 - Wette platzier
 ---
 
 
-### 4. Sequenz Diagram
+### 4. Sequenzdiagramm
 ```mermaid
 sequenceDiagram
   participant FE as Frontend (Blackjack)
@@ -78,7 +78,7 @@ sequenceDiagram
   Note over FE: Weitere Aktionen siehe UC7 (hit/stand/settle)
 ```
 
-### 5. AktivitAtsdiagramm (aktuell)
+### 5. Aktivitätsdiagramm (aktuell)
 ```mermaid
 flowchart TD
   A[Start] --> B[Einsatz und Sidebets eingeben]
