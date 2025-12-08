@@ -1,9 +1,10 @@
-﻿## Revision History
+## Revision History
 | Datum | Version | Beschreibung | Autor |
 | --- | --- | --- | --- |
-| 27.10.2025 | 0.1 | Initiale SRS (Neue Ordnerstruktur) | Team BetCeption|
+| 08.12.2025 | 1.0 | Finale RUP-SRS, Encoding/Umlaute korrigiert | Team BetCeption |
+| 27.10.2025 | 0.1 | Initiale SRS (Neue Ordnerstruktur) | Team BetCeption |
 
-# BetCeption:  Software Requirements Specification (SRS)
+# BetCeption: Software Requirements Specification (SRS)
 
 ## Table of contents
 - [Einleitung](#1-einleitung)
@@ -84,12 +85,10 @@ Zusätzliche Casinospiele neben Blackjack sowie Administrationsfunktionen (Moder
 | RNG | Random Number Generator. Zufallsquelle zur Kartenmischung. |
 | SPA | Single-Page Application. Frontend-Architektur, die clientseitig navigiert. |
 
-
 ### 1.4 Referenzen
 
 | Titel | Datum | Herausgeber | Bezugsquelle |
 | --- | --- | --- | --- |
-
 
 ### 1.5 Überblick
 Das folgende Kapitel gibt einen Überblick über das Projekt mit Vision, Produktperspektive und Funktionsrahmen. Außerdem zeigt es ein Use-Case-Diagramm, das die Anwendung als Ganzes abbildet. Das danach folgende Kapitel beschreibt die Anforderungen im Detail auf Basis von Use Cases, inklusive kurzer Beschreibungen, GUI-Mockups, Sequenzdiagrammen sowie Vor- und Nachbedingungen. Nicht-funktionale Aspekte wie Bedienbarkeit, Zuverlässigkeit, Leistung und Wartbarkeit werden dort ebenfalls konkretisiert. Abschließend enthält das Dokument einen Abschnitt mit unterstützenden Informationen.
@@ -164,7 +163,6 @@ Die Anwendung wird mit folgenden Technologien umgesetzt:
 - YouTrack für Backlog, Sprints und Zeiterfassung  
 - GitHub für Quellcode und Reviews
 
-
 **Containerisierung & Laufzeit:**  
 - Docker und Docker Compose für lokale Entwicklungsumgebung
 
@@ -218,7 +216,7 @@ Fortschritt durch gespielte Runden führt zu Erfahrungspunkten und Level-Aufstie
 [Zur Spezifikation](./uc9-xp-level-system-verwalten.md)
 
 ### 3.2 Benutzerfreundlichkeit
-ie Oberfläche soll ohne Anleitung verständlich sein. Zentrale Aktionen sind jederzeit sichtbar und mit klaren Bezeichnungen versehen. Interaktionen folgen einem einfachen, wiederkehrenden Muster: Einsatz wählen, Runde starten, Entscheidung treffen, Ergebnis sehen. Tooltips und kurze Inline-Hinweise helfen bei Bedarf, ohne den Spielfluss zu stören.
+Die Oberfläche soll ohne Anleitung verständlich sein. Zentrale Aktionen sind jederzeit sichtbar und mit klaren Bezeichnungen versehen. Interaktionen folgen einem einfachen, wiederkehrenden Muster: Einsatz wählen, Runde starten, Entscheidung treffen, Ergebnis sehen. Tooltips und kurze Inline-Hinweise helfen bei Bedarf, ohne den Spielfluss zu stören.
 
 #### 3.2.1 Keine Einarbeitungszeit
 Spieler sollen das Spiel im Browser öffnen und alle Grundfunktionen ohne zusätzliche Erklärungen nutzen können. Die wichtigsten Aktionen sind maximal zwei Klicks entfernt.
@@ -231,7 +229,6 @@ Kontraste erfüllen WCAG-Basiswerte. Fokus-Reihenfolge ist nachvollziehbar. Alle
 
 #### 3.2.4 Responsives Verhalten
 Layout und Bedienelemente passen sich an gängige Auflösungen an. Auf kleineren Displays werden sekundäre Informationen ausgeblendet oder komprimiert, ohne Funktionen zu verlieren.
-
 
 ### 3.3 Zuverlässigkeit
 Das System priorisiert eine stabile Spiellogik und konsistente Buchungen. Ausfälle sollen den Spielfortschritt nicht verfälschen. Einsätze und Auszahlungen werden zuverlässig erfasst und nachverfolgbar gespeichert.
@@ -265,7 +262,6 @@ Pro Spielaktion maximal zwei schreibende Transaktionen. Häufige Abfragen sind i
 
 #### 3.4.5 Stabilität bei Verbindungsproblemen
 Kurzzeitige Ausfälle führen nicht zu doppelten Buchungen. Idempotente Requests werden bei Bedarf automatisch wiederholt. Der Spielstatus lässt sich nach einem Reload herstellen.
-
 
 ### 3.5 Supportability
 Der Code ist gut wartbar, testbar und nachvollziehbar. Konfiguration und Infrastruktur sind für das Team leicht zu bedienen.
@@ -327,10 +323,5 @@ Texte sind zentral abgelegt. Eine spätere Übersetzung ist möglich, auch wenn 
 ## 4. Begleitende Informationen
 - Vollständige Use-Case-Spezifikationen: `docs/use-cases/uc1-...-uc10-*.md`.
 - Use-Case-Realization (UCRS) mit Sequenz- und Aktivitätsdiagrammen: `docs/use-case-realisation/*.md`.
-- Architektur- und Qualitaetsartefakte: `docs/architecture/*.md`, Utility-Tree und Klassendiagramm.
+- Architektur- und Qualitätsartefakte: `docs/architecture/*.md`, Utility-Tree und Klassendiagramm.
 - Glossar/Definitionen siehe Abschnitt 1.3 und UCRS-Referenzen.
-
-
-
-
-
