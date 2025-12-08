@@ -62,7 +62,7 @@ sequenceDiagram
 ```
 
 ---
-## 5. AktivitAtsdiagramm (aktuell: Read-only)
+## 5. Aktivitätsdiagramm (aktuell: Read-only)
 ```mermaid
 flowchart TD
   A[Start] --> B[UI ruft GET /wallet]

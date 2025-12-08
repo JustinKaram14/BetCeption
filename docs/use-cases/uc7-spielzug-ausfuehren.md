@@ -72,7 +72,7 @@ sequenceDiagram
 
 ---
 
-## 5. AktivitAtsdiagramm (aktuell)
+## 5. Aktivitätsdiagramm (aktuell)
 ```mermaid
 flowchart TD
   A[Start] --> B[Hit/Stand/Settle senden]
