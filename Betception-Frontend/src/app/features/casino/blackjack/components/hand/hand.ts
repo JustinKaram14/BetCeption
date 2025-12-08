@@ -13,6 +13,8 @@ export class Hand implements OnChanges {
   @Input() label = '';
   @Input() hand: RoundHand | null = null;
   @Input() isActive = false;
+  @Input() isDealer = false;
+  @Input() revealDealerCards = false;
 
   scoreAnimated = false;
   private lastScore: number | null = null;
@@ -22,7 +24,11 @@ export class Hand implements OnChanges {
   }
 
   get displayScore(): string {
-    if (!this.hand || this.hand.handValue === null || this.hand.handValue === undefined) {
+    // Hide dealer's score until cards are revealed
+    if (this.isDealer && !this.revealDealerCards && this.hand?.cards.length === 2) {
+      return '--';
+    }
+    if (!this.hand || this.hand.handValue === null) {
       return '--';
     }
     return String(this.hand.handValue);
@@ -59,13 +65,20 @@ export class Hand implements OnChanges {
     return card.id ?? `${card.rank}-${card.suit}-${card.drawOrder}`;
   }
 
-  cardClasses(card: RoundCard) {
+  cardClasses(card: RoundCard, index: number) {
     const isRed = card.suit === CardSuit.HEARTS || card.suit === CardSuit.DIAMONDS;
+
+    // The second card of the dealer is hidden if it's the initial deal (2 cards)
+    // and the reveal flag is not set.
+    const isDealerHoleCard = this.isDealer && index === 1 && this.hand?.cards.length === 2;
+    const isDealerSecondCardHidden = isDealerHoleCard && !this.revealDealerCards;
+
     return {
       card: true,
       red: isRed,
       black: !isRed,
-      visible: true,
+      visible: !isDealerSecondCardHidden,
+      back: isDealerSecondCardHidden,
       'active-hand-card': this.isActive,
     };
   }

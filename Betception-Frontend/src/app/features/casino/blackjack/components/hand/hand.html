@@ -6,8 +6,8 @@
 
   <div class="hand" *ngIf="cards.length; else emptyHand">
     <div
-      *ngFor="let card of cards; trackBy: trackByCard"
-      [ngClass]="cardClasses(card)"
+      *ngFor="let card of cards; let i = index; trackBy: trackByCard"
+      [ngClass]="cardClasses(card, i)"
     >
       <div class="card-face">
         <div class="card-rank top">{{ card.rank }}</div>
