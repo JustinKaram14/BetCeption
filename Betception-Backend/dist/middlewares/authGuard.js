@@ -1,17 +1,24 @@
 import { verifyAccess } from '../utils/jwt.js';
 export async function authGuard(req, res, next) {
     try {
-        if (req.user)
-            return res.status(500).json({ message: 'req.user already exists' });
+        const allowGuest = req.method === 'GET' && typeof req.baseUrl === 'string' && req.baseUrl.startsWith('/leaderboard');
+        if (req.user) {
+            return next();
+        }
         const header = req.header('Authorization');
-        if (!header?.startsWith('Bearer '))
-            return res.status(401).json({ message: 'Missing token' });
+        if (!header?.startsWith('Bearer ')) {
+            if (allowGuest) {
+                return next();
+            }
+            throw new Error('Missing token');
+        }
         const token = header.substring(7);
         const payload = await verifyAccess(token);
         req.user = payload;
         next();
     }
-    catch {
-        return res.status(401).json({ message: 'Invalid or expired token' });
+    catch (error) {
+        const message = error instanceof Error ? error.message : 'Invalid or expired token';
+        return res.status(401).json({ message });
     }
 }

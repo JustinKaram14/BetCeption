@@ -21,7 +21,7 @@ function setRefreshTokenCookie(res, token) {
     });
 }
 function clearRefreshTokenCookie(res) {
-    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieDefaults);
+    res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
 }
 export async function register(req, res) {
     const { email, password, username } = req.body;
@@ -48,12 +48,13 @@ export async function login(req, res) {
     const repo = AppDataSource.getRepository(User);
     const sessionRepo = AppDataSource.getRepository(Session);
     const user = await repo.findOne({ select: ['id', 'email', 'username', 'passwordHash'], where: { email } });
-    const invalidResponse = { message: 'Invalid email or password' };
-    if (!user)
-        return res.status(401).json(invalidResponse);
+    if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+    }
     const ok = await verifyPassword(password, user.passwordHash);
-    if (!ok)
-        return res.status(401).json(invalidResponse);
+    if (!ok) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+    }
     await repo.update(user.id, { lastLoginAt: new Date() });
     const subject = { sub: user.id, email: user.email, username: user.username };
     const accessToken = await signAccess(subject);

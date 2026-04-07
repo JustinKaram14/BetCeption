@@ -15,7 +15,7 @@ export async function listPowerups(_req, res) {
             title: type.title,
             description: type.description,
             minLevel: type.minLevel,
-            price: type.price,
+            price: Number(type.price),
             effect: type.effectJson,
         })),
     });
@@ -75,7 +75,7 @@ export async function purchasePowerup(req, res) {
         });
         return res.status(201).json({
             message: 'Power-up purchased',
-            balance: result.newBalance,
+            balance: Number(result.newBalance),
             quantity: result.inventoryQuantity,
         });
     }

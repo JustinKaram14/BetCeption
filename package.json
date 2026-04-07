@@ -1,6 +1,10 @@
 {
   "scripts": {
-    "start": "node start-stack.js"
+    "start": "node start-stack.js",
+    "install:all": "npm install --prefix Betception-Backend && npm install --prefix Betception-Frontend",
+    "build": "npm run build --prefix Betception-Backend && npm run build --prefix Betception-Frontend",
+    "build:backend": "npm run build --prefix Betception-Backend",
+    "build:frontend": "npm run build --prefix Betception-Frontend"
   },
   "devDependencies": {
     "@types/jasmine": "^5.1.9",

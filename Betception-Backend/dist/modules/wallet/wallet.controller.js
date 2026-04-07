@@ -2,7 +2,7 @@ import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
-import { centsToDecimal, decimalToCents } from '../../utils/money.js';
+import { centsToDecimal, centsToNumber, decimalToCents } from '../../utils/money.js';
 export async function getWalletSummary(req, res) {
     const userId = String(req.user?.sub);
     const repo = AppDataSource.getRepository(User);
@@ -15,7 +15,7 @@ export async function getWalletSummary(req, res) {
     return res.json({
         id: user.id,
         username: user.username,
-        balance: user.balance,
+        balance: Number(user.balance),
         xp: user.xp,
         level: user.level,
         lastDailyRewardAt: user.lastDailyRewardAt,
@@ -38,7 +38,7 @@ export async function getWalletTransactions(req, res) {
         items: items.map((tx) => ({
             id: tx.id,
             kind: tx.kind,
-            amount: tx.amount,
+            amount: Number(tx.amount),
             refTable: tx.refTable,
             refId: tx.refId,
             createdAt: tx.createdAt,
@@ -115,7 +115,7 @@ async function performWalletAdjustment(userId, amountCents, kind, reference) {
         });
         await walletRepo.save(tx);
         return {
-            balance: centsToDecimal(newBalance),
+            balance: centsToNumber(newBalance),
             transactionId: tx.id,
         };
     });
