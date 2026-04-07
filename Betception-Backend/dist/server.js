@@ -1,14 +1,21 @@
 import 'reflect-metadata';
+import { fileURLToPath } from 'url';
 import { app } from './app.js';
 import { env } from './config/env.js';
 import { AppDataSource, initDataSource } from './db/data-source.js';
 import { logger } from './utils/logger.js';
 let httpServer = null;
 let shuttingDown = false;
-async function bootstrap() {
+export async function startServer(options = {}) {
     try {
-        logger.info('server.starting', { port: env.port });
+        logger.info('server.starting', { port: env.port, runMigrations: options.runMigrations ?? false });
         await initDataSource();
+        if (options.runMigrations) {
+            const results = await AppDataSource.runMigrations();
+            logger.info('server.migrations.completed', {
+                executed: results.map((migration) => migration.name),
+            });
+        }
         httpServer = app.listen(env.port, () => {
             logger.info('server.listening', {
                 port: env.port,
@@ -51,4 +58,7 @@ async function shutdown(signal) {
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-bootstrap();
+const isDirectExecution = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectExecution) {
+    startServer();
+}

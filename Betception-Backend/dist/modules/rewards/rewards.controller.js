@@ -60,7 +60,7 @@ export async function claimDailyReward(req, res) {
         });
         return res.json({
             claimedAmount: result.claimedAmount,
-            balance: result.balance,
+            balance: Number(result.balance),
             eligibleAt: nextEligibleFrom(new Date()),
         });
     }

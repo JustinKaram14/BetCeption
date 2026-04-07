@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import type { Server } from 'http';
+import { fileURLToPath } from 'url';
 import { app } from './app.js';
 import { env } from './config/env.js';
 import { AppDataSource, initDataSource } from './db/data-source.js';
@@ -8,10 +9,20 @@ import { logger } from './utils/logger.js';
 let httpServer: Server | null = null;
 let shuttingDown = false;
 
-async function bootstrap() {
+type StartServerOptions = {
+  runMigrations?: boolean;
+};
+
+export async function startServer(options: StartServerOptions = {}) {
   try {
-    logger.info('server.starting', { port: env.port });
+    logger.info('server.starting', { port: env.port, runMigrations: options.runMigrations ?? false });
     await initDataSource();
+    if (options.runMigrations) {
+      const results = await AppDataSource.runMigrations();
+      logger.info('server.migrations.completed', {
+        executed: results.map((migration) => migration.name),
+      });
+    }
     httpServer = app.listen(env.port, () => {
       logger.info('server.listening', {
         port: env.port,
@@ -54,4 +65,8 @@ async function shutdown(signal: NodeJS.Signals) {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-bootstrap();
+const isDirectExecution = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+
+if (isDirectExecution) {
+  startServer();
+}

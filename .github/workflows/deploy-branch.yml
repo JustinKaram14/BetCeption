@@ -1,0 +1,80 @@
+name: Build deploy branch
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-branch
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            Betception-Backend/package-lock.json
+            Betception-Frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: Betception-Backend
+
+      - name: Build backend
+        run: npm run build
+        working-directory: Betception-Backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: Betception-Frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: Betception-Frontend
+
+      - name: Assemble deploy branch content
+        shell: bash
+        run: |
+          rm -rf deploy-branch
+          mkdir -p deploy-branch/backend deploy-branch/frontend
+
+          cp -R Betception-Backend/dist deploy-branch/backend/dist
+          cp Betception-Backend/package.json deploy-branch/backend/package.json
+          cp Betception-Backend/package-lock.json deploy-branch/backend/package-lock.json
+          cp Betception-Backend/.env.example deploy-branch/backend/.env.example
+
+          cp -R Betception-Frontend/dist/Betception-Frontend/browser/. deploy-branch/frontend/
+
+          cat > deploy-branch/README.md <<'EOF'
+          # Deploy branch
+
+          Dieser Branch wird automatisch durch GitHub Actions erzeugt.
+
+          Inhalt:
+          - `frontend/`: gebautes Angular-Frontend
+          - `backend/`: produktionsreifes Node-Backend mit `dist/` und `package*.json`
+          EOF
+
+      - name: Publish deploy branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy-branch
+          publish_branch: deploy
+          force_orphan: true

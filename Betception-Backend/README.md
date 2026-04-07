@@ -1,5 +1,18 @@
 ## Betception Backend
 
+## Production / Cloud86
+
+Für Cloud86 oder andere Node-Hosts gilt:
+
+```bash
+npm install
+cp .env.example .env
+npm run build
+npm run start:cloud86
+```
+
+`npm run start:cloud86` startet `dist/bootstrap.js`, führt vorher offene TypeORM-Migrationen aus und startet dann den HTTP-Server ohne Docker-Abhängigkeit.
+
 ### Local Development
 
 ```bash
