@@ -2,11 +2,9 @@
 
 **Projekt:** BetCeption – Blackjack Casino  
 **Version:** 1.0  
-**Datum:** 2026-04-12  
-**Letztes Update:** 2026-04-12
+**Datum:** 2026-04-12
 
 ---
-
 ## RMMM Table (Risk Mitigation, Monitoring and Management)
 
 | Risk ID | Category | Risk Description | Probability | Impact | Risk Score | Mitigation Strategy | Indicator | Contingency Plan | Responsible | Status | Last Modified |
@@ -34,16 +32,16 @@
 
 ## Top Ten Software Project Risks Checklist (verwendete Punkte)
 
-1. ✅ **Personnel shortfall** — Team mit 3 Personen, klare Rollenverteilung
-2. ✅ **Unrealistic estimates** — Aufwandsschätzung aus Handout: 108h gesamt
-3. ✅ **Silver bullet syndrome** — Bewusst gewählte etablierte Technologien (Angular, Node.js, MySQL)
-4. ✅ **Requirements gold-plating** — Scope klar definiert: Blackjack + Wallet + PowerUps
-5. ✅ **Unit tests vs system test** — Jest + Supertest vorhanden
-6. ✅ **Integration risk** — Feature-Folder Struktur; API first
-7. ✅ **Front-end risk** — Angular mit Interceptors/Guards; Philipp als Frontend-Lead
-8. ✅ **Database risk** — ACID-Transaktionen; Ledger-Ansatz für Buchungen
-9. ✅ **Deployment risk** — Docker Compose; Cloud86 Deployment dokumentiert
-10. ✅ **Technology risk** — Bewusst gewählter Stack (TypeORM, Zod, bcrypt)
+1. ✅ **Personnel shortfall** - Team mit 3 Personen, klare Rollenverteilung
+2. ✅ **Unrealistic estimates** - Aufwandsschätzung aus Handout: 108h gesamt
+3. ✅ **Silver bullet syndrome** - Bewusst gewählte etablierte Technologien (Angular, Node.js, MySQL)
+4. ✅ **Requirements gold-plating** - Scope klar definiert: Blackjack + Wallet + PowerUps
+5. ✅ **Unit tests vs system test** - Jest + Supertest vorhanden
+6. ✅ **Integration risk** - Feature-Folder Struktur; API first
+7. ✅ **Front-end risk** - Angular mit Interceptors/Guards; Philipp als Frontend-Lead
+8. ✅ **Database risk** - ACID-Transaktionen; Ledger-Ansatz für Buchungen
+9. ✅ **Deployment risk** - Docker Compose; Cloud86 Deployment dokumentiert
+10. ✅ **Technology risk** - Bewusst gewählter Stack (TypeORM, Zod, bcrypt)
 
 ---
 
@@ -51,7 +49,7 @@
 
 ### Risiko erklärt
 
-Das größte technische Risiko ist eine **Race Condition** im Wallet-System. Wenn ein Spieler zwei Wetten in kurzer Zeit hintereinander platziert (z.B. Sidebet + Haupteinsatz), könnten beide Transaktionen gleichzeitig die Wallet-Balance prüfen — beide sehen denselben Saldo, beide buchen ab, das Wallet geht ins Negative.
+Das größte technische Risiko ist eine **Race Condition** im Wallet-System. Wenn ein Spieler zwei Wetten in kurzer Zeit hintereinander platziert (z.B. Sidebet + Haupteinsatz), könnten beide Transaktionen gleichzeitig die Wallet-Balance prüfen - beide sehen denselben Saldo, beide buchen ab, das Wallet geht ins Negative.
 
 ### Mitigation Strategy
 
@@ -70,6 +68,6 @@ Das größte technische Risiko ist eine **Race Condition** im Wallet-System. Wen
 
 ## Version History
 
-| Version | Datum | Autor | Änderung |
-|---------|-------|-------|----------|
-| 1.0 | 2026-04-12 | Philipp | Initiale RMMM Tabelle erstellt |
+| Version | Datum | Änderung |
+|---------|-------|----------|
+| 1.0 | 2026-04-12 | Initiale RMMM Tabelle erstellt |
