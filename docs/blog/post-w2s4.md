@@ -1,123 +1,68 @@
-# Blog: RMMM Analyse & Projektfortschritt
+# Architektur-Blog Woche 14
 
-**Autor:** Philipp  
-**Datum:** 12. April 2026  
-**Kategorie:** Risikomanagement & Projektupdate
+## Was wir diese Woche gemacht haben
 
----
+### RMMM Analyse (Risk Mitigation, Monitoring and Management)
 
-## RMMM Table — Risikomanagement für BetCeption
+Vollständige RMMM-Tabelle erstellt und versioniert unter `docs/RMMM/rmmm-table.md`. Folgende Risiken wurden identifiziert und dokumentiert:
 
-Wie in der Aufgabe gefordert, haben wir eine vollständige **RMMM-Tabelle** (Risk Mitigation, Monitoring and Management) für unser Projekt erstellt. Die Tabelle befindet sich unter `docs/RMMM/rmmm-table.md` und enthält 10 identifizierte Risiken mit vollständiger Dokumentation.
+| Kategorie | Anzahl | Höchstes Score |
+|-----------|--------|----------------|
+| Technical | 7 | 15 |
+| Schedule | 1 | 9 |
+| Financial | 1 | 6 |
+| Operational | 1 | 5 |
 
-### Risiko-Kategorien im Überblick
+Die Tabelle enthält für jedes Risiko: Risk ID, Category, Risk Description, Probability, Impact, Risk Score, Mitigation Strategy, Indicator, Contingency Plan, Responsible und Status.
 
-| Kategorie | Anzahl Risiken | Höchstes Score |
-|-----------|---------------|-----------------|
-| Technical | 7 | 15 (Race Condition) |
-| Schedule | 1 | 9 (Team-Koordination) |
-| Financial | 1 | 6 (Fake Accounts) |
-| Operational | 1 | 5 (Datenverlust) |
+Verwendete Referenz: Top Ten Lists of Software Project Risks Checklist
 
-### Top 3 Risiken nach Score
-
-1. **R-001: Race Condition bei Wallet-Transaktionen** (Score: 15)
-2. **R-002: Seed-Kollision in Blackjack-Engine** (Score: 10)
-3. **R-004: Docker Compose Networking** (Score: 10)
-
----
-
-## Unser größtes technisches Risiko: Race Condition im Wallet
-
-Wir haben uns intensiv mit unseren technischen Risiken auseinandergesetzt. Das größte Risiko sehen wir in **Race Conditions beim Wallet-System**.
-
-### Das Problem
-
-Bei gleichzeitigen Wetten (z.B. Hauptwette + Sidebet) könnte folgendes passieren:
-
-```
-Spieler hat 100€ Wallet
-Runde 1: Hauptwette 50€ platziert → Balance Check: 100€ ≥ 50€ ✓
-Runde 1: Sidebet 60€ platziert (gleichzeitig) → Balance Check: noch 100€ ≥ 60€ ✓
-Ergebnis: Beide Wetten gebucht → Wallet = -10€
-```
-
-### Unsere Mitigation Strategy
-
-1. **Idempotency-Keys**: Jede Wette hat einen eindeutigen Key. Doppelte Requests werden erkannt.
-2. **Atomare SQL-Operationen**: `UPDATE wallet SET balance = balance - ? WHERE balance >= ?`
-3. **Row-Level Locking**: `SELECT ... FOR UPDATE` sperrt die Wallet-Zeile
-
-### Contingency Plan
-
-- Echtzeit-Monitoring auf negative Wallet-Salden
-- Bei negativem Saldo: Account sofort sperren
-- Transaktions-Rollback aller offenen Wetten
-- Post-Incident-Analyse der Logs
-
----
-
-## Projektfortschritt seit der Halbzeitpräsentation
-
-Seit unserer Halbzeitpräsentation haben wir bedeutende Fortschritte gemacht:
-
-### ✅ Abgeschlossen
+### Projektfortschritt seit der Halbzeitpräsentation
 
 **Backend:**
-- Vollständige Blackjack-Engine mit deterministischer Kartenverteilung (Seed + Hash)
+- Blackjack-Engine mit deterministischer Kartenverteilung via Seed + Hash (beweisbare Fairness)
 - Wallet-System mit ACID-Transaktionen und Ledger-Ansatz
-- JWT-Authentifizierung mit HttpOnly Refresh-Cookies
-- Rate-Limiting auf kritischen Endpoints
+- JWT-Authentifizierung mit HttpOnly Refresh-Cookies und Rate-Limiting
+- Docker Compose Setup für MySQL + Backend
 
 **Frontend:**
 - Blackjack-Spielfeld mit versteckter Dealer-Karte
-- Auth-Integration mit Guards und Interceptors
-- Routing-Struktur mit Angular
-- RxJS-basierte State-Management
+- Auth-Integration mit Angular Guards und Interceptors
+- Routing-Struktur und RxJS-basiertes State-Management
 
 **DevOps:**
-- Docker Compose Setup (Backend + MySQL)
 - Cloud86 Deployment dokumentiert
 - CI/CD Pipeline via GitHub Actions
 
-### 🔄 In Bearbeitung
+## Größtes technisches Risiko: Race Condition im Wallet-System
 
-- Power-Up System (Frontend + Backend Integration)
-- Leaderboard mit Echtzeit-Updates
-- XP/Level Berechnung und Anzeige
+### Risiko (R-001)
 
-### 📊 Aufwandsverteilung
+Race Condition bei gleichzeitigen Wallet-Transaktionen. Zwei Wetten in kurzer Zeit könnten beide dieselbe Balance prüfen und das Wallet ins Negative buchen.
 
-| Person | Stunden |
-|--------|---------|
-| Justin | ~50h |
-| Philipp | ~39h |
-| J. Häuser | ~20h |
-| **Gesamt** | **~108h** |
+### Mitigation Strategy
 
-### Architektur-Highlight: Fairness via Seed + Hash
+1. **Idempotency-Keys**: Jede Wette erhält eindeutigen Key; doppelte Requests werden erkannt
+2. **Atomare SQL-Operationen**: `UPDATE wallet SET balance = balance - ? WHERE balance >= ?`
+3. **Row-Level Locking**: `SELECT ... FOR UPDATE` sperrt die Wallet-Zeile während der Transaktion
 
-Eine unserer technischen Herausforderungen war die "beweisbare Fairness" des Spiels:
+### Contingency Plan
 
-```
-Runde startet → Server generiert starken Seed
-→ Hash des Seeds → an Client (vor Spielbeginn sichtbar)
-→ Karten werden deterministisch aus Seed berechnet
-→ Nach Runde: Seed revealed → Client kann Hash verifizieren
-```
-
-Dies stellt sicher, dass der Server die Karten nicht nachträglich manipulieren kann.
-
----
+- Echtzeit-Monitoring auf negative Wallet-Salden → Alert
+- Account sofort sperren bei negativem Saldo
+- Transaktions-Rollback aller offenen Wetten
+- Post-Incident-Analyse der Transaktionslogs
 
 ## Nächste Schritte
 
-1. **Diese Woche**: Power-Up Integration abschließen
-2. **Nächste Woche**: Leaderboard und Daily Rewards implementieren
-3. **Endspurt**: Testing, Balancing, Deployment-Finishing
+- Power-Up System fertigstellen (Frontend + Backend Integration)
+- Leaderboard mit Echtzeit-Updates
+- XP/Level-Progression finalisieren
+- Testing und Balancing
 
-Wir sind auf einem guten Weg, alle Anforderungen fristgerecht zu erfüllen.
+## Links
 
----
-
-*Fragen oder Anmerkungen? Gerne in den Comments unten!*
+- RMMM Tabelle: `docs/RMMM/rmmm-table.md`
+- Use Cases: `docs/use-cases/`
+- UCRS: `docs/use-case-realisation/`
+- SAD: `docs/architecture/SAD.md`
