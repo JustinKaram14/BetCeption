@@ -8,14 +8,16 @@ import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
+import { DailyRewardModalComponent, DailyRewardState } from '../../components/daily-reward-modal/daily-reward-modal';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
+import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types';
 import type { AuthUser } from '../../../../../core/api/api.types';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent],
+  imports: [NgIf, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -23,10 +25,14 @@ export class HomepageComponent {
   private readonly authFacade = inject(AuthFacade);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly wallet = inject(Wallet);
 
   authLoading = false;
   authSuccess: string | null = null;
   authError: string | null = null;
+
+  showRewardModal = false;
+  rewardState: DailyRewardState = { kind: 'loading' };
 
   onLogin(payload: LoginRequest) {
     this.runAuthRequest(
@@ -51,7 +57,43 @@ export class HomepageComponent {
     }
     this.authError = 'Bitte logge dich ein, um Betception Blackjack zu spielen.';
   }
-  onRewards() { console.log('daily rewards'); }
+  onRewards() {
+    if (!this.authFacade.isAuthenticated()) {
+      this.rewardState = { kind: 'not-logged-in' };
+      this.showRewardModal = true;
+      return;
+    }
+
+    this.rewardState = { kind: 'loading' };
+    this.showRewardModal = true;
+
+    this.wallet.claimDailyReward()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.rewardState = {
+            kind: 'success',
+            claimedAmount: res.claimedAmount,
+            balance: res.balance,
+            eligibleAt: res.eligibleAt,
+          };
+        },
+        error: (err) => {
+          const status = err?.status;
+          if (status === 409) {
+            const eligibleAt = err?.error?.eligibleAt ?? new Date().toISOString();
+            this.rewardState = { kind: 'already-claimed', eligibleAt };
+          } else {
+            const message = err?.error?.message ?? 'Unbekannter Fehler. Bitte versuche es erneut.';
+            this.rewardState = { kind: 'error', message };
+          }
+        },
+      });
+  }
+
+  closeRewardModal() {
+    this.showRewardModal = false;
+  }
 
   private runAuthRequest(
     request$: Observable<AuthUser | null>,
