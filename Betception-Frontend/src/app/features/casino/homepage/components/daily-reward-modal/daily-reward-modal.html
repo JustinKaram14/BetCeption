@@ -1,0 +1,46 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-card">
+
+    <!-- Loading -->
+    <div *ngIf="state.kind === 'loading'" class="modal-body loading">
+      <div class="spinner"></div>
+      <p>Reward wird geladen…</p>
+    </div>
+
+    <!-- Success -->
+    <div *ngIf="state.kind === 'success'" class="modal-body success">
+      <div class="reward-icon">🎁</div>
+      <h2>Daily Reward!</h2>
+      <p class="amount">+{{ state.claimedAmount }} Coins</p>
+      <p class="balance">Neues Guthaben: <strong>{{ state.balance }}</strong></p>
+      <p class="cooldown">Nächster Reward in: {{ countdownText }}</p>
+      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+    </div>
+
+    <!-- Already claimed -->
+    <div *ngIf="state.kind === 'already-claimed'" class="modal-body already-claimed">
+      <div class="reward-icon">⏰</div>
+      <h2>Bereits abgeholt!</h2>
+      <p>Du hast deinen Daily Reward heute schon abgeholt.</p>
+      <p class="cooldown">Nächster Reward in: {{ countdownText }}</p>
+      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+    </div>
+
+    <!-- Not logged in -->
+    <div *ngIf="state.kind === 'not-logged-in'" class="modal-body not-logged-in">
+      <div class="reward-icon">🔒</div>
+      <h2>Nicht eingeloggt</h2>
+      <p>Bitte logge dich ein, um deinen Daily Reward abzuholen.</p>
+      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="state.kind === 'error'" class="modal-body error">
+      <div class="reward-icon">❌</div>
+      <h2>Fehler</h2>
+      <p>{{ state.message }}</p>
+      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+    </div>
+
+  </div>
+</div>

@@ -36,3 +36,9 @@
     </div>
   </div>
 </div>
+
+<app-daily-reward-modal
+  *ngIf="showRewardModal"
+  [state]="rewardState"
+  (closed)="closeRewardModal()">
+</app-daily-reward-modal>
