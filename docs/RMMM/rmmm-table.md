@@ -2,7 +2,8 @@
 
 **Projekt:** BetCeption – Blackjack Casino  
 **Version:** 1.0  
-**Datum:** 2026-04-12
+**Datum:** 2026-04-12  
+**Tool:** Markdown-Tabelle mit Git-Versionierung – direkt im Repository versionierbar und über Pull Requests im Team reviewbar.
 
 ---
 ## RMMM Table (Risk Mitigation, Monitoring and Management)
@@ -17,7 +18,7 @@
 | R-006 | Schedule | **Team-Koordination Backend/Frontend**: API-Änderungen ohne Abstimmung → Integrationsfehler | 3 | 3 | 9 | Wöchentliche Sync-Meetings; Swagger/OpenAPI Spec vor Implementation; Postman-Tests | Monitor: Merge-Konflikte; API-Breaking Changes; Failed Builds | API-Versioning; Feature-Flags; gemeinsames Review vor Merge | Team | OPEN | 2026-04-12 |
 | R-007 | Technical | **XSS in Chat/Username**: Spieler können JavaScript in Usernamen injizieren | 2 | 4 | 8 | Input-Validierung via Zod; Angular DomSanitizer; Content-Security-Policy Header | Monitor: Ungewöhnliche Script-Tags in DB; Browser-Warnungen | Content-Escape; Account-Sperre; CSP-Report auswerten | Philipp | OPEN | 2026-04-12 |
 | R-008 | Financial | **Fake Accounts für Daily Rewards**: Spieler erstellen viele Accounts für Bonus-Sammmlung | 2 | 3 | 6 | IP-basiertes Rate-Limiting; Device-Fingerprinting; Email-Verifikation | Monitor: Ungewöhnliche Account-Erstellung; viele Rewards pro IP | Rewards zurückziehen; IP sperren; Captcha bei Registration | Team | OPEN | 2026-04-12 |
-| R-009 | Technical | **Passwort-Hashes via bcrypt zu schwach**: Kurze Passwörter trotz Hashing leicht zu cracken | 1 | 4 | 4 | bcrypt cost factor = 12; Passwort-Mindestlänge 8 Zeichen; regex complexity Check | Monitor: Cracked Hashes in Leaked-DB-Checks | Sofortiger Password-Reset;强制复杂度要求 | Justin | OPEN | 2026-04-12 |
+| R-009 | Technical | **Passwort-Hashes via bcrypt zu schwach**: Kurze Passwörter trotz Hashing leicht zu cracken | 1 | 4 | 4 | bcrypt cost factor = 12; Passwort-Mindestlänge 8 Zeichen; regex complexity Check | Monitor: Cracked Hashes in Leaked-DB-Checks | Sofortiger Password-Reset; Komplexitätsanforderungen erzwingen | Justin | OPEN | 2026-04-12 |
 | R-010 | Operational | **Datenverlust bei Container-Stopp**: Uncommitted Transactions gehen verloren | 1 | 5 | 5 | Docker Volumes für MySQL data; regelmäßige Snapshots; Write-Ahead Log aktiviert | Monitor: Volume-Mount-Errors; unerwartete Container-Stops | Backup-Restore aus letztem Snapshot; Replay der in-flight Transaktionen | Justin | OPEN | 2026-04-12 |
 
 ---
