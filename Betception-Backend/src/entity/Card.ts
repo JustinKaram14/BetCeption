@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { CardRank, CardSuit } from './enums.js';
 import { Hand } from './Hand.js';
@@ -15,7 +16,7 @@ export class Card {
 
   @ManyToOne(() => Hand, (hand) => hand.cards, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hand_id' })
-  hand!: Hand;
+  hand!: Relation<Hand>;
 
   @Column({ name: 'draw_order', type: 'tinyint', unsigned: true })
   drawOrder!: number;

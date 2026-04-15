@@ -21,7 +21,7 @@ export class Hand {
 
   @ManyToOne(() => Round, (round) => round.hands, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'round_id' })
-  round!: Round;
+  round!: Relation<Round>;
 
   @Column({
     name: 'owner_type',
@@ -42,10 +42,10 @@ export class Hand {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'parent_hand_id' })
-  parent: Hand | null = null;
+  parent: Relation<Hand> | null = null;
 
   @OneToMany(() => Hand, (hand) => hand.parent)
-  children?: Hand[];
+  children?: Relation<Hand[]>;
 
   @Column({
     type: 'enum',
@@ -68,5 +68,5 @@ export class Hand {
   cards?: Card[];
 
   @OneToOne(() => MainBet, (bet) => bet.hand)
-  mainBet?: MainBet;
+  mainBet?: Relation<MainBet>;
 }

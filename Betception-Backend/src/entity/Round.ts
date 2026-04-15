@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Relation } from 'typeorm';
 import { RoundStatus } from './enums.js';
 import { Hand } from './Hand.js';
 import { MainBet } from './MainBet.js';
@@ -37,14 +37,14 @@ export class Round {
   serverSeed: string | null = null;
 
   @OneToMany(() => Hand, (hand) => hand.round)
-  hands?: Hand[];
+  hands?: Relation<Hand[]>;
 
   @OneToMany(() => MainBet, (bet) => bet.round)
-  mainBets?: MainBet[];
+  mainBets?: Relation<MainBet[]>;
 
   @OneToMany(() => SideBet, (bet) => bet.round)
-  sideBets?: SideBet[];
+  sideBets?: Relation<SideBet[]>;
 
   @OneToMany(() => PowerupConsumption, (consumption) => consumption.round)
-  powerupConsumptions?: PowerupConsumption[];
+  powerupConsumptions?: Relation<PowerupConsumption[]>;
 }
