@@ -19,6 +19,7 @@ const RawEnvSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
   FRONTEND_ORIGIN: z
     .string()
+    .trim()
     .url('FRONTEND_ORIGIN must be a valid http(s) URL')
     .default('http://localhost:4200'),
   COOKIE_SECURE: z.string().optional(),
