@@ -28,17 +28,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: |
-            Betception-Backend/package-lock.json
-            Betception-Frontend/package-lock.json
-
-      - name: Install backend dependencies
-        run: npm ci
-        working-directory: Betception-Backend
-
-      - name: Build backend
-        run: npm run build
-        working-directory: Betception-Backend
+          cache-dependency-path: Betception-Frontend/package-lock.json
 
       - name: Install frontend dependencies
         run: npm ci
@@ -52,14 +42,9 @@ jobs:
         shell: bash
         run: |
           rm -rf deploy-branch
-          mkdir -p deploy-branch/backend deploy-branch/frontend
+          mkdir -p deploy-branch
 
-          cp -R Betception-Backend/dist deploy-branch/backend/dist
-          cp Betception-Backend/package.json deploy-branch/backend/package.json
-          cp Betception-Backend/package-lock.json deploy-branch/backend/package-lock.json
-          cp Betception-Backend/.env.example deploy-branch/backend/.env.example
-
-          cp -R Betception-Frontend/dist/Betception-Frontend/browser/. deploy-branch/frontend/
+          cp -R Betception-Frontend/dist/Betception-Frontend/browser/. deploy-branch/
 
           cat > deploy-branch/README.md <<'EOF'
           # Deploy branch
@@ -67,8 +52,8 @@ jobs:
           Dieser Branch wird automatisch durch GitHub Actions erzeugt.
 
           Inhalt:
-          - `frontend/`: gebautes Angular-Frontend
-          - `backend/`: produktionsreifes Node-Backend mit `dist/` und `package*.json`
+          - Gebautes Angular-Frontend (direkt im Root, bereit für Cloud86 Shared Hosting)
+          - Backend wird separat über Railway deployed (Dockerfile im main-Branch)
           EOF
 
       - name: Publish deploy branch
