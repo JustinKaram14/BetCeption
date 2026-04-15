@@ -32,7 +32,7 @@ export class PowerupConsumption {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'round_id' })
-  round: Round | null = null;
+  round: Relation<Round> | null = null;
 
   @Column({
     name: 'consumed_at',

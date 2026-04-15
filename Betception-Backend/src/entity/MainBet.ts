@@ -19,11 +19,11 @@ export class MainBet {
 
   @ManyToOne(() => Round, (round) => round.mainBets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'round_id' })
-  round!: Round;
+  round!: Relation<Round>;
 
   @OneToOne(() => Hand, (hand) => hand.mainBet, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hand_id' })
-  hand!: Hand;
+  hand!: Relation<Hand>;
 
   @ManyToOne(() => User, (user) => user.mainBets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

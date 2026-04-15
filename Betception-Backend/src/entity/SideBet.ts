@@ -24,7 +24,7 @@ export class SideBet {
 
   @ManyToOne(() => Round, (round) => round.sideBets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'round_id' })
-  round!: Round;
+  round!: Relation<Round>;
 
   @ManyToOne(() => User, (user) => user.sideBets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
