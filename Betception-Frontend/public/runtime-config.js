@@ -1,4 +1,4 @@
 window.__BETCEPTION_CONFIG__ = {
-  apiBaseUrl: 'https://betception-backend.up.railway.app',
+  apiBaseUrl: 'https://betception-production.up.railway.app',
   includeCredentials: true,
 };
