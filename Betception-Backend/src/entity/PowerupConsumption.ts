@@ -25,7 +25,7 @@ export class PowerupConsumption {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'type_id' })
-  type!: PowerupType;
+  type!: Relation<PowerupType>;
 
   @ManyToOne(() => Round, (round) => round.powerupConsumptions, {
     nullable: true,
