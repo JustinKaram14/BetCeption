@@ -6,6 +6,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { HandOwnerType, HandStatus } from './enums.js';
 import { Round } from './Round.js';
@@ -34,7 +35,7 @@ export class Hand {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'user_id' })
-  user: User | null = null;
+  user: Relation<User> | null = null;
 
   @ManyToOne(() => Hand, (hand) => hand.children, {
     nullable: true,

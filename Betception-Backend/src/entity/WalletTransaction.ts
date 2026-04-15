@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { User } from './User.js';
 import { WalletTransactionKind } from './enums.js';
@@ -17,7 +18,7 @@ export class WalletTransaction {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @Column({ type: 'enum', enum: WalletTransactionKind })
   kind!: WalletTransactionKind;

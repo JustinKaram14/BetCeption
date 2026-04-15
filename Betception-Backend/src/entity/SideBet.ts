@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { Round } from './Round.js';
 import { User } from './User.js';
@@ -27,7 +28,7 @@ export class SideBet {
 
   @ManyToOne(() => User, (user) => user.sideBets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @ManyToOne(() => SidebetType, (type) => type.sideBets, {
     onDelete: 'RESTRICT',

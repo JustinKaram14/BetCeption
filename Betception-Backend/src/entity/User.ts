@@ -4,6 +4,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   Index,
+  Relation,
 } from 'typeorm';
 import { Session } from './Session.js';
 import { Hand } from './Hand.js';
@@ -58,26 +59,26 @@ export class User {
   createdAt!: Date;
 
   @OneToMany(() => Session, (session) => session.user)
-  sessions?: Session[];
+  sessions?: Relation<Session[]>;
 
   @OneToMany(() => Hand, (hand) => hand.user)
-  hands?: Hand[];
+  hands?: Relation<Hand[]>;
 
   @OneToMany(() => MainBet, (bet) => bet.user)
-  mainBets?: MainBet[];
+  mainBets?: Relation<MainBet[]>;
 
   @OneToMany(() => SideBet, (bet) => bet.user)
-  sideBets?: SideBet[];
+  sideBets?: Relation<SideBet[]>;
 
   @OneToMany(() => WalletTransaction, (tx) => tx.user)
-  walletTransactions?: WalletTransaction[];
+  walletTransactions?: Relation<WalletTransaction[]>;
 
   @OneToMany(() => DailyRewardClaim, (claim) => claim.user)
-  dailyRewardClaims?: DailyRewardClaim[];
+  dailyRewardClaims?: Relation<DailyRewardClaim[]>;
 
   @OneToMany(() => UserPowerup, (powerup) => powerup.user)
-  powerups?: UserPowerup[];
+  powerups?: Relation<UserPowerup[]>;
 
   @OneToMany(() => PowerupConsumption, (consumption) => consumption.user)
-  powerupConsumptions?: PowerupConsumption[];
+  powerupConsumptions?: Relation<PowerupConsumption[]>;
 }
