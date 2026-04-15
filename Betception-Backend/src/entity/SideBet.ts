@@ -34,7 +34,7 @@ export class SideBet {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'type_id' })
-  type!: SidebetType;
+  type!: Relation<SidebetType>;
 
   @Column({
     type: 'decimal',

@@ -22,7 +22,7 @@ export class UserPowerup {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'type_id' })
-  type!: PowerupType;
+  type!: Relation<PowerupType>;
 
   @Column({ type: 'int', default: () => '0' })
   quantity!: number;
