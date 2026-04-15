@@ -1,4 +1,4 @@
 window.__BETCEPTION_CONFIG__ = {
-  apiBaseUrl: 'https://api.example.com',
+  apiBaseUrl: 'http://localhost:3000',
   includeCredentials: true,
 };
