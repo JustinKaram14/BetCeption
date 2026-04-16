@@ -45,7 +45,7 @@
           *ngFor="let column of activeCategory.columns"
           [ngSwitch]="column.format"
         >
-          <span *ngSwitchCase="'currency'">{{ row.metrics[column.key] | currency:'USD':'symbol':'1.0-0' }}</span>
+          <span *ngSwitchCase="'currency'">{{ row.metrics[column.key] | number:'1.0-0' }} Coins</span>
           <span *ngSwitchCase="'number'">{{ row.metrics[column.key] | number:'1.0-0' }}</span>
           <span *ngSwitchDefault>{{ row.metrics[column.key] ?? '--' }}</span>
         </td>

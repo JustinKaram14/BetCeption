@@ -7,7 +7,7 @@
       </div>
       <div class="info-display" *ngIf="balance !== null">
         Guthaben:
-        <span>{{ balance | currency:'EUR':'symbol-narrow' }}</span>
+        <span>{{ balance | number:'1.0-0' }} Coins</span>
       </div>
       <div class="info-display">
         Runde:

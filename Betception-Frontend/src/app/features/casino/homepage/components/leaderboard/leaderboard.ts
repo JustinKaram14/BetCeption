@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject } from '@angular/core';
-import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe, CurrencyPipe } from '@angular/common';
+import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe } from '@angular/common';
 import { map, Observable, Subscription } from 'rxjs';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import {
@@ -31,7 +31,7 @@ type LeaderboardState = {
 @Component({
   selector: 'app-leaderboard',
   standalone: true,
-  imports: [NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe, CurrencyPipe],
+  imports: [NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe],
   templateUrl: './leaderboard.html',
   styleUrls: ['./leaderboard.css'],
 })
