@@ -20,6 +20,9 @@
              [class.push]="roundOutcome?.push">
           {{ roundOutcome?.headline }}
         </div>
+        <div class="round-over-dealer" *ngIf="roundOutcome?.dealerInfo">
+          {{ roundOutcome?.dealerInfo }}
+        </div>
         <div class="round-over-amount" *ngIf="roundOutcome?.detail">
           {{ roundOutcome?.detail }}
         </div>
