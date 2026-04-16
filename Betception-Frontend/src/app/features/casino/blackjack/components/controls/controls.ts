@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgClass, NgFor, NgIf, DecimalPipe, CurrencyPipe } from '@angular/common';
+import { NgClass, NgFor, NgIf, DecimalPipe } from '@angular/common';
 import { HandStatus, RoundStatus } from '../../../../../core/api/api.types';
 
 @Component({
   selector: 'app-controls',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, DecimalPipe, CurrencyPipe],
+  imports: [NgIf, NgFor, NgClass, DecimalPipe],
   templateUrl: './controls.html',
   styleUrl: './controls.css'
 })
