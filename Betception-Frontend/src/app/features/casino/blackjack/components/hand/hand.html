@@ -11,6 +11,7 @@
       [class.dealing]="dealingCardIds.has(trackByCard(i, card))"
       [style.animation-delay]="cardDelay(card)"
     >
+      <div class="card-back-face"></div>
       <div class="card-face">
         <div class="card-rank top">{{ card.rank }}</div>
         <div class="card-suit">{{ suitSymbol(card.suit) }}</div>

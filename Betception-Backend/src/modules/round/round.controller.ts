@@ -306,6 +306,31 @@ export async function standRound(
   }
 }
 
+export async function getActiveRound(req: Request, res: Response) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const handRepo = AppDataSource.getRepository(Hand);
+    const activeHand = await handRepo.findOne({
+      where: {
+        ownerType: HandOwnerType.PLAYER,
+        user: { id: userId },
+        round: { status: In(ACTIVE_ROUND_STATUSES) },
+      },
+      relations: ['round'],
+    });
+    if (!activeHand?.round) {
+      return res.status(404).json({ message: 'No active round' });
+    }
+    const round = await loadRoundForUser(activeHand.round.id, userId);
+    if (!round) {
+      return res.status(404).json({ message: 'No active round' });
+    }
+    return res.json({ round: serializeRound(round, userId) });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
 export async function getRound(
   req: Request<RoundIdParams>,
   res: Response,
