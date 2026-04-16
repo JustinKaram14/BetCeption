@@ -4,8 +4,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthUser } from '../api/api.types';
 
-const STORAGE_KEY = 'betception.access_token';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -17,9 +15,10 @@ export class TokenStorage {
 
   constructor(@Inject(PLATFORM_ID) platformId: object) {
     this.isBrowser = isPlatformBrowser(platformId);
-    this.tokenSubject = new BehaviorSubject<string | null>(
-      this.readInitialToken(),
-    );
+    // Access token lives in memory only — never persisted to localStorage/sessionStorage.
+    // On page reload the token is intentionally gone; the authGuard performs a silent
+    // refresh via the HttpOnly refresh-cookie which the browser sends automatically.
+    this.tokenSubject = new BehaviorSubject<string | null>(null);
     this.token$ = this.tokenSubject.asObservable();
     this.user$ = this.token$.pipe(map((token) => this.decode(token)));
   }
@@ -30,15 +29,15 @@ export class TokenStorage {
 
   setToken(token: string | null) {
     const normalized = token?.trim() || null;
-    this.persist(normalized);
+    this.tokenSubject.next(normalized);
   }
 
   store(token: string) {
-    this.persist(token);
+    this.tokenSubject.next(token);
   }
 
   clear() {
-    this.persist(null);
+    this.tokenSubject.next(null);
   }
 
   getUser(): AuthUser | null {
@@ -47,25 +46,6 @@ export class TokenStorage {
 
   decodeToken(token: string): AuthUser | null {
     return this.decode(token);
-  }
-
-  private persist(token: string | null) {
-    if (this.isBrowser) {
-      if (token) {
-        localStorage.setItem(STORAGE_KEY, token);
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    }
-    this.tokenSubject.next(token);
-  }
-
-  private readInitialToken() {
-    if (!this.isBrowser) {
-      return null;
-    }
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored && stored.trim().length > 0 ? stored : null;
   }
 
   private decode(rawToken: string | null): AuthUser | null {
