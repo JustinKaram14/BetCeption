@@ -36,11 +36,12 @@ export class Blackjack implements OnInit {
   info: string | null = null;
   showBlackjackBanner = false;
   showRoundOverlay = false;
-  roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean } | null = null;
+  roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean; dealerInfo: string | null } | null = null;
   private bannerTimer: number | null = null;
 
   ngOnInit() {
     this.loadBalance();
+    this.resumeActiveRoundIfAny();
   }
 
   get playerHandStatus(): HandStatus | null {
@@ -149,6 +150,18 @@ export class Blackjack implements OnInit {
       });
   }
 
+  private resumeActiveRoundIfAny() {
+    this.rng
+      .getActiveRound()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ round }) => {
+          this.round = round;
+        },
+        error: () => null, // 404 = no active round, nothing to resume
+      });
+  }
+
   private triggerBanner(round: RoundState) {
     const isBlackjack =
       round.playerHand?.status === HandStatus.BLACKJACK &&
@@ -203,16 +216,29 @@ export class Blackjack implements OnInit {
     const amount = round.mainBet?.settledAmount ?? null;
     const formatted = amount !== null ? `${Number(amount).toFixed(0)} Coins` : null;
 
+    const dealer = round.dealerHand;
+    let dealerInfo: string | null = null;
+    if (dealer) {
+      const val = dealer.handValue;
+      if (dealer.status === HandStatus.STOOD) {
+        dealerInfo = `Dealer steht bei ${val}`;
+      } else if (dealer.status === HandStatus.BUSTED) {
+        dealerInfo = `Dealer Bust (${val})`;
+      } else if (dealer.status === HandStatus.BLACKJACK) {
+        dealerInfo = 'Dealer Blackjack';
+      }
+    }
+
     if (status === MainBetStatus.WON) {
-      return { headline: 'GEWONNEN!', detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false };
+      return { headline: 'GEWONNEN!', detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false, dealerInfo };
     }
     if (status === MainBetStatus.PUSH || status === MainBetStatus.REFUNDED) {
-      return { headline: 'PUSH', detail: 'Einsatz zurück.', won: false, lost: false, push: true };
+      return { headline: 'PUSH', detail: 'Einsatz zurück.', won: false, lost: false, push: true, dealerInfo };
     }
     if (status === MainBetStatus.LOST) {
-      return { headline: 'VERLOREN', detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false };
+      return { headline: 'VERLOREN', detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false, dealerInfo };
     }
-    return { headline: 'FERTIG', detail: null, won: false, lost: false, push: false };
+    return { headline: 'FERTIG', detail: null, won: false, lost: false, push: false, dealerInfo };
   }
 
   private extractError(error: unknown): string {

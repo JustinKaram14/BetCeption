@@ -12,6 +12,10 @@ export class Rng {
     return this.api.startRound(payload);
   }
 
+  getActiveRound() {
+    return this.api.getActiveRound();
+  }
+
   hit(roundId: string) {
     return this.api.hitRound(roundId);
   }
