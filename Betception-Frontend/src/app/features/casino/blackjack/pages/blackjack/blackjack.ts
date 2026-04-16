@@ -35,6 +35,8 @@ export class Blackjack implements OnInit {
   error: string | null = null;
   info: string | null = null;
   showBlackjackBanner = false;
+  showRoundOverlay = false;
+  roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean } | null = null;
   private bannerTimer: number | null = null;
 
   ngOnInit() {
@@ -111,8 +113,24 @@ export class Blackjack implements OnInit {
           }
           if (kind === 'settle') {
             this.info = this.buildOutcomeText(round);
+            this.showRoundOverlay = true;
+            this.roundOutcome = this.buildRoundOutcome(round);
           }
           this.busyAction = null;
+
+          // Auto-settle when the player's turn is over (bust, stand, blackjack)
+          if (
+            kind !== 'settle' &&
+            round.status !== RoundStatus.SETTLED &&
+            round.status !== RoundStatus.ABORTED &&
+            round.playerHand?.status !== HandStatus.ACTIVE
+          ) {
+            window.setTimeout(() => {
+              if (this.round?.id === round.id && !this.busyAction) {
+                this.runAction('settle', this.rng.settle(round.id));
+              }
+            }, 850);
+          }
         },
         error: (err) => {
           this.error = this.extractError(err);
@@ -158,7 +176,7 @@ export class Blackjack implements OnInit {
 
     if (status === MainBetStatus.WON) {
       return formattedAmount
-        ? `Gewonnen! Auszahlung ${formattedAmount}`
+        ? `Gewonnen! Auszahlung: ${formattedAmount} Coins`
         : 'Gewonnen!';
     }
     if (status === MainBetStatus.PUSH) {
@@ -171,6 +189,30 @@ export class Blackjack implements OnInit {
       return 'Verloren. Neue Runde?';
     }
     return 'Runde abgeschlossen.';
+  }
+
+  onNextRound() {
+    this.showRoundOverlay = false;
+    this.roundOutcome = null;
+    this.round = null;
+    this.info = null;
+  }
+
+  private buildRoundOutcome(round: RoundState): typeof this.roundOutcome {
+    const status = round.mainBet?.status;
+    const amount = round.mainBet?.settledAmount ?? null;
+    const formatted = amount !== null ? `${Number(amount).toFixed(0)} Coins` : null;
+
+    if (status === MainBetStatus.WON) {
+      return { headline: 'GEWONNEN!', detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false };
+    }
+    if (status === MainBetStatus.PUSH || status === MainBetStatus.REFUNDED) {
+      return { headline: 'PUSH', detail: 'Einsatz zurück.', won: false, lost: false, push: true };
+    }
+    if (status === MainBetStatus.LOST) {
+      return { headline: 'VERLOREN', detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false };
+    }
+    return { headline: 'FERTIG', detail: null, won: false, lost: false, push: false };
   }
 
   private extractError(error: unknown): string {

@@ -6,6 +6,7 @@
     label="Dealer"
     [hand]="dealerHand"
     [isDealer]="true"
+    [dealOffset]="200"
     [isActive]="activeHand === HandOwnerType.DEALER"
     [revealDealerCards]="
       activeHand === HandOwnerType.DEALER || dealerHand?.status !== HandStatus.ACTIVE
@@ -15,6 +16,7 @@
   <app-hand
     label="Spieler"
     [hand]="playerHand"
+    [dealOffset]="0"
     [isActive]="activeHand === HandOwnerType.PLAYER"
   ></app-hand>
 
