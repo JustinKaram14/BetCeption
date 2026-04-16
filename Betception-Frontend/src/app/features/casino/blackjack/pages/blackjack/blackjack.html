@@ -10,7 +10,25 @@
     ></app-table>
 
     <div class="message error" *ngIf="error">{{ error }}</div>
-    <div class="message success" *ngIf="info">{{ info }}</div>
+
+    <!-- Round-over overlay -->
+    <div class="round-over-overlay" *ngIf="showRoundOverlay">
+      <div class="round-over-card">
+        <div class="round-over-result"
+             [class.won]="roundOutcome?.won"
+             [class.lost]="roundOutcome?.lost"
+             [class.push]="roundOutcome?.push">
+          {{ roundOutcome?.headline }}
+        </div>
+        <div class="round-over-amount" *ngIf="roundOutcome?.detail">
+          {{ roundOutcome?.detail }}
+        </div>
+        <div class="round-over-actions">
+          <button class="btn btn-neue-runde" (click)="onNextRound()">Neue Runde</button>
+          <a class="btn btn-aufhoeren" routerLink="/homepage">Aufhören</a>
+        </div>
+      </div>
+    </div>
 
     <app-controls
       [betAmount]="betAmount"

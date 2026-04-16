@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth-guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'homepage', pathMatch: 'full' },
@@ -10,6 +11,7 @@ export const routes: Routes = [
   },
   {
     path: 'blackjack',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/casino/blackjack/pages/blackjack/blackjack')
         .then(m => m.Blackjack),
