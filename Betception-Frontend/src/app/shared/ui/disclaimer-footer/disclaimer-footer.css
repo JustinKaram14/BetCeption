@@ -1,0 +1,55 @@
+.disclaimer-footer {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.2rem 2rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: auto;
+}
+
+.disclaimer-content {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.disclaimer-main {
+  color: rgba(255, 220, 100, 0.75);
+}
+
+.disclaimer-main strong,
+.disclaimer-sub strong {
+  color: rgba(255, 220, 100, 0.95);
+}
+
+.disclaimer-sub {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.disclaimer-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+
+.disclaimer-links a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.disclaimer-links a:hover {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: underline;
+}
+
+.divider {
+  color: rgba(255, 255, 255, 0.2);
+}
