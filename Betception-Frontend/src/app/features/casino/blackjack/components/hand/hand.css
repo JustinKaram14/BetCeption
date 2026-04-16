@@ -53,20 +53,47 @@
   margin:0 -20px;
   position:relative;
   transform-style:preserve-3d;
-  transition:transform .6s,opacity .6s,box-shadow .3s,border-color .3s;
-  opacity:0;
-  transform:translateY(20px) rotateY(180deg);
+  /* Default: fully visible (for already-dealt cards) */
+  opacity:1;
+  transform:rotateY(0deg);
+  /* Transition only for interactive state changes (e.g. dealer reveal flip) */
+  transition:transform .5s ease, opacity .3s, box-shadow .3s, border-color .3s;
 }
 .card.visible{
   opacity:1;
-  transform:translateY(0) rotateY(0deg);
+  transform:rotateY(0deg);
 }
 .card.back{
   background-image:linear-gradient(45deg,rgba(0,255,255,.1) 25%,transparent 25%),linear-gradient(-45deg,rgba(0,255,255,.1) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,rgba(0,255,255,.1) 75%),linear-gradient(-45deg,transparent 75%,rgba(0,255,255,.1) 75%);
   background-size:20px 20px;
   background-color:#16213e;
   opacity:1;
-  transform:translateY(0) rotateY(180deg);
+  transform:rotateY(180deg);
+}
+
+/* Deal-in animations — only when .dealing class is present */
+.card.dealing.visible{
+  animation-name:card-deal-in;
+  animation-duration:.6s;
+  animation-timing-function:cubic-bezier(.22,.61,.36,1);
+  animation-fill-mode:both;
+}
+.card.dealing.back{
+  animation-name:card-deal-back;
+  animation-duration:.6s;
+  animation-timing-function:cubic-bezier(.22,.61,.36,1);
+  animation-fill-mode:both;
+}
+
+@keyframes card-deal-in{
+  from{opacity:0;transform:translateY(-35px) rotateY(180deg) scale(.85);}
+  60%{transform:translateY(4px) rotateY(20deg) scale(1.04);}
+  to{opacity:1;transform:translateY(0) rotateY(0deg) scale(1);}
+}
+@keyframes card-deal-back{
+  from{opacity:0;transform:translateY(-35px) rotateY(180deg) scale(.85);}
+  60%{transform:translateY(4px) rotateY(200deg) scale(1.04);}
+  to{opacity:1;transform:translateY(0) rotateY(180deg) scale(1);}
 }
 .card-face{
   width:100%;

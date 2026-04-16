@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { NgClass, NgFor, NgIf } from '@angular/common';
 import { CardSuit, HandStatus, RoundCard, RoundHand } from '../../../../../core/api/api.types';
 
@@ -10,14 +10,22 @@ import { CardSuit, HandStatus, RoundCard, RoundHand } from '../../../../../core/
   styleUrl: './hand.css'
 })
 export class Hand implements OnChanges {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input() label = '';
   @Input() hand: RoundHand | null = null;
   @Input() isActive = false;
   @Input() isDealer = false;
   @Input() revealDealerCards = false;
+  /** Offset in ms before the first card of this hand animates in (for cross-hand stagger). */
+  @Input() dealOffset = 0;
 
   scoreAnimated = false;
+  dealingCardIds = new Set<string>();
+
   private lastScore: number | null = null;
+  private seenCardIds = new Set<string>();
+  private cardDelays = new Map<string, number>();
 
   get cards(): RoundCard[] {
     return [...(this.hand?.cards ?? [])].sort((a, b) => a.drawOrder - b.drawOrder);
@@ -58,6 +66,31 @@ export class Hand implements OnChanges {
         this.triggerScorePulse();
       }
       this.lastScore = currentScore;
+
+      // Staggered deal animation
+      const currentCards = [...(this.hand?.cards ?? [])].sort((a, b) => a.drawOrder - b.drawOrder);
+      const hasOverlap = currentCards.some(c => this.seenCardIds.has(this.cardId(c)));
+      if (!hasOverlap && this.seenCardIds.size > 0) {
+        // New round: clear stale state
+        this.seenCardIds.clear();
+        this.cardDelays.clear();
+        this.dealingCardIds.clear();
+      }
+
+      const newCards = currentCards.filter(c => !this.seenCardIds.has(this.cardId(c)));
+      newCards.forEach((card, newIdx) => {
+        const id = this.cardId(card);
+        const delay = this.dealOffset + newIdx * 350;
+        this.seenCardIds.add(id);
+        this.cardDelays.set(id, delay);
+        this.dealingCardIds.add(id);
+
+        // Remove the deal animation class once the animation has finished
+        window.setTimeout(() => {
+          this.dealingCardIds.delete(id);
+          this.cdr.markForCheck();
+        }, delay + 700);
+      });
     }
   }
 
@@ -95,6 +128,14 @@ export class Hand implements OnChanges {
       default:
         return '♠';
     }
+  }
+
+  cardDelay(card: RoundCard): string {
+    return `${this.cardDelays.get(this.cardId(card)) ?? 0}ms`;
+  }
+
+  private cardId(card: RoundCard): string {
+    return card.id ?? `${card.rank}-${card.suit}-${card.drawOrder}`;
   }
 
   private triggerScorePulse() {

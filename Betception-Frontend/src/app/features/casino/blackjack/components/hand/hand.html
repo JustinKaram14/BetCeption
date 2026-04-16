@@ -8,6 +8,8 @@
     <div
       *ngFor="let card of cards; let i = index; trackBy: trackByCard"
       [ngClass]="cardClasses(card, i)"
+      [class.dealing]="dealingCardIds.has(trackByCard(i, card))"
+      [style.animation-delay]="cardDelay(card)"
     >
       <div class="card-face">
         <div class="card-rank top">{{ card.rank }}</div>
