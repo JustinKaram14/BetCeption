@@ -95,6 +95,12 @@
 .round-over-result.won{color:var(--win-color);}
 .round-over-result.lost{color:var(--loss-color);}
 .round-over-result.push{color:var(--push-color);}
+.round-over-dealer{
+  font-size:.85rem;
+  color:rgba(255,255,255,.45);
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
 .round-over-amount{
   font-size:1.1rem;
   color:rgba(255,255,255,.6);

@@ -5,6 +5,7 @@ import {
   startRound,
   hitRound,
   standRound,
+  getActiveRound,
   getRound,
   settleRound,
 } from './round.controller.js';
@@ -28,6 +29,7 @@ roundRouter.post(
   validateRequest(RoundIdParamsSchema, 'params'),
   standRound,
 );
+roundRouter.get('/active', getActiveRound);
 roundRouter.get(
   '/:roundId',
   validateRequest(RoundIdParamsSchema, 'params'),

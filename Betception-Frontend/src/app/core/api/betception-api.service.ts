@@ -110,6 +110,10 @@ export class BetceptionApi {
     return this.http.post<RoundResponse>('/round/start', payload);
   }
 
+  getActiveRound() {
+    return this.http.get<RoundResponse>('/round/active');
+  }
+
   hitRound(roundId: string) {
     return this.http.post<RoundResponse>(`/round/hit/${roundId}`);
   }
