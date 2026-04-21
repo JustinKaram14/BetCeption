@@ -78,7 +78,7 @@ export async function login(
   const subject = { sub: user.id, email: user.email, username: user.username };
   const accessToken = await signAccess(subject);
   const refreshToken = await signRefresh(subject);
-  const refreshExpiresAt = new Date(Date.now() + env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000);
+  const refreshExpiresAt = new Date(Date.now() + REFRESH_TTL_MS);
 
   setRefreshTokenCookie(res, refreshToken);
 
@@ -121,7 +121,7 @@ export async function refresh(req: Request, res: Response) {
     const subject = { sub: user.id, email: user.email, username: user.username };
     const accessToken = await signAccess(subject);
     const newRefreshToken = await signRefresh(subject);
-    const refreshExpiresAt = new Date(Date.now() + env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000);
+    const refreshExpiresAt = new Date(Date.now() + REFRESH_TTL_MS);
 
     session.refreshToken = hashToken(newRefreshToken);
     session.expiresAt = refreshExpiresAt;

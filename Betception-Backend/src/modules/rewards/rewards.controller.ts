@@ -20,6 +20,24 @@ function nextEligibleFrom(date: Date) {
   return next.toISOString();
 }
 
+class RewardError extends Error {
+  constructor(
+    public statusCode: number,
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'RewardError';
+  }
+}
+
+function handleRewardError(res: Response, error: unknown) {
+  if (error instanceof RewardError) {
+    return res.status(error.statusCode).json({ message: error.message, code: error.code });
+  }
+  throw error;
+}
+
 export async function claimDailyReward(req: Request, res: Response) {
   const userId = String(req.user?.sub);
   const todayUtc = new Date().toISOString().slice(0, 10);
@@ -31,8 +49,10 @@ export async function claimDailyReward(req: Request, res: Response) {
         where: { id: userId },
         lock: { mode: 'pessimistic_write' },
       });
-      if (!user) throw new Error('USER_NOT_FOUND');
-      if (user.lastDailyRewardAt === todayUtc) throw new Error('NOT_ELIGIBLE');
+      if (!user) throw new RewardError(404, 'USER_NOT_FOUND', 'User not found');
+      if (user.lastDailyRewardAt === todayUtc) {
+        throw new RewardError(409, 'NOT_ELIGIBLE', 'Reward already claimed for today');
+      }
 
       const amount = rollRewardAmount();
       const amountCents = decimalToCents(amount);
@@ -70,18 +90,14 @@ export async function claimDailyReward(req: Request, res: Response) {
       balance: Number(result.balance),
       eligibleAt: nextEligibleFrom(new Date()),
     });
-  } catch (err: any) {
-    const code = err?.message;
-    if (code === 'NOT_ELIGIBLE') {
+  } catch (err: unknown) {
+    if (err instanceof RewardError && err.code === 'NOT_ELIGIBLE') {
       return res.status(409).json({
-        message: 'Reward already claimed for today',
+        message: err.message,
         eligibleAt: nextEligibleFrom(new Date()),
       });
     }
-    if (code === 'USER_NOT_FOUND') {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    throw err;
+    return handleRewardError(res, err);
   }
 }
 
