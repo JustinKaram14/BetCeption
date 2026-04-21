@@ -61,6 +61,13 @@ const ACTIVE_ROUND_STATUSES = [
   RoundStatus.IN_PROGRESS,
 ] as const;
 
+const PAYOUT_BLACKJACK = 2.5;
+const PAYOUT_WIN = 2;
+const PAYOUT_PUSH = 1;
+const PAYOUT_LOSS = 0;
+
+const TEN_VALUE_RANKS = new Set([CardRank.KING, CardRank.QUEEN, CardRank.JACK, CardRank.TEN]);
+
 const FULL_DECK: DeckCard[] = buildDeck();
 
 class RoundFlowError extends Error {
@@ -692,19 +699,18 @@ function serializeHand(hand: Hand & { cards?: Card[] }) {
   };
 }
 
-function dealInitialCards(
+async function dealInitialCards(
   manager: EntityManager,
   playerHand: Hand,
   dealerHand: Hand,
   usedCards: Set<string>,
   serverSeed: string,
-) {
+): Promise<void> {
   const sequence = [playerHand, dealerHand, playerHand, dealerHand];
-  return sequence.reduce<Promise<void>>(async (prev, hand) => {
-    await prev;
+  for (const hand of sequence) {
     const card = drawCardFromSeed(serverSeed, usedCards);
     await addCardToHand(manager, hand, card);
-  }, Promise.resolve());
+  }
 }
 
 async function addCardToHand(
@@ -813,12 +819,7 @@ function evaluateHand(cards: Card[]): HandEvaluation {
     if (card.rank === CardRank.ACE) {
       total += 11;
       softAces += 1;
-    } else if (
-      card.rank === CardRank.KING ||
-      card.rank === CardRank.QUEEN ||
-      card.rank === CardRank.JACK ||
-      card.rank === CardRank.TEN
-    ) {
+    } else if (TEN_VALUE_RANKS.has(card.rank)) {
       total += 10;
     } else {
       total += Number(card.rank);
@@ -846,27 +847,33 @@ function resolveMainBet(
   const dealerEval = recalcHand(dealerHand, { preserveStanding: true });
 
   if (playerHand.status === HandStatus.BUSTED) {
-    return { status: MainBetStatus.LOST, multiplier: 0 };
+    return { status: MainBetStatus.LOST, multiplier: PAYOUT_LOSS };
   }
 
   if (playerHand.status === HandStatus.BLACKJACK && dealerHand.status !== HandStatus.BLACKJACK) {
-    return { status: MainBetStatus.WON, multiplier: 2.5 };
+    return { status: MainBetStatus.WON, multiplier: PAYOUT_BLACKJACK };
   }
   if (dealerHand.status === HandStatus.BUSTED) {
-    return { status: MainBetStatus.WON, multiplier: 2 };
+    return { status: MainBetStatus.WON, multiplier: PAYOUT_WIN };
   }
   if (dealerHand.status === HandStatus.BLACKJACK && playerHand.status !== HandStatus.BLACKJACK) {
-    return { status: MainBetStatus.LOST, multiplier: 0 };
+    return { status: MainBetStatus.LOST, multiplier: PAYOUT_LOSS };
   }
 
   if (playerEval.total > dealerEval.total) {
-    return { status: MainBetStatus.WON, multiplier: 2 };
+    return { status: MainBetStatus.WON, multiplier: PAYOUT_WIN };
   }
   if (playerEval.total < dealerEval.total) {
-    return { status: MainBetStatus.LOST, multiplier: 0 };
+    return { status: MainBetStatus.LOST, multiplier: PAYOUT_LOSS };
   }
 
-  return { status: MainBetStatus.PUSH, multiplier: 1 };
+  return { status: MainBetStatus.PUSH, multiplier: PAYOUT_PUSH };
+}
+
+function resolveSideBetOutcome(won: boolean, oddsValue: number): SideBetResolution {
+  return won
+    ? { status: SideBetStatus.WON, multiplier: oddsValue, isRefund: false }
+    : { status: SideBetStatus.LOST, multiplier: 0, isRefund: false };
 }
 
 function evaluateSideBet(
@@ -890,24 +897,15 @@ function evaluateSideBet(
       targetCard.suit === CardSuit.HEARTS || targetCard.suit === CardSuit.DIAMONDS
         ? SideBetColor.RED
         : SideBetColor.BLACK;
-    if (sideBet.predictedColor === actualColor) {
-      return { status: SideBetStatus.WON, multiplier: oddsValue, isRefund: false };
-    }
-    return { status: SideBetStatus.LOST, multiplier: 0, isRefund: false };
+    return resolveSideBetOutcome(sideBet.predictedColor === actualColor, oddsValue);
   }
 
   if (code === 'FIRST_CARD_SUIT') {
-    if (sideBet.predictedSuit === targetCard.suit) {
-      return { status: SideBetStatus.WON, multiplier: oddsValue, isRefund: false };
-    }
-    return { status: SideBetStatus.LOST, multiplier: 0, isRefund: false };
+    return resolveSideBetOutcome(sideBet.predictedSuit === targetCard.suit, oddsValue);
   }
 
   if (code === 'FIRST_CARD_RANK') {
-    if (sideBet.predictedRank === targetCard.rank) {
-      return { status: SideBetStatus.WON, multiplier: oddsValue, isRefund: false };
-    }
-    return { status: SideBetStatus.LOST, multiplier: 0, isRefund: false };
+    return resolveSideBetOutcome(sideBet.predictedRank === targetCard.rank, oddsValue);
   }
 
   return { status: SideBetStatus.VOID, multiplier: 1, isRefund: true };
@@ -982,9 +980,7 @@ function buildSeededDeck(serverSeed: string): DeckCard[] {
   const rng = createSeededRandomIntGenerator(serverSeed);
   for (let i = deck.length - 1; i > 0; i -= 1) {
     const j = rng(i + 1);
-    const temp = deck[i];
-    deck[i] = deck[j];
-    deck[j] = temp;
+    [deck[i], deck[j]] = [deck[j], deck[i]];
   }
   return deck;
 }
