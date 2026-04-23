@@ -13,9 +13,10 @@
         <ng-container *ngIf="isAuthenticated$ | async; else loginPanel">
           <div class="user-panel">
             <div class="user-panel__greeting">
-              Willkommen, <strong>{{ (user$ | async)?.username }}</strong>!
+              Eingeloggt als
+              <strong>{{ (user$ | async)?.username }}</strong>
             </div>
-            <button class="btn logout-btn" (click)="onLogout()">ABMELDEN</button>
+            <button class="btn logout-btn" (click)="onLogout()">Abmelden</button>
           </div>
         </ng-container>
 
