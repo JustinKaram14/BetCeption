@@ -252,13 +252,14 @@ export interface LevelLeaderboardItem {
 export interface WinningsLeaderboardItem {
   rank: number;
   userId: string;
+  username: string;
   netWinnings7d: number;
 }
 
 export interface RoundCard {
   id: string;
-  rank: CardRank;
-  suit: CardSuit;
+  rank: CardRank | null;
+  suit: CardSuit | null;
   drawOrder: number;
   createdAt: string;
 }

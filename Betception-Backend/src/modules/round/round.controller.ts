@@ -677,22 +677,22 @@ function serializeRound(round: RoundWithRelations, userId: string) {
       settledAt: mainBet.settledAt ?? null,
     },
     playerHand: serializeHand(playerHand),
-    dealerHand: serializeHand(dealerHand),
+    dealerHand: serializeHand(dealerHand, ACTIVE_ROUND_STATUSES.includes(round.status as typeof ACTIVE_ROUND_STATUSES[number])),
     sideBets,
     fairness: buildFairnessPayload(round),
   };
 }
 
-function serializeHand(hand: Hand & { cards?: Card[] }) {
+function serializeHand(hand: Hand & { cards?: Card[] }, maskHoleCard = false) {
   return {
     id: hand.id,
     ownerType: hand.ownerType,
     status: hand.status,
     handValue: hand.handValue,
-    cards: sortCards(hand.cards ?? []).map((card) => ({
+    cards: sortCards(hand.cards ?? []).map((card, index) => ({
       id: card.id,
-      rank: card.rank,
-      suit: card.suit,
+      rank: maskHoleCard && index === 1 ? null : card.rank,
+      suit: maskHoleCard && index === 1 ? null : card.suit,
       drawOrder: card.drawOrder,
       createdAt: card.createdAt,
     })),

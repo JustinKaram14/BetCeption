@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgIf, AsyncPipe } from '@angular/common';
 import { Observable, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -17,7 +17,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -26,6 +26,9 @@ export class HomepageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly wallet = inject(Wallet);
+
+  readonly isAuthenticated$ = this.authFacade.isAuthenticated$;
+  readonly user$ = this.authFacade.user$;
 
   authLoading = false;
   authSuccess: string | null = null;
@@ -48,6 +51,12 @@ export class HomepageComponent {
         .pipe(switchMap(() => this.authFacade.login({ email: payload.email, password: payload.password }))),
       (user) => `Account erstellt! Eingeloggt als ${user?.username ?? payload.username}.`,
     );
+  }
+
+  onLogout() {
+    this.authFacade.logout()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => {} });
   }
 
   onEnter() {

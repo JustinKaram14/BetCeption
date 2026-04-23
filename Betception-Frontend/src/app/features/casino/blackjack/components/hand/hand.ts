@@ -99,7 +99,7 @@ export class Hand implements OnChanges {
   }
 
   cardClasses(card: RoundCard, index: number) {
-    const isRed = card.suit === CardSuit.HEARTS || card.suit === CardSuit.DIAMONDS;
+    const isRed = card.suit !== null && (card.suit === CardSuit.HEARTS || card.suit === CardSuit.DIAMONDS);
 
     // The second card of the dealer is hidden if it's the initial deal (2 cards)
     // and the reveal flag is not set.
@@ -116,7 +116,7 @@ export class Hand implements OnChanges {
     };
   }
 
-  suitSymbol(suit: CardSuit) {
+  suitSymbol(suit: CardSuit | null) {
     switch (suit) {
       case CardSuit.HEARTS:
         return '♥';
@@ -125,8 +125,9 @@ export class Hand implements OnChanges {
       case CardSuit.CLUBS:
         return '♣';
       case CardSuit.SPADES:
-      default:
         return '♠';
+      default:
+        return '';
     }
   }
 
