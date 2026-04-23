@@ -25,3 +25,11 @@
   filter:grayscale(.4);
   box-shadow:none;
 }
+.auth-validation-error{
+  color:#ff4d6d;
+  font-size:.85rem;
+  padding:8px 10px;
+  border-radius:4px;
+  background:rgba(255,77,109,.1);
+  border:1px solid rgba(255,77,109,.3);
+}

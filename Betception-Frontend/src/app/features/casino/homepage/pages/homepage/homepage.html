@@ -10,21 +10,32 @@
 
     <div class="right-column">
       <app-neon-card>
-        <app-auth-panel
-          (login)="onLogin($event)"
-          (register)="onRegister($event)">
-        </app-auth-panel>
-        <div class="auth-status" *ngIf="authLoading || authSuccess || authError">
-          <div *ngIf="authLoading" class="auth-status__message loading">
-            Anmeldung läuft...
+        <ng-container *ngIf="isAuthenticated$ | async; else loginPanel">
+          <div class="user-panel">
+            <div class="user-panel__greeting">
+              Willkommen, <strong>{{ (user$ | async)?.username }}</strong>!
+            </div>
+            <button class="btn logout-btn" (click)="onLogout()">ABMELDEN</button>
           </div>
-          <div *ngIf="!authLoading && authSuccess" class="auth-status__message success">
-            {{ authSuccess }}
+        </ng-container>
+
+        <ng-template #loginPanel>
+          <app-auth-panel
+            (login)="onLogin($event)"
+            (register)="onRegister($event)">
+          </app-auth-panel>
+          <div class="auth-status" *ngIf="authLoading || authSuccess || authError">
+            <div *ngIf="authLoading" class="auth-status__message loading">
+              Anmeldung läuft...
+            </div>
+            <div *ngIf="!authLoading && authSuccess" class="auth-status__message success">
+              {{ authSuccess }}
+            </div>
+            <div *ngIf="!authLoading && authError" class="auth-status__message error">
+              {{ authError }}
+            </div>
           </div>
-          <div *ngIf="!authLoading && authError" class="auth-status__message error">
-            {{ 'Ungültige Logindaten' }}
-          </div>
-        </div>
+        </ng-template>
       </app-neon-card>
 
       <app-neon-card>
