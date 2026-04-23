@@ -155,7 +155,7 @@ export class LeaderboardComponent {
     return {
       rows: response.items.map((item) => ({
         rank: item.rank,
-        username: `User #${item.userId}`,
+        username: item.username,
         metrics: {
           netWinnings7d: item.netWinnings7d,
         },

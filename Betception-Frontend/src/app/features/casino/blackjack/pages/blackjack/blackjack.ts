@@ -209,6 +209,9 @@ export class Blackjack implements OnInit {
     this.roundOutcome = null;
     this.round = null;
     this.info = null;
+    if (this.balance !== null && this.betAmount > this.balance) {
+      this.betAmount = this.balance;
+    }
   }
 
   private buildRoundOutcome(round: RoundState): typeof this.roundOutcome {

@@ -5,6 +5,9 @@ export class LeaderboardWeeklyWinningsView {
   @ViewColumn({ name: 'user_id' })
   userId!: string;
 
+  @ViewColumn({ name: 'username' })
+  username!: string;
+
   @ViewColumn({ name: 'net_winnings_7d' })
   netWinnings7d!: string;
 }
