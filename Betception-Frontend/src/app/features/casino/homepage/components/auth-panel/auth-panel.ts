@@ -12,17 +12,31 @@ import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types
   styleUrls: ['./auth-panel.css']
 })
 export class AuthPanelComponent {
-  tab:'login'|'register' = 'login';
+  tab: 'login' | 'register' = 'login';
   email = '';
   username = '';
   password = '';
+  validationError: string | null = null;
+
   @Output() login = new EventEmitter<LoginRequest>();
   @Output() register = new EventEmitter<RegisterRequest>();
 
-  submit(){
+  onTabChange(tab: 'login' | 'register') {
+    this.tab = tab;
+    this.validationError = null;
+  }
+
+  submit() {
+    this.validationError = null;
     const email = this.email.trim();
     const password = this.password;
-    if (!email || !password) {
+
+    if (!email || !this.isValidEmail(email)) {
+      this.validationError = 'Bitte eine gültige E-Mail-Adresse eingeben.';
+      return;
+    }
+    if (password.length < 8) {
+      this.validationError = 'Passwort muss mindestens 8 Zeichen lang sein.';
       return;
     }
 
@@ -32,7 +46,8 @@ export class AuthPanelComponent {
     }
 
     const username = this.username.trim();
-    if (!username) {
+    if (username.length < 3 || username.length > 32) {
+      this.validationError = 'Benutzername muss 3–32 Zeichen lang sein.';
       return;
     }
     this.register.emit({ email, username, password });
@@ -44,7 +59,10 @@ export class AuthPanelComponent {
     if (this.tab === 'login') {
       return emailValid && passwordValid;
     }
-    const usernameValid = this.username.trim().length > 0;
-    return emailValid && passwordValid && usernameValid;
+    return emailValid && passwordValid && this.username.trim().length > 0;
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 }

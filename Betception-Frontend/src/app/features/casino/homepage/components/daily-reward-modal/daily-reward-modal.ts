@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgIf } from '@angular/common';
 
 export type DailyRewardState =
@@ -15,17 +15,27 @@ export type DailyRewardState =
   templateUrl: './daily-reward-modal.html',
   styleUrls: ['./daily-reward-modal.css'],
 })
-export class DailyRewardModalComponent {
+export class DailyRewardModalComponent implements OnInit, OnDestroy {
   @Input() state: DailyRewardState = { kind: 'loading' };
   @Output() closed = new EventEmitter<void>();
+
+  private tickInterval: ReturnType<typeof setInterval> | null = null;
+  now = Date.now();
+
+  ngOnInit() {
+    this.tickInterval = setInterval(() => { this.now = Date.now(); }, 30_000);
+  }
+
+  ngOnDestroy() {
+    if (this.tickInterval) clearInterval(this.tickInterval);
+  }
 
   get countdownText(): string {
     if (this.state.kind !== 'success' && this.state.kind !== 'already-claimed') {
       return '';
     }
     const eligible = new Date(this.state.eligibleAt);
-    const now = new Date();
-    const diff = eligible.getTime() - now.getTime();
+    const diff = eligible.getTime() - this.now;
     if (diff <= 0) return 'Jetzt verfügbar!';
     const hours = Math.floor(diff / 3_600_000);
     const minutes = Math.floor((diff % 3_600_000) / 60_000);

@@ -92,6 +92,7 @@ export function getWeeklyWinningsLeaderboard(req: Request, res: Response) {
       order: { netWinnings7d: 'DESC' },
       mapRow: (row) => ({
         userId: row.userId,
+        username: row.username,
         netWinnings7d: Number(row.netWinnings7d),
       }),
       getUserId: (row) => row.userId,
