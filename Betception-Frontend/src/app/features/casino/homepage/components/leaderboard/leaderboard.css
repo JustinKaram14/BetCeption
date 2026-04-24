@@ -1,10 +1,20 @@
+:host{
+  display:block;
+  height:100%;
+  min-height:0;
+}
 .leaderboard-container{
-  max-width:640px;
+  width:100%;
+  max-width:none;
+  height:100%;
   padding:24px;
   border-radius:18px;
   background:rgba(4,10,25,.65);
   border:1px solid rgba(0,255,255,.15);
   box-shadow:0 0 30px rgba(0,255,255,.08);
+  display:flex;
+  flex-direction:column;
+  min-height:0;
   /*backdrop-filter:blur(9px);*/
 }
 .leaderboard-heading{
@@ -53,6 +63,32 @@
   color:rgba(255,255,255,.8);
   font-size:.95rem;
 }
+.leaderboard-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:12px;
+  margin-right:-8px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,255,255,.72) rgba(0,255,255,.08);
+}
+.leaderboard-scroll::-webkit-scrollbar{
+  width:8px;
+}
+.leaderboard-scroll::-webkit-scrollbar-track{
+  background:rgba(0,255,255,.08);
+  border-radius:999px;
+  box-shadow:inset 0 0 8px rgba(0,0,0,.35);
+}
+.leaderboard-scroll::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,var(--secondary-glow),var(--accent-glow));
+  border-radius:999px;
+  box-shadow:0 0 10px rgba(0,255,255,.45);
+}
+.leaderboard-scroll::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(180deg,#7cffff,#ff5cff);
+}
 .leaderboard-table{
   width:100%;
   border-collapse:collapse;
@@ -64,6 +100,10 @@
   border-bottom:1px solid rgba(0,255,255,.08);
 }
 .leaderboard-table th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:rgba(4,10,25,.96);
   font-size:.85rem;
   text-transform:uppercase;
   letter-spacing:.08em;
@@ -87,15 +127,20 @@
 .name-cell{
   font-weight:500;
   color:#f8f8f8;
+  max-width:260px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 .metric-cell{
   color:var(--secondary-glow);
   font-variant-numeric:tabular-nums;
 }
 .current-rank{
-  margin-top:14px;
+  margin-top:16px;
   font-size:.95rem;
   color:#fff;
+  flex:0 0 auto;
 }
 .current-rank strong{
   color:var(--accent-glow);
@@ -120,9 +165,6 @@
 }
 .leaderboard-state .dot:nth-child(2){animation-delay:.15s}
 .leaderboard-state .dot:nth-child(3){animation-delay:.3s}
-.leaderboard-state.error{
-  color:#ff6b6b;
-}
 @keyframes pulse{
   0%,80%,100%{opacity:.2;transform:scale(.8)}
   40%{opacity:1;transform:scale(1.1)}
