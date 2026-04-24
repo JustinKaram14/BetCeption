@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe } from '@angular/common';
 import { map, Observable, Subscription } from 'rxjs';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
+import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import {
   BalanceLeaderboardItem,
   LeaderboardResponse,
@@ -37,8 +38,9 @@ type LeaderboardState = {
 })
 export class LeaderboardComponent {
   private readonly api = inject(BetceptionApi);
+  private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly pageSize = 10;
+  private readonly pageSize = 100;
   private requestSub: Subscription | null = null;
 
   readonly categories = [
@@ -68,7 +70,6 @@ export class LeaderboardComponent {
   activeCategory = this.categories[0];
 
   loading = false;
-  error: string | null = null;
   rows: LeaderboardRow[] = [];
   currentUserRank: number | null = null;
 
@@ -93,7 +94,6 @@ export class LeaderboardComponent {
 
   private loadCategory(id: LeaderboardCategoryId) {
     this.loading = true;
-    this.error = null;
     this.requestSub?.unsubscribe();
     this.requestSub = this.createRequest(id).subscribe({
       next: (state) => {
@@ -104,7 +104,7 @@ export class LeaderboardComponent {
       error: (err) => {
         this.rows = [];
         this.currentUserRank = null;
-        this.error = this.extractMessage(err);
+        this.toast.error(this.extractMessage(err));
         this.loading = false;
       },
     });

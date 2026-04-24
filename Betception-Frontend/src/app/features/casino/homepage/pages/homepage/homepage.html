@@ -2,14 +2,12 @@
   <app-hero></app-hero>
 
   <div class="main-content">
-
-    <app-neon-card>
+    <app-neon-card class="leaderboard-card">
       <app-leaderboard></app-leaderboard>
     </app-neon-card>
 
-
     <div class="right-column">
-      <app-neon-card>
+      <app-neon-card class="auth-card">
         <ng-container *ngIf="isAuthenticated$ | async; else loginPanel">
           <div class="user-panel">
             <div class="user-panel__greeting">
@@ -25,21 +23,10 @@
             (login)="onLogin($event)"
             (register)="onRegister($event)">
           </app-auth-panel>
-          <div class="auth-status" *ngIf="authLoading || authSuccess || authError">
-            <div *ngIf="authLoading" class="auth-status__message loading">
-              Anmeldung läuft...
-            </div>
-            <div *ngIf="!authLoading && authSuccess" class="auth-status__message success">
-              {{ authSuccess }}
-            </div>
-            <div *ngIf="!authLoading && authError" class="auth-status__message error">
-              {{ authError }}
-            </div>
-          </div>
         </ng-template>
       </app-neon-card>
 
-      <app-neon-card>
+      <app-neon-card class="cta-card">
         <app-cta-panel
           (enter)="onEnter()"
           (rewards)="onRewards()">
@@ -47,6 +34,8 @@
       </app-neon-card>
     </div>
   </div>
+
+  <app-disclaimer-footer></app-disclaimer-footer>
 </div>
 
 <app-daily-reward-modal
@@ -54,3 +43,5 @@
   [state]="rewardState"
   (closed)="closeRewardModal()">
 </app-daily-reward-modal>
+
+<app-toast-container></app-toast-container>

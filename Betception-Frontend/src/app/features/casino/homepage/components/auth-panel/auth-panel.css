@@ -18,18 +18,10 @@
   text-transform:uppercase;transition:all .3s ease;
   box-shadow:0 0 5px rgba(0,255,255,.5), inset 0 0 5px rgba(0,255,255,.3)
 }
-.btn:hover{background:var(--secondary-glow);color:var(--bg-color);box-shadow:0 0 15px var(--secondary-glow), inset 0 0 10px var(--secondary-glow);transform:translateY(-2px)}
+.btn:hover:not(:disabled){background:var(--secondary-glow);color:var(--bg-color);box-shadow:0 0 15px var(--secondary-glow), inset 0 0 10px var(--secondary-glow);transform:translateY(-2px)}
 .btn:disabled{
   opacity:.6;
   cursor:not-allowed;
   filter:grayscale(.4);
   box-shadow:none;
-}
-.auth-validation-error{
-  color:#ff4d6d;
-  font-size:.85rem;
-  padding:8px 10px;
-  border-radius:4px;
-  background:rgba(255,77,109,.1);
-  border:1px solid rgba(255,77,109,.3);
 }

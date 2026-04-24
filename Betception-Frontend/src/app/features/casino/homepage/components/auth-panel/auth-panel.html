@@ -27,10 +27,6 @@
       name="password"
       [autocomplete]="tab === 'login' ? 'current-password' : 'new-password'">
 
-    <div *ngIf="validationError" class="auth-validation-error">
-      {{ validationError }}
-    </div>
-
     <button class="btn auth-btn" type="submit" [disabled]="!canSubmit()">
       {{ tab==='login' ? 'LOGIN' : 'ACCOUNT ERSTELLEN' }}
     </button>

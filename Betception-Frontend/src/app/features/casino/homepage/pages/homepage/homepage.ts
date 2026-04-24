@@ -9,6 +9,9 @@ import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { DailyRewardModalComponent, DailyRewardState } from '../../components/daily-reward-modal/daily-reward-modal';
+import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-footer/disclaimer-footer';
+import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
+import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types';
@@ -17,7 +20,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, DisclaimerFooterComponent, ToastContainerComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -26,14 +29,12 @@ export class HomepageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly wallet = inject(Wallet);
+  private readonly toast = inject(ToastService);
 
   readonly isAuthenticated$ = this.authFacade.isAuthenticated$;
   readonly user$ = this.authFacade.user$;
 
   authLoading = false;
-  authSuccess: string | null = null;
-  authError: string | null = null;
-
   showRewardModal = false;
   rewardState: DailyRewardState = { kind: 'loading' };
 
@@ -56,7 +57,11 @@ export class HomepageComponent {
   onLogout() {
     this.authFacade.logout()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ error: () => {} });
+      .subscribe({
+        error: (error) => {
+          this.toast.error(this.extractErrorMessage(error));
+        },
+      });
   }
 
   onEnter() {
@@ -64,12 +69,11 @@ export class HomepageComponent {
       this.router.navigate(['/blackjack']);
       return;
     }
-    this.authError = 'Bitte logge dich ein, um Betception Blackjack zu spielen.';
+    this.toast.error('Bitte logge dich ein, um Betception Blackjack zu spielen.');
   }
   onRewards() {
     if (!this.authFacade.isAuthenticated()) {
-      this.rewardState = { kind: 'not-logged-in' };
-      this.showRewardModal = true;
+      this.toast.error('Bitte logge dich ein, um deinen Daily Reward abzuholen.');
       return;
     }
 
@@ -94,7 +98,8 @@ export class HomepageComponent {
             this.rewardState = { kind: 'already-claimed', eligibleAt };
           } else {
             const message = err?.error?.message ?? 'Unbekannter Fehler. Bitte versuche es erneut.';
-            this.rewardState = { kind: 'error', message };
+            this.toast.error(message);
+            this.showRewardModal = false;
           }
         },
       });
@@ -109,17 +114,15 @@ export class HomepageComponent {
     successMessage: (value: AuthUser | null) => string,
   ) {
     this.authLoading = true;
-    this.authError = null;
-    this.authSuccess = null;
 
     request$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
-          this.authSuccess = successMessage(result);
+          this.toast.success(successMessage(result));
         },
         error: (error) => {
-          this.authError = this.extractErrorMessage(error);
+          this.toast.error(this.extractErrorMessage(error));
           this.authLoading = false;
         },
         complete: () => {

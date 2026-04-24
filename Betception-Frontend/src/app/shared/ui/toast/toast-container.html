@@ -1,0 +1,23 @@
+<div class="toast-stack" aria-live="polite" aria-atomic="false">
+  <div
+    class="toast"
+    *ngFor="let toast of messages$ | async; trackBy: trackToast"
+    [ngClass]="'toast--' + toast.type"
+    [style.--toast-duration]="toast.durationMs + 'ms'"
+  >
+    <div class="toast__glow"></div>
+    <div class="toast__body">
+      <div class="toast__label">{{ labelFor(toast) }}</div>
+      <div class="toast__message">{{ toast.message }}</div>
+    </div>
+    <button
+      class="toast__close"
+      type="button"
+      aria-label="Toast schliessen"
+      (click)="dismiss(toast.id)"
+    >
+      X
+    </button>
+    <div class="toast__timer"></div>
+  </div>
+</div>
