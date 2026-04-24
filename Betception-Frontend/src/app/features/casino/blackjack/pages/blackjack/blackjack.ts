@@ -27,6 +27,10 @@ export class Blackjack implements OnInit {
   private readonly rng = inject(Rng);
   private readonly wallet = inject(Wallet);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dealerRevealMs = 620;
+  private readonly dealerFollowUpCardStepMs = 360;
+  private readonly cardAnimationMs = 650;
+  private readonly resultPauseMs = 250;
 
   round: RoundState | null = null;
   betAmount = 10;
@@ -38,6 +42,16 @@ export class Blackjack implements OnInit {
   showRoundOverlay = false;
   roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean; dealerInfo: string | null } | null = null;
   private bannerTimer: number | null = null;
+  private resultOverlayTimer: number | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.bannerTimer) {
+        window.clearTimeout(this.bannerTimer);
+      }
+      this.clearResultOverlayTimer();
+    });
+  }
 
   ngOnInit() {
     this.loadBalance();
@@ -102,20 +116,20 @@ export class Blackjack implements OnInit {
     this.busyAction = kind;
     this.error = null;
     this.info = null;
+    this.clearResultOverlayTimer();
 
     request$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ round }) => {
+          const previousRound = this.round;
           this.round = round;
           this.triggerBanner(round);
           if (kind === 'deal' || kind === 'settle') {
             this.loadBalance();
           }
           if (kind === 'settle') {
-            this.info = this.buildOutcomeText(round);
-            this.showRoundOverlay = true;
-            this.roundOutcome = this.buildRoundOutcome(round);
+            this.scheduleRoundOverlay(previousRound, round);
           }
           this.busyAction = null;
 
@@ -205,6 +219,7 @@ export class Blackjack implements OnInit {
   }
 
   onNextRound() {
+    this.clearResultOverlayTimer();
     this.showRoundOverlay = false;
     this.roundOutcome = null;
     this.round = null;
@@ -242,6 +257,51 @@ export class Blackjack implements OnInit {
       return { headline: 'VERLOREN', detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false, dealerInfo };
     }
     return { headline: 'FERTIG', detail: null, won: false, lost: false, push: false, dealerInfo };
+  }
+
+  private scheduleRoundOverlay(previousRound: RoundState | null, settledRound: RoundState) {
+    const info = this.buildOutcomeText(settledRound);
+    const outcome = this.buildRoundOutcome(settledRound);
+    const delay = this.settlementAnimationDelay(previousRound, settledRound);
+
+    this.resultOverlayTimer = window.setTimeout(() => {
+      if (this.round?.id !== settledRound.id) {
+        return;
+      }
+      this.info = info;
+      this.roundOutcome = outcome;
+      this.showRoundOverlay = true;
+      this.resultOverlayTimer = null;
+    }, delay);
+  }
+
+  private settlementAnimationDelay(previousRound: RoundState | null, settledRound: RoundState) {
+    const previousDealerCards = previousRound?.dealerHand?.cards ?? [];
+    const settledDealerCards = settledRound.dealerHand?.cards ?? [];
+    const previousDealerCardIds = new Set(previousDealerCards.map((card) => card.id));
+    const newDealerCardCount = settledDealerCards.filter((card) => !previousDealerCardIds.has(card.id)).length;
+    const hadHiddenDealerCard = previousDealerCards.some(
+      (card, index) =>
+        card.rank === null ||
+        card.suit === null ||
+        (index === 1 && previousDealerCards.length === 2),
+    );
+
+    const revealDuration = hadHiddenDealerCard ? this.dealerRevealMs : 0;
+    const drawDuration =
+      newDealerCardCount > 0
+        ? revealDuration + (newDealerCardCount - 1) * this.dealerFollowUpCardStepMs + this.cardAnimationMs
+        : revealDuration;
+
+    return Math.max(this.cardAnimationMs, drawDuration + this.resultPauseMs);
+  }
+
+  private clearResultOverlayTimer() {
+    if (!this.resultOverlayTimer) {
+      return;
+    }
+    window.clearTimeout(this.resultOverlayTimer);
+    this.resultOverlayTimer = null;
   }
 
   private extractError(error: unknown): string {

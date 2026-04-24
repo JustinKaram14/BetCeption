@@ -11,6 +11,9 @@ import { CardSuit, HandStatus, RoundCard, RoundHand } from '../../../../../core/
 })
 export class Hand implements OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly initialCardStepMs = 360;
+  private readonly dealerRevealMs = 560;
+  private readonly followUpCardStepMs = 360;
 
   @Input() label = '';
   @Input() hand: RoundHand | null = null;
@@ -25,6 +28,7 @@ export class Hand implements OnChanges {
 
   private lastScore: number | null = null;
   private seenCardIds = new Set<string>();
+  private hiddenCardIds = new Set<string>();
   private cardDelays = new Map<string, number>();
 
   get cards(): RoundCard[] {
@@ -33,7 +37,7 @@ export class Hand implements OnChanges {
 
   get displayScore(): string {
     // Hide dealer's score until cards are revealed
-    if (this.isDealer && !this.revealDealerCards && this.hand?.cards.length === 2) {
+    if (this.isDealer && this.cards.some((card, index) => this.isDealerCardHidden(card, index, this.cards))) {
       return '--';
     }
     if (!this.hand || this.hand.handValue === null) {
@@ -60,7 +64,7 @@ export class Hand implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['hand']) {
+    if (changes['hand'] || changes['revealDealerCards']) {
       const currentScore = this.hand?.handValue ?? null;
       if (currentScore !== this.lastScore && this.lastScore !== null) {
         this.triggerScorePulse();
@@ -78,9 +82,16 @@ export class Hand implements OnChanges {
       }
 
       const newCards = currentCards.filter(c => !this.seenCardIds.has(this.cardId(c)));
+      const currentHiddenCardIds = this.getHiddenCardIds(currentCards);
+      const isDealerRevealPhase =
+        this.isDealer &&
+        currentCards.some((card) => this.hiddenCardIds.has(this.cardId(card)) && !currentHiddenCardIds.has(this.cardId(card)));
+      const isInitialDeal = currentCards.length === 2 && this.seenCardIds.size === 0 && newCards.length === 2;
+
       newCards.forEach((card, newIdx) => {
         const id = this.cardId(card);
-        const delay = this.dealOffset + newIdx * 350;
+        const index = currentCards.findIndex((currentCard) => this.cardId(currentCard) === id);
+        const delay = this.cardDealDelay(index, newIdx, isInitialDeal, isDealerRevealPhase);
         this.seenCardIds.add(id);
         this.cardDelays.set(id, delay);
         this.dealingCardIds.add(id);
@@ -91,6 +102,8 @@ export class Hand implements OnChanges {
           this.cdr.markForCheck();
         }, delay + 700);
       });
+
+      this.hiddenCardIds = currentHiddenCardIds;
     }
   }
 
@@ -100,18 +113,14 @@ export class Hand implements OnChanges {
 
   cardClasses(card: RoundCard, index: number) {
     const isRed = card.suit !== null && (card.suit === CardSuit.HEARTS || card.suit === CardSuit.DIAMONDS);
-
-    // The second card of the dealer is hidden if it's the initial deal (2 cards)
-    // and the reveal flag is not set.
-    const isDealerHoleCard = this.isDealer && index === 1 && this.hand?.cards.length === 2;
-    const isDealerSecondCardHidden = isDealerHoleCard && !this.revealDealerCards;
+    const isHiddenDealerCard = this.isDealerCardHidden(card, index, this.cards);
 
     return {
       card: true,
       red: isRed,
       black: !isRed,
-      visible: !isDealerSecondCardHidden,
-      back: isDealerSecondCardHidden,
+      visible: !isHiddenDealerCard,
+      back: isHiddenDealerCard,
       'active-hand-card': this.isActive,
     };
   }
@@ -137,6 +146,39 @@ export class Hand implements OnChanges {
 
   private cardId(card: RoundCard): string {
     return card.id ?? `${card.rank}-${card.suit}-${card.drawOrder}`;
+  }
+
+  private isDealerCardHidden(card: RoundCard, index: number, cards: RoundCard[]) {
+    if (!this.isDealer) {
+      return false;
+    }
+
+    const isMaskedCard = card.rank === null || card.suit === null;
+    const isInitialHoleCard = index === 1 && cards.length === 2 && !this.revealDealerCards;
+    return isMaskedCard || isInitialHoleCard;
+  }
+
+  private getHiddenCardIds(cards: RoundCard[]) {
+    return new Set(
+      cards
+        .filter((card, index) => this.isDealerCardHidden(card, index, cards))
+        .map((card) => this.cardId(card)),
+    );
+  }
+
+  private cardDealDelay(
+    index: number,
+    newCardIndex: number,
+    isInitialDeal: boolean,
+    isDealerRevealPhase: boolean,
+  ) {
+    if (isInitialDeal) {
+      return this.dealOffset + index * this.initialCardStepMs;
+    }
+    if (isDealerRevealPhase) {
+      return this.dealerRevealMs + newCardIndex * this.followUpCardStepMs;
+    }
+    return newCardIndex * this.followUpCardStepMs;
   }
 
   private triggerScorePulse() {
