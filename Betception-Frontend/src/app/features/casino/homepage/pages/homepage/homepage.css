@@ -4,6 +4,32 @@
   gap:0;
   padding:34px 40px 32px;position:relative;text-align:center;
 }
+.how-to-play-btn{
+  position:absolute;
+  top:24px;
+  right:40px;
+  z-index:10;
+  padding:10px 18px;
+  border:1px solid rgba(0,255,255,.42);
+  border-radius:8px;
+  background:linear-gradient(180deg,rgba(12,18,30,.78),rgba(5,8,15,.86));
+  color:var(--secondary-glow);
+  font-family:var(--font-main);
+  font-size:.82rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+  text-shadow:0 0 8px rgba(0,255,255,.45);
+  box-shadow:0 0 14px rgba(0,255,255,.14),inset 0 0 10px rgba(106,13,173,.12);
+  transition:all .2s ease;
+}
+.how-to-play-btn:hover{
+  color:#05070f;
+  background:var(--secondary-glow);
+  box-shadow:0 0 18px rgba(0,255,255,.45),inset 0 0 10px rgba(255,255,255,.18);
+  transform:translateY(-1px);
+}
 .main-content{
   display:flex;justify-content:center;align-items:stretch;
   gap:50px;margin-top:42px;width:100%;max-width:1200px;
@@ -61,7 +87,11 @@ app-disclaimer-footer{
 @media (max-width:900px){
   .home-container{
     justify-content:flex-start;
-    padding:28px 24px 24px;
+    padding:72px 24px 24px;
+  }
+  .how-to-play-btn{
+    top:20px;
+    right:24px;
   }
   .main-content{
     flex-direction:column;
@@ -87,6 +117,15 @@ app-disclaimer-footer{
 }
 @media (max-width:600px){
   .home-container{padding:22px 14px 20px}
+  .how-to-play-btn{
+    position:relative;
+    top:auto;
+    right:auto;
+    align-self:flex-end;
+    margin-bottom:18px;
+    padding:9px 14px;
+    font-size:.74rem;
+  }
   .main-content{
     gap:18px;
     margin-top:24px;

@@ -1,4 +1,8 @@
 <div class="home-container">
+  <button class="how-to-play-btn" type="button" (click)="openHowToPlay()">
+    How to Play
+  </button>
+
   <app-hero></app-hero>
 
   <div class="main-content">
@@ -43,5 +47,10 @@
   [state]="rewardState"
   (closed)="closeRewardModal()">
 </app-daily-reward-modal>
+
+<app-how-to-play-modal
+  *ngIf="showHowToPlayModal"
+  (closed)="closeHowToPlay()">
+</app-how-to-play-modal>
 
 <app-toast-container></app-toast-container>
