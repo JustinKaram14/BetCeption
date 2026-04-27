@@ -3,6 +3,7 @@ import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe } fro
 import { map, Observable, Subscription } from 'rxjs';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
+import { I18n } from '../../../../../core/i18n/i18n';
 import {
   BalanceLeaderboardItem,
   LeaderboardResponse,
@@ -40,34 +41,40 @@ export class LeaderboardComponent {
   private readonly api = inject(BetceptionApi);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18n);
   private readonly pageSize = 100;
   private requestSub: Subscription | null = null;
+  private activeCategoryId: LeaderboardCategoryId = 'balance';
 
-  readonly categories = [
-    {
-      id: 'balance' as LeaderboardCategoryId,
-      label: 'Balance',
-      description: 'Top Kontostaende - wer hat die meisten Coins auf der Wallet?',
-      columns: [{ key: 'balance', label: 'Balance', format: 'currency' }] as LeaderboardColumn[],
-    },
-    {
-      id: 'level' as LeaderboardCategoryId,
-      label: 'Level',
-      description: 'Highest level + XP progress.',
-      columns: [
-        { key: 'level', label: 'Level', format: 'number' },
-        { key: 'xp', label: 'XP', format: 'number' },
-      ] as LeaderboardColumn[],
-    },
-    {
-      id: 'winnings' as LeaderboardCategoryId,
-      label: 'Winnings',
-      description: 'Net winnings of the last 7 days.',
-      columns: [{ key: 'netWinnings7d', label: 'Net Winnings (7d)', format: 'currency' }] as LeaderboardColumn[],
-    },
-  ];
+  get categories() {
+    return [
+      {
+        id: 'balance' as LeaderboardCategoryId,
+        label: this.i18n.t('controls.balance'),
+        description: this.i18n.t('leaderboard.balanceDescription'),
+        columns: [{ key: 'balance', label: this.i18n.t('controls.balance'), format: 'currency' }] as LeaderboardColumn[],
+      },
+      {
+        id: 'level' as LeaderboardCategoryId,
+        label: 'Level',
+        description: this.i18n.t('leaderboard.levelDescription'),
+        columns: [
+          { key: 'level', label: 'Level', format: 'number' },
+          { key: 'xp', label: 'XP', format: 'number' },
+        ] as LeaderboardColumn[],
+      },
+      {
+        id: 'winnings' as LeaderboardCategoryId,
+        label: this.i18n.t('leaderboard.winnings'),
+        description: this.i18n.t('leaderboard.winningsDescription'),
+        columns: [{ key: 'netWinnings7d', label: this.i18n.t('leaderboard.netWinnings'), format: 'currency' }] as LeaderboardColumn[],
+      },
+    ];
+  }
 
-  activeCategory = this.categories[0];
+  get activeCategory() {
+    return this.categories.find((category) => category.id === this.activeCategoryId) ?? this.categories[0];
+  }
 
   loading = false;
   rows: LeaderboardRow[] = [];
@@ -79,12 +86,12 @@ export class LeaderboardComponent {
   }
 
   selectCategory(id: LeaderboardCategoryId) {
-    if (this.activeCategory.id === id) return;
+    if (this.activeCategoryId === id) return;
     const next = this.categories.find((category) => category.id === id);
     if (!next) {
       return;
     }
-    this.activeCategory = next;
+    this.activeCategoryId = next.id;
     this.loadCategory(id);
   }
 
@@ -177,6 +184,6 @@ export class LeaderboardComponent {
         return String((error as any).message);
       }
     }
-    return 'Leaderboard konnte nicht geladen werden.';
+    return this.i18n.t('home.toast.actionFailed');
   }
 }

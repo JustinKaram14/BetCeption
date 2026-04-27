@@ -17,6 +17,22 @@ function nextEligibleFrom(date) {
     const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1));
     return next.toISOString();
 }
+class RewardError extends Error {
+    statusCode;
+    code;
+    constructor(statusCode, code, message) {
+        super(message);
+        this.statusCode = statusCode;
+        this.code = code;
+        this.name = 'RewardError';
+    }
+}
+function handleRewardError(res, error) {
+    if (error instanceof RewardError) {
+        return res.status(error.statusCode).json({ message: error.message, code: error.code });
+    }
+    throw error;
+}
 export async function claimDailyReward(req, res) {
     const userId = String(req.user?.sub);
     const todayUtc = new Date().toISOString().slice(0, 10);
@@ -28,9 +44,10 @@ export async function claimDailyReward(req, res) {
                 lock: { mode: 'pessimistic_write' },
             });
             if (!user)
-                throw new Error('USER_NOT_FOUND');
-            if (user.lastDailyRewardAt === todayUtc)
-                throw new Error('NOT_ELIGIBLE');
+                throw new RewardError(404, 'USER_NOT_FOUND', 'User not found');
+            if (user.lastDailyRewardAt === todayUtc) {
+                throw new RewardError(409, 'NOT_ELIGIBLE', 'Reward already claimed for today');
+            }
             const amount = rollRewardAmount();
             const amountCents = decimalToCents(amount);
             const balanceCents = decimalToCents(user.balance);
@@ -65,16 +82,12 @@ export async function claimDailyReward(req, res) {
         });
     }
     catch (err) {
-        const code = err?.message;
-        if (code === 'NOT_ELIGIBLE') {
+        if (err instanceof RewardError && err.code === 'NOT_ELIGIBLE') {
             return res.status(409).json({
-                message: 'Reward already claimed for today',
+                message: err.message,
                 eligibleAt: nextEligibleFrom(new Date()),
             });
         }
-        if (code === 'USER_NOT_FOUND') {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        throw err;
+        return handleRewardError(res, err);
     }
 }

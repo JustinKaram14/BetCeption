@@ -1,0 +1,39 @@
+<div class="settings-menu">
+  <button
+    class="settings-button"
+    type="button"
+    [attr.aria-label]="i18n.t('common.settings')"
+    [attr.title]="i18n.t('common.settings')"
+    [attr.aria-expanded]="open"
+    (click)="toggle()"
+  >
+    &#9881;
+  </button>
+
+  <div class="settings-popover" *ngIf="open">
+    <div class="settings-title">{{ i18n.t('common.settings') }}</div>
+    <label class="settings-label">{{ i18n.t('common.language') }}</label>
+    <div class="language-carousel">
+      <button
+        type="button"
+        class="language-arrow"
+        [attr.aria-label]="i18n.t('tutorial.previous')"
+        (click)="previousLanguage()"
+      >
+        &#8249;
+      </button>
+      <div class="language-current" aria-live="polite">
+        <span class="language-name">{{ currentLanguage.nativeLabel }}</span>
+        <span class="language-code">{{ currentLanguage.code.toUpperCase() }}</span>
+      </div>
+      <button
+        type="button"
+        class="language-arrow"
+        [attr.aria-label]="i18n.t('tutorial.next')"
+        (click)="nextLanguage()"
+      >
+        &#8250;
+      </button>
+    </div>
+  </div>
+</div>

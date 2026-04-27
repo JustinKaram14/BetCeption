@@ -1,7 +1,10 @@
 <div class="home-container">
-  <button class="how-to-play-btn" type="button" (click)="openHowToPlay()">
-    How to Play
-  </button>
+  <div class="top-actions">
+    <button class="how-to-play-btn" type="button" (click)="openHowToPlay()">
+      {{ i18n.t('common.howToPlay') }}
+    </button>
+    <app-settings-menu></app-settings-menu>
+  </div>
 
   <app-hero></app-hero>
 
@@ -15,10 +18,10 @@
         <ng-container *ngIf="isAuthenticated$ | async; else loginPanel">
           <div class="user-panel">
             <div class="user-panel__greeting">
-              Eingeloggt als
+              {{ i18n.t('home.loggedInAs') }}
               <strong>{{ (user$ | async)?.username }}</strong>
             </div>
-            <button class="btn logout-btn" (click)="onLogout()">Abmelden</button>
+            <button class="btn logout-btn" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
           </div>
         </ng-container>
 

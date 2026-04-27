@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 export type DailyRewardState =
   | { kind: 'loading' }
@@ -16,6 +17,8 @@ export type DailyRewardState =
   styleUrls: ['./daily-reward-modal.css'],
 })
 export class DailyRewardModalComponent implements OnInit, OnDestroy {
+  readonly i18n = inject(I18n);
+
   @Input() state: DailyRewardState = { kind: 'loading' };
   @Output() closed = new EventEmitter<void>();
 
@@ -36,7 +39,7 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
     }
     const eligible = new Date(this.state.eligibleAt);
     const diff = eligible.getTime() - this.now;
-    if (diff <= 0) return 'Jetzt verfügbar!';
+    if (diff <= 0) return this.i18n.t('daily.availableNow');
     const hours = Math.floor(diff / 3_600_000);
     const minutes = Math.floor((diff % 3_600_000) / 60_000);
     return `${hours}h ${minutes}m`;

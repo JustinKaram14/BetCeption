@@ -21,7 +21,7 @@
   </div>
 
   <ng-template #emptyHand>
-    <div class="empty-hand">Bereit für die nächste Runde</div>
+    <div class="empty-hand">{{ i18n.t('hand.empty') }}</div>
   </ng-template>
 
   <div class="hand-status" *ngIf="statusLabel">{{ statusLabel }}</div>

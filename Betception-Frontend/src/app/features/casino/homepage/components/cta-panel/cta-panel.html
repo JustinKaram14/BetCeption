@@ -1,4 +1,4 @@
 <div class="play-panel">
-  <button class="btn play-btn" (click)="enter.emit()">ENTER BETCEPTION</button>
-  <button class="btn rewards-btn" (click)="rewards.emit()">🎁 DAILY REWARDS</button>
+  <button class="btn play-btn" (click)="enter.emit()">{{ i18n.t('home.enter') }}</button>
+  <button class="btn rewards-btn" (click)="rewards.emit()">&#127873; {{ i18n.t('home.dailyRewards') }}</button>
 </div>

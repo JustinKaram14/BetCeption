@@ -59,7 +59,7 @@ export async function login(req, res) {
     const subject = { sub: user.id, email: user.email, username: user.username };
     const accessToken = await signAccess(subject);
     const refreshToken = await signRefresh(subject);
-    const refreshExpiresAt = new Date(Date.now() + env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000);
+    const refreshExpiresAt = new Date(Date.now() + REFRESH_TTL_MS);
     setRefreshTokenCookie(res, refreshToken);
     await sessionRepo.save(sessionRepo.create({
         user,
@@ -99,7 +99,7 @@ export async function refresh(req, res) {
         const subject = { sub: user.id, email: user.email, username: user.username };
         const accessToken = await signAccess(subject);
         const newRefreshToken = await signRefresh(subject);
-        const refreshExpiresAt = new Date(Date.now() + env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000);
+        const refreshExpiresAt = new Date(Date.now() + REFRESH_TTL_MS);
         session.refreshToken = hashToken(newRefreshToken);
         session.expiresAt = refreshExpiresAt;
         session.userAgent = req.headers['user-agent']?.slice(0, 255) ?? session.userAgent;
