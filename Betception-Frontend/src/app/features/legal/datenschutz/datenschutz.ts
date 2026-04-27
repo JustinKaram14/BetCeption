@@ -11,7 +11,7 @@ type DatenschutzContent = {
 
 const CONTENT: Record<LanguageCode, DatenschutzContent> = {
   de: {
-    title: 'Datenschutzerklaerung',
+    title: 'Datenschutzerklärung',
     sections: [
       {
         heading: '1. Verantwortlicher',
@@ -21,44 +21,44 @@ const CONTENT: Record<LanguageCode, DatenschutzContent> = {
         heading: '2. Erhobene Daten',
         paragraphs: ['Bei der Registrierung und Nutzung werden folgende personenbezogene oder nutzungsbezogene Daten erhoben:'],
         items: [
-          'E-Mail-Adresse als Pflichtfeld fuer die Anmeldung',
-          'selbst gewaehlter Benutzername',
+          'E-Mail-Adresse als Pflichtfeld für die Anmeldung',
+          'selbst gewählter Benutzername',
           'Passwort, gespeichert als bcrypt-Hash und niemals im Klartext',
-          'Spielstaende, Transaktionen und Aktivitaetsdaten innerhalb der Plattform',
+          'Spielstände, Transaktionen und Aktivitätsdaten innerhalb der Plattform',
         ],
       },
       {
         heading: '3. Zweck der Verarbeitung',
         paragraphs: [
-          'Die Daten werden ausschliesslich zur Bereitstellung der Spielfunktionalitaet verwendet, insbesondere fuer Authentifizierung, Spielstatus und Bestenliste. Eine Weitergabe an Dritte findet nicht statt.',
+          'Die Daten werden ausschließlich zur Bereitstellung der Spielfunktionalität verwendet, insbesondere für Authentifizierung, Spielstatus und Bestenliste. Eine Weitergabe an Dritte findet nicht statt.',
         ],
       },
       {
         heading: '4. Speicherdauer',
         paragraphs: [
-          'Daten werden so lange gespeichert, wie das Konto aktiv ist. Eine Loeschung kann jederzeit durch Kontaktaufnahme mit dem Projektteam beantragt werden.',
+          'Daten werden so lange gespeichert, wie das Konto aktiv ist. Eine Löschung kann jederzeit durch Kontaktaufnahme mit dem Projektteam beantragt werden.',
         ],
       },
       {
         heading: '5. Cookies und Sessions',
         paragraphs: [
-          'Es werden HttpOnly-Session-Cookies fuer die Authentifizierung gesetzt. Es werden keine Tracking- oder Werbe-Cookies verwendet.',
+          'Es werden HttpOnly-Session-Cookies für die Authentifizierung gesetzt. Es werden keine Tracking- oder Werbe-Cookies verwendet.',
         ],
       },
       {
         heading: '6. Rechte der Nutzer',
         paragraphs: [
-          'Gemaess DSGVO haben Nutzer das Recht auf Auskunft, Berichtigung und Loeschung ihrer Daten. Da es sich um ein nicht-kommerzielles Studentenprojekt handelt, wenden Sie sich bei Anfragen direkt an das Projektteam.',
+          'Gemäß DSGVO haben Nutzer das Recht auf Auskunft, Berichtigung und Löschung ihrer Daten. Da es sich um ein nicht-kommerzielles Studentenprojekt handelt, wenden Sie sich bei Anfragen direkt an das Projektteam.',
         ],
       },
       {
-        heading: '7. Hinweis zum Gluecksspiel',
+        heading: '7. Hinweis zum Glücksspiel',
         paragraphs: [
-          'BetCeption verwendet ausschliesslich virtuelle Coins ohne Geldwert. Es handelt sich um kein Gluecksspiel im Sinne des Gluecksspielstaatsvertrags. Empfohlen ab 18 Jahren.',
+          'BetCeption verwendet ausschließlich virtuelle Coins ohne Geldwert. Es handelt sich um kein Glücksspiel im Sinne des Glücksspielstaatsvertrags. Empfohlen ab 18 Jahren.',
         ],
       },
     ],
-    back: 'Zurueck zur Startseite',
+    back: 'Zurück zur Startseite',
   },
   en: {
     title: 'Privacy Policy',
@@ -111,44 +111,44 @@ const CONTENT: Record<LanguageCode, DatenschutzContent> = {
     back: 'Back to homepage',
   },
   es: {
-    title: 'Politica de privacidad',
+    title: 'Política de privacidad',
     sections: [
       {
         heading: '1. Responsable',
-        paragraphs: ['Team BetCeption - proyecto estudiantil no comercial en el contexto de un curso universitario de ingenieria de software.'],
+        paragraphs: ['Team BetCeption - proyecto estudiantil no comercial en el contexto de un curso universitario de ingeniería de software.'],
       },
       {
         heading: '2. Datos recopilados',
         paragraphs: ['Durante el registro y el uso se pueden recopilar los siguientes datos personales o de uso:'],
         items: [
-          'direccion de email como campo obligatorio para iniciar sesion',
+          'dirección de email como campo obligatorio para iniciar sesión',
           'nombre de usuario elegido por el usuario',
-          'contrasena almacenada como hash bcrypt y nunca en texto claro',
+          'contraseña almacenada como hash bcrypt y nunca en texto claro',
           'estados de juego, transacciones y datos de actividad dentro de la plataforma',
         ],
       },
       {
         heading: '3. Finalidad del tratamiento',
         paragraphs: [
-          'Los datos se usan exclusivamente para proporcionar la funcionalidad del juego, especialmente autenticacion, estado de juego y leaderboard. No se comparten datos con terceros.',
+          'Los datos se usan exclusivamente para proporcionar la funcionalidad del juego, especialmente autenticación, estado de juego y clasificación. No se comparten datos con terceros.',
         ],
       },
       {
-        heading: '4. Periodo de conservacion',
+        heading: '4. Periodo de conservación',
         paragraphs: [
-          'Los datos se almacenan mientras la cuenta este activa. Se puede solicitar la eliminacion en cualquier momento contactando con el equipo del proyecto.',
+          'Los datos se almacenan mientras la cuenta esté activa. Se puede solicitar la eliminación en cualquier momento contactando con el equipo del proyecto.',
         ],
       },
       {
         heading: '5. Cookies y sesiones',
         paragraphs: [
-          'Se usan cookies de sesion HttpOnly para la autenticacion. No se usan cookies de tracking ni de publicidad.',
+          'Se usan cookies de sesión HttpOnly para la autenticación. No se usan cookies de tracking ni de publicidad.',
         ],
       },
       {
         heading: '6. Derechos de los usuarios',
         paragraphs: [
-          'Segun el RGPD, los usuarios tienen derecho de acceso, rectificacion y eliminacion de sus datos. Como se trata de un proyecto estudiantil no comercial, las solicitudes deben dirigirse al equipo del proyecto.',
+          'Según el RGPD, los usuarios tienen derecho de acceso, rectificación y eliminación de sus datos. Como se trata de un proyecto estudiantil no comercial, las solicitudes deben dirigirse al equipo del proyecto.',
         ],
       },
       {
@@ -161,54 +161,54 @@ const CONTENT: Record<LanguageCode, DatenschutzContent> = {
     back: 'Volver al inicio',
   },
   fr: {
-    title: 'Politique de confidentialite',
+    title: 'Politique de confidentialité',
     sections: [
       {
         heading: '1. Responsable',
-        paragraphs: ['Team BetCeption - projet etudiant non commercial dans le cadre d un cours universitaire de genie logiciel.'],
+        paragraphs: ["Team BetCeption - projet étudiant non commercial dans le cadre d'un cours universitaire de génie logiciel."],
       },
       {
-        heading: '2. Donnees collectees',
-        paragraphs: ['Lors de l inscription et de l utilisation, les donnees personnelles ou donnees d usage suivantes peuvent etre collectees:'],
+        heading: '2. Données collectées',
+        paragraphs: ["Lors de l'inscription et de l'utilisation, les données personnelles ou données d'usage suivantes peuvent être collectées:"],
         items: [
           'adresse e-mail comme champ obligatoire pour la connexion',
-          'nom d utilisateur choisi par l utilisateur',
-          'mot de passe stocke sous forme de hash bcrypt et jamais en clair',
-          'etats de jeu, transactions et donnees d activite dans la plateforme',
+          "nom d'utilisateur choisi par l'utilisateur",
+          'mot de passe stocké sous forme de hash bcrypt et jamais en clair',
+          "états de jeu, transactions et données d'activité dans la plateforme",
         ],
       },
       {
-        heading: '3. Finalite du traitement',
+        heading: '3. Finalité du traitement',
         paragraphs: [
-          'Les donnees sont utilisees exclusivement pour fournir les fonctionnalites du jeu, notamment l authentification, l etat du jeu et le leaderboard. Les donnees ne sont pas transmises a des tiers.',
+          "Les données sont utilisées exclusivement pour fournir les fonctionnalités du jeu, notamment l'authentification, l'état du jeu et le classement. Les données ne sont pas transmises à des tiers.",
         ],
       },
       {
-        heading: '4. Duree de conservation',
+        heading: '4. Durée de conservation',
         paragraphs: [
-          'Les donnees sont conservees tant que le compte est actif. Une suppression peut etre demandee a tout moment en contactant l equipe du projet.',
+          "Les données sont conservées tant que le compte est actif. Une suppression peut être demandée à tout moment en contactant l'équipe du projet.",
         ],
       },
       {
         heading: '5. Cookies et sessions',
         paragraphs: [
-          'Des cookies de session HttpOnly sont utilises pour l authentification. Aucun cookie de tracking ou publicitaire n est utilise.',
+          "Des cookies de session HttpOnly sont utilisés pour l'authentification. Aucun cookie de tracking ou publicitaire n'est utilisé.",
         ],
       },
       {
         heading: '6. Droits des utilisateurs',
         paragraphs: [
-          'Selon le RGPD, les utilisateurs disposent d un droit d acces, de rectification et de suppression de leurs donnees. Comme il s agit d un projet etudiant non commercial, les demandes doivent etre adressees directement a l equipe du projet.',
+          "Selon le RGPD, les utilisateurs disposent d'un droit d'accès, de rectification et de suppression de leurs données. Comme il s'agit d'un projet étudiant non commercial, les demandes doivent être adressées directement à l'équipe du projet.",
         ],
       },
       {
-        heading: '7. Note sur les jeux d argent',
+        heading: "7. Note sur les jeux d'argent",
         paragraphs: [
-          'BetCeption utilise uniquement des coins virtuels sans valeur monetaire. Ce n est pas un jeu d argent. Recommande aux 18 ans et plus.',
+          "BetCeption utilise uniquement des coins virtuels sans valeur monétaire. Ce n'est pas un jeu d'argent. Recommandé aux 18 ans et plus.",
         ],
       },
     ],
-    back: 'Retour a l accueil',
+    back: "Retour à l'accueil",
   },
 };
 
