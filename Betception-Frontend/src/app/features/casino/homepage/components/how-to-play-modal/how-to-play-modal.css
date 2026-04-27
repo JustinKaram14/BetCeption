@@ -1,0 +1,32 @@
+.tutorial-overlay{position:fixed;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.72);backdrop-filter:blur(7px)}
+.tutorial-card{position:relative;width:min(880px,100%);max-height:min(760px,calc(100vh - 48px));overflow:auto;border:1px solid rgba(0,255,255,.28);border-radius:12px;background:linear-gradient(180deg,rgba(12,12,22,.96),rgba(5,7,15,.98));padding:28px}
+.tutorial-close{position:absolute;top:18px;right:18px;width:32px;height:32px;border:1px solid rgba(0,255,255,.25);border-radius:7px;background:rgba(0,0,0,.35);color:rgba(255,255,255,.66);font-family:var(--font-main);cursor:pointer}
+.tutorial-close:hover{color:#fff}
+.tutorial-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-right:44px;text-align:left}
+.tutorial-eyebrow,.step-eyebrow{margin:0 0 6px;color:var(--accent-glow);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase}
+.tutorial-header h2{margin:0;font-family:var(--font-display);color:var(--secondary-glow);font-size:2rem;letter-spacing:1px}
+.tutorial-count{color:#888}
+.tutorial-progress{height:3px;margin:18px 0 26px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.tutorial-progress__bar{height:100%;border-radius:999px;background:var(--secondary-glow);transition:width .25s ease}
+.tutorial-body{display:grid;grid-template-columns:minmax(320px,1fr) minmax(260px,.8fr);gap:28px;align-items:stretch}
+.tutorial-table{min-height:370px;display:grid;grid-template-rows:auto 1fr auto;gap:20px;padding:24px;border:1px solid rgba(0,255,255,.16);border-radius:10px;background:rgba(4,10,25,.72)}
+.hand-row{display:flex;flex-direction:column;align-items:center;gap:10px}
+.hand-label{color:rgba(255,255,255,.64);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase}
+.cards{display:flex;justify-content:center;gap:10px;min-height:78px}
+.mini-card{width:54px;height:76px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(145deg,#f7f7ff,#bfc6d8);color:#09101e;font-family:var(--font-display);font-size:1.5rem}
+.mini-card--player{border-color:rgba(0,255,255,.45)}
+.mini-card--hidden{background:repeating-linear-gradient(45deg,#111421 0 8px,#17213a 8px 16px);border-color:rgba(0,255,255,.45)}
+.table-core{position:relative;display:flex;align-items:center;justify-content:center}
+.table-ring{width:150px;height:78px;border:1px solid rgba(0,255,255,.12);border-radius:50%}
+.decision-chip{position:absolute;padding:9px 22px;border:1px solid var(--secondary-glow);border-radius:8px;background:rgba(0,0,0,.78);color:var(--secondary-glow);font-family:var(--font-display);letter-spacing:.08em}
+.tutorial-copy{text-align:left;display:flex;flex-direction:column;justify-content:center;padding:24px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(0,0,0,.22)}
+.tutorial-copy h3{margin:0 0 14px;color:#fff;font-size:1.45rem;line-height:1.2}
+.tutorial-copy p{margin:0;color:rgba(255,255,255,.72);font-size:.98rem;line-height:1.55}
+.tutorial-hint{margin-top:18px;padding:12px 14px;border-left:3px solid var(--push-color);background:rgba(255,193,7,.08);color:rgba(255,225,130,.88);font-size:.86rem;line-height:1.45}
+.tutorial-steps{display:flex;justify-content:center;gap:9px;margin:24px 0 18px}
+.step-dot{width:10px;height:10px;border:1px solid rgba(0,255,255,.34);border-radius:50%;background:rgba(255,255,255,.08)}
+.step-dot.active{width:28px;border-radius:999px;background:var(--secondary-glow)}
+.tutorial-actions{display:flex;justify-content:flex-end;gap:12px}.tutorial-btn{min-width:130px}
+.tutorial-btn--ghost{color:rgba(255,255,255,.65);box-shadow:none}.tutorial-btn:disabled{opacity:.45;cursor:not-allowed}
+@media (max-width:760px){.tutorial-card{padding:22px}.tutorial-body{grid-template-columns:1fr}.tutorial-table{min-height:300px}.tutorial-actions{justify-content:stretch}.tutorial-btn{flex:1;min-width:0}}
+@media (max-width:520px){.tutorial-overlay{padding:12px}.tutorial-card{padding:18px}.tutorial-header h2{font-size:1.55rem}.mini-card{width:46px;height:66px;font-size:1.25rem}}
