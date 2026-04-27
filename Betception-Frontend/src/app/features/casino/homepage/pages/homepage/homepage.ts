@@ -9,6 +9,7 @@ import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { DailyRewardModalComponent, DailyRewardState } from '../../components/daily-reward-modal/daily-reward-modal';
+import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
 import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-footer/disclaimer-footer';
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
@@ -20,7 +21,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, DisclaimerFooterComponent, ToastContainerComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, DisclaimerFooterComponent, ToastContainerComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -36,6 +37,7 @@ export class HomepageComponent {
 
   authLoading = false;
   showRewardModal = false;
+  showHowToPlayModal = false;
   rewardState: DailyRewardState = { kind: 'loading' };
 
   onLogin(payload: LoginRequest) {
@@ -107,6 +109,14 @@ export class HomepageComponent {
 
   closeRewardModal() {
     this.showRewardModal = false;
+  }
+
+  openHowToPlay() {
+    this.showHowToPlayModal = true;
+  }
+
+  closeHowToPlay() {
+    this.showHowToPlayModal = false;
   }
 
   private runAuthRequest(
