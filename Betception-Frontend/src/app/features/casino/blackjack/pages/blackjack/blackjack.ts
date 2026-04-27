@@ -233,8 +233,14 @@ export class Blackjack implements OnInit {
 
   private buildRoundOutcome(round: RoundState): typeof this.roundOutcome {
     const status = round.mainBet?.status;
-    const amount = round.mainBet?.settledAmount ?? null;
-    const formatted = amount !== null ? `${Number(amount).toFixed(0)} Coins` : null;
+    const displayAmount =
+      status === MainBetStatus.LOST
+        ? round.mainBet?.amount
+        : round.mainBet?.settledAmount;
+    const formatted =
+      displayAmount !== null && typeof displayAmount !== 'undefined'
+        ? `${Number(displayAmount).toFixed(0)} Coins`
+        : null;
 
     const dealer = round.dealerHand;
     let dealerInfo: string | null = null;
