@@ -4,42 +4,42 @@
     <!-- Loading -->
     <div *ngIf="state.kind === 'loading'" class="modal-body loading">
       <div class="spinner"></div>
-      <p>Reward wird geladen…</p>
+      <p>{{ i18n.t('daily.loading') }}</p>
     </div>
 
     <!-- Success -->
     <div *ngIf="state.kind === 'success'" class="modal-body success">
-      <div class="reward-icon">🎁</div>
-      <h2>Daily Reward!</h2>
+      <div class="reward-icon">&#127873;</div>
+      <h2>{{ i18n.t('daily.title') }}</h2>
       <p class="amount">+{{ state.claimedAmount }} Coins</p>
-      <p class="balance">Neues Guthaben: <strong>{{ state.balance }}</strong></p>
-      <p class="cooldown">Nächster Reward in: {{ countdownText }}</p>
-      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+      <p class="balance">{{ i18n.t('daily.balance') }}: <strong>{{ state.balance }}</strong></p>
+      <p class="cooldown">{{ i18n.t('daily.next') }}: {{ countdownText }}</p>
+      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
     <!-- Already claimed -->
     <div *ngIf="state.kind === 'already-claimed'" class="modal-body already-claimed">
-      <div class="reward-icon">⏰</div>
-      <h2>Bereits abgeholt!</h2>
-      <p>Du hast deinen Daily Reward heute schon abgeholt.</p>
-      <p class="cooldown">Nächster Reward in: {{ countdownText }}</p>
-      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+      <div class="reward-icon">&#9200;</div>
+      <h2>{{ i18n.t('daily.alreadyTitle') }}</h2>
+      <p>{{ i18n.t('daily.alreadyCopy') }}</p>
+      <p class="cooldown">{{ i18n.t('daily.next') }}: {{ countdownText }}</p>
+      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
     <!-- Not logged in -->
     <div *ngIf="state.kind === 'not-logged-in'" class="modal-body not-logged-in">
-      <div class="reward-icon">🔒</div>
-      <h2>Nicht eingeloggt</h2>
-      <p>Bitte logge dich ein, um deinen Daily Reward abzuholen.</p>
-      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+      <div class="reward-icon">&#128274;</div>
+      <h2>{{ i18n.t('daily.notLoggedTitle') }}</h2>
+      <p>{{ i18n.t('daily.notLoggedCopy') }}</p>
+      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
     <!-- Error -->
     <div *ngIf="state.kind === 'error'" class="modal-body error">
-      <div class="reward-icon">❌</div>
-      <h2>Fehler</h2>
+      <div class="reward-icon">&#10060;</div>
+      <h2>{{ i18n.t('daily.errorTitle') }}</h2>
       <p>{{ state.message }}</p>
-      <button class="btn close-btn" (click)="closed.emit()">OK</button>
+      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
   </div>

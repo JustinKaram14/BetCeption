@@ -1,6 +1,6 @@
 <div class="page-wrapper">
   <div class="app-container">
-    <a class="btn home-btn" routerLink="/homepage">Home</a>
+    <a class="btn home-btn" routerLink="/homepage">{{ i18n.t('common.home') }}</a>
 
     <app-table
       [dealerHand]="round?.dealerHand ?? null"
@@ -27,8 +27,8 @@
           {{ roundOutcome?.detail }}
         </div>
         <div class="round-over-actions">
-          <button class="btn btn-neue-runde" (click)="onNextRound()">Neue Runde</button>
-          <a class="btn btn-aufhoeren" routerLink="/homepage">Aufhören</a>
+          <button class="btn btn-neue-runde" (click)="onNextRound()">{{ i18n.t('blackjack.newRound') }}</button>
+          <a class="btn btn-aufhoeren" routerLink="/homepage">{{ i18n.t('blackjack.quit') }}</a>
         </div>
       </div>
     </div>

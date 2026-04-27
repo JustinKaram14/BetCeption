@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 @Component({
   selector: 'app-auth-panel',
@@ -14,6 +15,7 @@ import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 })
 export class AuthPanelComponent {
   private readonly toast = inject(ToastService);
+  readonly i18n = inject(I18n);
 
   tab: 'login' | 'register' = 'login';
   email = '';
@@ -32,11 +34,11 @@ export class AuthPanelComponent {
     const password = this.password;
 
     if (!email || !this.isValidEmail(email)) {
-      this.toast.error('Bitte eine gueltige E-Mail-Adresse eingeben.');
+      this.toast.error(this.i18n.t('auth.emailInvalid'));
       return;
     }
     if (password.length < 8) {
-      this.toast.error('Passwort muss mindestens 8 Zeichen lang sein.');
+      this.toast.error(this.i18n.t('auth.passwordTooShort'));
       return;
     }
 
@@ -47,7 +49,7 @@ export class AuthPanelComponent {
 
     const username = this.username.trim();
     if (username.length < 3 || username.length > 32) {
-      this.toast.error('Benutzername muss 3-32 Zeichen lang sein.');
+      this.toast.error(this.i18n.t('auth.usernameInvalid'));
       return;
     }
     this.register.emit({ email, username, password });

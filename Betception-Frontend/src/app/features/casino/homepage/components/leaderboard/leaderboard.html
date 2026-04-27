@@ -1,6 +1,6 @@
 <div class="leaderboard-container">
   <div class="leaderboard-heading">
-    <h2>Leaderboard</h2>
+    <h2>{{ i18n.t('leaderboard.title') }}</h2>
     <div class="leaderboard-tabs">
       <button
         type="button"
@@ -20,7 +20,7 @@
     <span class="dot"></span>
     <span class="dot"></span>
     <span class="dot"></span>
-    <span>Lade {{ activeCategory.label }}...</span>
+    <span>{{ i18n.t('leaderboard.loading', { label: activeCategory.label }) }}</span>
   </div>
 
   <ng-container *ngIf="!loading">
@@ -28,8 +28,8 @@
       <table class="leaderboard-table">
         <thead>
         <tr>
-          <th>Rank</th>
-          <th>Player</th>
+          <th>{{ i18n.t('leaderboard.rank') }}</th>
+          <th>{{ i18n.t('leaderboard.player') }}</th>
           <th *ngFor="let column of activeCategory.columns">{{ column.label }}</th>
         </tr>
         </thead>
@@ -52,11 +52,11 @@
     </div>
 
     <p class="current-rank" *ngIf="currentUserRank !== null; else noRank">
-      Dein aktueller Rang: <strong>#{{ currentUserRank }}</strong>
+      {{ i18n.t('leaderboard.currentRank') }}: <strong>#{{ currentUserRank }}</strong>
     </p>
     <ng-template #noRank>
       <p class="current-rank muted">
-        Spiele mehr Runden, um im Leaderboard aufzutauchen.
+        {{ i18n.t('leaderboard.noRank') }}
       </p>
     </ng-template>
   </ng-container>

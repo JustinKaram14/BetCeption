@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { NgClass, NgFor, NgIf } from '@angular/common';
 import { CardSuit, HandStatus, RoundCard, RoundHand } from '../../../../../core/api/api.types';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 @Component({
   selector: 'app-hand',
@@ -11,6 +12,7 @@ import { CardSuit, HandStatus, RoundCard, RoundHand } from '../../../../../core/
 })
 export class Hand implements OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
+  readonly i18n = inject(I18n);
   private readonly initialCardStepMs = 360;
   private readonly dealerRevealMs = 560;
   private readonly followUpCardStepMs = 360;
@@ -49,15 +51,15 @@ export class Hand implements OnChanges {
   get statusLabel(): string | null {
     switch (this.hand?.status) {
       case HandStatus.ACTIVE:
-        return 'Aktiv';
+        return this.i18n.t('hand.status.active');
       case HandStatus.STOOD:
-        return 'Stand';
+        return this.i18n.t('hand.status.stood');
       case HandStatus.BUSTED:
-        return 'Busted';
+        return this.i18n.t('hand.status.busted');
       case HandStatus.BLACKJACK:
-        return 'Blackjack';
+        return this.i18n.t('hand.status.blackjack');
       case HandStatus.SURRENDERED:
-        return 'Surrender';
+        return this.i18n.t('hand.status.surrendered');
       default:
         return null;
     }
