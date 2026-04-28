@@ -35,7 +35,7 @@ describe('authGuard middleware', () => {
     });
     const res = createMockResponse();
     const next = createMockNext();
-    jest.mocked(verifyAccess).mockRejectedValue(new Error('bad token'));
+    jest.mocked(verifyAccess).mockRejectedValue(new Error('Invalid or expired token'));
 
     await authGuard(req, res, next);
 

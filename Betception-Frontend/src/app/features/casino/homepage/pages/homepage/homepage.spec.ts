@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { HomepageComponent } from './homepage';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
@@ -8,23 +9,70 @@ import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { HeroComponent } from '../../components/hero/hero';
 import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
+import { BetceptionApi } from '../../../../../core/api/betception-api.service';
+import { Wallet } from '../../../../../core/services/wallet/wallet';
 
 describe('HomepageComponent', () => {
   let fixture: ComponentFixture<HomepageComponent>;
   let component: HomepageComponent;
-  const authFacadeMock = {
-    login: jasmine.createSpy('login').and.returnValue(of(null)),
-    register: jasmine.createSpy('register').and.returnValue(of({ message: 'ok' })),
-  } as Partial<AuthFacade>;
+  const authFacadeMock = jasmine.createSpyObj<AuthFacade>(
+    'AuthFacade',
+    ['login', 'register', 'logout', 'isAuthenticated'],
+    {
+      isAuthenticated$: of(false),
+      user$: of(null),
+    },
+  );
+  const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['claimDailyReward']);
+  let routerNavigateSpy: jasmine.Spy;
+  const apiMock = jasmine.createSpyObj<BetceptionApi>(
+    'BetceptionApi',
+    ['getBalanceLeaderboard', 'getLevelLeaderboard', 'getWinningsLeaderboard'],
+  );
 
   beforeEach(async () => {
+    authFacadeMock.login.and.returnValue(of(null));
+    authFacadeMock.register.and.returnValue(of({ message: 'ok' } as any));
+    authFacadeMock.logout.and.returnValue(of(undefined));
+    authFacadeMock.isAuthenticated.and.returnValue(false);
+    walletMock.claimDailyReward.and.returnValue(
+      of({
+        claimedAmount: 100,
+        balance: 1000,
+        eligibleAt: new Date().toISOString(),
+      }),
+    );
+    apiMock.getBalanceLeaderboard.and.returnValue(
+      of({ items: [], currentUserRank: null, total: 0, limit: 10, offset: 0 }),
+    );
+    apiMock.getLevelLeaderboard.and.returnValue(
+      of({ items: [], currentUserRank: null, total: 0, limit: 10, offset: 0 }),
+    );
+    apiMock.getWinningsLeaderboard.and.returnValue(
+      of({ items: [], currentUserRank: null, total: 0, limit: 10, offset: 0 }),
+    );
+
     await TestBed.configureTestingModule({
       imports: [HomepageComponent],
-      providers: [{ provide: AuthFacade, useValue: authFacadeMock }],
+      providers: [
+        provideRouter([]),
+        { provide: AuthFacade, useValue: authFacadeMock },
+        { provide: BetceptionApi, useValue: apiMock },
+        { provide: Wallet, useValue: walletMock },
+      ],
     }).compileComponents();
 
-    authFacadeMock.login!.calls.reset();
-    authFacadeMock.register!.calls.reset();
+    routerNavigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    authFacadeMock.login.calls.reset();
+    authFacadeMock.register.calls.reset();
+    authFacadeMock.logout.calls.reset();
+    authFacadeMock.isAuthenticated.calls.reset();
+    apiMock.getBalanceLeaderboard.calls.reset();
+    apiMock.getLevelLeaderboard.calls.reset();
+    apiMock.getWinningsLeaderboard.calls.reset();
+    walletMock.claimDailyReward.calls.reset();
+    routerNavigateSpy.calls.reset();
 
     fixture = TestBed.createComponent(HomepageComponent);
     component = fixture.componentInstance;

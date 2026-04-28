@@ -7,3 +7,7 @@ Betception-Frontend/dist/
 .idea/
 CLAUDE.md
 graphify-out/
+.claude-flow/
+.mcp.json
+.swarm
+ruvector.db

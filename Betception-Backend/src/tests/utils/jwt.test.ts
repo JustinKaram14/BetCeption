@@ -23,4 +23,24 @@ describe('jwt utils', () => {
 
     await expect(verifyAccess(invalid)).rejects.toThrow('Invalid auth payload');
   });
+
+  it('rejects expired access tokens', async () => {
+    const expired = await new jose.SignJWT(subject)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime(new Date(Date.now() - 1000))
+      .sign(new TextEncoder().encode(process.env.ACCESS_TOKEN_SECRET));
+
+    await expect(verifyAccess(expired)).rejects.toThrow();
+  });
+
+  it('rejects refresh tokens signed with the wrong secret', async () => {
+    const bogus = await new jose.SignJWT(subject)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('1h')
+      .sign(new TextEncoder().encode('totally-wrong-secret'));
+
+    await expect(verifyRefresh(bogus)).rejects.toThrow();
+  });
 });

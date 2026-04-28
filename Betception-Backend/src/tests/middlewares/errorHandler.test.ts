@@ -39,4 +39,16 @@ describe('errorHandler middleware', () => {
     expect(res.status).toHaveBeenCalledWith(418);
     expect(res.json).toHaveBeenCalledWith({ message: 'Boom' });
   });
+
+  it('defaults to 500 and hides internal error details for errors without a status code', () => {
+    const req = createMockRequest();
+    const res = createMockResponse();
+    const next = createMockNext();
+    const err = new Error('sensitive internal details');
+
+    errorHandler(err, req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Internal server error' });
+  });
 });
