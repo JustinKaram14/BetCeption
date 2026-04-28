@@ -1,13 +1,13 @@
 <div class="auth-container">
   <div class="auth-toggle">
-    <button [class.active]="tab==='login'" (click)="onTabChange('login')">Login</button>
-    <button [class.active]="tab==='register'" (click)="onTabChange('register')">Register</button>
+    <button [class.active]="tab==='login'" (click)="onTabChange('login')">{{ i18n.t('auth.login') }}</button>
+    <button [class.active]="tab==='register'" (click)="onTabChange('register')">{{ i18n.t('auth.register') }}</button>
   </div>
 
   <form class="auth-form" (ngSubmit)="submit()">
     <input
       type="email"
-      placeholder="E-Mail"
+      [placeholder]="i18n.t('auth.emailPlaceholder')"
       [(ngModel)]="email"
       name="email"
       autocomplete="email">
@@ -15,24 +15,20 @@
     <input
       *ngIf="tab==='register'"
       type="text"
-      placeholder="Benutzername (3–32 Zeichen)"
+      [placeholder]="i18n.t('auth.usernamePlaceholder')"
       [(ngModel)]="username"
       name="username"
       autocomplete="nickname">
 
     <input
       type="password"
-      placeholder="Passwort (min. 8 Zeichen)"
+      [placeholder]="i18n.t('auth.passwordPlaceholder')"
       [(ngModel)]="password"
       name="password"
       [autocomplete]="tab === 'login' ? 'current-password' : 'new-password'">
 
-    <div *ngIf="validationError" class="auth-validation-error">
-      {{ validationError }}
-    </div>
-
     <button class="btn auth-btn" type="submit" [disabled]="!canSubmit()">
-      {{ tab==='login' ? 'LOGIN' : 'ACCOUNT ERSTELLEN' }}
+      {{ tab==='login' ? i18n.t('auth.submitLogin') : i18n.t('auth.createAccount') }}
     </button>
   </form>
 </div>

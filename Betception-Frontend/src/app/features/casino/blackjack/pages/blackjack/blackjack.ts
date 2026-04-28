@@ -13,6 +13,7 @@ import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { Table } from '../../components/table/table';
 import { Controls } from '../../components/controls/controls';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
 
@@ -27,6 +28,11 @@ export class Blackjack implements OnInit {
   private readonly rng = inject(Rng);
   private readonly wallet = inject(Wallet);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18n);
+  private readonly dealerRevealMs = 620;
+  private readonly dealerFollowUpCardStepMs = 360;
+  private readonly cardAnimationMs = 650;
+  private readonly resultPauseMs = 250;
 
   round: RoundState | null = null;
   betAmount = 10;
@@ -38,6 +44,16 @@ export class Blackjack implements OnInit {
   showRoundOverlay = false;
   roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean; dealerInfo: string | null } | null = null;
   private bannerTimer: number | null = null;
+  private resultOverlayTimer: number | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.bannerTimer) {
+        window.clearTimeout(this.bannerTimer);
+      }
+      this.clearResultOverlayTimer();
+    });
+  }
 
   ngOnInit() {
     this.loadBalance();
@@ -68,7 +84,7 @@ export class Blackjack implements OnInit {
 
   onDeal() {
     if (this.busyAction || this.betAmount <= 0) {
-      this.error = this.betAmount <= 0 ? 'Setze einen Einsatz, um zu starten.' : this.error;
+      this.error = this.betAmount <= 0 ? this.i18n.t('blackjack.setBetError') : this.error;
       return;
     }
     this.runAction('deal', this.rng.startRound({ betAmount: this.betAmount }));
@@ -102,20 +118,20 @@ export class Blackjack implements OnInit {
     this.busyAction = kind;
     this.error = null;
     this.info = null;
+    this.clearResultOverlayTimer();
 
     request$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ round }) => {
+          const previousRound = this.round;
           this.round = round;
           this.triggerBanner(round);
           if (kind === 'deal' || kind === 'settle') {
             this.loadBalance();
           }
           if (kind === 'settle') {
-            this.info = this.buildOutcomeText(round);
-            this.showRoundOverlay = true;
-            this.roundOutcome = this.buildRoundOutcome(round);
+            this.scheduleRoundOverlay(previousRound, round);
           }
           this.busyAction = null;
 
@@ -182,29 +198,30 @@ export class Blackjack implements OnInit {
   private buildOutcomeText(round: RoundState) {
     const status = round.mainBet?.status;
     const amount = round.mainBet?.settledAmount ?? null;
-    if (!status) return 'Runde abgeschlossen.';
+    if (!status) return this.i18n.t('blackjack.completed');
 
     const formattedAmount =
       amount !== null ? Number(amount).toFixed(2) : null;
 
     if (status === MainBetStatus.WON) {
       return formattedAmount
-        ? `Gewonnen! Auszahlung: ${formattedAmount} Coins`
-        : 'Gewonnen!';
+        ? this.i18n.t('blackjack.wonPayout', { amount: formattedAmount })
+        : this.i18n.t('blackjack.won');
     }
     if (status === MainBetStatus.PUSH) {
-      return 'Push – Einsatz zurück.';
+      return this.i18n.t('blackjack.pushBetBack');
     }
     if (status === MainBetStatus.REFUNDED) {
-      return 'Einsatz erstattet.';
+      return this.i18n.t('blackjack.refunded');
     }
     if (status === MainBetStatus.LOST) {
-      return 'Verloren. Neue Runde?';
+      return this.i18n.t('blackjack.lostNewRound');
     }
-    return 'Runde abgeschlossen.';
+    return this.i18n.t('blackjack.completed');
   }
 
   onNextRound() {
+    this.clearResultOverlayTimer();
     this.showRoundOverlay = false;
     this.roundOutcome = null;
     this.round = null;
@@ -216,32 +233,83 @@ export class Blackjack implements OnInit {
 
   private buildRoundOutcome(round: RoundState): typeof this.roundOutcome {
     const status = round.mainBet?.status;
-    const amount = round.mainBet?.settledAmount ?? null;
-    const formatted = amount !== null ? `${Number(amount).toFixed(0)} Coins` : null;
+    const displayAmount =
+      status === MainBetStatus.LOST
+        ? round.mainBet?.amount
+        : round.mainBet?.settledAmount;
+    const formatted =
+      displayAmount !== null && typeof displayAmount !== 'undefined'
+        ? `${Number(displayAmount).toFixed(0)} Coins`
+        : null;
 
     const dealer = round.dealerHand;
     let dealerInfo: string | null = null;
     if (dealer) {
       const val = dealer.handValue;
       if (dealer.status === HandStatus.STOOD) {
-        dealerInfo = `Dealer steht bei ${val}`;
+        dealerInfo = this.i18n.t('blackjack.dealerStands', { value: val ?? '--' });
       } else if (dealer.status === HandStatus.BUSTED) {
-        dealerInfo = `Dealer Bust (${val})`;
+        dealerInfo = this.i18n.t('blackjack.dealerBust', { value: val ?? '--' });
       } else if (dealer.status === HandStatus.BLACKJACK) {
-        dealerInfo = 'Dealer Blackjack';
+        dealerInfo = this.i18n.t('blackjack.dealerBlackjack');
       }
     }
 
     if (status === MainBetStatus.WON) {
-      return { headline: 'GEWONNEN!', detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false, dealerInfo };
+      return { headline: this.i18n.t('blackjack.wonHeadline'), detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false, dealerInfo };
     }
     if (status === MainBetStatus.PUSH || status === MainBetStatus.REFUNDED) {
-      return { headline: 'PUSH', detail: 'Einsatz zurück.', won: false, lost: false, push: true, dealerInfo };
+      return { headline: this.i18n.t('blackjack.pushHeadline'), detail: this.i18n.t('blackjack.pushBetBack'), won: false, lost: false, push: true, dealerInfo };
     }
     if (status === MainBetStatus.LOST) {
-      return { headline: 'VERLOREN', detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false, dealerInfo };
+      return { headline: this.i18n.t('blackjack.lostHeadline'), detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false, dealerInfo };
     }
-    return { headline: 'FERTIG', detail: null, won: false, lost: false, push: false, dealerInfo };
+    return { headline: this.i18n.t('blackjack.finishedHeadline'), detail: null, won: false, lost: false, push: false, dealerInfo };
+  }
+
+  private scheduleRoundOverlay(previousRound: RoundState | null, settledRound: RoundState) {
+    const info = this.buildOutcomeText(settledRound);
+    const outcome = this.buildRoundOutcome(settledRound);
+    const delay = this.settlementAnimationDelay(previousRound, settledRound);
+
+    this.resultOverlayTimer = window.setTimeout(() => {
+      if (this.round?.id !== settledRound.id) {
+        return;
+      }
+      this.info = info;
+      this.roundOutcome = outcome;
+      this.showRoundOverlay = true;
+      this.resultOverlayTimer = null;
+    }, delay);
+  }
+
+  private settlementAnimationDelay(previousRound: RoundState | null, settledRound: RoundState) {
+    const previousDealerCards = previousRound?.dealerHand?.cards ?? [];
+    const settledDealerCards = settledRound.dealerHand?.cards ?? [];
+    const previousDealerCardIds = new Set(previousDealerCards.map((card) => card.id));
+    const newDealerCardCount = settledDealerCards.filter((card) => !previousDealerCardIds.has(card.id)).length;
+    const hadHiddenDealerCard = previousDealerCards.some(
+      (card, index) =>
+        card.rank === null ||
+        card.suit === null ||
+        (index === 1 && previousDealerCards.length === 2),
+    );
+
+    const revealDuration = hadHiddenDealerCard ? this.dealerRevealMs : 0;
+    const drawDuration =
+      newDealerCardCount > 0
+        ? revealDuration + (newDealerCardCount - 1) * this.dealerFollowUpCardStepMs + this.cardAnimationMs
+        : revealDuration;
+
+    return Math.max(this.cardAnimationMs, drawDuration + this.resultPauseMs);
+  }
+
+  private clearResultOverlayTimer() {
+    if (!this.resultOverlayTimer) {
+      return;
+    }
+    window.clearTimeout(this.resultOverlayTimer);
+    this.resultOverlayTimer = null;
   }
 
   private extractError(error: unknown): string {
@@ -256,6 +324,6 @@ export class Blackjack implements OnInit {
         return String((error as any).message);
       }
     }
-    return 'Aktion fehlgeschlagen. Bitte versuche es erneut.';
+    return this.i18n.t('blackjack.actionFailed');
   }
 }

@@ -1,67 +1,17 @@
 <div class="legal-page">
   <div class="legal-card">
-    <h1>Datenschutzerklärung</h1>
+    <h1>{{ content.title }}</h1>
 
-    <section>
-      <h2>1. Verantwortlicher</h2>
-      <p>
-        Team BetCeption – nicht-kommerzielles Studentenprojekt (Hochschulprojekt Softwaretechnik).
+    <section *ngFor="let section of content.sections">
+      <h2>{{ section.heading }}</h2>
+      <p *ngFor="let paragraph of section.paragraphs">
+        {{ paragraph }}
       </p>
-    </section>
-
-    <section>
-      <h2>2. Erhobene Daten</h2>
-      <p>Bei der Registrierung werden folgende personenbezogene Daten erhoben:</p>
-      <ul>
-        <li>E-Mail-Adresse (Pflichtfeld für Anmeldung)</li>
-        <li>Benutzername (selbst gewählt)</li>
-        <li>Passwort (gespeichert als bcrypt-Hash – niemals im Klartext)</li>
-        <li>Spielstände, Transaktionen und Aktivitätsdaten innerhalb der Plattform</li>
+      <ul *ngIf="section.items">
+        <li *ngFor="let item of section.items">{{ item }}</li>
       </ul>
     </section>
 
-    <section>
-      <h2>3. Zweck der Verarbeitung</h2>
-      <p>
-        Die Daten werden ausschließlich zur Bereitstellung der Spielfunktionalität verwendet
-        (Authentifizierung, Spielstatus, Leaderboard). Eine Weitergabe an Dritte findet nicht statt.
-      </p>
-    </section>
-
-    <section>
-      <h2>4. Speicherdauer</h2>
-      <p>
-        Daten werden so lange gespeichert, wie das Konto aktiv ist. Eine Löschung kann
-        jederzeit durch Kontaktaufnahme mit dem Projektteam beantragt werden.
-      </p>
-    </section>
-
-    <section>
-      <h2>5. Cookies & Sessions</h2>
-      <p>
-        Es werden HttpOnly-Session-Cookies für die Authentifizierung gesetzt.
-        Es werden keine Tracking- oder Werbe-Cookies verwendet.
-      </p>
-    </section>
-
-    <section>
-      <h2>6. Rechte der Nutzer</h2>
-      <p>
-        Gemäß DSGVO haben Sie das Recht auf Auskunft, Berichtigung und Löschung Ihrer Daten.
-        Da es sich um ein nicht-kommerzielles Studentenprojekt handelt, wenden Sie sich bei
-        Anfragen direkt an das Projektteam.
-      </p>
-    </section>
-
-    <section>
-      <h2>7. Hinweis zum Glücksspiel</h2>
-      <p>
-        BetCeption verwendet <strong>ausschließlich virtuelle Coins</strong> ohne Geldwert.
-        Es handelt sich um kein Glücksspiel im Sinne des GlüStV.
-        Empfohlen ab 18 Jahren.
-      </p>
-    </section>
-
-    <a routerLink="/" class="back-link">← Zurück zur Startseite</a>
+    <a routerLink="/" class="back-link">&larr; {{ content.back }}</a>
   </div>
 </div>

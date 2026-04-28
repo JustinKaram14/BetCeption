@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgClass, NgFor, NgIf, DecimalPipe } from '@angular/common';
 import { HandStatus, RoundStatus } from '../../../../../core/api/api.types';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 @Component({
   selector: 'app-controls',
@@ -10,6 +11,8 @@ import { HandStatus, RoundStatus } from '../../../../../core/api/api.types';
   styleUrl: './controls.css'
 })
 export class Controls {
+  readonly i18n = inject(I18n);
+
   @Input() betAmount = 0;
   @Input() balance: number | null = null;
   @Input() roundStatus: RoundStatus | null = null;
@@ -28,17 +31,17 @@ export class Controls {
   get roundLabel(): string {
     switch (this.roundStatus) {
       case RoundStatus.IN_PROGRESS:
-        return 'Läuft';
+        return this.i18n.t('round.inProgress');
       case RoundStatus.DEALING:
-        return 'Dealing';
+        return this.i18n.t('round.dealing');
       case RoundStatus.CREATED:
-        return 'Gestartet';
+        return this.i18n.t('round.created');
       case RoundStatus.SETTLED:
-        return 'Fertig';
+        return this.i18n.t('round.settled');
       case RoundStatus.ABORTED:
-        return 'Abgebrochen';
+        return this.i18n.t('round.aborted');
       default:
-        return 'Bereit';
+        return this.i18n.t('round.ready');
     }
   }
 
