@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Hand } from './hand';
-import { CardSuit, HandOwnerType, HandStatus, RoundHand } from '../../../../../core/api/api.types';
+import { CardRank, CardSuit, HandOwnerType, HandStatus, RoundHand } from '../../../../../core/api/api.types';
 
 function makeHand(overrides: Partial<RoundHand> = {}): RoundHand {
   return {
@@ -66,20 +66,20 @@ describe('Hand', () => {
   });
 
   describe('statusLabel', () => {
-    const cases: [HandStatus | undefined, string | null][] = [
-      [HandStatus.ACTIVE, 'Aktiv'],
-      [HandStatus.STOOD, 'Stand'],
-      [HandStatus.BUSTED, 'Busted'],
-      [HandStatus.BLACKJACK, 'Blackjack'],
-      [HandStatus.SURRENDERED, 'Surrender'],
+    const cases = [
+      [HandStatus.ACTIVE, 'hand.status.active'],
+      [HandStatus.STOOD, 'hand.status.stood'],
+      [HandStatus.BUSTED, 'hand.status.busted'],
+      [HandStatus.BLACKJACK, 'hand.status.blackjack'],
+      [HandStatus.SURRENDERED, 'hand.status.surrendered'],
       [HandStatus.SETTLED, null],
       [undefined, null],
-    ];
+    ] as const;
 
-    for (const [status, expected] of cases) {
-      it(`returns "${expected}" for status "${status}"`, () => {
+    for (const [status, expectedKey] of cases) {
+      it(`returns the translated label for status "${status}"`, () => {
         component.hand = status ? makeHand({ status }) : null;
-        expect(component.statusLabel).toBe(expected);
+        expect(component.statusLabel).toBe(expectedKey ? component.i18n.t(expectedKey) : null);
       });
     }
   });
@@ -115,9 +115,9 @@ describe('Hand', () => {
   });
 
   describe('cardClasses', () => {
-    const makeCard = (suit: CardSuit | null) => ({
+    const makeCard = (suit: CardSuit | null, rank: CardRank | null = null) => ({
       id: 'c1',
-      rank: null,
+      rank,
       suit,
       drawOrder: 0,
       createdAt: '',
@@ -146,9 +146,14 @@ describe('Hand', () => {
     it('shows the hole card when revealDealerCards is true', () => {
       component.isDealer = true;
       component.revealDealerCards = true;
-      component.hand = makeHand({ cards: [makeCard(null), makeCard(null)] });
+      component.hand = makeHand({
+        cards: [
+          makeCard(CardSuit.CLUBS, CardRank.TEN),
+          makeCard(CardSuit.SPADES, CardRank.ACE),
+        ],
+      });
 
-      const classes = component.cardClasses(makeCard(null), 1);
+      const classes = component.cardClasses(makeCard(CardSuit.SPADES, CardRank.ACE), 1);
       expect(classes['visible']).toBeTrue();
       expect(classes['back']).toBeFalse();
     });
