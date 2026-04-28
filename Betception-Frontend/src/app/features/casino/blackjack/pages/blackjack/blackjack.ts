@@ -13,6 +13,7 @@ import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { Table } from '../../components/table/table';
 import { Controls } from '../../components/controls/controls';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
 
@@ -27,6 +28,7 @@ export class Blackjack implements OnInit {
   private readonly rng = inject(Rng);
   private readonly wallet = inject(Wallet);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18n);
   private readonly dealerRevealMs = 620;
   private readonly dealerFollowUpCardStepMs = 360;
   private readonly cardAnimationMs = 650;
@@ -82,7 +84,7 @@ export class Blackjack implements OnInit {
 
   onDeal() {
     if (this.busyAction || this.betAmount <= 0) {
-      this.error = this.betAmount <= 0 ? 'Setze einen Einsatz, um zu starten.' : this.error;
+      this.error = this.betAmount <= 0 ? this.i18n.t('blackjack.setBetError') : this.error;
       return;
     }
     this.runAction('deal', this.rng.startRound({ betAmount: this.betAmount }));
@@ -196,26 +198,26 @@ export class Blackjack implements OnInit {
   private buildOutcomeText(round: RoundState) {
     const status = round.mainBet?.status;
     const amount = round.mainBet?.settledAmount ?? null;
-    if (!status) return 'Runde abgeschlossen.';
+    if (!status) return this.i18n.t('blackjack.completed');
 
     const formattedAmount =
       amount !== null ? Number(amount).toFixed(2) : null;
 
     if (status === MainBetStatus.WON) {
       return formattedAmount
-        ? `Gewonnen! Auszahlung: ${formattedAmount} Coins`
-        : 'Gewonnen!';
+        ? this.i18n.t('blackjack.wonPayout', { amount: formattedAmount })
+        : this.i18n.t('blackjack.won');
     }
     if (status === MainBetStatus.PUSH) {
-      return 'Push – Einsatz zurück.';
+      return this.i18n.t('blackjack.pushBetBack');
     }
     if (status === MainBetStatus.REFUNDED) {
-      return 'Einsatz erstattet.';
+      return this.i18n.t('blackjack.refunded');
     }
     if (status === MainBetStatus.LOST) {
-      return 'Verloren. Neue Runde?';
+      return this.i18n.t('blackjack.lostNewRound');
     }
-    return 'Runde abgeschlossen.';
+    return this.i18n.t('blackjack.completed');
   }
 
   onNextRound() {
@@ -231,32 +233,38 @@ export class Blackjack implements OnInit {
 
   private buildRoundOutcome(round: RoundState): typeof this.roundOutcome {
     const status = round.mainBet?.status;
-    const amount = round.mainBet?.settledAmount ?? null;
-    const formatted = amount !== null ? `${Number(amount).toFixed(0)} Coins` : null;
+    const displayAmount =
+      status === MainBetStatus.LOST
+        ? round.mainBet?.amount
+        : round.mainBet?.settledAmount;
+    const formatted =
+      displayAmount !== null && typeof displayAmount !== 'undefined'
+        ? `${Number(displayAmount).toFixed(0)} Coins`
+        : null;
 
     const dealer = round.dealerHand;
     let dealerInfo: string | null = null;
     if (dealer) {
       const val = dealer.handValue;
       if (dealer.status === HandStatus.STOOD) {
-        dealerInfo = `Dealer steht bei ${val}`;
+        dealerInfo = this.i18n.t('blackjack.dealerStands', { value: val ?? '--' });
       } else if (dealer.status === HandStatus.BUSTED) {
-        dealerInfo = `Dealer Bust (${val})`;
+        dealerInfo = this.i18n.t('blackjack.dealerBust', { value: val ?? '--' });
       } else if (dealer.status === HandStatus.BLACKJACK) {
-        dealerInfo = 'Dealer Blackjack';
+        dealerInfo = this.i18n.t('blackjack.dealerBlackjack');
       }
     }
 
     if (status === MainBetStatus.WON) {
-      return { headline: 'GEWONNEN!', detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false, dealerInfo };
+      return { headline: this.i18n.t('blackjack.wonHeadline'), detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false, dealerInfo };
     }
     if (status === MainBetStatus.PUSH || status === MainBetStatus.REFUNDED) {
-      return { headline: 'PUSH', detail: 'Einsatz zurück.', won: false, lost: false, push: true, dealerInfo };
+      return { headline: this.i18n.t('blackjack.pushHeadline'), detail: this.i18n.t('blackjack.pushBetBack'), won: false, lost: false, push: true, dealerInfo };
     }
     if (status === MainBetStatus.LOST) {
-      return { headline: 'VERLOREN', detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false, dealerInfo };
+      return { headline: this.i18n.t('blackjack.lostHeadline'), detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false, dealerInfo };
     }
-    return { headline: 'FERTIG', detail: null, won: false, lost: false, push: false, dealerInfo };
+    return { headline: this.i18n.t('blackjack.finishedHeadline'), detail: null, won: false, lost: false, push: false, dealerInfo };
   }
 
   private scheduleRoundOverlay(previousRound: RoundState | null, settledRound: RoundState) {
@@ -316,6 +324,6 @@ export class Blackjack implements OnInit {
         return String((error as any).message);
       }
     }
-    return 'Aktion fehlgeschlagen. Bitte versuche es erneut.';
+    return this.i18n.t('blackjack.actionFailed');
   }
 }

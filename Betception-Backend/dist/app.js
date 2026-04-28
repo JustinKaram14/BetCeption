@@ -25,12 +25,12 @@ export const app = express();
 app.set('trust proxy', env.http.trustProxy);
 app.use(helmet());
 app.use(morgan('dev'));
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use(corsMiddleware);
 app.use(requestContext);
 app.use(express.json());
 app.use(cookieParser());
 app.use(globalRateLimiter);
-app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 if (env.monitoring.metrics.enabled) {
     const guards = [];
     if (env.monitoring.metrics.apiKey) {

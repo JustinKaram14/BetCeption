@@ -1,20 +1,19 @@
 <footer class="disclaimer-footer">
   <div class="disclaimer-content">
     <p class="disclaimer-main">
-      ⚠️ <strong>Kein Echtgeld – Nur virtuelle Coins.</strong>
-      BetCeption verwendet ausschließlich virtuelles Spielgeld ohne realen Gegenwert.
-      Es sind keine Ein- oder Auszahlungen möglich. Dies ist kein Glücksspiel im Sinne des GlüStV.
+      &#9888; <strong>{{ i18n.t('footer.disclaimer') }}</strong>
+      <br *ngIf="i18n.language() === 'es'">
+      {{ i18n.t('footer.copy') }}
     </p>
     <p class="disclaimer-sub">
-      Dieses Projekt ist ein <strong>nicht-kommerzielles Studentenprojekt</strong> zu Bildungs- und
-      Unterhaltungszwecken. Empfohlen ab 18 Jahren.
+      {{ i18n.t('footer.project') }}
     </p>
     <nav class="disclaimer-links">
       <a routerLink="/impressum">Impressum</a>
       <span class="divider">|</span>
-      <a routerLink="/datenschutz">Datenschutz</a>
+      <a routerLink="/datenschutz">{{ i18n.t('footer.privacy') }}</a>
       <span class="divider">|</span>
-      <span>© {{ year }} BetCeption – Studentenprojekt</span>
+      <span>&copy; {{ year }} BetCeption - {{ i18n.t('footer.studentProject') }}</span>
     </nav>
   </div>
 </footer>

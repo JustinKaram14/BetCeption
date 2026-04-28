@@ -5,6 +5,22 @@ import { UserPowerup } from '../../entity/UserPowerup.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
 import { decimalToCents, centsToDecimal } from '../../utils/money.js';
+class ShopError extends Error {
+    statusCode;
+    code;
+    constructor(statusCode, code, message) {
+        super(message);
+        this.statusCode = statusCode;
+        this.code = code;
+        this.name = 'ShopError';
+    }
+}
+function handleShopError(res, error) {
+    if (error instanceof ShopError) {
+        return res.status(error.statusCode).json({ message: error.message, code: error.code });
+    }
+    throw error;
+}
 export async function listPowerups(_req, res) {
     const repo = AppDataSource.getRepository(PowerupType);
     const powerups = await repo.find({ order: { minLevel: 'ASC', price: 'ASC' } });
@@ -37,12 +53,14 @@ export async function purchasePowerup(req, res) {
                 lock: { mode: 'pessimistic_write' },
             });
             if (!user)
-                throw new Error('USER_NOT_FOUND');
-            if (user.level < type.minLevel)
-                throw new Error('LEVEL_TOO_LOW');
+                throw new ShopError(404, 'USER_NOT_FOUND', 'User not found');
+            if (user.level < type.minLevel) {
+                throw new ShopError(403, 'LEVEL_TOO_LOW', 'Power-up locked for your current level');
+            }
             const balanceCents = decimalToCents(user.balance);
-            if (balanceCents < totalPriceCents)
-                throw new Error('INSUFFICIENT_FUNDS');
+            if (balanceCents < totalPriceCents) {
+                throw new ShopError(400, 'INSUFFICIENT_FUNDS', 'Insufficient balance');
+            }
             user.balance = centsToDecimal(balanceCents - totalPriceCents);
             await userRepo.save(user);
             const userPowerupRepo = manager.getRepository(UserPowerup);
@@ -79,19 +97,7 @@ export async function purchasePowerup(req, res) {
             quantity: result.inventoryQuantity,
         });
     }
-    catch (err) {
-        const code = err?.message ?? 'UNKNOWN';
-        if (code === 'INSUFFICIENT_FUNDS') {
-            return res.status(400).json({ message: 'Insufficient balance' });
-        }
-        if (code === 'LEVEL_TOO_LOW') {
-            return res
-                .status(403)
-                .json({ message: 'Power-up locked for your current level' });
-        }
-        if (code === 'USER_NOT_FOUND') {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        throw err;
+    catch (error) {
+        return handleShopError(res, error);
     }
 }

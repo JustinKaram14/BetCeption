@@ -13,7 +13,7 @@
     <button
       class="toast__close"
       type="button"
-      aria-label="Toast schliessen"
+      [attr.aria-label]="labelFor(toast)"
       (click)="dismiss(toast.id)"
     >
       X

@@ -1,0 +1,113 @@
+.settings-menu {
+  position: relative;
+}
+
+.settings-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(0, 255, 255, 0.42);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(12, 18, 30, 0.78), rgba(5, 8, 15, 0.86));
+  color: var(--secondary-glow);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.45);
+  box-shadow: 0 0 14px rgba(0, 255, 255, 0.14), inset 0 0 10px rgba(106, 13, 173, 0.12);
+  transition: all 0.2s ease;
+}
+
+.settings-button:hover {
+  color: #05070f;
+  background: var(--secondary-glow);
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.45), inset 0 0 10px rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.settings-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  width: 220px;
+  padding: 14px;
+  border: 1px solid rgba(0, 255, 255, 0.32);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(4, 7, 14, 0.98));
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.42), 0 0 22px rgba(0, 255, 255, 0.12);
+  text-align: left;
+}
+
+.settings-title {
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.settings-label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.language-carousel {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.language-arrow,
+.language-current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.82);
+  font: inherit;
+}
+
+.language-arrow {
+  cursor: pointer;
+  color: var(--secondary-glow);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.language-arrow:hover {
+  border-color: rgba(0, 255, 255, 0.54);
+  color: var(--secondary-glow);
+  background: rgba(0, 255, 255, 0.08);
+}
+
+.language-current {
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 8px;
+  min-width: 0;
+}
+
+.language-name {
+  width: 100%;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.language-code {
+  color: rgba(0, 255, 255, 0.74);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
