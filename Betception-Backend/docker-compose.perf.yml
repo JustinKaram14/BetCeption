@@ -1,0 +1,99 @@
+# Dedizierte Performance-Testumgebung für BetCeption
+#
+# Startet MySQL + Backend mit gelockerten Rate-Limits auf Port 3001
+# (damit kein Konflikt mit der Entwicklungsumgebung auf Port 3000).
+# k6 läuft als Docker-Container – keine lokale k6-Installation nötig.
+#
+# Verwendung:
+#   docker compose -f docker-compose.perf.yml up -d --build
+#   docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run /performance/k6/scenarios/game-flow.js
+#   docker compose -f docker-compose.perf.yml down -v
+
+services:
+  db-perf:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: perfpw
+      MYSQL_DATABASE: betception_perf
+      MYSQL_USER: betuser
+      MYSQL_PASSWORD: betpw
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pperfpw"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    volumes:
+      - dbdata-perf:/var/lib/mysql
+    networks:
+      - perf-net
+
+  backend-perf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HTTP_PROXY: ${DOCKER_HTTP_PROXY:-}
+        HTTPS_PROXY: ${DOCKER_HTTPS_PROXY:-}
+        NO_PROXY: ${DOCKER_NO_PROXY:-}
+        http_proxy: ${DOCKER_HTTP_PROXY:-}
+        https_proxy: ${DOCKER_HTTPS_PROXY:-}
+        no_proxy: ${DOCKER_NO_PROXY:-}
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db-perf
+      DB_PORT: 3306
+      DB_USER: betuser
+      DB_PASSWORD: betpw
+      DB_NAME: betception_perf
+      # Secrets: nur für Perf-Tests – niemals in Produktion verwenden
+      ACCESS_TOKEN_SECRET: perf-access-secret-not-for-production-32ch
+      REFRESH_TOKEN_SECRET: perf-refresh-secret-not-for-production-32ch
+      ACCESS_TOKEN_TTL_MIN: "60"
+      REFRESH_TOKEN_TTL_DAYS: "7"
+      FRONTEND_ORIGIN: http://localhost:4200
+      COOKIE_SECURE: "false"
+      COOKIE_SAMESITE: "lax"
+      NEW_USER_INITIAL_BALANCE: "1000"
+      # Rate-Limits für Lasttest hochsetzen
+      RATE_LIMIT_MAX: "2000"
+      RATE_LIMIT_WINDOW_MS: "60000"
+      AUTH_RATE_LIMIT_MAX: "1000"
+      AUTH_RATE_LIMIT_WINDOW_MS: "60000"
+    ports:
+      - "3001:3000"
+    depends_on:
+      db-perf:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - perf-net
+
+  # k6 läuft als einmaliger Container (docker compose run --rm k6 run ...)
+  # Kein lokales k6 erforderlich.
+  k6:
+    image: grafana/k6:latest
+    profiles: [k6]
+    volumes:
+      - ./performance/k6:/performance/k6:ro
+      - ./results:/results
+    environment:
+      BASE_URL: http://backend-perf:3000
+    depends_on:
+      backend-perf:
+        condition: service_healthy
+    networks:
+      - perf-net
+
+networks:
+  perf-net:
+    driver: bridge
+
+volumes:
+  dbdata-perf:
+

@@ -15,3 +15,6 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+
+# k6 Performance-Testergebnisse
+results/*.json

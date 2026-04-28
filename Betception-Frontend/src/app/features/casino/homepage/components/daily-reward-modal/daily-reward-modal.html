@@ -1,5 +1,5 @@
-<div class="modal-overlay" (click)="onOverlayClick($event)">
-  <div class="modal-card">
+<div class="modal-overlay" data-testid="daily-reward-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-card" data-testid="daily-reward-card" role="dialog" aria-modal="true" tabindex="-1">
 
     <!-- Loading -->
     <div *ngIf="state.kind === 'loading'" class="modal-body loading">
@@ -14,7 +14,7 @@
       <p class="amount">+{{ state.claimedAmount }} Coins</p>
       <p class="balance">{{ i18n.t('daily.balance') }}: <strong>{{ state.balance }}</strong></p>
       <p class="cooldown">{{ i18n.t('daily.next') }}: {{ countdownText }}</p>
-      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
     <!-- Already claimed -->
@@ -23,7 +23,7 @@
       <h2>{{ i18n.t('daily.alreadyTitle') }}</h2>
       <p>{{ i18n.t('daily.alreadyCopy') }}</p>
       <p class="cooldown">{{ i18n.t('daily.next') }}: {{ countdownText }}</p>
-      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
     <!-- Not logged in -->
@@ -31,7 +31,7 @@
       <div class="reward-icon">&#128274;</div>
       <h2>{{ i18n.t('daily.notLoggedTitle') }}</h2>
       <p>{{ i18n.t('daily.notLoggedCopy') }}</p>
-      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
     <!-- Error -->
@@ -39,7 +39,7 @@
       <div class="reward-icon">&#10060;</div>
       <h2>{{ i18n.t('daily.errorTitle') }}</h2>
       <p>{{ state.message }}</p>
-      <button class="btn close-btn" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
     </div>
 
   </div>

@@ -10,11 +10,15 @@ module.exports = function (config) {
       require('karma-jasmine-html-reporter'),
       require('karma-coverage'),
     ],
+    client: {
+      jasmine: {},
+      clearContext: false,
+    },
     jasmineHtmlReporter: {
       suppressAll: true,
     },
     coverageReporter: {
-      dir: path.join(__dirname, 'coverage', 'Betception-Frontend'),
+      dir: path.join(__dirname, './coverage/betception-frontend'),
       subdir: '.',
       reporters: [{ type: 'html' }, { type: 'text-summary' }],
     },

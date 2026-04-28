@@ -6,6 +6,8 @@ import { HomepageComponent } from './homepage';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
+import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
+import { DailyRewardModalComponent } from '../../components/daily-reward-modal/daily-reward-modal';
 import { HeroComponent } from '../../components/hero/hero';
 import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
@@ -129,5 +131,46 @@ describe('HomepageComponent', () => {
 
     cta.rewards.emit();
     expect(rewardsSpy).toHaveBeenCalled();
+  });
+
+  it('opens and closes the how-to-play modal from the DOM', () => {
+    const openButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="how-to-play-button"]');
+
+    openButton.click();
+    fixture.detectChanges();
+
+    const modalDe = fixture.debugElement.query(By.directive(HowToPlayModalComponent));
+    expect(modalDe).toBeTruthy();
+
+    (modalDe.componentInstance as HowToPlayModalComponent).closed.emit();
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.directive(HowToPlayModalComponent))).toBeNull();
+  });
+
+  it('opens the daily reward modal for authenticated users', () => {
+    authFacadeMock.isAuthenticated.and.returnValue(true);
+    fixture.detectChanges();
+
+    const rewardsButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="daily-rewards-button"]');
+    rewardsButton.click();
+    fixture.detectChanges();
+
+    expect(walletMock.claimDailyReward).toHaveBeenCalled();
+    expect(fixture.debugElement.query(By.directive(DailyRewardModalComponent))).toBeTruthy();
+  });
+
+  it('switches to the stacked layout on narrow viewports', (done) => {
+    const mainContent: HTMLElement = fixture.nativeElement.querySelector('[data-testid="homepage-main-content"]');
+    const originalWidth = window.outerWidth;
+
+    Object.defineProperty(window, 'outerWidth', { get: () => 560, configurable: true });
+    fixture.detectChanges();
+
+    window.requestAnimationFrame(() => {
+      expect(getComputedStyle(mainContent).flexDirection).toBe('column');
+      Object.defineProperty(window, 'outerWidth', { get: () => originalWidth, configurable: true });
+      done();
+    });
   });
 });

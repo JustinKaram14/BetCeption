@@ -1,4 +1,18 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { NgIf } from '@angular/common';
 import { I18n } from '../../../../../core/i18n/i18n';
 
@@ -16,13 +30,15 @@ export type DailyRewardState =
   templateUrl: './daily-reward-modal.html',
   styleUrls: ['./daily-reward-modal.css'],
 })
-export class DailyRewardModalComponent implements OnInit, OnDestroy {
+export class DailyRewardModalComponent implements OnInit, OnDestroy, OnChanges, AfterViewChecked {
   readonly i18n = inject(I18n);
 
   @Input() state: DailyRewardState = { kind: 'loading' };
   @Output() closed = new EventEmitter<void>();
+  @ViewChild('closeAction') private closeAction?: ElementRef<HTMLButtonElement>;
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
+  private hasFocusedCloseAction = false;
   now = Date.now();
 
   ngOnInit() {
@@ -31,6 +47,21 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.tickInterval) clearInterval(this.tickInterval);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['state']) {
+      this.hasFocusedCloseAction = false;
+    }
+  }
+
+  ngAfterViewChecked() {
+    if (this.hasFocusedCloseAction || !this.closeAction) {
+      return;
+    }
+
+    this.closeAction.nativeElement.focus();
+    this.hasFocusedCloseAction = true;
   }
 
   get countdownText(): string {
@@ -49,5 +80,11 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
     if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
       this.closed.emit();
     }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: Event) {
+    event.preventDefault();
+    this.closed.emit();
   }
 }

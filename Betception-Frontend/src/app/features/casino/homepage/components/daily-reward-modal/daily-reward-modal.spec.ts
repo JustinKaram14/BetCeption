@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { DailyRewardModalComponent } from './daily-reward-modal';
@@ -47,6 +47,20 @@ describe('DailyRewardModalComponent', () => {
     expect(component.countdownText.startsWith('Jetzt')).toBeTrue();
   });
 
+  it('focuses the close button when a dismissible state is rendered', fakeAsync(() => {
+    component.state = { kind: 'not-logged-in' };
+
+    fixture.detectChanges();
+    tick();
+
+    const closeButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="daily-reward-close"]');
+    const dialog: HTMLDivElement = fixture.nativeElement.querySelector('[data-testid="daily-reward-card"]');
+
+    expect(dialog.getAttribute('role')).toBe('dialog');
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    expect(document.activeElement).toBe(closeButton);
+  }));
+
   it('returns an empty countdown for non-cooldown states', () => {
     component.state = { kind: 'loading' };
 
@@ -85,6 +99,16 @@ describe('DailyRewardModalComponent', () => {
     });
 
     expect(component.closed.emit).not.toHaveBeenCalled();
+  });
+
+  it('emits closed when escape is pressed', () => {
+    spyOn(component.closed, 'emit');
+    component.state = { kind: 'error', message: 'Oops' };
+
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(component.closed.emit).toHaveBeenCalled();
   });
 
   it('clears the refresh interval on destroy', () => {
