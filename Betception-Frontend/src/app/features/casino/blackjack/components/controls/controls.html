@@ -4,6 +4,8 @@
       *ngFor="let chip of chips"
       class="chip"
       [ngClass]="'chip-' + chip"
+      [attr.data-testid]="'chip-' + chip"
+      type="button"
       (click)="onChip(chip)"
       [disabled]="isRoundActive || busy"
     >
@@ -21,12 +23,12 @@
 
     <div class="center-controls">
       <div class="action-buttons">
-        <button class="btn" (click)="deal.emit()" [disabled]="!canDeal">{{ i18n.t('controls.deal') }}</button>
-        <button class="btn" (click)="hit.emit()" [disabled]="!canHit">{{ i18n.t('controls.hit') }}</button>
-        <button class="btn" (click)="stand.emit()" [disabled]="!canStand">{{ i18n.t('controls.stand') }}</button>
-        <button class="btn" (click)="settle.emit()" [disabled]="!canSettle">{{ i18n.t('controls.settle') }}</button>
+        <button class="btn" data-testid="deal-button" type="button" (click)="deal.emit()" [disabled]="!canDeal">{{ i18n.t('controls.deal') }}</button>
+        <button class="btn" data-testid="hit-button" type="button" (click)="hit.emit()" [disabled]="!canHit">{{ i18n.t('controls.hit') }}</button>
+        <button class="btn" data-testid="stand-button" type="button" (click)="stand.emit()" [disabled]="!canStand">{{ i18n.t('controls.stand') }}</button>
+        <button class="btn" data-testid="settle-button" type="button" (click)="settle.emit()" [disabled]="!canSettle">{{ i18n.t('controls.settle') }}</button>
       </div>
-      <button class="btn reset-btn" (click)="resetBet.emit()" [disabled]="isRoundActive || busy">{{ i18n.t('controls.reset') }}</button>
+      <button class="btn reset-btn" data-testid="reset-bet-button" type="button" (click)="resetBet.emit()" [disabled]="isRoundActive || busy">{{ i18n.t('controls.reset') }}</button>
     </div>
 
     <div class="panel-section-right">
