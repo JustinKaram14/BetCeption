@@ -32,7 +32,7 @@ describe('LeaderboardComponent', () => {
     component = fixture.componentInstance;
 
     expect(component.loading).toBeTrue();
-    expect(apiMock.getBalanceLeaderboard).toHaveBeenCalledWith({ limit: 10 });
+    expect(apiMock.getBalanceLeaderboard).toHaveBeenCalledWith({ limit: 100 });
 
     balance$.next({
       total: 1,
@@ -59,7 +59,7 @@ describe('LeaderboardComponent', () => {
     component.selectCategory('level');
 
     expect(component.activeCategory.id).toBe('level');
-    expect(apiMock.getLevelLeaderboard).toHaveBeenCalledWith({ limit: 10 });
+    expect(apiMock.getLevelLeaderboard).toHaveBeenCalledWith({ limit: 100 });
   });
 
   it('does not refetch when the active category is selected again', () => {
