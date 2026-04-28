@@ -1,6 +1,6 @@
 <div class="leaderboard-container">
   <div class="leaderboard-heading">
-    <h2>Leaderboard</h2>
+    <h2>{{ i18n.t('leaderboard.title') }}</h2>
     <div class="leaderboard-tabs">
       <button
         type="button"
@@ -20,45 +20,43 @@
     <span class="dot"></span>
     <span class="dot"></span>
     <span class="dot"></span>
-    <span>Lade {{ activeCategory.label }}...</span>
+    <span>{{ i18n.t('leaderboard.loading', { label: activeCategory.label }) }}</span>
   </div>
 
-  <div *ngIf="!loading && error" class="leaderboard-state error">
-    {{ error }}
-  </div>
-
-  <ng-container *ngIf="!loading && !error">
-    <table class="leaderboard-table">
-      <thead>
-      <tr>
-        <th>Rank</th>
-        <th>Player</th>
-        <th *ngFor="let column of activeCategory.columns">{{ column.label }}</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let row of rows; trackBy: trackRow">
-        <td class="rank-cell">#{{ row.rank }}</td>
-        <td class="name-cell">{{ row.username }}</td>
-        <td
-          class="metric-cell"
-          *ngFor="let column of activeCategory.columns"
-          [ngSwitch]="column.format"
-        >
-          <span *ngSwitchCase="'currency'">{{ row.metrics[column.key] | number:'1.0-0' }} Coins</span>
-          <span *ngSwitchCase="'number'">{{ row.metrics[column.key] | number:'1.0-0' }}</span>
-          <span *ngSwitchDefault>{{ row.metrics[column.key] ?? '--' }}</span>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+  <ng-container *ngIf="!loading">
+    <div class="leaderboard-scroll">
+      <table class="leaderboard-table">
+        <thead>
+        <tr>
+          <th>{{ i18n.t('leaderboard.rank') }}</th>
+          <th>{{ i18n.t('leaderboard.player') }}</th>
+          <th *ngFor="let column of activeCategory.columns">{{ column.label }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let row of rows; trackBy: trackRow">
+          <td class="rank-cell">#{{ row.rank }}</td>
+          <td class="name-cell">{{ row.username }}</td>
+          <td
+            class="metric-cell"
+            *ngFor="let column of activeCategory.columns"
+            [ngSwitch]="column.format"
+          >
+            <span *ngSwitchCase="'currency'">{{ row.metrics[column.key] | number:'1.0-0' }} Coins</span>
+            <span *ngSwitchCase="'number'">{{ row.metrics[column.key] | number:'1.0-0' }}</span>
+            <span *ngSwitchDefault>{{ row.metrics[column.key] ?? '--' }}</span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
 
     <p class="current-rank" *ngIf="currentUserRank !== null; else noRank">
-      Dein aktueller Rang: <strong>#{{ currentUserRank }}</strong>
+      {{ i18n.t('leaderboard.currentRank') }}: <strong>#{{ currentUserRank }}</strong>
     </p>
     <ng-template #noRank>
       <p class="current-rank muted">
-        Spiele mehr Runden, um im Leaderboard aufzutauchen.
+        {{ i18n.t('leaderboard.noRank') }}
       </p>
     </ng-template>
   </ng-container>

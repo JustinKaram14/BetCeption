@@ -1,0 +1,77 @@
+<div class="tutorial-overlay" (click)="onOverlayClick($event)">
+  <section class="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+    <button class="tutorial-close" type="button" [attr.aria-label]="i18n.t('tutorial.close')" (click)="closed.emit()">X</button>
+
+    <div class="tutorial-header">
+      <div>
+        <p class="tutorial-eyebrow">{{ i18n.t('tutorial.basics') }}</p>
+        <h2 id="tutorial-title">{{ i18n.t('common.howToPlay') }}</h2>
+      </div>
+      <div class="tutorial-count">{{ i18n.t('tutorial.count', { current: activeIndex + 1, total: steps.length }) }}</div>
+    </div>
+
+    <div class="tutorial-progress" aria-hidden="true">
+      <div class="tutorial-progress__bar" [style.width.%]="progress"></div>
+    </div>
+
+    <div class="tutorial-body">
+      <div class="tutorial-table">
+        <div class="hand-row dealer-row">
+          <span class="hand-label">{{ i18n.t('common.dealer') }}</span>
+          <div class="cards">
+            <div
+              class="mini-card"
+              *ngFor="let card of activeStep.dealer"
+              [class.mini-card--hidden]="card === '?'"
+            >
+              <span>{{ card === '?' ? '' : card }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-core">
+          <div class="decision-chip" *ngIf="activeStep.action">
+            {{ activeStep.actionLabel }}
+          </div>
+          <div class="table-ring"></div>
+        </div>
+
+        <div class="hand-row player-row">
+          <span class="hand-label">{{ i18n.t('common.player') }}</span>
+          <div class="cards">
+            <div class="mini-card mini-card--player" *ngFor="let card of activeStep.player">
+              <span>{{ card }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <article class="tutorial-copy">
+        <p class="step-eyebrow">{{ activeStep.eyebrow }}</p>
+        <h3>{{ activeStep.title }}</h3>
+        <p>{{ activeStep.copy }}</p>
+        <div class="tutorial-hint">{{ activeStep.hint }}</div>
+      </article>
+    </div>
+
+    <div class="tutorial-steps" [attr.aria-label]="i18n.t('tutorial.stepsLabel')">
+      <button
+        type="button"
+        class="step-dot"
+        *ngFor="let step of steps; let i = index"
+        [class.active]="i === activeIndex"
+        [attr.aria-label]="i18n.t('tutorial.step', { step: i + 1 })"
+        (click)="selectStep(i)"
+      ></button>
+    </div>
+
+    <div class="tutorial-actions">
+      <button class="btn tutorial-btn tutorial-btn--ghost" type="button" (click)="previous()" [disabled]="activeIndex === 0">
+        {{ i18n.t('tutorial.previous') }}
+      </button>
+      <button class="btn tutorial-btn" type="button" (click)="next()">
+        {{ activeIndex === steps.length - 1 ? i18n.t('tutorial.understood') : i18n.t('tutorial.next') }}
+      </button>
+    </div>
+  </section>
+</div>

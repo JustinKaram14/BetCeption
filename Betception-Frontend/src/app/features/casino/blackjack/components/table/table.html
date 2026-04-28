@@ -3,7 +3,7 @@
   <h2 class="title">Betception Blackjack</h2>
 
   <app-hand
-    label="Dealer"
+    [label]="i18n.t('common.dealer')"
     [hand]="dealerHand"
     [isDealer]="true"
     [dealOffset]="200"
@@ -14,7 +14,7 @@
   ></app-hand>
 
   <app-hand
-    label="Spieler"
+    [label]="i18n.t('common.player')"
     [hand]="playerHand"
     [dealOffset]="0"
     [isActive]="activeHand === HandOwnerType.PLAYER"

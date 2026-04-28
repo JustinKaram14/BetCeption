@@ -1,6 +1,17 @@
 <div class="page-wrapper">
   <div class="app-container">
-    <a class="btn home-btn" routerLink="/homepage">Home</a>
+    <a
+      class="btn home-btn"
+      routerLink="/homepage"
+      [attr.aria-label]="i18n.t('common.home')"
+      [title]="i18n.t('common.home')"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 11.5 12 4l9 7.5" />
+        <path d="M5.5 10.5V20h13v-9.5" />
+        <path d="M9.5 20v-5h5v5" />
+      </svg>
+    </a>
 
     <app-table
       [dealerHand]="round?.dealerHand ?? null"
@@ -27,8 +38,8 @@
           {{ roundOutcome?.detail }}
         </div>
         <div class="round-over-actions">
-          <button class="btn btn-neue-runde" (click)="onNextRound()">Neue Runde</button>
-          <a class="btn btn-aufhoeren" routerLink="/homepage">Aufhören</a>
+          <button class="btn btn-neue-runde" (click)="onNextRound()">{{ i18n.t('blackjack.newRound') }}</button>
+          <a class="btn btn-aufhoeren" routerLink="/homepage">{{ i18n.t('blackjack.quit') }}</a>
         </div>
       </div>
     </div>
