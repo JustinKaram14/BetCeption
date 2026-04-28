@@ -1,4 +1,5 @@
 import { register, login, refresh, logout } from '../../../modules/auth/auth.controller.js';
+import { RegisterSchema } from '../../../modules/auth/auth.schema.js';
 import { User } from '../../../entity/User.js';
 import { Session } from '../../../entity/Session.js';
 import {
@@ -53,6 +54,24 @@ describe('auth.controller', () => {
 
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith({ message: 'Email already in use' });
+    });
+
+    it('rejects duplicate usernames', async () => {
+      const userRepo = createMockRepository<User>({
+        exist: jest.fn()
+          .mockResolvedValueOnce(false) // email check passes
+          .mockResolvedValueOnce(true), // username check fails
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+      const req = createMockRequest({
+        body: { email: 'user@example.com', password: 'secret123', username: 'takenuser' },
+      });
+      const res = createMockResponse();
+
+      await register(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Username already in use' });
     });
   });
 
@@ -110,6 +129,30 @@ describe('auth.controller', () => {
 
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
+    });
+
+    it('rejects wrong passwords', async () => {
+      const user = { id: '1', email: 'user@example.com', username: 'player', passwordHash: 'hash' } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      const sessionRepo = createMockRepository<Session>();
+      const repoMap = new Map<any, any>();
+      repoMap.set(User, userRepo);
+      repoMap.set(Session, sessionRepo);
+      mockAppDataSourceRepositories(repoMap);
+
+      jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(false);
+
+      const req = createMockRequest({
+        body: { email: 'user@example.com', password: 'wrongpassword' },
+      });
+      const res = createMockResponse();
+
+      await login(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid email or password' });
     });
   });
 
@@ -190,5 +233,34 @@ describe('auth.controller', () => {
       expect(res.clearCookie).toHaveBeenCalledWith('refresh_token', { path: '/auth/refresh' });
       expect(res.status).toHaveBeenCalledWith(204);
     });
+  });
+});
+
+describe('auth schemas', () => {
+  it('rejects passwords longer than 128 characters', () => {
+    const result = RegisterSchema.safeParse({
+      email: 'user@example.com',
+      password: 'a'.repeat(129),
+      username: 'player',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts passwords of exactly 128 characters', () => {
+    const result = RegisterSchema.safeParse({
+      email: 'user@example.com',
+      password: 'a'.repeat(128),
+      username: 'player',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects passwords shorter than 8 characters', () => {
+    const result = RegisterSchema.safeParse({
+      email: 'user@example.com',
+      password: 'short',
+      username: 'player',
+    });
+    expect(result.success).toBe(false);
   });
 });

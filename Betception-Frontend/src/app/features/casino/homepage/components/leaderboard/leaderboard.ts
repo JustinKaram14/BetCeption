@@ -77,6 +77,7 @@ export class LeaderboardComponent {
   }
 
   loading = false;
+  error: string | null = null;
   rows: LeaderboardRow[] = [];
   currentUserRank: number | null = null;
 
@@ -106,12 +107,14 @@ export class LeaderboardComponent {
       next: (state) => {
         this.rows = state.rows;
         this.currentUserRank = state.currentUserRank;
+        this.error = null;
         this.loading = false;
       },
       error: (err) => {
         this.rows = [];
         this.currentUserRank = null;
-        this.toast.error(this.extractMessage(err));
+        this.error = this.extractMessage(err);
+        this.toast.error(this.error);
         this.loading = false;
       },
     });

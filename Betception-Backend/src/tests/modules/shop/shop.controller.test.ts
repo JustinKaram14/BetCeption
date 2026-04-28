@@ -146,7 +146,10 @@ describe('shop.controller', () => {
       await purchasePowerup(req as any, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Insufficient balance' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Insufficient balance',
+        code: 'INSUFFICIENT_FUNDS',
+      });
     });
 
     it('returns 404 when the power-up type is missing', async () => {
