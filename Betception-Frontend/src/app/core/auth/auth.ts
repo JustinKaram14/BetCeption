@@ -1,7 +1,7 @@
 import { HttpContext } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { throwError } from 'rxjs';
-import { catchError, finalize, map, tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import {
   AuthTokens,
   AuthUser,
@@ -19,6 +19,7 @@ import { TokenStorage } from './token-storage';
 export class Auth {
   private readonly http = inject(HttpClient);
   private readonly tokenStorage = inject(TokenStorage);
+  private refreshInProgress$: Observable<AuthUser | null> | null = null;
 
   readonly token$ = this.tokenStorage.token$;
   readonly user$ = this.tokenStorage.user$;
@@ -41,8 +42,11 @@ export class Auth {
       );
   }
 
-  refresh() {
-    return this.http
+  refresh(): Observable<AuthUser | null> {
+    if (this.refreshInProgress$) {
+      return this.refreshInProgress$;
+    }
+    this.refreshInProgress$ = this.http
       .post<AuthTokens>('/auth/refresh', undefined, {
         context: this.skipAuth(),
       })
@@ -53,7 +57,12 @@ export class Auth {
           this.clearSession();
           return throwError(() => error);
         }),
+        finalize(() => {
+          this.refreshInProgress$ = null;
+        }),
+        shareReplay(1),
       );
+    return this.refreshInProgress$;
   }
 
   logout() {

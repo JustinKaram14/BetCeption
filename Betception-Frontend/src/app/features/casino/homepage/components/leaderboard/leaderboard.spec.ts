@@ -25,9 +25,6 @@ describe('LeaderboardComponent', () => {
   });
 
   it('loads the balance leaderboard on init and maps rows', () => {
-    apiMock.getBalanceLeaderboard.and.returnValue(
-      new Subject<any>().asObservable(),
-    );
     const balance$ = new Subject<any>();
     apiMock.getBalanceLeaderboard.and.returnValue(balance$.asObservable());
 
@@ -42,36 +39,19 @@ describe('LeaderboardComponent', () => {
       limit: 10,
       offset: 0,
       currentUserRank: 4,
-      items: [
-        {
-          rank: 1,
-          userId: 'u1',
-          username: 'neo',
-          balance: 1500,
-        },
-      ],
+      items: [{ rank: 1, userId: 'u1', username: 'neo', balance: 1500 }],
     });
     fixture.detectChanges();
 
     expect(component.loading).toBeFalse();
     expect(component.error).toBeNull();
     expect(component.currentUserRank).toBe(4);
-    expect(component.rows).toEqual([
-      {
-        rank: 1,
-        username: 'neo',
-        metrics: { balance: 1500 },
-      },
-    ]);
+    expect(component.rows).toEqual([{ rank: 1, username: 'neo', metrics: { balance: 1500 } }]);
   });
 
   it('switches to the level leaderboard and updates the active category', () => {
-    apiMock.getBalanceLeaderboard.and.returnValue(
-      new Subject<any>().asObservable(),
-    );
-    apiMock.getLevelLeaderboard.and.returnValue(
-      new Subject<any>().asObservable(),
-    );
+    apiMock.getBalanceLeaderboard.and.returnValue(new Subject<any>().asObservable());
+    apiMock.getLevelLeaderboard.and.returnValue(new Subject<any>().asObservable());
 
     fixture = TestBed.createComponent(LeaderboardComponent);
     component = fixture.componentInstance;
@@ -83,9 +63,7 @@ describe('LeaderboardComponent', () => {
   });
 
   it('does not refetch when the active category is selected again', () => {
-    apiMock.getBalanceLeaderboard.and.returnValue(
-      new Subject<any>().asObservable(),
-    );
+    apiMock.getBalanceLeaderboard.and.returnValue(new Subject<any>().asObservable());
 
     fixture = TestBed.createComponent(LeaderboardComponent);
     component = fixture.componentInstance;
