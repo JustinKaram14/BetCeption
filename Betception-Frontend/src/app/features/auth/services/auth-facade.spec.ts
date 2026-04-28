@@ -30,4 +30,37 @@ describe('AuthFacade', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
+  it('login delegates to auth.login', () => {
+    authMock.login.and.returnValue(of(null));
+    service.login({ email: 'a@b.com', password: 'pass' }).subscribe();
+    expect(authMock.login).toHaveBeenCalledWith({ email: 'a@b.com', password: 'pass' });
+  });
+
+  it('register delegates to auth.register', () => {
+    authMock.register.and.returnValue(of({ message: 'ok' }));
+    service.register({ email: 'a@b.com', password: 'pass', username: 'tester' }).subscribe();
+    expect(authMock.register).toHaveBeenCalledWith({
+      email: 'a@b.com',
+      password: 'pass',
+      username: 'tester',
+    });
+  });
+
+  it('logout delegates to auth.logout', () => {
+    service.logout().subscribe();
+    expect(authMock.logout).toHaveBeenCalled();
+  });
+
+  it('isAuthenticated delegates to auth.isAuthenticated', () => {
+    authMock.isAuthenticated.and.returnValue(true);
+    expect(service.isAuthenticated()).toBeTrue();
+  });
+
+  it('exposes user$ from auth', (done) => {
+    service.user$.subscribe((user) => {
+      expect(user).toBeNull();
+      done();
+    });
+  });
 });

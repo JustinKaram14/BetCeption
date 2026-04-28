@@ -77,4 +77,34 @@ describe('apiKeyGuard middleware', () => {
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ message: 'Unauthorized' });
   });
+
+  it('rejects a key shorter than the expected key without throwing', () => {
+    const guard = apiKeyGuard('secret-key');
+    const req = createMockRequest({
+      header: ((name: string) => (name === 'x-api-key' ? 'secret' : undefined)) as any,
+    });
+    const res = createMockResponse();
+    const next = createMockNext();
+
+    guard(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Unauthorized' });
+  });
+
+  it('rejects a key longer than the expected key without throwing', () => {
+    const guard = apiKeyGuard('secret-key');
+    const req = createMockRequest({
+      header: ((name: string) => (name === 'x-api-key' ? 'secret-key-extra' : undefined)) as any,
+    });
+    const res = createMockResponse();
+    const next = createMockNext();
+
+    guard(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Unauthorized' });
+  });
 });
