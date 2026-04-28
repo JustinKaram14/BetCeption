@@ -10,7 +10,7 @@ import {
   RegisterRequest,
 } from '../api/api.types';
 import { HttpClient } from '../api/http-client';
-import { SKIP_AUTH } from './auth-interceptor';
+import { SKIP_AUTH } from './auth-context';
 import { TokenStorage } from './token-storage';
 
 @Injectable({
