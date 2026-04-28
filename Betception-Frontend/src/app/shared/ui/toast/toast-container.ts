@@ -1,6 +1,7 @@
 import { AsyncPipe, NgClass, NgFor } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ToastMessage, ToastService } from './toast.service';
+import { I18n } from '../../../core/i18n/i18n';
 
 @Component({
   selector: 'app-toast-container',
@@ -11,6 +12,7 @@ import { ToastMessage, ToastService } from './toast.service';
 })
 export class ToastContainerComponent {
   private readonly toastService = inject(ToastService);
+  private readonly i18n = inject(I18n);
 
   readonly messages$ = this.toastService.messages$;
 
@@ -20,12 +22,12 @@ export class ToastContainerComponent {
 
   labelFor(toast: ToastMessage) {
     if (toast.type === 'error') {
-      return 'Fehler';
+      return this.i18n.t('toast.error');
     }
     if (toast.type === 'success') {
-      return 'Erfolg';
+      return this.i18n.t('toast.success');
     }
-    return 'Info';
+    return this.i18n.t('toast.info');
   }
 
   trackToast(_index: number, toast: ToastMessage) {
