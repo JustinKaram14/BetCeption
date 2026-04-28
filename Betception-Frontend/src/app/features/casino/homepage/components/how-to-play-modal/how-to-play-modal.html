@@ -1,6 +1,6 @@
-<div class="tutorial-overlay" (click)="onOverlayClick($event)">
-  <section class="tutorial-card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
-    <button class="tutorial-close" type="button" [attr.aria-label]="i18n.t('tutorial.close')" (click)="closed.emit()">X</button>
+<div class="tutorial-overlay" data-testid="how-to-play-overlay" (click)="onOverlayClick($event)">
+  <section class="tutorial-card" data-testid="how-to-play-card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+    <button #closeButton class="tutorial-close" data-testid="how-to-play-close" type="button" [attr.aria-label]="i18n.t('tutorial.close')" (click)="closed.emit()">X</button>
 
     <div class="tutorial-header">
       <div>
@@ -58,6 +58,7 @@
       <button
         type="button"
         class="step-dot"
+        data-testid="how-to-play-step-dot"
         *ngFor="let step of steps; let i = index"
         [class.active]="i === activeIndex"
         [attr.aria-label]="i18n.t('tutorial.step', { step: i + 1 })"
@@ -66,10 +67,10 @@
     </div>
 
     <div class="tutorial-actions">
-      <button class="btn tutorial-btn tutorial-btn--ghost" type="button" (click)="previous()" [disabled]="activeIndex === 0">
+      <button class="btn tutorial-btn tutorial-btn--ghost" data-testid="how-to-play-previous" type="button" (click)="previous()" [disabled]="activeIndex === 0">
         {{ i18n.t('tutorial.previous') }}
       </button>
-      <button class="btn tutorial-btn" type="button" (click)="next()">
+      <button class="btn tutorial-btn" data-testid="how-to-play-next" type="button" (click)="next()">
         {{ activeIndex === steps.length - 1 ? i18n.t('tutorial.understood') : i18n.t('tutorial.next') }}
       </button>
     </div>

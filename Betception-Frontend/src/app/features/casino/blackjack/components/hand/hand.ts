@@ -151,12 +151,12 @@ export class Hand implements OnChanges {
   }
 
   private isDealerCardHidden(card: RoundCard, index: number, cards: RoundCard[]) {
-    if (!this.isDealer) {
+    if (!this.isDealer || this.revealDealerCards) {
       return false;
     }
 
     const isMaskedCard = card.rank === null || card.suit === null;
-    const isInitialHoleCard = index === 1 && cards.length === 2 && !this.revealDealerCards;
+    const isInitialHoleCard = index === 1 && cards.length === 2;
     return isMaskedCard || isInitialHoleCard;
   }
 

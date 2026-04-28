@@ -1,11 +1,40 @@
 <div class="auth-container">
-  <div class="auth-toggle">
-    <button [class.active]="tab==='login'" (click)="onTabChange('login')">{{ i18n.t('auth.login') }}</button>
-    <button [class.active]="tab==='register'" (click)="onTabChange('register')">{{ i18n.t('auth.register') }}</button>
+  <div class="auth-toggle" role="tablist" [attr.aria-label]="i18n.t('auth.login') + ' / ' + i18n.t('auth.register')">
+    <button
+      #loginTabButton
+      type="button"
+      role="tab"
+      id="auth-tab-login"
+      data-testid="auth-tab-login"
+      [class.active]="tab==='login'"
+      [attr.aria-selected]="tab==='login'"
+      aria-controls="auth-panel-login"
+      (click)="onTabChange('login')"
+      (keydown)="onTabKeydown($event, 'login')"
+    >{{ i18n.t('auth.login') }}</button>
+    <button
+      #registerTabButton
+      type="button"
+      role="tab"
+      id="auth-tab-register"
+      data-testid="auth-tab-register"
+      [class.active]="tab==='register'"
+      [attr.aria-selected]="tab==='register'"
+      aria-controls="auth-panel-register"
+      (click)="onTabChange('register')"
+      (keydown)="onTabKeydown($event, 'register')"
+    >{{ i18n.t('auth.register') }}</button>
   </div>
 
-  <form class="auth-form" (ngSubmit)="submit()">
+  <form
+    class="auth-form"
+    [attr.id]="tab === 'login' ? 'auth-panel-login' : 'auth-panel-register'"
+    [attr.aria-labelledby]="tab === 'login' ? 'auth-tab-login' : 'auth-tab-register'"
+    (ngSubmit)="submit()"
+  >
     <input
+      #emailField
+      data-testid="auth-email-input"
       type="email"
       [placeholder]="i18n.t('auth.emailPlaceholder')"
       [(ngModel)]="email"
@@ -14,6 +43,8 @@
 
     <input
       *ngIf="tab==='register'"
+      #usernameField
+      data-testid="auth-username-input"
       type="text"
       [placeholder]="i18n.t('auth.usernamePlaceholder')"
       [(ngModel)]="username"
@@ -21,13 +52,14 @@
       autocomplete="nickname">
 
     <input
+      data-testid="auth-password-input"
       type="password"
       [placeholder]="i18n.t('auth.passwordPlaceholder')"
       [(ngModel)]="password"
       name="password"
       [autocomplete]="tab === 'login' ? 'current-password' : 'new-password'">
 
-    <button class="btn auth-btn" type="submit" [disabled]="!canSubmit()">
+    <button class="btn auth-btn" data-testid="auth-submit" type="submit" [disabled]="!canSubmit()">
       {{ tab==='login' ? i18n.t('auth.submitLogin') : i18n.t('auth.createAccount') }}
     </button>
   </form>

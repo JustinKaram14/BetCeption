@@ -1,0 +1,76 @@
+name: Performance Tests
+
+on:
+  # Manuell auslösbar, z.B. vor Releases oder nach größeren Änderungen
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Backend-URL für die Tests (leer = lokale Perf-Umgebung)'
+        required: false
+        default: ''
+
+  # Automatisch jeden Montag um 03:00 UTC
+  schedule:
+    - cron: '0 3 * * 1'
+
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  performance:
+    name: k6 Performance Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Betception-Backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Performance-Umgebung starten
+        run: docker compose -f docker-compose.perf.yml up -d --build
+
+      - name: Backend-Bereitschaft abwarten
+        run: |
+          echo "Warte auf Backend-Healthcheck..."
+          for i in $(seq 1 40); do
+            STATUS=$(docker compose -f docker-compose.perf.yml ps --format json backend-perf 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0].get('Health','') if isinstance(d,list) else d.get('Health',''))" 2>/dev/null || echo "")
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Backend healthy nach ${i}x5s"
+              break
+            fi
+            echo "  Versuch $i/40 (Status: ${STATUS:-unbekannt})..."
+            sleep 5
+          done
+          curl -sf http://localhost:3001/health || (echo "Backend nicht erreichbar!" && exit 1)
+
+      - name: Auth-Flow-Performance
+        run: docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/auth-results.json --summary-export /results/auth-summary.json /performance/k6/scenarios/auth-flow.js
+        continue-on-error: true
+
+      - name: Game-Flow-Performance
+        run: docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/game-results.json --summary-export /results/game-summary.json /performance/k6/scenarios/game-flow.js
+        continue-on-error: true
+
+      - name: Wallet-Flow-Performance
+        run: docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/wallet-results.json --summary-export /results/wallet-summary.json /performance/k6/scenarios/wallet-flow.js
+        continue-on-error: true
+
+      - name: Leaderboard-Performance
+        run: docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/leaderboard-results.json --summary-export /results/leaderboard-summary.json /performance/k6/scenarios/leaderboard.js
+        continue-on-error: true
+
+      - name: Performance-Umgebung stoppen
+        if: always()
+        run: docker compose -f docker-compose.perf.yml down -v
+
+      - name: Ergebnisse hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-results-${{ github.run_number }}
+          path: Betception-Backend/results/
+          retention-days: 30

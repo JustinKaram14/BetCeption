@@ -165,4 +165,54 @@ describe('Controls', () => {
       expect(spy).not.toHaveBeenCalled();
     });
   });
+
+  describe('DOM button disabled states', () => {
+    it('deal button is disabled in the DOM when betAmount is zero', () => {
+      component.roundStatus = null;
+      component.betAmount = 0;
+      fixture.detectChanges();
+
+      const dealBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="deal-button"]');
+      expect(dealBtn.disabled).toBeTrue();
+    });
+
+    it('deal button is enabled in the DOM when betAmount > 0 and round is not active', () => {
+      component.roundStatus = null;
+      component.betAmount = 25;
+      fixture.detectChanges();
+
+      const dealBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="deal-button"]');
+      expect(dealBtn.disabled).toBeFalse();
+    });
+
+    it('hit and stand buttons are disabled in the DOM when no round is active', () => {
+      component.roundStatus = null;
+      fixture.detectChanges();
+
+      const hitBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="hit-button"]');
+      const standBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="stand-button"]');
+      expect(hitBtn.disabled).toBeTrue();
+      expect(standBtn.disabled).toBeTrue();
+    });
+
+    it('hit and stand buttons are enabled when round is IN_PROGRESS and player hand is ACTIVE', () => {
+      component.roundStatus = RoundStatus.IN_PROGRESS;
+      component.playerHandStatus = HandStatus.ACTIVE;
+      component.busy = false;
+      fixture.detectChanges();
+
+      const hitBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="hit-button"]');
+      const standBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="stand-button"]');
+      expect(hitBtn.disabled).toBeFalse();
+      expect(standBtn.disabled).toBeFalse();
+    });
+
+    it('chip-25 button is disabled in the DOM when a round is active', () => {
+      component.roundStatus = RoundStatus.IN_PROGRESS;
+      fixture.detectChanges();
+
+      const chipBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="chip-25"]');
+      expect(chipBtn.disabled).toBeTrue();
+    });
+  });
 });

@@ -1,0 +1,2 @@
+# Platzhalter-Datei: Verhindert, dass das results/-Verzeichnis von Git ignoriert wird.
+# Die eigentlichen k6-JSON-Ergebnisdateien werden über .gitignore ausgeschlossen.
