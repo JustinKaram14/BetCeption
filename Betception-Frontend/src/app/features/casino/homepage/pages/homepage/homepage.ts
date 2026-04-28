@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { NgIf, AsyncPipe } from '@angular/common';
 import { Observable, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -37,6 +37,13 @@ export class HomepageComponent {
 
   readonly isAuthenticated$ = this.authFacade.isAuthenticated$;
   readonly user$ = this.authFacade.user$;
+
+  get isNarrow(): boolean {
+    return window.outerWidth <= 900;
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void { /* triggers change detection so isNarrow getter re-evaluates */ }
 
   authLoading = false;
   showRewardModal = false;

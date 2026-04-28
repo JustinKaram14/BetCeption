@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, Output, ViewChild, inject } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { I18n, LanguageCode } from '../../../../../core/i18n/i18n';
 
@@ -271,12 +271,17 @@ const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
   templateUrl: './how-to-play-modal.html',
   styleUrls: ['./how-to-play-modal.css'],
 })
-export class HowToPlayModalComponent {
+export class HowToPlayModalComponent implements AfterViewInit {
   readonly i18n = inject(I18n);
 
   @Output() closed = new EventEmitter<void>();
+  @ViewChild('closeButton') private closeButton?: ElementRef<HTMLButtonElement>;
 
   activeIndex = 0;
+
+  ngAfterViewInit() {
+    this.closeButton?.nativeElement.focus();
+  }
 
   get steps() {
     return TUTORIAL_STEPS[this.i18n.language()];
@@ -312,5 +317,11 @@ export class HowToPlayModalComponent {
     if ((event.target as HTMLElement).classList.contains('tutorial-overlay')) {
       this.closed.emit();
     }
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: Event) {
+    event.preventDefault();
+    this.closed.emit();
   }
 }

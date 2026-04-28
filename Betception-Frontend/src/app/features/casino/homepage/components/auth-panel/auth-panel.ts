@@ -1,5 +1,5 @@
 // src/app/features/homepage/components/auth-panel/auth-panel.ts
-import { Component, EventEmitter, Output, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types';
@@ -17,6 +17,11 @@ export class AuthPanelComponent {
   private readonly toast = inject(ToastService);
   readonly i18n = inject(I18n);
 
+  @ViewChild('loginTabButton') private loginTabButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('registerTabButton') private registerTabButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('emailField') private emailField?: ElementRef<HTMLInputElement>;
+  @ViewChild('usernameField') private usernameField?: ElementRef<HTMLInputElement>;
+
   tab: 'login' | 'register' = 'login';
   email = '';
   username = '';
@@ -27,6 +32,28 @@ export class AuthPanelComponent {
 
   onTabChange(tab: 'login' | 'register') {
     this.tab = tab;
+    window.setTimeout(() => this.focusActiveField());
+  }
+
+  onTabKeydown(event: KeyboardEvent, currentTab: 'login' | 'register') {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') {
+      return;
+    }
+
+    event.preventDefault();
+
+    const nextTab =
+      event.key === 'ArrowLeft' || event.key === 'Home'
+        ? 'login'
+        : event.key === 'ArrowRight' || event.key === 'End'
+          ? 'register'
+          : currentTab;
+
+    this.tab = nextTab;
+    window.setTimeout(() => {
+      this.focusTabButton(nextTab);
+      this.focusActiveField();
+    });
   }
 
   submit() {
@@ -66,5 +93,23 @@ export class AuthPanelComponent {
 
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  private focusActiveField() {
+    const target =
+      this.tab === 'register' && this.email.trim().length > 0
+        ? this.usernameField?.nativeElement
+        : this.emailField?.nativeElement;
+
+    target?.focus();
+  }
+
+  private focusTabButton(tab: 'login' | 'register') {
+    const button =
+      tab === 'login'
+        ? this.loginTabButton?.nativeElement
+        : this.registerTabButton?.nativeElement;
+
+    button?.focus();
   }
 }

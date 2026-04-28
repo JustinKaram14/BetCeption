@@ -4,7 +4,16 @@
     "install:all": "npm install --prefix Betception-Backend && npm install --prefix Betception-Frontend",
     "build": "npm run build --prefix Betception-Backend && npm run build --prefix Betception-Frontend",
     "build:backend": "npm run build --prefix Betception-Backend",
-    "build:frontend": "npm run build --prefix Betception-Frontend"
+    "build:frontend": "npm run build --prefix Betception-Frontend",
+    "test": "npm run test --prefix Betception-Frontend",
+    "e2e": "npm run e2e --prefix Betception-Frontend",
+    "perf:env:up": "npm run perf:env:up --prefix Betception-Backend",
+    "perf:env:down": "npm run perf:env:down --prefix Betception-Backend",
+    "perf:auth": "npm run perf:auth --prefix Betception-Backend",
+    "perf:game": "npm run perf:game --prefix Betception-Backend",
+    "perf:wallet": "npm run perf:wallet --prefix Betception-Backend",
+    "perf:leaderboard": "npm run perf:leaderboard --prefix Betception-Backend",
+    "perf": "npm run perf --prefix Betception-Backend"
   },
   "devDependencies": {
     "@types/jasmine": "^5.1.9",

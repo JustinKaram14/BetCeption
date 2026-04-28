@@ -16,7 +16,14 @@
     "migrate:show": "tsx src/scripts/migrate.ts show",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down -v",
-    "docker:logs": "docker compose logs -f backend"
+    "docker:logs": "docker compose logs -f backend",
+    "perf:env:up": "docker compose -f docker-compose.perf.yml up -d --build",
+    "perf:env:down": "docker compose -f docker-compose.perf.yml down -v",
+    "perf:auth": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/auth-results.json --summary-export /results/auth-summary.json /performance/k6/scenarios/auth-flow.js",
+    "perf:game": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/game-results.json --summary-export /results/game-summary.json /performance/k6/scenarios/game-flow.js",
+    "perf:wallet": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/wallet-results.json --summary-export /results/wallet-summary.json /performance/k6/scenarios/wallet-flow.js",
+    "perf:leaderboard": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/leaderboard-results.json --summary-export /results/leaderboard-summary.json /performance/k6/scenarios/leaderboard.js",
+    "perf": "npm run perf:auth && npm run perf:game && npm run perf:wallet && npm run perf:leaderboard"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

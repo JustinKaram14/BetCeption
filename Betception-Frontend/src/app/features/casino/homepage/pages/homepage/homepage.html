@@ -1,6 +1,6 @@
-<div class="home-container">
-  <div class="top-actions">
-    <button class="how-to-play-btn" type="button" (click)="openHowToPlay()">
+<div class="home-container" data-testid="homepage-root">
+  <div class="top-actions" data-testid="homepage-top-actions">
+    <button class="how-to-play-btn" data-testid="how-to-play-button" type="button" (click)="openHowToPlay()">
       {{ i18n.t('common.howToPlay') }}
     </button>
     <app-settings-menu></app-settings-menu>
@@ -8,7 +8,7 @@
 
   <app-hero></app-hero>
 
-  <div class="main-content">
+  <div class="main-content" [style.flex-direction]="isNarrow ? 'column' : null" data-testid="homepage-main-content">
     <app-neon-card class="leaderboard-card">
       <app-leaderboard></app-leaderboard>
     </app-neon-card>
@@ -16,13 +16,13 @@
     <div class="right-column">
       <app-neon-card class="auth-card">
         <ng-container *ngIf="isAuthenticated$ | async; else loginPanel">
-          <div class="user-panel">
-            <div class="user-panel__greeting">
-              {{ i18n.t('home.loggedInAs') }}
-              <strong>{{ (user$ | async)?.username }}</strong>
+            <div class="user-panel" data-testid="homepage-user-panel">
+              <div class="user-panel__greeting" data-testid="homepage-user-greeting">
+                {{ i18n.t('home.loggedInAs') }}
+                <strong>{{ (user$ | async)?.username }}</strong>
+              </div>
+              <button class="btn logout-btn" data-testid="logout-button" type="button" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
             </div>
-            <button class="btn logout-btn" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
-          </div>
         </ng-container>
 
         <ng-template #loginPanel>

@@ -1,34 +1,41 @@
 <div class="settings-menu">
   <button
+    #settingsButton
     class="settings-button"
     type="button"
+    data-testid="settings-button"
     [attr.aria-label]="i18n.t('common.settings')"
     [attr.title]="i18n.t('common.settings')"
     [attr.aria-expanded]="open"
+    aria-haspopup="dialog"
     (click)="toggle()"
+    (keydown)="onTriggerKeydown($event)"
   >
     &#9881;
   </button>
 
-  <div class="settings-popover" *ngIf="open">
+  <div class="settings-popover" *ngIf="open" data-testid="settings-popover" role="dialog" tabindex="-1" (keydown)="onMenuKeydown($event)">
     <div class="settings-title">{{ i18n.t('common.settings') }}</div>
     <label class="settings-label">{{ i18n.t('common.language') }}</label>
     <div class="language-carousel">
       <button
+        #previousLanguageButton
         type="button"
         class="language-arrow"
+        data-testid="settings-language-previous"
         [attr.aria-label]="i18n.t('tutorial.previous')"
         (click)="previousLanguage()"
       >
         &#8249;
       </button>
-      <div class="language-current" aria-live="polite">
+      <div class="language-current" data-testid="settings-language-current" aria-live="polite">
         <span class="language-name">{{ currentLanguage.nativeLabel }}</span>
         <span class="language-code">{{ currentLanguage.code.toUpperCase() }}</span>
       </div>
       <button
         type="button"
         class="language-arrow"
+        data-testid="settings-language-next"
         [attr.aria-label]="i18n.t('tutorial.next')"
         (click)="nextLanguage()"
       >
