@@ -83,9 +83,6 @@ jobs:
 
       - name: Run tests (headless Chrome)
         run: npm run test:ci
-        env:
-          # Ensures the Karma ChromeHeadless sandbox works on GitHub-hosted runners
-          CHROMIUM_FLAGS: "--no-sandbox"
 
   # ─────────────────────────────────────────────────────────────
   # Summary gate — all jobs above must pass before merge
