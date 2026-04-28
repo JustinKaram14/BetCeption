@@ -120,17 +120,17 @@ describe('Controls', () => {
 
   describe('roundLabel', () => {
     it('returns the correct label for each round status', () => {
-      const cases: [RoundStatus | null, string][] = [
-        [RoundStatus.IN_PROGRESS, 'Läuft'],
-        [RoundStatus.DEALING, 'Dealing'],
-        [RoundStatus.CREATED, 'Gestartet'],
-        [RoundStatus.SETTLED, 'Fertig'],
-        [RoundStatus.ABORTED, 'Abgebrochen'],
-        [null, 'Bereit'],
-      ];
-      for (const [status, label] of cases) {
+      const cases = [
+        [RoundStatus.IN_PROGRESS, 'round.inProgress'],
+        [RoundStatus.DEALING, 'round.dealing'],
+        [RoundStatus.CREATED, 'round.created'],
+        [RoundStatus.SETTLED, 'round.settled'],
+        [RoundStatus.ABORTED, 'round.aborted'],
+        [null, 'round.ready'],
+      ] as const;
+      for (const [status, labelKey] of cases) {
         component.roundStatus = status;
-        expect(component.roundLabel).withContext(`status=${String(status)}`).toBe(label);
+        expect(component.roundLabel).withContext(`status=${String(status)}`).toBe(component.i18n.t(labelKey));
       }
     });
   });

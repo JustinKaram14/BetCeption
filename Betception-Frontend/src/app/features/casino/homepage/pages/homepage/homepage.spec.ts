@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { HomepageComponent } from './homepage';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
@@ -24,7 +24,7 @@ describe('HomepageComponent', () => {
     },
   );
   const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['claimDailyReward']);
-  const routerMock = jasmine.createSpyObj<Router>('Router', ['navigate']);
+  let routerNavigateSpy: jasmine.Spy;
   const apiMock = jasmine.createSpyObj<BetceptionApi>(
     'BetceptionApi',
     ['getBalanceLeaderboard', 'getLevelLeaderboard', 'getWinningsLeaderboard'],
@@ -55,12 +55,14 @@ describe('HomepageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [HomepageComponent],
       providers: [
+        provideRouter([]),
         { provide: AuthFacade, useValue: authFacadeMock },
         { provide: BetceptionApi, useValue: apiMock },
         { provide: Wallet, useValue: walletMock },
-        { provide: Router, useValue: routerMock },
       ],
     }).compileComponents();
+
+    routerNavigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
 
     authFacadeMock.login.calls.reset();
     authFacadeMock.register.calls.reset();
@@ -70,7 +72,7 @@ describe('HomepageComponent', () => {
     apiMock.getLevelLeaderboard.calls.reset();
     apiMock.getWinningsLeaderboard.calls.reset();
     walletMock.claimDailyReward.calls.reset();
-    routerMock.navigate.calls.reset();
+    routerNavigateSpy.calls.reset();
 
     fixture = TestBed.createComponent(HomepageComponent);
     component = fixture.componentInstance;
