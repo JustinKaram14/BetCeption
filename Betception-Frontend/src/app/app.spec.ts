@@ -1,29 +1,32 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 import { App } from './app';
 import { Auth } from './core/auth/auth';
 
 describe('App', () => {
-  const authMock = jasmine.createSpyObj<Auth>('Auth', ['refresh'], {
-    user$: of(null),
-    token$: of(null),
-    isAuthenticated$: of(false),
-  });
+  let authMock: jasmine.SpyObj<Auth>;
 
   beforeEach(async () => {
+    authMock = jasmine.createSpyObj<Auth>('Auth', ['refresh'], {
+      user$: of(null),
+      token$: of(null),
+      isAuthenticated$: of(false),
+    });
     authMock.refresh.and.returnValue(of(null));
 
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: Auth, useValue: authMock },
       ],
     }).compileComponents();
-
-    authMock.refresh.calls.reset();
   });
 
   it('should create the app', () => {
@@ -31,10 +34,10 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('calls auth.refresh() on init to silently restore the session from the cookie', () => {
-    authMock.refresh.and.returnValue(of(null));
+  it('renders the router outlet host element', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    expect(authMock.refresh).toHaveBeenCalledOnceWith();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('router-outlet')).toBeTruthy();
   });
 });

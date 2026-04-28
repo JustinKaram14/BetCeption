@@ -3,9 +3,11 @@ import { inject } from '@angular/core';
 import { throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { Auth } from './auth';
+import { SKIP_AUTH } from './auth-context';
 import { TokenStorage } from './token-storage';
 
-export const SKIP_AUTH = new HttpContextToken<boolean>(() => false);
+// Re-export so existing imports of SKIP_AUTH from this module keep working.
+export { SKIP_AUTH };
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenStorage = inject(TokenStorage);
