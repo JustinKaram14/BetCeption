@@ -1,0 +1,58 @@
+Hier eine Übersicht aller Tests im Projekt:
+
+---
+
+## 🖥️ Frontend — Angular Karma (Unit/Integration)
+**31 Spec-Dateien** — `ng test`
+
+| Bereich | Dateien |
+|---|---|
+| App root | `app.spec.ts` |
+| Auth core | `auth.spec.ts`, `auth-guard.spec.ts`, `auth-interceptor.spec.ts`, `token-storage.spec.ts` |
+| Auth pages | `login.spec.ts`, `register.spec.ts`, `verify-email.spec.ts` |
+| Auth service | `auth-facade.spec.ts` |
+| Blackjack | `blackjack.spec.ts`, `table.spec.ts`, `hand.spec.ts`, `controls.spec.ts` |
+| Homepage | `homepage.spec.ts`, `auth-panel.spec.ts`, `leaderboard.spec.ts`, `how-to-play-modal.spec.ts`, `daily-reward-modal.spec.ts` |
+| Shared UI | `button.spec.ts`, `not-found.spec.ts`, `settings-menu.spec.ts` |
+| Services | `wallet.spec.ts`, `rng.spec.ts` |
+| Pipes | `format-coins-pipe.spec.ts` |
+| API | `http-client.spec.ts` |
+| Risk-Up | `card-guess.spec.ts` |
+
+---
+
+## 🎭 Frontend — Playwright E2E
+**17 Tests** — `npm run e2e`
+
+| Datei | Tests |
+|---|---|
+| `auth-forms.e2e.spec.ts` | Login, Registrierung, Logout |
+| `routing.e2e.spec.ts` | Root-Redirect, Auth-Guard, Login→Blackjack |
+| `modals.e2e.spec.ts` | How-to-play, Daily Reward, Narrow Viewport, Tab-Navigation |
+| `blackjack-game.e2e.spec.ts` | Bet→Deal→Stand→Result, Fresh-Page-State |
+| `settings.e2e.spec.ts` | Öffnen, Sprache vor/zurück, Escape, Sprachwechsel |
+
+---
+
+## ⚙️ Backend — Vitest (Unit)
+**23 Test-Dateien** — `npm test` im Backend
+
+| Bereich | Dateien |
+|---|---|
+| Utils | `jwt.test.ts`, `passwords.test.ts`, `money.test.ts`, `tokenHash.test.ts` |
+| Middlewares | `authGuard`, `apiKeyGuard`, `rateLimiters`, `errorHandler`, `notFoundHandler`, `validateRequest` |
+| Controller | `auth`, `wallet`, `user`, `shop`, `round`, `rewards`, `powerups`, `fairness`, `leaderboard`, `inventory` |
+| Spezial | `round.fairness.test.ts` (Provably-Fair-Logik) |
+| Integration | `db-integrity.test.ts` (Docker/MySQL), `app.health.test.ts` |
+
+---
+
+## 📊 Backend — k6 Performance
+**4 Szenarien** — `npm run perf`
+
+| Datei | Was wird gemessen |
+|---|---|
+| `auth-flow.js` | Login + Register (p95 < 600ms) |
+| `game-flow.js` | Bet→Deal→Stand Zyklus (p95 < 300ms) |
+| `wallet-flow.js` | Wallet-Abfragen |
+| `leaderboard.js` | Leaderboard-Abfragen |
