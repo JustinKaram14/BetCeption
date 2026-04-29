@@ -15,8 +15,10 @@
  */
 
 import { check, sleep } from 'k6';
+import http from 'k6/http';
 import { Counter } from 'k6/metrics';
 import {
+  BASE_URL,
   registerUser,
   loginUser,
   deposit,
@@ -28,6 +30,11 @@ import {
 import { gameThresholds } from '../lib/thresholds.js';
 
 const gameErrors = new Counter('game_errors');
+
+// 404 (kein aktive Runde) und 409 (Runden-Konflikt bei Recovery) sind erwartete
+// Statuscodes im Spielablauf und dürfen http_req_failed nicht erhöhen.
+// Echte Fehler (5xx, Netzwerkprobleme) werden weiterhin als Fehler gezählt.
+http.setResponseCallback(http.expectedStatuses({ min: 200, max: 299 }, 404, 409));
 
 // Anzahl vorab registrierter Testnutzer (= max. gleichzeitige VUs)
 const VU_COUNT = 10;
@@ -100,12 +107,36 @@ export default function (users) {
 
   // Jede VU bekommt einen festen Nutzer (VU-IDs starten bei 1)
   const user = users[(__VU - 1) % users.length];
+  const authHeaders = { 'Authorization': `Bearer ${user.token}`, 'Content-Type': 'application/json' };
 
-  // --- Round Start ---
-  const startRes = startRound(user.token, 10);
-  const startOk  = check(startRes, { 'round start → 201': (r) => r.status === 201 });
+  // --- Round Start (mit einmaligem Recovery-Retry bei 409) ---
+  let startRes = startRound(user.token, 10);
+
+  if (startRes.status === 409) {
+    // Steckengebliebene Runde aus einem vorherigen Durchlauf abschließen und erneut versuchen.
+    const activeRes = http.get(`${BASE_URL}/round/active`, { headers: authHeaders });
+    if (activeRes.status === 200) {
+      try {
+        const active = JSON.parse(activeRes.body);
+        const stuckId = active.round?.id;
+        if (stuckId) {
+          if (active.round?.playerHand?.status === 'active') {
+            const stRes = standRound(user.token, stuckId);
+            if (stRes.status !== 200) {
+              gameErrors.add(1);
+              sleep(1);
+              return;
+            }
+          }
+          settleRound(user.token, stuckId);
+        }
+      } catch (_) { /* JSON-Fehler ignorieren */ }
+    }
+    startRes = startRound(user.token, 10);
+  }
+
+  const startOk = check(startRes, { 'round start → 201': (r) => r.status === 201 });
   if (!startOk) {
-    // Möglicherweise abgelaufenes Token – neu einloggen und weiterfahren
     const newToken = loginUser(user.email, user.password);
     if (newToken) user.token = newToken;
     gameErrors.add(1);
@@ -113,15 +144,18 @@ export default function (users) {
     return;
   }
 
-  const roundId = JSON.parse(startRes.body).round.id;
+  const round   = JSON.parse(startRes.body).round;
+  const roundId = round.id;
 
-  // --- Stand (einfachster Pfad ohne Bustrisiko) ---
-  const standRes = standRound(user.token, roundId);
-  const standOk  = check(standRes, { 'round stand → 200': (r) => r.status === 200 });
-  if (!standOk) {
-    gameErrors.add(1);
-    sleep(1);
-    return;
+  // --- Stand (nur wenn Spielerhand noch aktiv; bei Natural Blackjack überspringen) ---
+  if (round.playerHand.status === 'active') {
+    const standRes = standRound(user.token, roundId);
+    const standOk  = check(standRes, { 'round stand → 200': (r) => r.status === 200 });
+    if (!standOk) {
+      gameErrors.add(1);
+      sleep(1);
+      return;
+    }
   }
 
   // --- Settle ---

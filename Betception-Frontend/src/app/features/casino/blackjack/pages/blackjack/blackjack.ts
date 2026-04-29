@@ -35,7 +35,7 @@ export class Blackjack implements OnInit {
   private readonly resultPauseMs = 250;
 
   round: RoundState | null = null;
-  betAmount = 10;
+  betAmount = 0;
   balance: number | null = null;
   busyAction: ActionKind | null = null;
   error: string | null = null;

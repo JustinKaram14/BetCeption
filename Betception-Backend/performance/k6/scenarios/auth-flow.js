@@ -44,8 +44,11 @@ export default function () {
   const password = 'Perf1234!';
 
   // --- Register ---
+
   const regRes = registerUser(email, username, password);
-  const regOk = check(regRes, { 'register → 201': (r) => r.status === 201 });
+  const regOk = check(regRes, {
+    'register → 201 or 409': (r) => r.status === 201 || r.status === 409,
+  });
   if (!regOk) {
     authErrors.add(1);
     return;

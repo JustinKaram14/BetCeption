@@ -4,22 +4,7 @@
 
 ## Version 1.2
 
----
 
-## Seit dem letzten Stand
-
-Folgendes ist seit dem letzten Stand dazugekommen bzw. implementiert worden:
-
-- **CI/CD-Pipeline**: GitHub Actions (`ci.yml`) führt bei jedem Pull Request auf `main`/`develop` und bei jedem Push auf `main` automatisch alle Backend- und Frontend-Tests aus. Ein dedizierter Gate-Job `All Tests Pass` blockiert den Merge, solange auch nur ein Test fehlschlägt. Der Deploy-Workflow (`deploy-branch.yml`) baut den Frontend-Dist und veröffentlicht ihn nur bei erfolgreichem Push auf `main`.
-- **Abmelde-Button**: Der Nutzer kann sich nun explizit ausloggen; der vollständige Logout-Flow (POST `/auth/logout` + Session-Clear) ist in `auth.spec.ts` abgedeckt.
-- **Credentials-Persistenz**: Login-Daten bleiben nach einem Seitenreload erhalten; der Nutzer muss sich nicht erneut anmelden. Die zugrundeliegende TokenStorage-Logik ist in `token-storage.spec.ts` getestet.
-- **Spieleanleitung**: Eine HowToPlay-Ansicht wurde ergänzt; der Übersetzungsschlüssel `common.howToPlay` ist im i18n-Service für alle Sprachen verankert.
-- **Mehrsprachigkeit (i18n)**: Die Anwendung unterstützt jetzt Deutsch, Englisch, Französisch und Spanisch über einen dedizierten `i18n`-Service mit dem Typen `LanguageCode = 'de' | 'en' | 'es' | 'fr'`.
-- **Verbesserte Sicherheitswarnung**: Die Sicherheitswarnung im Frontend wurde überarbeitet und gibt dem Nutzer eine klarere, aussagekräftigere Rückmeldung bei sicherheitsrelevanten Ereignissen.
-- **Diverse Bugfixes**: Kleinere Korrekturen in verschiedenen Komponenten und Services.
-- **Docker-Build-Fix (Multi-Stage Dockerfile)**: Das Backend-Dockerfile wurde von einem Single-Stage- auf ein Multi-Stage-Build-Verfahren umgestellt (`Betception-Backend/Dockerfile`). Die neue Builder-Stage installiert alle Abhängigkeiten einschließlich DevDependencies (`npm install --include=dev`) und führt den TypeScript-Compiler aus. Die anschließende Production-Stage kopiert nur das kompilierte `dist/`-Verzeichnis und installiert ausschließlich Produktionsabhängigkeiten (`npm ci --omit=dev`). Damit wird das zuvor auftretende `sh: 1: tsc: not found`-Problem (exit code 127 beim Build) dauerhaft behoben und gleichzeitig eine schlanke Produktions-Image-Größe sichergestellt.
-- **Entrypoint-CRLF-Fix**: Das Skript `docker-entrypoint.sh` enthielt Windows-CRLF-Zeilenenden (`\r\n`), was auf Linux-Containern dazu führte, dass Bash alle Befehle mit einem angehängten `\r` aufrief und diese als unbekannte Kommandos interpretierte (exit code 127 zur Laufzeit). Die Datei wurde auf reine LF-Zeilenenden konvertiert. Zusätzlich wurde im Dockerfile ein `sed -i 's/\r$//'`-Schritt vor dem `chmod +x` ergänzt, sodass zukünftige Windows-Edits das Problem nicht erneut einbringen können.
-- **Performance-Testumgebung funktionsfähig**: Die dedizierte k6-Lasttest-Infrastruktur (`Betception-Backend/docker-compose.perf.yml`) ist durch die obigen Fixes nun vollständig lauffähig. Die Umgebung startet MySQL (`db-perf`), baut und startet das Backend (`backend-perf` auf Port 3001) und führt k6-Szenarien als kurzlebige Docker-Container aus (`grafana/k6:latest`). Eine lokale k6-Installation ist nicht erforderlich.
 
 ---
 
@@ -69,7 +54,7 @@ Folgendes ist seit dem letzten Stand dazugekommen bzw. implementiert worden:
 Dieses Testplan-Dokument für BetCeption dient der Erreichung folgender Ziele:
 
 - Identifikation der vorhandenen Projektinformationen, Testartefakte und getesteten Software-Komponenten auf Basis des Repositories, der SRS und der technischen Dokumentation `(bereits implementiert)`.
-- Beschreibung der aktuellen Testanforderungen aus Backend, Frontend, Middleware, Integrations- und Utility-Tests mit 23 Backend-Testdateien, 23 Frontend-Spec-Dateien, 78+ Backend-Testfällen und 37 Frontend-Testfällen.
+- Beschreibung der aktuellen Testanforderungen aus Backend, Frontend, Middleware, Integrations- und Utility-Tests mit 23 Backend-Testdateien, 31 Frontend-Spec-Dateien, 5 Playwright-E2E-Spec-Dateien, 4 k6-Performance-Szenarien, 101 Backend-Testfällen und 147 Frontend-Testfällen.
 - Empfehlung und Beschreibung der Teststrategie für bereits vorhandene und künftig noch zu ergänzende Testarten `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
 - Benennung der benötigten Ressourcen, Werkzeuge und Testumgebungen für die Weiterführung der Testaktivitäten `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
 - Definition der zu liefernden Testartefakte wie Testmodell, Testprotokolle und Defect Reports auf Basis des aktuellen Projektstands `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
@@ -88,7 +73,7 @@ Inhaltlich zeigen die Tests eine klare Konzentration auf Kernprozesse wie Regist
 <a id="13-scope"></a>
 ## 1.3 Scope
 
-Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/API Test und einen kleinen Integrationsumfang für den Health-Endpunkt `(bereits implementiert)`. Systematische End-to-End-, Performance-, Recovery- und Installations-Tests sind fachlich vorgesehen, im aktuellen Repository aber nicht als Testautomatisierung vorhanden `(noch nicht implementiert)`.
+Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/API Test, Integration Test, End-to-End-Test und Performance-Test `(bereits implementiert)`. Recovery- und Installations-Tests sind fachlich vorgesehen, aber noch nicht als Testautomatisierung vorhanden `(noch nicht implementiert)`.
 
 **Funktionen, die durch vorhandene Tests abgedeckt werden:**
 
@@ -106,8 +91,6 @@ Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/
 
 **Funktionen, die aktuell nicht oder nicht ausreichend automatisiert getestet werden:**
 
-- Komplette Ende-zu-Ende-Nutzerflüsse über Browser und Backend hinweg.
-- Leistungs-, Last-, Stress- und Volumentests unter realistischen Parallelzugriffen.
 - Failover-, Recovery- und Installationsszenarien auf Infrastruktur- oder Deployment-Ebene.
 - Systematische Multi-Browser- und Multi-Geräte-Konfigurationstests.
 
@@ -125,7 +108,7 @@ Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/
 
 **Constraints:**
 
-- Es existiert aktuell keine im Repository sichtbare E2E-Suite, kein dediziertes Performance-Framework und keine formale Testmanagement-Datenbank.
+- Recovery- und Installationstests sind noch nicht als automatisierte Suite vorhanden.
 
 <a id="14-project-identification"></a>
 ## 1.4 Project Identification
@@ -164,6 +147,19 @@ Die folgende Auflistung enthält jene Elemente – Anwendungsfälle, funktionale
 # 3. Test Strategy
 
 Die Teststrategie orientiert sich am tatsächlich vorhandenen Testbestand und erweitert ihn um die im Projektkontext sinnvollen, aber noch fehlenden Testarten. Bestehende Tests sichern vor allem fachliche Logik, API-Verhalten, Eingabevalidierung und zentrale UI-Komponenten ab `(bereits implementiert)`. Nicht vorhandene Testarten werden in diesem Dokument als empfohlene Ergänzung beschrieben, damit aus dem aktuellen Unit-/Controller-Fokus ein vollständigerer Qualitätssicherungsansatz entstehen kann `(noch nicht implementiert)`.
+
+### Coverage-Ziel
+
+Das Projekt definiert eine **Mindest-Testabdeckung von 80 %** für alle vier Metriken (Statements, Branches, Functions, Lines) — gemessen jeweils separat für Backend (Jest) und Frontend (Karma/Istanbul). Dieses Ziel gilt für produktiven Quellcode; reine Infrastrukturdateien wie TypeORM-Entities, DB-Migrationen und Konfigurationsskripte können bei der Gesamtberechnung ausgeschlossen werden.
+
+| Metrik | Zielwert | Backend (aktuell) | Frontend (aktuell) |
+|---|---|---|---|
+| Statements | ≥ 80 % | 76,3 % | 74,3 % |
+| Branches | ≥ 80 % | 53,1 % | 63,3 % |
+| Functions | ≥ 80 % | 52,9 % | 63,7 % |
+| Lines | ≥ 80 % | 79,8 % | 74,9 % |
+
+Die Abweichungen resultieren vor allem aus nicht vollständig getesteten Bereichen wie `round.controller.ts` (Branch-Coverage), `rateLimiters.ts` sowie Frontend-Komponenten ohne dedizierte Spec-Dateien. Der Abbau dieser Lücken ist als Aufgabe im Testplan vermerkt.
 
 <a id="31-testing-types"></a>
 ## 3.1 Testing Types
@@ -215,8 +211,8 @@ Die Teststrategie orientiert sich am tatsächlich vorhandenen Testbestand und er
 |---|---|
 | Test Objective | Messung der Antwortzeiten kritischer Transaktionen (Login, Register, Round Start/Hit/Stand/Settle, Wallet Summary, Leaderboard) unter Ramp-Last mit bis zu 20 gleichzeitigen virtuellen Nutzern. |
 | Technique | Vier k6-Szenarien in `performance/k6/scenarios/`: **auth-flow.js** (Register + Login, 10 VUs), **game-flow.js** (vollständiger Blackjack-Rundenablauf: Start → Stand → Settle, 10 VUs), **wallet-flow.js** (Deposit + Summary + Transactions, 10 VUs), **leaderboard.js** (alle drei Leaderboard-Endpunkte, 20 VUs). Jedes Szenario misst p(95) über gefilterte Tags (`name:round_start`, `name:login` usw.) und wertet sie gegen die SRS-Ziele aus: < 300 ms für Spielaktionen, < 600 ms für Auth, < 1 % Fehlerrate. |
-| Completion Criteria | Alle k6-Threshold-Prüfungen (p95, Fehlerrate, Fehlerzähler) werden bestanden, wenn die Skripte gegen die dedizierte Perf-Umgebung (`docker-compose.perf.yml`) ausgeführt werden. Ergebnisse werden als JSON-Artifacts in CI gespeichert. Die Perf-Umgebung ist nach dem Multi-Stage-Dockerfile-Fix und der CRLF-Korrektur am Entrypoint vollständig lauffähig `(bereits implementiert)`. |
-| Special Considerations | Die dedizierte Umgebung (`docker-compose.perf.yml`) exponiert das Backend auf Port 3001, nutzt eine separate MySQL-Datenbank (`betception_perf`) und hebt die Rate-Limits auf (AUTH_RATE_LIMIT_MAX=1000, RATE_LIMIT_MAX=2000). Der GitHub-Actions-Workflow `perf.yml` kann manuell oder automatisch jeden Montag um 03:00 UTC ausgeführt werden. k6 läuft als Docker-Container (`grafana/k6:latest`) innerhalb von `docker-compose.perf.yml` – eine lokale k6-Installation ist nicht erforderlich `(bereits implementiert)`. |
+| Completion Criteria | Alle k6-Threshold-Prüfungen (p95, Fehlerrate, Fehlerzähler) werden bestanden, wenn die Skripte gegen die dedizierte Perf-Umgebung (`docker-compose.perf.yml`) ausgeführt werden. Ergebnisse werden als JSON-Artifacts in CI gespeichert `(bereits implementiert)`. |
+| Special Considerations | Die dedizierte Umgebung (`docker-compose.perf.yml`) exponiert das Backend auf Port 3001, nutzt eine separate MySQL-Datenbank (`betception_perf`) und hebt die Rate-Limits auf (AUTH_RATE_LIMIT_MAX=1000, RATE_LIMIT_MAX=2000). Der GitHub-Actions-Workflow `perf.yml` kann manuell ausgeführt werden. k6 läuft als Docker-Container (`grafana/k6:latest`) innerhalb von `docker-compose.perf.yml` – eine lokale k6-Installation ist nicht erforderlich `(bereits implementiert)`. |
 
 <a id="316-load-testing"></a>
 ### 3.1.6 Load Testing
@@ -337,8 +333,6 @@ Die folgende Tabelle enthält die Systemressourcen für das Testprojekt.
 | Client Test PC's | Entwicklungsrechner mit Node.js, npm, Angular CLI-fähiger Umgebung und Browser für Karma-Tests |
 | Include special configuration requirements | Chrome-/Browser-Unterstützung für Karma, Zugriff auf Docker, Node-/npm-Kompatibilität, Umgebungsvariablen für Backend-Tests |
 | Test Repository | GitHub-Repository des Projekts BetCeption |
-| Network or Subnet | TBD für zentrale CI-/Shared-Testumgebung; lokal nicht erforderlich `(noch nicht implementiert als dedizierte Testumgebung)` |
-| Server Name | TBD; aktuell repositorybasiert ohne separates Testmanagementsystem im Codebestand `(noch nicht implementiert)` |
 | Test Development PC's | Lokale Entwicklerarbeitsplätze mit VS Code, Node.js, Docker, optional MySQL Workbench |
 
 <a id="5-project-milestones"></a>
@@ -367,7 +361,7 @@ Das Testmodell besteht aktuell aus den im Repository vorhandenen Jest- und Jasmi
 Zu erzeugende bzw. zu pflegende Artefakte:
 
 - Repository-basierte Test-Suites für Backend und Frontend.
-- Coverage-Reports aus Jest und Karma Coverage.
+- Coverage-Reports aus Jest und Karma Coverage mit Mindestabdeckung von **80 % Statements, Branches, Functions und Lines**.
 - Anforderungs-zu-Test-Matrix pro Use Case und Modul.
 - Erweiterte Nichtfunktionstest-Skripte für Performance, Load, Recovery und Installation.
 
