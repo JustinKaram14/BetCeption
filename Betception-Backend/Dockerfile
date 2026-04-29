@@ -15,8 +15,6 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
     no_proxy=${no_proxy}
 
 WORKDIR /app
-RUN npm config set proxy http://host.docker.internal:3128/ && \
-    npm config set https-proxy http://host.docker.internal:3128/
 COPY package*.json ./
 RUN npm install --include=dev
 COPY tsconfig.json ./
@@ -41,8 +39,6 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
     NODE_ENV=production
 
 WORKDIR /app
-RUN npm config set proxy http://host.docker.internal:3128/ && \
-    npm config set https-proxy http://host.docker.internal:3128/
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
