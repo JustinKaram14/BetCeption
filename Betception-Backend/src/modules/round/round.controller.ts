@@ -1007,6 +1007,9 @@ function bufferToBigInt(buffer: Buffer): bigint {
 export const roundTestUtils = {
   buildSeededDeck,
   drawCardFromSeed,
+  evaluateHand,
+  resolveMainBet,
+  evaluateSideBet,
 };
 
 function isTerminalHandStatus(status: HandStatus) {

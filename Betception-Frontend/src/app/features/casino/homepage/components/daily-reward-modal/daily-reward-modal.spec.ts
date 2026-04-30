@@ -9,6 +9,7 @@ describe('DailyRewardModalComponent', () => {
   let clearIntervalSpy: jasmine.Spy;
 
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [DailyRewardModalComponent],
     }).compileComponents();

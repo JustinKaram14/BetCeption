@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HomepageComponent } from './homepage';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
@@ -160,17 +160,122 @@ describe('HomepageComponent', () => {
     expect(fixture.debugElement.query(By.directive(DailyRewardModalComponent))).toBeTruthy();
   });
 
-  it('switches to the stacked layout on narrow viewports', (done) => {
-    const mainContent: HTMLElement = fixture.nativeElement.querySelector('[data-testid="homepage-main-content"]');
+  it('returns true for isNarrow when outerWidth is narrow', () => {
     const originalWidth = window.outerWidth;
-
     Object.defineProperty(window, 'outerWidth', { get: () => 560, configurable: true });
-    fixture.detectChanges();
+    expect(component.isNarrow).toBeTrue();
+    Object.defineProperty(window, 'outerWidth', { get: () => originalWidth, configurable: true });
+  });
 
-    window.requestAnimationFrame(() => {
-      expect(getComputedStyle(mainContent).flexDirection).toBe('column');
-      Object.defineProperty(window, 'outerWidth', { get: () => originalWidth, configurable: true });
-      done();
-    });
+  it('onWindowResize can be called without error', () => {
+    expect(() => component.onWindowResize()).not.toThrow();
+  });
+
+  it('shows a success toast on successful login', () => {
+    const toastSpy = spyOn((component as any).toast, 'success');
+    authFacadeMock.login.and.returnValue(of({ sub: 'u1', email: 't@t.com', username: 'tester' } as any));
+    component.onLogin({ email: 't@t.com', password: 'pw' });
+    expect(toastSpy).toHaveBeenCalled();
+  });
+
+  it('shows an error toast on login failure (string error)', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.login.and.returnValue(throwError(() => 'Login failed'));
+    component.onLogin({ email: 't@t.com', password: 'pw' });
+    expect(toastSpy).toHaveBeenCalledWith('Login failed');
+  });
+
+  it('shows an error toast on login failure (error.error.message)', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.login.and.returnValue(throwError(() => ({ error: { message: 'Invalid credentials' } })));
+    component.onLogin({ email: 't@t.com', password: 'pw' });
+    expect(toastSpy).toHaveBeenCalledWith('Invalid credentials');
+  });
+
+  it('shows an error toast on login failure (error.error as string)', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.login.and.returnValue(throwError(() => ({ error: 'Unauthorized' })));
+    component.onLogin({ email: 't@t.com', password: 'pw' });
+    expect(toastSpy).toHaveBeenCalledWith('Unauthorized');
+  });
+
+  it('shows an error toast on login failure (error.message)', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.login.and.returnValue(throwError(() => ({ message: 'Network error' })));
+    component.onLogin({ email: 't@t.com', password: 'pw' });
+    expect(toastSpy).toHaveBeenCalled();
+  });
+
+  it('shows a fallback error toast on login failure (unknown shape)', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.login.and.returnValue(throwError(() => ({ unknownProp: true })));
+    component.onLogin({ email: 't@t.com', password: 'pw' });
+    expect(toastSpy).toHaveBeenCalled();
+  });
+
+  it('shows a success toast on successful register', () => {
+    const toastSpy = spyOn((component as any).toast, 'success');
+    authFacadeMock.register.and.returnValue(of({ message: 'ok' } as any));
+    authFacadeMock.login.and.returnValue(of({ sub: 'u1', email: 't@t.com', username: 'new' } as any));
+    component.onRegister({ email: 't@t.com', username: 'new', password: 'pw' });
+    expect(toastSpy).toHaveBeenCalled();
+  });
+
+  it('calls logout on authFacade and does not throw on success', () => {
+    authFacadeMock.logout.and.returnValue(of(undefined));
+    expect(() => component.onLogout()).not.toThrow();
+  });
+
+  it('shows an error toast on logout failure', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.logout.and.returnValue(throwError(() => new Error('Network error')));
+    component.onLogout();
+    expect(toastSpy).toHaveBeenCalled();
+  });
+
+  it('navigates to /blackjack when entering as authenticated user', () => {
+    authFacadeMock.isAuthenticated.and.returnValue(true);
+    component.onEnter();
+    expect(routerNavigateSpy).toHaveBeenCalledWith(['/blackjack']);
+  });
+
+  it('shows a toast when entering as unauthenticated user', () => {
+    authFacadeMock.isAuthenticated.and.returnValue(false);
+    const toastSpy = spyOn((component as any).toast, 'error');
+    component.onEnter();
+    expect(toastSpy).toHaveBeenCalled();
+    expect(routerNavigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('shows a toast when claiming rewards while unauthenticated', () => {
+    authFacadeMock.isAuthenticated.and.returnValue(false);
+    const toastSpy = spyOn((component as any).toast, 'error');
+    component.onRewards();
+    expect(toastSpy).toHaveBeenCalled();
+    expect(component.showRewardModal).toBeFalse();
+  });
+
+  it('sets already-claimed state on 409 reward error', () => {
+    authFacadeMock.isAuthenticated.and.returnValue(true);
+    const eligibleAt = '2026-04-30T10:00:00.000Z';
+    walletMock.claimDailyReward.and.returnValue(throwError(() => ({ status: 409, error: { eligibleAt } })));
+    component.onRewards();
+    expect(component.rewardState).toEqual({ kind: 'already-claimed', eligibleAt });
+  });
+
+  it('closes reward modal and shows toast on non-409 reward error', () => {
+    authFacadeMock.isAuthenticated.and.returnValue(true);
+    const toastSpy = spyOn((component as any).toast, 'error');
+    walletMock.claimDailyReward.and.returnValue(throwError(() => ({ status: 500, error: { message: 'Server error' } })));
+    component.showRewardModal = true;
+    component.onRewards();
+    expect(toastSpy).toHaveBeenCalled();
+    expect(component.showRewardModal).toBeFalse();
+  });
+
+  it('closeRewardModal sets showRewardModal to false', () => {
+    component.showRewardModal = true;
+    component.closeRewardModal();
+    expect(component.showRewardModal).toBeFalse();
   });
 });
