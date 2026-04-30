@@ -150,6 +150,241 @@ describe('Blackjack', () => {
     expect(component.balance).toBe(1000);
   });
 
+  describe('guard conditions', () => {
+    it('onPlaceBet is a no-op when a round is active', () => {
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.betAmount = 50;
+      component.onPlaceBet(25);
+      expect(component.betAmount).toBe(50);
+    });
+
+    it('onPlaceBet places the bet without cap when balance is null', () => {
+      component.balance = null;
+      component.round = null;
+      component.betAmount = 0;
+      component.onPlaceBet(100);
+      expect(component.betAmount).toBe(100);
+    });
+
+    it('onResetBet is a no-op when a round is active', () => {
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.betAmount = 50;
+      component.onResetBet();
+      expect(component.betAmount).toBe(50);
+    });
+
+    it('onDeal is a no-op when busyAction is already set', () => {
+      component.busyAction = 'hit';
+      component.betAmount = 25;
+      component.onDeal();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
+    it('onDeal sets error when betAmount is 0', () => {
+      component.betAmount = 0;
+      component.onDeal();
+      expect(component.error).toBeTruthy();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
+    it('onHit is a no-op when round is null', () => {
+      component.round = null;
+      component.onHit();
+      expect(rngMock.hit).not.toHaveBeenCalled();
+    });
+
+    it('onHit is a no-op when busyAction is set', () => {
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.busyAction = 'deal';
+      component.onHit();
+      expect(rngMock.hit).not.toHaveBeenCalled();
+    });
+
+    it('onStand is a no-op when round is null', () => {
+      component.round = null;
+      component.onStand();
+      expect(rngMock.stand).not.toHaveBeenCalled();
+    });
+
+    it('onSettle is a no-op when round is null', () => {
+      component.round = null;
+      component.onSettle();
+      expect(rngMock.settle).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isRoundActive getter', () => {
+    it('returns true for CREATED status', () => {
+      component.round = makeRoundState(RoundStatus.CREATED, HandStatus.ACTIVE);
+      expect(component.isRoundActive).toBeTrue();
+    });
+
+    it('returns true for DEALING status', () => {
+      component.round = makeRoundState(RoundStatus.DEALING, HandStatus.ACTIVE);
+      expect(component.isRoundActive).toBeTrue();
+    });
+
+    it('returns false for ABORTED status', () => {
+      component.round = makeRoundState(RoundStatus.ABORTED, HandStatus.SETTLED);
+      expect(component.isRoundActive).toBeFalse();
+    });
+  });
+
+  describe('onNextRound', () => {
+    it('resets round-related state', () => {
+      component.showRoundOverlay = true;
+      component.roundOutcome = { headline: 'Win!', detail: null, won: true, lost: false, push: false, dealerInfo: null };
+      component.round = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED);
+      component.onNextRound();
+      expect(component.showRoundOverlay).toBeFalse();
+      expect(component.round).toBeNull();
+      expect(component.roundOutcome).toBeNull();
+    });
+
+    it('caps betAmount to balance when it exceeds the balance', () => {
+      component.balance = 20;
+      component.betAmount = 50;
+      component.onNextRound();
+      expect(component.betAmount).toBe(20);
+    });
+
+    it('does not modify betAmount when balance is null', () => {
+      component.balance = null;
+      component.betAmount = 50;
+      component.onNextRound();
+      expect(component.betAmount).toBe(50);
+    });
+  });
+
+  describe('round outcomes', () => {
+    it('shows a PUSH outcome after settling with PUSH status', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.PUSH);
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+      expect(component.roundOutcome?.push).toBeTrue();
+    }));
+
+    it('shows a WON outcome with payout detail when settledAmount is available', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      settled.mainBet = { ...settled.mainBet, settledAmount: '50.00' };
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+      expect(component.roundOutcome?.won).toBeTrue();
+      expect(component.roundOutcome?.detail).toContain('50');
+    }));
+
+    it('shows a WON outcome without detail when settledAmount is null', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+      expect(component.roundOutcome?.won).toBeTrue();
+      expect(component.roundOutcome?.detail).toBeNull();
+    }));
+
+    it('shows dealer BUSTED info in round outcome', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      settled.dealerHand = { ...settled.dealerHand, status: HandStatus.BUSTED, handValue: 23 };
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+      expect(component.roundOutcome?.dealerInfo).toBeTruthy();
+    }));
+
+    it('shows dealer BLACKJACK info in round outcome', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
+      settled.dealerHand = { ...settled.dealerHand, status: HandStatus.BLACKJACK, handValue: 21 };
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+      expect(component.roundOutcome?.dealerInfo).toBeTruthy();
+    }));
+
+    it('shows a REFUNDED outcome as push', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.REFUNDED);
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+      expect(component.roundOutcome?.push).toBeTrue();
+    }));
+  });
+
+  describe('triggerBanner', () => {
+    it('shows the blackjack banner when player has blackjack and hides it after 1500 ms', fakeAsync(() => {
+      const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      const blackjack = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.BLACKJACK);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      rngMock.hit.and.returnValue(of({ round: blackjack }));
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = inProgress;
+      component.onHit();
+      expect(component.showBlackjackBanner).toBeTrue();
+      tick(1500);
+      expect(component.showBlackjackBanner).toBeFalse();
+    }));
+
+    it('does not show banner for non-blackjack hand after a hit', fakeAsync(() => {
+      const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      const afterHit = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      rngMock.hit.and.returnValue(of({ round: afterHit }));
+      component.round = inProgress;
+      component.onHit();
+      expect(component.showBlackjackBanner).toBeFalse();
+      tick(1000);
+    }));
+  });
+
+  describe('error handling', () => {
+    it('stores the error message when hit fails (error.error.message)', fakeAsync(() => {
+      rngMock.hit.and.returnValue(throwError(() => ({ error: { message: 'Hand locked' } })));
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.onHit();
+      expect(component.error).toBe('Hand locked');
+    }));
+
+    it('extracts error.error string payload', fakeAsync(() => {
+      rngMock.hit.and.returnValue(throwError(() => ({ error: 'Too many requests' })));
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.onHit();
+      expect(component.error).toBe('Too many requests');
+    }));
+
+    it('extracts error.message when no error.error exists', fakeAsync(() => {
+      rngMock.hit.and.returnValue(throwError(() => ({ message: 'Connection failed' })));
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.onHit();
+      expect(component.error).toBe('Connection failed');
+    }));
+
+    it('stores a fallback error for unknown error shapes', fakeAsync(() => {
+      rngMock.hit.and.returnValue(throwError(() => ({ unknownProp: true })));
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.onHit();
+      expect(component.error).toBeTruthy();
+    }));
+
+    it('stores a string error message directly', fakeAsync(() => {
+      rngMock.stand.and.returnValue(throwError(() => 'Network error'));
+      component.round = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      component.onStand();
+      expect(component.error).toBe('Network error');
+    }));
+  });
+
   describe('onPlaceBet', () => {
     it('accumulates bets within the available balance', () => {
       component.betAmount = 0;

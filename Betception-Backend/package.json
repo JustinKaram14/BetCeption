@@ -89,6 +89,14 @@
     },
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.ts"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "\\.entity\\.ts$",
+      "src/entity/",
+      "src/db/migrations/",
+      "src/db/data-source\\.ts$"
     ]
   }
 }

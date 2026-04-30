@@ -43,6 +43,37 @@ describe('authGuard middleware', () => {
     expect(res.json).toHaveBeenCalledWith({ message: 'Invalid or expired token' });
   });
 
+  it('calls next immediately when req.user is already populated', async () => {
+    const existing = { sub: 'user-1', email: 'u@test.com', username: 'u' };
+    const req = createMockRequest({
+      user: existing as any,
+      header: (() => undefined) as any,
+    });
+    const res = createMockResponse();
+    const next = createMockNext();
+
+    await authGuard(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(verifyAccess).not.toHaveBeenCalled();
+  });
+
+  it('allows guest access to leaderboard GET endpoints without a token', async () => {
+    const req = createMockRequest({
+      method: 'GET',
+      baseUrl: '/leaderboard/balance',
+      header: (() => undefined) as any,
+    });
+    const res = createMockResponse();
+    const next = createMockNext();
+
+    await authGuard(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('attaches decoded payload and calls next on success', async () => {
     const payload = { sub: '1', email: 'user@example.com', username: 'user' };
     const req = createMockRequest({

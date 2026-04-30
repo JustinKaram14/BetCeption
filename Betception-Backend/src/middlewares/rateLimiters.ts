@@ -6,7 +6,7 @@ import { RateLimitCounter } from '../entity/RateLimitCounter.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 
-class TypeOrmRateLimitStore implements Store {
+export class TypeOrmRateLimitStore implements Store {
   windowMs = 60_000;
   localKeys = false;
 
