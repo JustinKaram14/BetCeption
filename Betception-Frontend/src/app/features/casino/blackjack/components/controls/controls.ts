@@ -24,7 +24,6 @@ export class Controls {
   @Output() deal = new EventEmitter<void>();
   @Output() hit = new EventEmitter<void>();
   @Output() stand = new EventEmitter<void>();
-  @Output() settle = new EventEmitter<void>();
 
   readonly chips = [1, 5, 25, 100, 500];
 
@@ -55,15 +54,6 @@ export class Controls {
 
   get canStand() {
     return this.roundStatus === RoundStatus.IN_PROGRESS && this.playerHandStatus === HandStatus.ACTIVE && !this.busy;
-  }
-
-  get canSettle() {
-    const roundOpen =
-      this.roundStatus &&
-      this.roundStatus !== RoundStatus.SETTLED &&
-      this.roundStatus !== RoundStatus.ABORTED;
-    const playerDone = this.playerHandStatus && this.playerHandStatus !== HandStatus.ACTIVE;
-    return !!roundOpen && !!playerDone && !this.busy;
   }
 
   get isRoundActive() {
