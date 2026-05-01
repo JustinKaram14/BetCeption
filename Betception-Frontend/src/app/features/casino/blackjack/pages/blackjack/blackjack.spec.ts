@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { Blackjack } from './blackjack';
-import { HandOwnerType, HandStatus, MainBetStatus, RoundStatus } from '../../../../../core/api/api.types';
+import { HandOwnerType, HandStatus, MainBetStatus, RoundStatus, type LevelProgress } from '../../../../../core/api/api.types';
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 
@@ -15,6 +15,15 @@ describe('Blackjack', () => {
     ['startRound', 'getActiveRound', 'hit', 'stand', 'settle'],
   );
   const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
+  const levelProgress: LevelProgress = {
+    level: 1,
+    xp: 0,
+    currentLevelXp: 0,
+    nextLevelXp: 500,
+    xpIntoLevel: 0,
+    xpToNextLevel: 500,
+    progressPercent: 0,
+  };
 
   beforeEach(async () => {
     walletMock.getSummary.and.returnValue(
@@ -24,6 +33,7 @@ describe('Blackjack', () => {
         balance: 1000,
         xp: 0,
         level: 1,
+        levelProgress,
         lastDailyRewardAt: null,
       }),
     );
@@ -57,6 +67,7 @@ describe('Blackjack', () => {
             cards: [],
           },
           sideBets: [],
+          playerProgress: null,
           fairness: {
             roundId: 'round-1',
             status: RoundStatus.ABORTED,
@@ -128,6 +139,7 @@ describe('Blackjack', () => {
         cards: [],
       },
       sideBets: [],
+      playerProgress: levelProgress,
       fairness: {
         roundId: 'round-1',
         status,
