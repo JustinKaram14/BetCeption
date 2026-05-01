@@ -1,0 +1,21 @@
+<div
+  class="level-progress"
+  [ngClass]="{
+    'level-progress--vertical': orientation === 'vertical',
+    'level-progress--horizontal': orientation === 'horizontal',
+    'level-progress--compact': compact,
+    'level-progress--pulse': xpGained > 0
+  }"
+  [style.--progress.%]="percent"
+>
+  <div class="level-progress__meta">
+    <span class="level-progress__level">LVL {{ progress?.level ?? 1 }}</span>
+    <span class="level-progress__xp" *ngIf="orientation === 'horizontal'">{{ xpLabel }}</span>
+  </div>
+
+  <div class="level-progress__track" aria-hidden="true">
+    <div class="level-progress__fill"></div>
+  </div>
+
+  <div class="level-progress__gain" *ngIf="xpGained > 0">+{{ xpGained }} XP</div>
+</div>

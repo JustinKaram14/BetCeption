@@ -24,6 +24,7 @@ import {
 } from '../../entity/enums.js';
 import { centsToDecimal, decimalToCents, multiplyMoney } from '../../utils/money.js';
 import { buildFairnessPayload } from '../fairness/fairness.utils.js';
+import { awardRoundXp, buildLevelProgress, countWonSideBets } from '../progression/progression.js';
 import type { RoundIdParams, StartRoundInput } from './round.schema.js';
 
 type RoundWithRelations = Round & {
@@ -53,6 +54,10 @@ type SideBetResolution = {
   status: SideBetStatus;
   multiplier: number;
   isRefund: boolean;
+};
+
+type SerializeRoundOptions = {
+  xpGained?: number;
 };
 
 const ACTIVE_ROUND_STATUSES = [
@@ -363,7 +368,7 @@ export async function settleRound(
     const userId = getUserIdOrThrow(req);
     const { roundId } = req.params;
 
-    await AppDataSource.transaction(async (manager) => {
+    const settlementProgress = await AppDataSource.transaction(async (manager) => {
       const round = await loadRoundOrFail(roundId, userId, manager);
       if (round.status === RoundStatus.SETTLED) {
         throw new RoundFlowError(409, 'ROUND_SETTLED', 'Round already settled');
@@ -430,9 +435,11 @@ export async function settleRound(
       const playerSideBets = (round.sideBets ?? []).filter(
         (sideBet) => sideBet.user.id === userId,
       );
+      const settledSideBetStatuses: SideBetStatus[] = [];
       for (const sideBet of playerSideBets) {
         if (sideBet.status !== SideBetStatus.PLACED) continue;
         const outcome = evaluateSideBet(sideBet, round, sideBet.user.id);
+        settledSideBetStatuses.push(outcome.status);
         const payoutDecimal = multiplyMoney(sideBet.amount, outcome.multiplier);
         const payoutCents = decimalToCents(payoutDecimal);
 
@@ -462,8 +469,15 @@ export async function settleRound(
       if (pendingCredit > 0n) {
         const balance = decimalToCents(user.balance);
         user.balance = centsToDecimal(balance + pendingCredit);
-        await userRepo.save(user);
       }
+
+      const progress = awardRoundXp(user, {
+        mainBetStatus: resolution.status,
+        playerHandStatus: playerHand.status,
+        wonSideBets: countWonSideBets(settledSideBetStatuses),
+      });
+      await userRepo.save(user);
+
       if (walletTxs.length) {
         await walletRepo.save(walletTxs);
       }
@@ -471,13 +485,19 @@ export async function settleRound(
       round.status = RoundStatus.SETTLED;
       round.endedAt = new Date();
       await manager.getRepository(Round).save(round);
+
+      return progress;
     });
 
     const updatedRound = await loadRoundForUser(roundId, userId);
     if (!updatedRound) {
       throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
     }
-    return res.json({ round: serializeRound(updatedRound, userId) });
+    return res.json({
+      round: serializeRound(updatedRound, userId, {
+        xpGained: settlementProgress.xpGained,
+      }),
+    });
   } catch (error) {
     return handleRoundError(res, error);
   }
@@ -639,7 +659,11 @@ async function loadRoundOrFail(
   return round;
 }
 
-function serializeRound(round: RoundWithRelations, userId: string) {
+function serializeRound(
+  round: RoundWithRelations,
+  userId: string,
+  options: SerializeRoundOptions = {},
+) {
   const playerHand = getPlayerHand(round, userId);
   const dealerHand = getDealerHand(round);
   const mainBet = getMainBetForUser(round, userId);
@@ -679,6 +703,12 @@ function serializeRound(round: RoundWithRelations, userId: string) {
     playerHand: serializeHand(playerHand),
     dealerHand: serializeHand(dealerHand, ACTIVE_ROUND_STATUSES.includes(round.status as typeof ACTIVE_ROUND_STATUSES[number])),
     sideBets,
+    playerProgress: playerHand.user
+      ? {
+          ...buildLevelProgress(playerHand.user),
+          xpGained: options.xpGained ?? 0,
+        }
+      : null,
     fairness: buildFairnessPayload(round),
   };
 }

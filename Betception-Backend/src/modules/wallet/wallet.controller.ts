@@ -4,6 +4,7 @@ import { User } from '../../entity/User.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
 import { centsToDecimal, centsToNumber, decimalToCents } from '../../utils/money.js';
+import { buildLevelProgress } from '../progression/progression.js';
 import type {
   WalletAdjustmentInput,
   WalletTransactionsQuery,
@@ -25,6 +26,7 @@ export async function getWalletSummary(req: Request, res: Response) {
     balance: Number(user.balance),
     xp: user.xp,
     level: user.level,
+    levelProgress: buildLevelProgress(user),
     lastDailyRewardAt: user.lastDailyRewardAt,
   });
 }
