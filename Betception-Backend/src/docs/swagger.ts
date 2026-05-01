@@ -88,6 +88,29 @@ const components = {
         },
         xp: { type: 'integer' },
         level: { type: 'integer' },
+        levelProgress: { $ref: '#/components/schemas/LevelProgress' },
+      },
+    },
+    LevelProgress: {
+      type: 'object',
+      required: [
+        'level',
+        'xp',
+        'currentLevelXp',
+        'nextLevelXp',
+        'xpIntoLevel',
+        'xpToNextLevel',
+        'progressPercent',
+      ],
+      properties: {
+        level: { type: 'integer', minimum: 1 },
+        xp: { type: 'integer', minimum: 0 },
+        currentLevelXp: { type: 'integer', minimum: 0 },
+        nextLevelXp: { type: 'integer', minimum: 1 },
+        xpIntoLevel: { type: 'integer', minimum: 0 },
+        xpToNextLevel: { type: 'integer', minimum: 0 },
+        progressPercent: { type: 'number', minimum: 0, maximum: 100 },
+        xpGained: { type: 'integer', minimum: 0 },
       },
     },
     UserProfileResponse: {
@@ -99,7 +122,7 @@ const components = {
     },
     WalletSummary: {
       type: 'object',
-      required: ['id', 'username', 'balance', 'xp', 'level', 'lastDailyRewardAt'],
+      required: ['id', 'username', 'balance', 'xp', 'level', 'levelProgress', 'lastDailyRewardAt'],
       properties: {
         id: { type: 'string' },
         username: { type: 'string' },
@@ -111,6 +134,7 @@ const components = {
         },
         xp: { type: 'integer' },
         level: { type: 'integer' },
+        levelProgress: { $ref: '#/components/schemas/LevelProgress' },
         lastDailyRewardAt: {
           type: 'string',
           format: 'date',
@@ -335,6 +359,10 @@ const components = {
         sideBets: {
           type: 'array',
           items: { $ref: '#/components/schemas/BlackjackSideBet' },
+        },
+        playerProgress: {
+          allOf: [{ $ref: '#/components/schemas/LevelProgress' }],
+          nullable: true,
         },
       },
     },
