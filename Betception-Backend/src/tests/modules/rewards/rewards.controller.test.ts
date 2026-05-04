@@ -97,4 +97,32 @@ describe('rewards.controller', () => {
       eligibleAt: '2025-01-02T00:00:00.000Z',
     });
   });
+
+  it('returns 404 when the user is not found', async () => {
+    const now = new Date('2025-01-01T12:00:00Z');
+    jest.setSystemTime(now);
+
+    const userRepo = createMockRepository<User>({
+      findOne: jest.fn().mockResolvedValue(null),
+    });
+    const claimRepo = createMockRepository<DailyRewardClaim>();
+    const walletRepo = createMockRepository<WalletTransaction>();
+
+    const transactionRepos = new Map<any, any>();
+    transactionRepos.set(User, userRepo);
+    transactionRepos.set(DailyRewardClaim, claimRepo);
+    transactionRepos.set(WalletTransaction, walletRepo);
+    mockAppDataSourceTransaction(transactionRepos);
+
+    const req = createMockRequest({ user: { sub: 'nonexistent' } as any });
+    const res = createMockResponse();
+
+    await claimDailyReward(req as any, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'User not found',
+      code: 'USER_NOT_FOUND',
+    });
+  });
 });

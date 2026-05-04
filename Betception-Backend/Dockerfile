@@ -15,8 +15,14 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
     no_proxy=${no_proxy}
 
 WORKDIR /app
+# --- BOSCH PROXY: uncomment the next two lines if behind the Bosch corporate proxy ---
+# RUN npm config set proxy http://host.docker.internal:3128/ && \
+#     npm config set https-proxy http://host.docker.internal:3128/
 COPY package*.json ./
-RUN npm install --include=dev
+ARG CACHEBUST=1
+ENV NPM_CONFIG_PRODUCTION=false NODE_ENV=development
+RUN npm ci --include=dev \
+ && test -x node_modules/.bin/tsc || (echo "tsc missing after npm ci — devDependencies were skipped" && ls node_modules/.bin | head -40 && exit 1)
 COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
@@ -39,6 +45,9 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
     NODE_ENV=production
 
 WORKDIR /app
+# --- BOSCH PROXY: uncomment the next two lines if behind the Bosch corporate proxy ---
+# RUN npm config set proxy http://host.docker.internal:3128/ && \
+#     npm config set https-proxy http://host.docker.internal:3128/
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist

@@ -13,6 +13,10 @@
       </svg>
     </a>
 
+    <div class="peek-badge" *ngIf="peekCard !== null && isRoundActive">
+      {{ i18n.t('powerup.peek.reveal') }} {{ peekCard.rank }}{{ peekCard.suit }}
+    </div>
+
     <app-level-progress
       class="game-level-progress"
       [progress]="levelProgress"
@@ -57,12 +61,28 @@
       [roundStatus]="round?.status ?? null"
       [playerHandStatus]="playerHandStatus"
       [busy]="!!busyAction"
+      [activePowerupCodes]="activePowerupCodes"
       (placeBet)="onPlaceBet($event)"
       (resetBet)="onResetBet()"
       (deal)="onDeal()"
       (hit)="onHit()"
       (stand)="onStand()"
-      (settle)="onSettle()"
+      (openPowerupMenu)="onOpenPowerupMenu()"
     ></app-controls>
   </div>
+
+  <app-powerup-menu
+    *ngIf="showPowerupMenu"
+    [inventory]="inventory"
+    [availablePowerups]="availablePowerups"
+    [roundId]="round?.id ?? null"
+    [roundActive]="isRoundActive"
+    [balance]="balance"
+    [userLevel]="userLevel"
+    [pendingTypeIds]="pendingPowerupTypeIds"
+    (purchase)="onPurchasePowerup($event)"
+    (activate)="onActivatePowerup($event)"
+    (toggleQueue)="onToggleQueue($event)"
+    (close)="onClosePowerupMenu()"
+  ></app-powerup-menu>
 </div>

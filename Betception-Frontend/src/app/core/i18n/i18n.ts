@@ -106,7 +106,18 @@ type TranslationKey =
   | 'tutorial.previous'
   | 'tutorial.step'
   | 'tutorial.stepsLabel'
-  | 'tutorial.understood';
+  | 'tutorial.understood'
+  | 'powerup.title'
+  | 'powerup.inventory'
+  | 'powerup.shop'
+  | 'powerup.activate'
+  | 'powerup.buy'
+  | 'powerup.empty'
+  | 'powerup.button'
+  | 'powerup.peek.reveal'
+  | 'powerup.locked'
+  | 'powerup.queue'
+  | 'powerup.queued';
 
 type TranslationMap = Record<TranslationKey, string>;
 
@@ -217,6 +228,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'tutorial.step': 'Schritt {{step}}',
     'tutorial.stepsLabel': 'Tutorial Schritte',
     'tutorial.understood': 'Verstanden',
+    'powerup.title': 'Power-ups',
+    'powerup.inventory': 'Mein Inventar',
+    'powerup.shop': 'Shop',
+    'powerup.activate': 'Aktivieren',
+    'powerup.buy': 'Kaufen',
+    'powerup.empty': 'Keine Power-ups im Inventar',
+    'powerup.button': '⚡ Power-ups',
+    'powerup.peek.reveal': 'Dealer 2. Karte:',
+    'powerup.locked': 'Ab Level {{level}}',
+    'powerup.queue': 'Vormerken',
+    'powerup.queued': 'Vorgemerkt',
   },
   en: {
     'auth.createAccount': 'CREATE ACCOUNT',
@@ -322,6 +344,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'tutorial.step': 'Step {{step}}',
     'tutorial.stepsLabel': 'Tutorial steps',
     'tutorial.understood': 'Got it',
+    'powerup.title': 'Power-ups',
+    'powerup.inventory': 'My Inventory',
+    'powerup.shop': 'Shop',
+    'powerup.activate': 'Activate',
+    'powerup.buy': 'Buy',
+    'powerup.empty': 'No power-ups in inventory',
+    'powerup.button': '⚡ Power-ups',
+    'powerup.peek.reveal': 'Dealer 2nd card:',
+    'powerup.locked': 'From Level {{level}}',
+    'powerup.queue': 'Queue',
+    'powerup.queued': 'Queued',
   },
   es: {
     'auth.createAccount': 'CREAR CUENTA',
@@ -427,6 +460,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'tutorial.step': 'Paso {{step}}',
     'tutorial.stepsLabel': 'Pasos del tutorial',
     'tutorial.understood': 'Entendido',
+    'powerup.title': 'Power-ups',
+    'powerup.inventory': 'Mi Inventario',
+    'powerup.shop': 'Tienda',
+    'powerup.activate': 'Activar',
+    'powerup.buy': 'Comprar',
+    'powerup.empty': 'Sin power-ups en el inventario',
+    'powerup.button': '⚡ Power-ups',
+    'powerup.peek.reveal': '2ª carta dealer:',
+    'powerup.locked': 'Desde Nivel {{level}}',
+    'powerup.queue': 'Reservar',
+    'powerup.queued': 'Reservado',
   },
   fr: {
     'auth.createAccount': 'CRÉER UN COMPTE',
@@ -532,6 +576,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'tutorial.step': 'Étape {{step}}',
     'tutorial.stepsLabel': 'Étapes du tutoriel',
     'tutorial.understood': 'Compris',
+    'powerup.title': 'Power-ups',
+    'powerup.inventory': 'Mon Inventaire',
+    'powerup.shop': 'Boutique',
+    'powerup.activate': 'Activer',
+    'powerup.buy': 'Acheter',
+    'powerup.empty': 'Aucun power-up dans l\'inventaire',
+    'powerup.button': '⚡ Power-ups',
+    'powerup.peek.reveal': '2e carte dealer:',
+    'powerup.locked': 'Dès Niveau {{level}}',
+    'powerup.queue': 'Réserver',
+    'powerup.queued': 'Réservé',
   },
 };
 

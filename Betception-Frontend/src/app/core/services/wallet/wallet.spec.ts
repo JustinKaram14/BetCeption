@@ -49,4 +49,37 @@ describe('Wallet', () => {
     expect(apiMock.claimDailyReward).toHaveBeenCalled();
     expect(result).toEqual(reward);
   });
+
+  it('getTransactions delegates to api.getWalletTransactions', () => {
+    const transactions = { page: 1, pageSize: 10, total: 0, items: [] };
+    apiMock.getWalletTransactions.and.returnValue(of(transactions as any));
+
+    let result: any;
+    service.getTransactions().subscribe((r) => (result = r));
+
+    expect(apiMock.getWalletTransactions).toHaveBeenCalled();
+    expect(result).toEqual(transactions);
+  });
+
+  it('deposit delegates to api.depositFunds', () => {
+    const response = { message: 'ok', balance: 200, transactionId: 'tx-1' };
+    apiMock.depositFunds.and.returnValue(of(response));
+
+    let result: any;
+    service.deposit({ amount: 100 }).subscribe((r) => (result = r));
+
+    expect(apiMock.depositFunds).toHaveBeenCalledWith({ amount: 100 });
+    expect(result).toEqual(response);
+  });
+
+  it('withdraw delegates to api.withdrawFunds', () => {
+    const response = { message: 'ok', balance: 50, transactionId: 'tx-2' };
+    apiMock.withdrawFunds.and.returnValue(of(response));
+
+    let result: any;
+    service.withdraw({ amount: 50 }).subscribe((r) => (result = r));
+
+    expect(apiMock.withdrawFunds).toHaveBeenCalledWith({ amount: 50 });
+    expect(result).toEqual(response);
+  });
 });

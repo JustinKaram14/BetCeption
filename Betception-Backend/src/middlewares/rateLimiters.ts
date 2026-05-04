@@ -6,7 +6,7 @@ import { RateLimitCounter } from '../entity/RateLimitCounter.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 
-class TypeOrmRateLimitStore implements Store {
+export class TypeOrmRateLimitStore implements Store {
   windowMs = 60_000;
   localKeys = false;
 
@@ -142,4 +142,11 @@ export const refreshRateLimiter = createLimiter({
     const token = req.cookies?.refresh_token ?? 'no-token';
     return `${req.ip ?? 'unknown'}:${token}`;
   },
+});
+
+export const powerupRateLimiter = createLimiter({
+  windowMs: 60_000,
+  max: 20,
+  prefix: 'powerup',
+  keyGenerator: (req) => String(req.user?.sub ?? req.ip ?? 'anonymous'),
 });

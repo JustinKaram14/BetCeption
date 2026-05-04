@@ -19,9 +19,13 @@
     "docker:logs": "docker compose logs -f backend",
     "perf:env:up": "docker compose -f docker-compose.perf.yml up -d --build",
     "perf:env:down": "docker compose -f docker-compose.perf.yml down -v",
+    "preperf:auth": "node scripts/clean-perf-results.js results/auth-results.json results/auth-summary.json",
     "perf:auth": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/auth-results.json --summary-export /results/auth-summary.json /performance/k6/scenarios/auth-flow.js",
+    "preperf:game": "node scripts/clean-perf-results.js results/game-results.json results/game-summary.json",
     "perf:game": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/game-results.json --summary-export /results/game-summary.json /performance/k6/scenarios/game-flow.js",
+    "preperf:wallet": "node scripts/clean-perf-results.js results/wallet-results.json results/wallet-summary.json",
     "perf:wallet": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/wallet-results.json --summary-export /results/wallet-summary.json /performance/k6/scenarios/wallet-flow.js",
+    "preperf:leaderboard": "node scripts/clean-perf-results.js results/leaderboard-results.json results/leaderboard-summary.json",
     "perf:leaderboard": "docker compose -f docker-compose.perf.yml --profile k6 run --rm k6 run --out json=/results/leaderboard-results.json --summary-export /results/leaderboard-summary.json /performance/k6/scenarios/leaderboard.js",
     "perf": "npm run perf:auth && npm run perf:game && npm run perf:wallet && npm run perf:leaderboard"
   },
@@ -85,6 +89,14 @@
     },
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.ts"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "\\.entity\\.ts$",
+      "src/entity/",
+      "src/db/migrations/",
+      "src/db/data-source\\.ts$"
     ]
   }
 }

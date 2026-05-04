@@ -18,7 +18,7 @@
   text-shadow:0 0 8px var(--push-color);animation:rewards-glow 3s infinite;
   max-width:300px;width:100%
 }
-@keyframes play-pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes play-pulse{0%,100%{box-shadow:0 0 8px var(--accent-glow)}50%{box-shadow:0 0 20px var(--accent-glow),0 0 35px var(--accent-glow)}}
 @keyframes rewards-glow{0%,100%{box-shadow:0 0 5px var(--push-color)}50%{box-shadow:0 0 15px var(--push-color),0 0 25px var(--push-color)}}
 @media (max-width:900px){
   .play-panel{

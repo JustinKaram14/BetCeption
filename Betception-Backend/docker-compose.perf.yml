@@ -60,6 +60,9 @@ services:
       RATE_LIMIT_WINDOW_MS: "60000"
       AUTH_RATE_LIMIT_MAX: "1000"
       AUTH_RATE_LIMIT_WINDOW_MS: "60000"
+      # Bcrypt-Runden für Lasttest reduzieren — misst API/DB-Latenz, nicht Bcrypt-CPU
+      # 4 Runden (16 Iterationen) statt 12 (4096) → ~256× schneller, kein VU-Stau
+      BCRYPT_ROUNDS: "4"
     ports:
       - "3001:3000"
     depends_on:
