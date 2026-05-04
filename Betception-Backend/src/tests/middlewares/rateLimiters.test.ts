@@ -5,6 +5,7 @@ import {
   globalRateLimiter,
   loginRateLimiter,
   refreshRateLimiter,
+  powerupRateLimiter,
 } from '../../middlewares/rateLimiters.js';
 import { createMockNext, createMockRequest, createMockResponse } from '../test-utils.js';
 
@@ -42,6 +43,7 @@ describe('rateLimiters middleware', () => {
   const globalOptions = limiterMocks[0]?.options as RateLimitOptions;
   const loginOptions = limiterMocks[1]?.options as RateLimitOptions;
   const refreshOptions = limiterMocks[2]?.options as RateLimitOptions;
+  const powerupOptions = limiterMocks[3]?.options as RateLimitOptions;
 
   beforeEach(() => {
     jest.mocked(logger.warn).mockReset();
@@ -100,6 +102,28 @@ describe('rateLimiters middleware', () => {
     );
 
     expect(key).toBe('127.0.0.1:no-token');
+  });
+
+  it('uses userId as the powerup limiter key when user is authenticated', () => {
+    const key = powerupOptions.keyGenerator(
+      createMockRequest({
+        user: { sub: '42' } as any,
+        ip: '127.0.0.1',
+      }),
+    );
+
+    expect(powerupRateLimiter).toBeDefined();
+    expect(key).toBe('42');
+  });
+
+  it('falls back to ip for the powerup limiter when no user is set', () => {
+    const key = powerupOptions.keyGenerator(
+      createMockRequest({
+        ip: '10.0.0.1',
+      }),
+    );
+
+    expect(key).toBe('10.0.0.1');
   });
 
   it('returns 429 and logs when the limiter handler is triggered', () => {

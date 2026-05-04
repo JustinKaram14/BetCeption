@@ -22,10 +22,17 @@
     </div>
 
     <div class="center-controls">
+      <div class="active-powerups" *ngIf="activePowerupCodes.length > 0">
+        <span
+          class="active-pill"
+          *ngFor="let code of activePowerupCodes"
+        >{{ getPowerupLabel(code) }}</span>
+      </div>
       <div class="action-buttons">
         <button class="btn" data-testid="deal-button" type="button" (click)="deal.emit()" [disabled]="!canDeal">{{ i18n.t('controls.deal') }}</button>
         <button class="btn" data-testid="hit-button" type="button" (click)="hit.emit()" [disabled]="!canHit">{{ i18n.t('controls.hit') }}</button>
         <button class="btn" data-testid="stand-button" type="button" (click)="stand.emit()" [disabled]="!canStand">{{ i18n.t('controls.stand') }}</button>
+        <button class="btn btn-powerup" data-testid="powerup-button" type="button" (click)="openPowerupMenu.emit()">{{ i18n.t('powerup.button') }}</button>
       </div>
       <button class="btn reset-btn" data-testid="reset-bet-button" type="button" (click)="resetBet.emit()" [disabled]="isRoundActive || busy">{{ i18n.t('controls.reset') }}</button>
     </div>

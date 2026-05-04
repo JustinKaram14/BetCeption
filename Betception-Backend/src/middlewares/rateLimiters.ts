@@ -143,3 +143,10 @@ export const refreshRateLimiter = createLimiter({
     return `${req.ip ?? 'unknown'}:${token}`;
   },
 });
+
+export const powerupRateLimiter = createLimiter({
+  windowMs: 60_000,
+  max: 20,
+  prefix: 'powerup',
+  keyGenerator: (req) => String(req.user?.sub ?? req.ip ?? 'anonymous'),
+});
