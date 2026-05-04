@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { Blackjack } from './blackjack';
-import { HandOwnerType, HandStatus, MainBetStatus, RoundStatus } from '../../../../../core/api/api.types';
+import { HandOwnerType, HandStatus, MainBetStatus, RoundStatus, type LevelProgress } from '../../../../../core/api/api.types';
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
@@ -20,6 +20,15 @@ describe('Blackjack', () => {
     'BetceptionApi',
     ['purchasePowerup', 'consumePowerup', 'listInventory', 'listPowerups'],
   );
+  const levelProgress: LevelProgress = {
+    level: 1,
+    xp: 0,
+    currentLevelXp: 0,
+    nextLevelXp: 500,
+    xpIntoLevel: 0,
+    xpToNextLevel: 500,
+    progressPercent: 0,
+  };
 
   beforeEach(async () => {
     apiMock.listInventory.and.returnValue(of({ items: [] }));
@@ -31,6 +40,7 @@ describe('Blackjack', () => {
         balance: 1000,
         xp: 0,
         level: 1,
+        levelProgress,
         lastDailyRewardAt: null,
       }),
     );
@@ -64,6 +74,7 @@ describe('Blackjack', () => {
             cards: [],
           },
           sideBets: [],
+          playerProgress: null,
           fairness: {
             roundId: 'round-1',
             status: RoundStatus.ABORTED,
@@ -138,6 +149,7 @@ describe('Blackjack', () => {
         cards: [],
       },
       sideBets: [],
+      playerProgress: levelProgress,
       fairness: {
         roundId: 'round-1',
         status,

@@ -29,6 +29,7 @@
     inset 0 0 14px rgba(106,13,173,.16);
   pointer-events:auto;
   animation:toast-in .2s ease-out;
+  -webkit-backdrop-filter:blur(7px);
   backdrop-filter:blur(7px);
 }
 .toast::before{

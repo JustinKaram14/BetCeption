@@ -4,6 +4,8 @@
   align-items:center;
   gap:10px;
   min-height:180px;
+  max-width:100%;
+  min-width:0;
 }
 .hand-container{
   display:flex;
@@ -11,6 +13,8 @@
   align-items:center;
   gap:10px;
   min-height:180px;
+  max-width:100%;
+  min-width:0;
 }
 .hand-container.active .hand{
   filter:drop-shadow(0 0 12px var(--secondary-glow));
@@ -42,6 +46,7 @@
   perspective:1000px;
   min-height:140px;
   min-width:300px;
+  max-width:100%;
 }
 .card{
   width:100px;
@@ -136,4 +141,64 @@
   letter-spacing:.5px;
   text-transform:uppercase;
   opacity:.8;
+}
+
+@media (max-width:720px){
+  :host,
+  .hand-container{
+    gap:7px;
+    min-height:132px;
+  }
+  .hand-label{
+    font-size:.9rem;
+    letter-spacing:0;
+  }
+  .score{
+    min-height:18px;
+    font-size:.82rem;
+  }
+  .hand{
+    min-width:230px;
+    min-height:104px;
+  }
+  .card{
+    width:74px;
+    height:104px;
+    margin:0 -15px;
+    border-radius:8px;
+  }
+  .card-face{
+    padding:7px;
+    font-size:1.35rem;
+  }
+  .card-suit{
+    font-size:1.75rem;
+  }
+  .empty-hand,
+  .hand-status{
+    font-size:.74rem;
+    letter-spacing:0;
+  }
+}
+
+@media (max-width:380px){
+  :host,
+  .hand-container{
+    min-height:118px;
+  }
+  .hand{
+    min-width:206px;
+    min-height:94px;
+  }
+  .card{
+    width:66px;
+    height:94px;
+    margin:0 -13px;
+  }
+  .card-face{
+    font-size:1.2rem;
+  }
+  .card-suit{
+    font-size:1.55rem;
+  }
 }
