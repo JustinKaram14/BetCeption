@@ -205,6 +205,16 @@ CREATE TABLE IF NOT EXISTS powerup_consumptions (
 ) ENGINE=InnoDB;
 
 -- =============================
+-- Rate Limit Counters
+-- =============================
+CREATE TABLE IF NOT EXISTS rate_limit_counters (
+  `key`       VARCHAR(255) NOT NULL,
+  points      INT UNSIGNED NOT NULL,
+  expires_at  TIMESTAMP NOT NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB;
+
+-- =============================
 -- Leaderboards (Views)
 -- =============================
 DROP VIEW IF EXISTS leaderboard_balance;
