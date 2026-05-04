@@ -17,6 +17,13 @@
       {{ i18n.t('powerup.peek.reveal') }} {{ peekCard.rank }}{{ peekCard.suit }}
     </div>
 
+    <app-level-progress
+      class="game-level-progress"
+      [progress]="levelProgress"
+      orientation="vertical"
+      [compact]="true"
+    ></app-level-progress>
+
     <app-table
       [dealerHand]="round?.dealerHand ?? null"
       [playerHand]="round?.playerHand ?? null"
