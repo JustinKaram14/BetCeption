@@ -13,9 +13,9 @@
 Dieses Dokument sammelt die wichtigsten Architekturentscheidungen für BetCeption. Es referenziert die ASR (`asr-3-step.md`) und beschreibt, welche Taktiken und konkreten Muster wir einsetzen.
 
 ## Implementierungsstand (Abgleich)
-- Backend: Entscheidungen AD-1..AD-9 sind umgesetzt (deterministische Round-Engine, Ledger, JWT/Refresh mit Session-Store, DB-Views fï¿½r Leaderboards, Daily-Reward-Transaktion).  
-- Frontend: Blackjack-Table, Auth-Panel und Leaderboard-Tabs vorhanden; Shop/Inventar/Wallet-UI und Power-Up-Flows fehlen; Daily-Reward-Call wird nicht verwendet.  
-- Offene Lï¿½cken: XP/Level werden nicht erhï¿½ht, Power-Up-Effekte greifen noch nicht in der Runde, Double/Split fehlen, Winnings-Leaderboard liefert nur `userId` (kein Username).
+- Backend: Entscheidungen AD-1..AD-9 sind umgesetzt (deterministische Round-Engine, Ledger, JWT/Refresh mit Session-Store, DB-Views für Leaderboards, Daily-Reward-Transaktion, XP/Level-Progression, BET_BOOST-Power-Ups, Shop/Inventory).  
+- Frontend: Blackjack-Table (inkl. Level-Fortschrittsanzeige), Auth-Panel, Leaderboard-Tabs und Daily-Reward-Modal vorhanden; Shop-UI und Power-Up-Inventar im Frontend fehlen noch.  
+- Offene Lücken: Double/Split fehlen im Backend; Shop-UI und Power-Up-Inventar-Ansicht fehlen im Frontend.
 
 ## 1. Entscheidungsportfolio
 | ID | Entscheidung | Motivation & betroffene ASR | Taktiken & Muster | Status |
