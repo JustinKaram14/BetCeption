@@ -6,6 +6,7 @@ import { Blackjack } from './blackjack';
 import { HandOwnerType, HandStatus, MainBetStatus, RoundStatus } from '../../../../../core/api/api.types';
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
+import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 
 describe('Blackjack', () => {
   let component: Blackjack;
@@ -15,8 +16,14 @@ describe('Blackjack', () => {
     ['startRound', 'getActiveRound', 'hit', 'stand', 'settle'],
   );
   const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
+  const apiMock = jasmine.createSpyObj<BetceptionApi>(
+    'BetceptionApi',
+    ['purchasePowerup', 'consumePowerup', 'listInventory', 'listPowerups'],
+  );
 
   beforeEach(async () => {
+    apiMock.listInventory.and.returnValue(of({ items: [] }));
+    apiMock.listPowerups.and.returnValue(of({ items: [] }));
     walletMock.getSummary.and.returnValue(
       of({
         id: 'user-1',
@@ -77,12 +84,15 @@ describe('Blackjack', () => {
         provideRouter([]),
         { provide: Rng, useValue: rngMock },
         { provide: Wallet, useValue: walletMock },
+        { provide: BetceptionApi, useValue: apiMock },
       ],
     })
     .compileComponents();
 
     walletMock.getSummary.calls.reset();
     rngMock.getActiveRound.calls.reset();
+    apiMock.listInventory.calls.reset();
+    apiMock.listPowerups.calls.reset();
 
     fixture = TestBed.createComponent(Blackjack);
     component = fixture.componentInstance;
@@ -513,6 +523,189 @@ describe('Blackjack', () => {
       tick(650);
       expect(component.showRoundOverlay).toBeTrue();
       expect(component.roundOutcome?.won).toBeTrue();
+    }));
+  });
+
+  describe('powerup interactions', () => {
+    let powerupComponent: Blackjack;
+    let powerupFixture: ComponentFixture<Blackjack>;
+    const apiMock = jasmine.createSpyObj<BetceptionApi>('BetceptionApi', [
+      'purchasePowerup', 'consumePowerup', 'listInventory', 'listPowerups',
+    ]);
+    const rngPowerupMock = jasmine.createSpyObj<Rng>(
+      'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'settle'],
+    );
+    const walletPowerupMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
+
+    const abortedRound = {
+      id: 'round-1',
+      status: RoundStatus.ABORTED,
+      startedAt: null,
+      endedAt: null,
+      mainBet: { id: 'bet-1', amount: '10', status: MainBetStatus.VOID, payoutMultiplier: null, settledAmount: null, settledAt: null },
+      playerHand: { id: 'hand-p', ownerType: HandOwnerType.PLAYER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
+      dealerHand: { id: 'hand-d', ownerType: HandOwnerType.DEALER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
+      sideBets: [],
+      fairness: { roundId: 'round-1', status: RoundStatus.ABORTED, createdAt: new Date().toISOString(), startedAt: null, endedAt: null, serverSeedHash: null, serverSeed: null, revealedAt: null },
+    };
+
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      walletPowerupMock.getSummary.and.returnValue(
+        of({ id: 'u1', username: 'neo', balance: 500, xp: 0, level: 3, lastDailyRewardAt: null }),
+      );
+      rngPowerupMock.getActiveRound.and.returnValue(of({ round: abortedRound }));
+      apiMock.listInventory.and.returnValue(of({ items: [] }));
+      apiMock.listPowerups.and.returnValue(of({ items: [] }));
+
+      await TestBed.configureTestingModule({
+        imports: [Blackjack],
+        providers: [
+          provideRouter([]),
+          { provide: Rng, useValue: rngPowerupMock },
+          { provide: Wallet, useValue: walletPowerupMock },
+          { provide: BetceptionApi, useValue: apiMock },
+        ],
+      }).compileComponents();
+
+      powerupFixture = TestBed.createComponent(Blackjack);
+      powerupComponent = powerupFixture.componentInstance;
+      powerupFixture.detectChanges();
+
+      apiMock.purchasePowerup.calls.reset();
+      apiMock.consumePowerup.calls.reset();
+      apiMock.listInventory.calls.reset();
+      apiMock.listPowerups.calls.reset();
+    });
+
+    it('onOpenPowerupMenu shows the menu and loads inventory', () => {
+      apiMock.listInventory.and.returnValue(of({ items: [] }));
+      apiMock.listPowerups.and.returnValue(of({ items: [] }));
+
+      expect(powerupComponent.showPowerupMenu).toBeFalse();
+      powerupComponent.onOpenPowerupMenu();
+
+      expect(powerupComponent.showPowerupMenu).toBeTrue();
+      expect(apiMock.listInventory).toHaveBeenCalledTimes(1);
+      expect(apiMock.listPowerups).toHaveBeenCalledTimes(1);
+    });
+
+    it('onClosePowerupMenu hides the powerup menu', () => {
+      powerupComponent.showPowerupMenu = true;
+      powerupComponent.onClosePowerupMenu();
+      expect(powerupComponent.showPowerupMenu).toBeFalse();
+    });
+
+    it('onPurchasePowerup updates balance and reloads inventory on success', () => {
+      apiMock.purchasePowerup.and.returnValue(of({ message: 'OK', balance: 450, quantity: 2 } as any));
+      apiMock.listInventory.and.returnValue(of({ items: [] }));
+      apiMock.listPowerups.and.returnValue(of({ items: [] }));
+
+      powerupComponent.onPurchasePowerup({ typeId: 1, quantity: 2 });
+
+      expect(powerupComponent.balance).toBe(450);
+      expect(apiMock.listInventory).toHaveBeenCalledTimes(1);
+    });
+
+    it('onPurchasePowerup stores error message on failure', () => {
+      apiMock.purchasePowerup.and.returnValue(throwError(() => ({ error: { message: 'Insufficient funds' } })));
+
+      powerupComponent.onPurchasePowerup({ typeId: 1, quantity: 1 });
+
+      expect(powerupComponent.error).toBe('Insufficient funds');
+    });
+
+    it('onActivatePowerup tracks the activated powerup code and reloads inventory', () => {
+      apiMock.consumePowerup.and.returnValue(of({
+        message: 'Power-up activated',
+        consumed: 1,
+        remaining: 0,
+        powerup: { id: 1, code: 'double_win', title: '2×', effect: null },
+        roundId: 'round-1',
+      } as any));
+      apiMock.listInventory.and.returnValue(of({ items: [] }));
+      apiMock.listPowerups.and.returnValue(of({ items: [] }));
+
+      powerupComponent.onActivatePowerup({ typeId: 1, roundId: 'round-1' });
+
+      expect(powerupComponent.activePowerupCodes).toContain('double_win');
+      expect(apiMock.listInventory).toHaveBeenCalledTimes(1);
+    });
+
+    it('onActivatePowerup sets peekCard when peek powerup returns rank and suit', () => {
+      apiMock.consumePowerup.and.returnValue(of({
+        message: 'Power-up activated',
+        consumed: 1,
+        remaining: 0,
+        powerup: { id: 2, code: 'peek', title: 'Peek', effect: { rank: 'K', suit: '♠' } },
+        roundId: 'round-1',
+      } as any));
+      apiMock.listInventory.and.returnValue(of({ items: [] }));
+      apiMock.listPowerups.and.returnValue(of({ items: [] }));
+
+      powerupComponent.onActivatePowerup({ typeId: 2, roundId: 'round-1' });
+
+      expect(powerupComponent.peekCard).toEqual({ rank: 'K', suit: '♠' });
+    });
+
+    it('onActivatePowerup stores error message on failure', () => {
+      apiMock.consumePowerup.and.returnValue(throwError(() => ({ error: { message: 'Power-up not owned' } })));
+
+      powerupComponent.onActivatePowerup({ typeId: 1, roundId: 'round-1' });
+
+      expect(powerupComponent.error).toBe('Power-up not owned');
+    });
+
+    it('onToggleQueue adds a typeId to pendingPowerupTypeIds', () => {
+      powerupComponent.onToggleQueue(5);
+      expect(powerupComponent.pendingPowerupTypeIds).toContain(5);
+    });
+
+    it('onToggleQueue removes the typeId when toggled again', () => {
+      powerupComponent.pendingPowerupTypeIds = [3, 5];
+      powerupComponent.onToggleQueue(3);
+      expect(powerupComponent.pendingPowerupTypeIds).not.toContain(3);
+      expect(powerupComponent.pendingPowerupTypeIds).toContain(5);
+    });
+
+    it('onNextRound clears pendingPowerupTypeIds', () => {
+      powerupComponent.pendingPowerupTypeIds = [1, 2, 3];
+      powerupComponent.onNextRound();
+      expect(powerupComponent.pendingPowerupTypeIds).toEqual([]);
+    });
+
+    it('onDeal consumes pending powerups after round starts', fakeAsync(() => {
+      const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      rngPowerupMock.startRound.and.returnValue(of({ round: inProgress }));
+      apiMock.consumePowerup.and.returnValue(of({
+        message: 'OK', consumed: 1, remaining: 2,
+        powerup: { id: 1, code: 'MULTI_PLUS', title: 'Multiplikator-Pille', effect: null },
+        roundId: 'round-1',
+      } as any));
+      apiMock.listInventory.and.returnValue(of({ items: [] }));
+      apiMock.listPowerups.and.returnValue(of({ items: [] }));
+
+      powerupComponent.betAmount = 10;
+      powerupComponent.pendingPowerupTypeIds = [1, 2];
+      powerupComponent.onDeal();
+      tick(1000);
+
+      expect(apiMock.consumePowerup).toHaveBeenCalledTimes(2);
+      expect(apiMock.consumePowerup).toHaveBeenCalledWith({ typeId: 1, quantity: 1, roundId: 'round-1' });
+      expect(apiMock.consumePowerup).toHaveBeenCalledWith({ typeId: 2, quantity: 1, roundId: 'round-1' });
+      expect(powerupComponent.pendingPowerupTypeIds).toEqual([]);
+    }));
+
+    it('onDeal skips consumePendingQueue when queue is empty', fakeAsync(() => {
+      const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      rngPowerupMock.startRound.and.returnValue(of({ round: inProgress }));
+
+      powerupComponent.betAmount = 10;
+      powerupComponent.pendingPowerupTypeIds = [];
+      powerupComponent.onDeal();
+      tick(1000);
+
+      expect(apiMock.consumePowerup).not.toHaveBeenCalled();
     }));
   });
 });

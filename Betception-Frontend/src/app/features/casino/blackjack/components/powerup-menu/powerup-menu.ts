@@ -1,0 +1,114 @@
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { NgFor, NgIf, DecimalPipe } from '@angular/common';
+import { InventoryPowerup, PowerupType } from '../../../../../core/api/api.types';
+import { I18n } from '../../../../../core/i18n/i18n';
+
+const POWERUP_ICONS: Record<string, string> = {
+  MULTI_PLUS: '💊',
+  JOKER_CARD: '🃏',
+  NO_LOSS: '🛡️',
+  BET_BOOST_30: '💰',
+  BET_BOOST_100: '🚀',
+};
+
+const POWERUP_COLORS: Record<string, string> = {
+  MULTI_PLUS: '#ffd700',
+  JOKER_CARD: '#a855f7',
+  NO_LOSS: '#4ade80',
+  BET_BOOST_30: '#ff9800',
+  BET_BOOST_100: '#ff4500',
+};
+
+@Component({
+  selector: 'app-powerup-menu',
+  standalone: true,
+  imports: [NgFor, NgIf, DecimalPipe],
+  templateUrl: './powerup-menu.html',
+  styleUrl: './powerup-menu.css',
+})
+export class PowerupMenu {
+  readonly i18n = inject(I18n);
+
+  @Input() inventory: InventoryPowerup[] = [];
+  @Input() availablePowerups: PowerupType[] = [];
+  @Input() roundId: string | null = null;
+  @Input() roundActive = false;
+  @Input() balance: number | null = null;
+  @Input() userLevel = 1;
+  @Input() pendingTypeIds: number[] = [];
+
+  @Output() purchase = new EventEmitter<{ typeId: number; quantity: number }>();
+  @Output() activate = new EventEmitter<{ typeId: number; roundId: string }>();
+  @Output() toggleQueue = new EventEmitter<number>();
+  @Output() close = new EventEmitter<void>();
+
+  selectedQuantities: Record<number, number> = {};
+
+  getIcon(code: string): string {
+    return POWERUP_ICONS[code] ?? '✨';
+  }
+
+  getColor(code: string): string {
+    return POWERUP_COLORS[code] ?? '#00e5ff';
+  }
+
+  getQuantity(typeId: number): number {
+    return this.selectedQuantities[typeId] ?? 1;
+  }
+
+  setQuantity(typeId: number, qty: number) {
+    this.selectedQuantities = { ...this.selectedQuantities, [typeId]: qty };
+  }
+
+  canActivate(item: InventoryPowerup): boolean {
+    return this.roundActive && this.roundId !== null && item.quantity > 0;
+  }
+
+  onActivate(item: InventoryPowerup) {
+    if (!this.canActivate(item) || !this.roundId || !item.type) return;
+    this.activate.emit({ typeId: item.type.id, roundId: this.roundId });
+  }
+
+  onPurchase(powerup: PowerupType) {
+    const qty = this.getQuantity(powerup.id);
+    this.purchase.emit({ typeId: powerup.id, quantity: qty });
+  }
+
+  canAfford(price: number, qty: number): boolean {
+    if (this.balance === null) return true;
+    return this.balance >= price * qty;
+  }
+
+  isLocked(powerup: PowerupType): boolean {
+    return powerup.minLevel > this.userLevel;
+  }
+
+  isQueued(item: InventoryPowerup): boolean {
+    return this.pendingTypeIds.includes(this.getInventoryTypeId(item));
+  }
+
+  canQueue(item: InventoryPowerup): boolean {
+    return !this.roundActive && item.quantity > 0;
+  }
+
+  onToggleQueue(item: InventoryPowerup) {
+    if (!this.canQueue(item)) return;
+    this.toggleQueue.emit(this.getInventoryTypeId(item));
+  }
+
+  getInventoryCode(item: InventoryPowerup): string {
+    return item.type?.code ?? '';
+  }
+
+  getInventoryTitle(item: InventoryPowerup): string {
+    return item.type?.title ?? '';
+  }
+
+  getInventoryDescription(item: InventoryPowerup): string {
+    return item.type?.description ?? '';
+  }
+
+  getInventoryTypeId(item: InventoryPowerup): number {
+    return item.type?.id ?? 0;
+  }
+}

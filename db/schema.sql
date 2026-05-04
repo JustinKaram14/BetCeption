@@ -254,7 +254,11 @@ INSERT INTO powerup_types (code, title, description, min_level, price, effect_js
 ('JOKER_CARD','Joker-Pille','Einmaliger Schutz: Bust wird zu Push', 5, 1000,
  JSON_OBJECT('joker', 1)),
 ('NO_LOSS','Schutz-Pille','10% Chance, Einsatz zurückzubekommen, wenn verloren', 7, 1500,
- JSON_OBJECT('no_loss_chance', 0.1))
+ JSON_OBJECT('no_loss_chance', 0.1)),
+('BET_BOOST_30','Wett-Boost +30%','Erhöht deinen Gewinn um +30% bei einem Sieg', 4, 750,
+ JSON_OBJECT('main_multiplier', 0.3)),
+('BET_BOOST_100','Wett-Dobler','Verdoppelt deinen Gewinn bei einem Sieg', 9, 2000,
+ JSON_OBJECT('main_multiplier', 1.0))
 ON DUPLICATE KEY UPDATE
   title = VALUES(title),
   description = VALUES(description),

@@ -40,6 +40,9 @@ export async function consumePowerup(
       if (userPowerup.quantity < quantity) {
         throw new PowerupConsumptionError(400, 'INSUFFICIENT_STOCK', 'Not enough power-ups available');
       }
+      if (userPowerup.user.level < userPowerup.type.minLevel) {
+        throw new PowerupConsumptionError(403, 'LEVEL_TOO_LOW', 'Player level too low to use this power-up');
+      }
 
       let round: Round | null = null;
       if (roundId) {

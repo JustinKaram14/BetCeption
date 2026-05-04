@@ -2,7 +2,7 @@
 
 # Test Plan
 
-## Version 1.2
+## Version 1.4
 
 
 
@@ -40,6 +40,7 @@
    6.2 [Test Logs](#62-test-logs)  
    6.3 [Defect Reports](#63-defect-reports)  
 7. [Appendix A: Project Tasks](#7-appendix-a-project-tasks)
+8. [Appendix B: Test File Inventory](#8-appendix-b-test-file-inventory)
 
 ---
 
@@ -54,7 +55,7 @@
 Dieses Testplan-Dokument für BetCeption dient der Erreichung folgender Ziele:
 
 - Identifikation der vorhandenen Projektinformationen, Testartefakte und getesteten Software-Komponenten auf Basis des Repositories, der SRS und der technischen Dokumentation `(bereits implementiert)`.
-- Beschreibung der aktuellen Testanforderungen aus Backend, Frontend, Middleware, Integrations- und Utility-Tests mit 23 Backend-Testdateien, 31 Frontend-Spec-Dateien, 5 Playwright-E2E-Spec-Dateien, 4 k6-Performance-Szenarien, 101 Backend-Testfällen und 147 Frontend-Testfällen.
+- Beschreibung der aktuellen Testanforderungen aus Backend, Frontend, Middleware, Integrations- und Utility-Tests mit **27 Backend-Testdateien**, **37 Frontend-Spec-Dateien**, **5 Playwright-E2E-Spec-Dateien**, **4 k6-Performance-Szenarien**, **189 Backend-Testfällen** und **259 Frontend-Testfällen**.
 - Empfehlung und Beschreibung der Teststrategie für bereits vorhandene und künftig noch zu ergänzende Testarten `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
 - Benennung der benötigten Ressourcen, Werkzeuge und Testumgebungen für die Weiterführung der Testaktivitäten `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
 - Definition der zu liefernden Testartefakte wie Testmodell, Testprotokolle und Defect Reports auf Basis des aktuellen Projektstands `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
@@ -66,9 +67,11 @@ BetCeption ist eine browserbasierte Casino-Anwendung mit Fokus auf Blackjack, Wa
 
 Architektonisch besteht das System aus einem Angular-Frontend und einem Node.js/Express-Backend mit TypeORM und MySQL 8. Das Backend nutzt REST-Endpunkte, JWT-basierte Authentifizierung, Refresh-Token-Cookies, Middleware für Validierung und Zugriffsschutz sowie persistente Entitäten für Runden, Wallet, Sessions, Rewards und Leaderboards `(bereits implementiert)`.
 
-Die aktuelle Testlandschaft deckt vor allem Unit-, komponentennahe und controllernahe Tests ab. Im Backend werden Controller, Middleware, Utility-Funktionen und ein Integrations-Endpunkt mit Jest, ts-jest und Supertest geprüft. Im Frontend werden Angular-Komponenten, Services, Guards, Interceptors und Pipes mit Jasmine/Karma getestet `(bereits implementiert)`.
+Die aktuelle Testlandschaft deckt vor allem Unit-, komponentennahe und controllernahe Tests ab. Im Backend werden Controller, Middleware, Utility-Funktionen (inkl. Logger und Fairness-Utils), reine Geschäftslogik-Funktionen (evaluateHand, resolveMainBet, evaluateSideBet) und ein Integrations-Endpunkt mit Jest, ts-jest und Supertest geprüft. Im Frontend werden Angular-Komponenten, Services, Guards, Interceptors und Pipes mit Jasmine/Karma getestet `(bereits implementiert)`.
 
 Inhaltlich zeigen die Tests eine klare Konzentration auf Kernprozesse wie Registrierung, Login, Token-Handling, Wallet-Buchungen, Power-Up-Kauf und -Verbrauch, Daily Rewards, Leaderboard-Daten, Fairness-Historie sowie den Start und die Abwicklung von Blackjack-Runden. Zusätzlich existieren erste UI-nahe Spezifikationen für Homepage, Leaderboard und Daily-Reward-Modal `(bereits implementiert)`.
+
+
 
 <a id="13-scope"></a>
 ## 1.3 Scope
@@ -78,16 +81,16 @@ Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/
 **Funktionen, die durch vorhandene Tests abgedeckt werden:**
 
 - Backend-Authentifizierung: Registrierung, Login, Refresh, Logout, JWT-Erzeugung und Middleware-Schutzmechanismen.
-- Backend-Wallet: Kontostand, Transaktionshistorie, Einzahlung, Auszahlung und Fehlerfälle bei unzureichendem Guthaben .
-- Backend-Gameplay: Rundenstart, Hit, Stand, Settlement, Fairness-Helfer, Fairness-Historie und Daily Rewards .
-- Backend-Shop und Inventory: Auflisten, Kaufen, Verbrauch und Besitzprüfung von Power-Ups.
-- Backend-Middleware und Utilities: Request-Validierung, Error Handling, 404, API-Key-Guard, Auth-Guard, Rate Limiting, Passwort-, Geld- und Token-Utilities.
-- Frontend-Core und UI: App, Auth, Guard, Interceptor, Token Storage, Http-Client-Service, Wallet/RNG-Services, gemeinsame UI-Komponenten und Pipes.
-- Frontend-Feature-Komponenten: Login, Register, Verify Email, Homepage, Blackjack-Page, Leaderboard, Daily Reward Modal und CardGuess (RiskUp-Feature).
-- Abmelde-Button und vollständiger Logout-Flow inkl. Session-Clear (`auth.spec.ts`).
-- Credentials-Persistenz bei Seitenreload über TokenStorage (`token-storage.spec.ts`).
-- Internationalisierung (i18n) mit DE/EN/ES/FR über dedizierten i18n-Service.
-- Spieleanleitung (HowToPlay) als Übersetzungsschlüssel `common.howToPlay` im i18n-Service verankert.
+- Backend-Wallet: Kontostand, Transaktionshistorie, Einzahlung, Auszahlung und Fehlerfälle bei unzureichendem Guthaben.
+- Backend-Gameplay: Rundenstart, Hit, Stand, Settlement, Fairness-Helfer, Fairness-Historie und Daily Rewards.
+- Backend-Shop und Inventory: Auflisten, Kaufen (atomarer Upsert für korrekte Qty-Akkumulation, exakte Saldo- und Wallet-Assertions), Verbrauch und Besitzprüfung von Power-Ups; Level-Sperre mit 403/LEVEL_TOO_LOW-Rückgabe.
+- Backend-BET_BOOST-Powerups: Settlement-Logik für BET_BOOST_30 (+30 %) und BET_BOOST_100 (+100 %) auf die Hauptwette; additives Stacking mehrerer Booster; kein Boost bei Push oder Loss; Blackjack-Basis (2,5×) plus Boost korrekt berechnet.
+- Backend-Middleware und Utilities: Request-Validierung, Error Handling, 404, API-Key-Guard, Auth-Guard, Rate Limiting, Rate-Limit-Store (vollständiger `TypeOrmRateLimitStore`-Lebenszyklus: init, get, increment, decrement, resetKey, resetAll, shutdown), Passwort-, Geld- und Token-Utilities sowie Logger-Utility (JSON-strukturierte Ausgabe, Level-Filterung für info/warn/error/debug, Error-Objekt-Serialisierung, Produktionssuppression für debug).
+- Backend-Fairness-Utilities: `buildFairnessPayload` mit Server-Seed-Enthüllung bei Settlement, Seed-Verschleierung bei laufenden oder nicht gestarteten Runden.
+- Backend-Runden-Geschäftslogik (reine Funktionen, kein TypeORM): `evaluateHand` (Ass-Handling soft/hard, Blackjack-Erkennung, Bust-Reduktion, Mehrfach-Asse); `resolveMainBet` (Gewinn/Verlust/Push-Entscheidung mit korrekten Multiplikatoren: 2,5× Blackjack, 2× Gewinn, 1× Push, 0× Verlust); `evaluateSideBet` (FIRST_CARD_COLOR, FIRST_CARD_SUIT, FIRST_CARD_RANK, FIRST_DEALER_CARD-Kontext, Refund bei ungültigen Odds, VOID bei unbekanntem Typ).
+- Frontend-Core und UI: App, Auth-Services (inkl. vollständiger Logout-Flow), Guard, Interceptor, Token Storage, HTTP-Client-Service, BetceptionApi-Service, Wallet-Service, RNG-Service, AppShell, gemeinsame UI-Bausteine (Button, NotFound, SettingsMenu, Toast-Service, ToastContainer, DisclaimerFooter) und Format-Coins-Pipe.
+- Frontend-i18n: Internationalisierung (DE/EN/ES/FR) mit dedizierten Spec-Tests; Schlüssel für `powerup.queue`/`powerup.queued` und `common.howToPlay` verifiziert.
+- Frontend-Feature-Komponenten: Login, Register, Verify Email, AuthFacade, Homepage (inkl. responsives Layout), Blackjack-Page (inkl. Pre-Round-Queue mit exakten `consumePowerup`-Parameter-Assertions, BET_BOOST-Flows, Queue-Reset bei `onNextRound`), Controls (inkl. `canSettle`-Getter), Hand, Table, Leaderboard, Daily-Reward-Modal, HowToPlay-Modal, Hero, NeonCard, CtaPanel, Auth-Panel, CardGuess (RiskUp-Feature), Impressum, Datenschutz.
 
 **Funktionen, die aktuell nicht oder nicht ausreichend automatisiert getestet werden:**
 
@@ -137,10 +140,13 @@ Die folgende Auflistung enthält jene Elemente – Anwendungsfälle, funktionale
 - Authentifizierung und Session-Management: Registrierung, Login, Refresh, Logout, Auth Guards, API-Key-Schutz und Token-Utilities `(bereits implementiert)`.
 - Wallet- und Geldlogik: Kontostand, Transaktionen, Ein- und Auszahlungen, Geldkonvertierung und Buchungskonsistenz in fachlichen Happy- und Error-Pfaden `(bereits implementiert)`.
 - Blackjack-Rundenlogik: Rundenstart, Hit, Stand, Settlement, aktive Runde sowie deterministische Fairness-Decklogik `(bereits implementiert)`.
-- Spielnahe Zusatzfunktionen: Power-Up-Kauf, Power-Up-Verbrauch, Inventory, Daily Rewards und Leaderboard-Daten `(bereits implementiert)`.
+- BET_BOOST-Powerup-Logik: +30 %- und +100 %-Multiplikatoren auf die Hauptwette, additives Stacking, korrektes Verhalten bei Push und Loss `(bereits implementiert)`.
+- Spielnahe Zusatzfunktionen: Power-Up-Kauf (atomarer Upsert, Level-Gating), Qty-Anzeige-Fix, Pre-Round-Queue-Aktivierung, Power-Up-Verbrauch, Inventory, Daily Rewards und Leaderboard-Daten `(bereits implementiert)`.
 - Robustheit der HTTP-Schicht: Request-Validierung, Fehlerformatierung, 404-Verhalten und Health-Endpunkt `(bereits implementiert)`.
-- Frontend-Anwendungsbasis: Rendering der App, Auth-Services, Guard/Interceptor, Token Storage, HTTP-Client, Wallet/RNG-Services, gemeinsame UI-Bausteine und Pipes `(bereits implementiert)`.
-- Frontend-Feature-Oberflächen: Auth-Seiten, Homepage, Blackjack-Page, Leaderboard-Komponente, Daily-Reward-Modal und Event-Handling zwischen Komponenten `(bereits implementiert)`.
+- Backend-Middleware und Utilities (erweitert): Rate-Limit-Store (`TypeOrmRateLimitStore`-Lebenszyklus), Logger-Utility (JSON-Logging, Error-Serialisierung, Debug-Suppression in Produktion), Fairness-Utils (`buildFairnessPayload`) `(bereits implementiert)`.
+- Backend-Runden-Geschäftslogik (reine Funktionen): `evaluateHand`, `resolveMainBet`, `evaluateSideBet` inkl. Sidebet-Typen und FIRST_DEALER_CARD-Kontext `(bereits implementiert)`.
+- Frontend-Anwendungsbasis: Rendering der App, Auth-Services, Guard/Interceptor, Token Storage, HTTP-Client, BetceptionApi-Service, Wallet/RNG-Services, Toast-System, gemeinsame UI-Bausteine und Pipes `(bereits implementiert)`.
+- Frontend-Feature-Oberflächen: Auth-Seiten, Homepage, Blackjack-Page (Queue, BET_BOOST, Powerup-Flow), Leaderboard-Komponente, Daily-Reward-Modal, HowToPlay-Modal, Hero, NeonCard, CtaPanel, Auth-Panel, CardGuess, Impressum, Datenschutz und Event-Handling zwischen Komponenten `(bereits implementiert)`.
 - Nichtfunktionale Anforderungen zu Leistung, Wiederherstellung, Installation, Konfiguration und Lastverhalten sollen künftig mit dedizierten Tests ergänzt werden `(noch nicht implementiert)`.
 
 <a id="3-test-strategy"></a>
@@ -154,12 +160,12 @@ Das Projekt definiert eine **Mindest-Testabdeckung von 80 %** für alle vier Met
 
 | Metrik | Zielwert | Backend (aktuell) | Frontend (aktuell) |
 |---|---|---|---|
-| Statements | ≥ 80 % | 76,3 % | 74,3 % |
-| Branches | ≥ 80 % | 53,1 % | 63,3 % |
-| Functions | ≥ 80 % | 52,9 % | 63,7 % |
-| Lines | ≥ 80 % | 79,8 % | 74,9 % |
+| Statements | ≥ 80 % | **90,16 %** ✅ | ≥ 80 % ✅ |
+| Branches | ≥ 80 % | **68,77 %** ⚠️ | ≥ 63 % |
+| Functions | ≥ 80 % | **89,72 %** ✅ | ≥ 80 % ✅ |
+| Lines | ≥ 80 % | **91,24 %** ✅ | ≥ 80 % ✅ |
 
-Die Abweichungen resultieren vor allem aus nicht vollständig getesteten Bereichen wie `round.controller.ts` (Branch-Coverage), `rateLimiters.ts` sowie Frontend-Komponenten ohne dedizierte Spec-Dateien. Der Abbau dieser Lücken ist als Aufgabe im Testplan vermerkt.
+Die Abweichungen resultieren vor allem aus nicht vollständig getesteten Branches in `round.controller.ts` (komplexe Sidebet- und Dealer-Logik) und `env.ts`/`rateLimiters.ts`. Im Frontend liegen die Branch-Coverage-Lücken vor allem bei Fehlerbehandlungspfaden in Services und seltenen Zustandswechseln in Komponenten. Der Abbau dieser Lücken — insbesondere die Round-Controller-Branch-Coverage auf ≥ 80 % — ist als offene Aufgabe im Testplan vermerkt.
 
 <a id="31-testing-types"></a>
 ## 3.1 Testing Types
@@ -180,9 +186,9 @@ Die Abweichungen resultieren vor allem aus nicht vollständig getesteten Bereich
 | Bereich | Inhalt |
 |---|---|
 | Test Objective | Sicherstellung der korrekten Fachfunktionalität in Backend und Frontend, inklusive Dateneingabe, Verarbeitung, Rückgabe, Statuscodes, Fehlermeldungen und UI-Reaktionen. Dies ist die am stärksten ausgebaute Testart im Projekt `(bereits implementiert)` |
-| Technique | - Backend-Controller-Tests mit validen und invaliden Eingaben für Auth, User, Wallet, Shop, Inventory, Powerups, Rewards, Leaderboard, Fairness und Round ausführen `(bereits implementiert)`  Middleware- und Utility-Tests für Request-Validierung, Fehlerbehandlung, Authentifizierung, API-Key-Checks, Rate Limiting sowie Geld-, Passwort- und Token-Helfer ausführen `(bereits implementiert)` Frontend-Specs für Services, Guards, Interceptor, Pipes und Feature-Komponenten mit Fokus auf Rendering, Mapping, Event-Handling und Fehlerszenarien ausführen `(bereits implementiert)`  Nicht abgedeckte Use Cases wie vollständige Sidebet-End-to-End-Flows oder kombinierte Frontend-Backend-Happy-Paths sollten zusätzlich als systematische Funktionssuiten ergänzt werden `(noch nicht implementiert)` |
-| Completion Criteria | - Alle geplanten funktionalen Tests für vorhandene Module laufen erfolgreich durch `(bereits implementiert als Ziel, tatsächlicher Lauf für diesen Testplan wurde nicht neu ausgeführt)`  Alle identifizierten Defekte sind dokumentiert und entweder behoben oder bewusst priorisiert `(teilweise bereits implementiert / formaler Defect-Workflow nicht sichtbar)` |
-| Special Considerations | Ein Teil der Frontend-Specs prüft aktuell nur Komponentenerstellung; dort sollte die fachliche Tiefe weiter erhöht werden. Umgekehrt zeigen neue Tests wie Homepage, Leaderboard und Daily Reward Modal bereits konkreteres UI-Verhalten und sollten als Qualitätsniveau für weitere Komponenten dienen `(teilweise bereits implementiert)` |
+| Technique | - Backend-Controller-Tests mit validen und invaliden Eingaben für Auth, User, Wallet, Shop (inkl. Level-Sperre und exakte Saldo-Assertions), Inventory, Powerups, Rewards, Leaderboard, Fairness, Round (inkl. BET_BOOST-Settlement: +30 %, +100 %, Stacking, Push-Ignoranz) ausführen `(bereits implementiert)` — Middleware- und Utility-Tests für Request-Validierung, Fehlerbehandlung, Authentifizierung, API-Key-Checks, Rate Limiting, Rate-Limit-Store sowie Geld-, Passwort- und Token-Helfer ausführen `(bereits implementiert)` — Frontend-Specs für Services (Auth, Wallet, RNG, BetceptionApi, i18n), Guards, Interceptor, Pipes, Toast-System und alle Feature-Komponenten mit Fokus auf Rendering, Mapping, Event-Handling, Fehlerszenarien und exakte Parameter-Assertions ausführen `(bereits implementiert)` — Nicht abgedeckte Use Cases wie vollständige Sidebet-End-to-End-Flows oder kombinierte Frontend-Backend-Happy-Paths sollten zusätzlich als systematische Funktionssuiten ergänzt werden `(noch nicht implementiert)` |
+| Completion Criteria | - Alle geplanten funktionalen Tests für vorhandene Module laufen erfolgreich durch: **189 Backend-Tests in 27 Suites**, **259 Frontend-Tests in 37 Suites** `(erreicht)` — Alle identifizierten Defekte sind dokumentiert und entweder behoben oder bewusst priorisiert `(teilweise bereits implementiert / formaler Defect-Workflow nicht sichtbar)` |
+| Special Considerations | Powerup-Tests wurden mit präzisen Parameter-Assertions implementiert (exakter Geldbetrag, exakter Wallet-Transaktionskind, exakte `consumePowerup`-Argumente). Dieses Qualitätsniveau sollte als Standard für alle zukünftigen Controller- und Service-Tests gelten. Die Blackjack-Spec isoliert Queue- und Boost-Logik mit `TestBed.resetTestingModule()` in verschachtelten `describe`-Blöcken `(bereits implementiert)`. Die neuen reinen Funktions-Tests in `round.business-logic.test.ts` testen `evaluateHand`, `resolveMainBet` und `evaluateSideBet` vollständig ohne TypeORM-Instanziierung; `rate-limit-store.test.ts` deckt den gesamten Store-Lebenszyklus mit Repository-Mocks ab; `logger.test.ts` verifiziert alle Log-Level sowie Produktionssuppression; `fairness.utils.test.ts` prüft die Seed-Enthüllungslogik `(bereits implementiert)` |
 
 <a id="313-business-cycle-testing"></a>
 ### 3.1.3 Business Cycle Testing
