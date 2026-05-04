@@ -195,25 +195,28 @@ Ein gekauftes Power-Up wird aktiviert und wirkt für eine definierte Anzahl an R
 Spiel- und Nutzungsdaten werden in der Datenbank gespeichert, damit Runden korrekt ausgewertet und Salden konsistent geführt werden.  
 [Zur Spezifikation](./uc10-daten-persistieren.md)
 
----
-
-#### Zeitlich offen (außerhalb des MVP)
-
 **3.1.7 Daily-Reward**  
 Spieler erhalten bei täglichem Login einen Bonus zur Progression.  
 [Zur Spezifikation](./uc3-daily-reward.md)
 
 **3.1.8 Leaderboard anzeigen**  
-Das System stellt eine Rangliste mehrerer Spieler dar (Kriterien wie Gewinnsumme, Siegquote, Serien).  
+Das System stellt eine Rangliste mehrerer Spieler dar (Kriterien: Balance, Level, wöchentliche Gewinne).  
 [Zur Spezifikation](./uc4-leaderboard-anzeigen.md)
 
 **3.1.9 Spielzug ausführen**  
-Interaktionen innerhalb der Runde (z. B. Hit/Stand) werden als Spielzug modelliert und an die Engine übergeben.  
+Interaktionen innerhalb der Runde (Hit/Stand) werden als Spielzug modelliert und an die Engine übergeben. Double/Split sind noch nicht implementiert.  
 [Zur Spezifikation](./uc7-spielzug-ausfuehren.md)
 
 **3.1.10 XP-/Level-System verwalten**  
-Fortschritt durch gespielte Runden führt zu Erfahrungspunkten und Level-Aufstiegen, die neue Boni freischalten können.  
+Fortschritt durch gespielte Runden führt zu Erfahrungspunkten und Level-Aufstiegen, die neue Inhalte freischalten können.  
 [Zur Spezifikation](./uc9-xp-level-system-verwalten.md)
+
+---
+
+#### Noch nicht implementiert (offen)
+
+**Double / Split**  
+Erweiterte Spielzüge innerhalb der Blackjack-Runde (Double Down, Split bei Paaren). Backend-Grundlage (Hand-Entity, Round-Flow) ist vorhanden; die Endpunkte fehlen noch.
 
 ### 3.2 Benutzerfreundlichkeit
 Die Oberfläche soll ohne Anleitung verständlich sein. Zentrale Aktionen sind jederzeit sichtbar und mit klaren Bezeichnungen versehen. Interaktionen folgen einem einfachen, wiederkehrenden Muster: Einsatz wählen, Runde starten, Entscheidung treffen, Ergebnis sehen. Tooltips und kurze Inline-Hinweise helfen bei Bedarf, ohne den Spielfluss zu stören.
