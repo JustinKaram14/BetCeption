@@ -2,24 +2,9 @@
 
 # Test Plan
 
-## Version 1.2
+## Version 1.4
 
----
 
-## Seit dem letzten Stand
-
-Folgendes ist seit dem letzten Stand dazugekommen bzw. implementiert worden:
-
-- **CI/CD-Pipeline**: GitHub Actions (`ci.yml`) führt bei jedem Pull Request auf `main`/`develop` und bei jedem Push auf `main` automatisch alle Backend- und Frontend-Tests aus. Ein dedizierter Gate-Job `All Tests Pass` blockiert den Merge, solange auch nur ein Test fehlschlägt. Der Deploy-Workflow (`deploy-branch.yml`) baut den Frontend-Dist und veröffentlicht ihn nur bei erfolgreichem Push auf `main`.
-- **Abmelde-Button**: Der Nutzer kann sich nun explizit ausloggen; der vollständige Logout-Flow (POST `/auth/logout` + Session-Clear) ist in `auth.spec.ts` abgedeckt.
-- **Credentials-Persistenz**: Login-Daten bleiben nach einem Seitenreload erhalten; der Nutzer muss sich nicht erneut anmelden. Die zugrundeliegende TokenStorage-Logik ist in `token-storage.spec.ts` getestet.
-- **Spieleanleitung**: Eine HowToPlay-Ansicht wurde ergänzt; der Übersetzungsschlüssel `common.howToPlay` ist im i18n-Service für alle Sprachen verankert.
-- **Mehrsprachigkeit (i18n)**: Die Anwendung unterstützt jetzt Deutsch, Englisch, Französisch und Spanisch über einen dedizierten `i18n`-Service mit dem Typen `LanguageCode = 'de' | 'en' | 'es' | 'fr'`.
-- **Verbesserte Sicherheitswarnung**: Die Sicherheitswarnung im Frontend wurde überarbeitet und gibt dem Nutzer eine klarere, aussagekräftigere Rückmeldung bei sicherheitsrelevanten Ereignissen.
-- **Diverse Bugfixes**: Kleinere Korrekturen in verschiedenen Komponenten und Services.
-- **Docker-Build-Fix (Multi-Stage Dockerfile)**: Das Backend-Dockerfile wurde von einem Single-Stage- auf ein Multi-Stage-Build-Verfahren umgestellt (`Betception-Backend/Dockerfile`). Die neue Builder-Stage installiert alle Abhängigkeiten einschließlich DevDependencies (`npm install --include=dev`) und führt den TypeScript-Compiler aus. Die anschließende Production-Stage kopiert nur das kompilierte `dist/`-Verzeichnis und installiert ausschließlich Produktionsabhängigkeiten (`npm ci --omit=dev`). Damit wird das zuvor auftretende `sh: 1: tsc: not found`-Problem (exit code 127 beim Build) dauerhaft behoben und gleichzeitig eine schlanke Produktions-Image-Größe sichergestellt.
-- **Entrypoint-CRLF-Fix**: Das Skript `docker-entrypoint.sh` enthielt Windows-CRLF-Zeilenenden (`\r\n`), was auf Linux-Containern dazu führte, dass Bash alle Befehle mit einem angehängten `\r` aufrief und diese als unbekannte Kommandos interpretierte (exit code 127 zur Laufzeit). Die Datei wurde auf reine LF-Zeilenenden konvertiert. Zusätzlich wurde im Dockerfile ein `sed -i 's/\r$//'`-Schritt vor dem `chmod +x` ergänzt, sodass zukünftige Windows-Edits das Problem nicht erneut einbringen können.
-- **Performance-Testumgebung funktionsfähig**: Die dedizierte k6-Lasttest-Infrastruktur (`Betception-Backend/docker-compose.perf.yml`) ist durch die obigen Fixes nun vollständig lauffähig. Die Umgebung startet MySQL (`db-perf`), baut und startet das Backend (`backend-perf` auf Port 3001) und führt k6-Szenarien als kurzlebige Docker-Container aus (`grafana/k6:latest`). Eine lokale k6-Installation ist nicht erforderlich.
 
 ---
 
@@ -55,6 +40,7 @@ Folgendes ist seit dem letzten Stand dazugekommen bzw. implementiert worden:
    6.2 [Test Logs](#62-test-logs)  
    6.3 [Defect Reports](#63-defect-reports)  
 7. [Appendix A: Project Tasks](#7-appendix-a-project-tasks)
+8. [Appendix B: Test File Inventory](#8-appendix-b-test-file-inventory)
 
 ---
 
@@ -69,7 +55,7 @@ Folgendes ist seit dem letzten Stand dazugekommen bzw. implementiert worden:
 Dieses Testplan-Dokument für BetCeption dient der Erreichung folgender Ziele:
 
 - Identifikation der vorhandenen Projektinformationen, Testartefakte und getesteten Software-Komponenten auf Basis des Repositories, der SRS und der technischen Dokumentation `(bereits implementiert)`.
-- Beschreibung der aktuellen Testanforderungen aus Backend, Frontend, Middleware, Integrations- und Utility-Tests mit 23 Backend-Testdateien, 23 Frontend-Spec-Dateien, 78+ Backend-Testfällen und 37 Frontend-Testfällen.
+- Beschreibung der aktuellen Testanforderungen aus Backend, Frontend, Middleware, Integrations- und Utility-Tests mit **27 Backend-Testdateien**, **37 Frontend-Spec-Dateien**, **5 Playwright-E2E-Spec-Dateien**, **4 k6-Performance-Szenarien**, **189 Backend-Testfällen** und **259 Frontend-Testfällen**.
 - Empfehlung und Beschreibung der Teststrategie für bereits vorhandene und künftig noch zu ergänzende Testarten `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
 - Benennung der benötigten Ressourcen, Werkzeuge und Testumgebungen für die Weiterführung der Testaktivitäten `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
 - Definition der zu liefernden Testartefakte wie Testmodell, Testprotokolle und Defect Reports auf Basis des aktuellen Projektstands `(teilweise bereits implementiert / teilweise noch nicht implementiert)`.
@@ -81,33 +67,33 @@ BetCeption ist eine browserbasierte Casino-Anwendung mit Fokus auf Blackjack, Wa
 
 Architektonisch besteht das System aus einem Angular-Frontend und einem Node.js/Express-Backend mit TypeORM und MySQL 8. Das Backend nutzt REST-Endpunkte, JWT-basierte Authentifizierung, Refresh-Token-Cookies, Middleware für Validierung und Zugriffsschutz sowie persistente Entitäten für Runden, Wallet, Sessions, Rewards und Leaderboards `(bereits implementiert)`.
 
-Die aktuelle Testlandschaft deckt vor allem Unit-, komponentennahe und controllernahe Tests ab. Im Backend werden Controller, Middleware, Utility-Funktionen und ein Integrations-Endpunkt mit Jest, ts-jest und Supertest geprüft. Im Frontend werden Angular-Komponenten, Services, Guards, Interceptors und Pipes mit Jasmine/Karma getestet `(bereits implementiert)`.
+Die aktuelle Testlandschaft deckt vor allem Unit-, komponentennahe und controllernahe Tests ab. Im Backend werden Controller, Middleware, Utility-Funktionen (inkl. Logger und Fairness-Utils), reine Geschäftslogik-Funktionen (evaluateHand, resolveMainBet, evaluateSideBet) und ein Integrations-Endpunkt mit Jest, ts-jest und Supertest geprüft. Im Frontend werden Angular-Komponenten, Services, Guards, Interceptors und Pipes mit Jasmine/Karma getestet `(bereits implementiert)`.
 
 Inhaltlich zeigen die Tests eine klare Konzentration auf Kernprozesse wie Registrierung, Login, Token-Handling, Wallet-Buchungen, Power-Up-Kauf und -Verbrauch, Daily Rewards, Leaderboard-Daten, Fairness-Historie sowie den Start und die Abwicklung von Blackjack-Runden. Zusätzlich existieren erste UI-nahe Spezifikationen für Homepage, Leaderboard und Daily-Reward-Modal `(bereits implementiert)`.
+
+
 
 <a id="13-scope"></a>
 ## 1.3 Scope
 
-Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/API Test und einen kleinen Integrationsumfang für den Health-Endpunkt `(bereits implementiert)`. Systematische End-to-End-, Performance-, Recovery- und Installations-Tests sind fachlich vorgesehen, im aktuellen Repository aber nicht als Testautomatisierung vorhanden `(noch nicht implementiert)`.
+Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/API Test, Integration Test, End-to-End-Test und Performance-Test `(bereits implementiert)`. Recovery- und Installations-Tests sind fachlich vorgesehen, aber noch nicht als Testautomatisierung vorhanden `(noch nicht implementiert)`.
 
 **Funktionen, die durch vorhandene Tests abgedeckt werden:**
 
 - Backend-Authentifizierung: Registrierung, Login, Refresh, Logout, JWT-Erzeugung und Middleware-Schutzmechanismen.
-- Backend-Wallet: Kontostand, Transaktionshistorie, Einzahlung, Auszahlung und Fehlerfälle bei unzureichendem Guthaben .
-- Backend-Gameplay: Rundenstart, Hit, Stand, Settlement, Fairness-Helfer, Fairness-Historie und Daily Rewards .
-- Backend-Shop und Inventory: Auflisten, Kaufen, Verbrauch und Besitzprüfung von Power-Ups.
-- Backend-Middleware und Utilities: Request-Validierung, Error Handling, 404, API-Key-Guard, Auth-Guard, Rate Limiting, Passwort-, Geld- und Token-Utilities.
-- Frontend-Core und UI: App, Auth, Guard, Interceptor, Token Storage, Http-Client-Service, Wallet/RNG-Services, gemeinsame UI-Komponenten und Pipes.
-- Frontend-Feature-Komponenten: Login, Register, Verify Email, Homepage, Blackjack-Page, Leaderboard, Daily Reward Modal und CardGuess (RiskUp-Feature).
-- Abmelde-Button und vollständiger Logout-Flow inkl. Session-Clear (`auth.spec.ts`).
-- Credentials-Persistenz bei Seitenreload über TokenStorage (`token-storage.spec.ts`).
-- Internationalisierung (i18n) mit DE/EN/ES/FR über dedizierten i18n-Service.
-- Spieleanleitung (HowToPlay) als Übersetzungsschlüssel `common.howToPlay` im i18n-Service verankert.
+- Backend-Wallet: Kontostand, Transaktionshistorie, Einzahlung, Auszahlung und Fehlerfälle bei unzureichendem Guthaben.
+- Backend-Gameplay: Rundenstart, Hit, Stand, Settlement, Fairness-Helfer, Fairness-Historie und Daily Rewards.
+- Backend-Shop und Inventory: Auflisten, Kaufen (atomarer Upsert für korrekte Qty-Akkumulation, exakte Saldo- und Wallet-Assertions), Verbrauch und Besitzprüfung von Power-Ups; Level-Sperre mit 403/LEVEL_TOO_LOW-Rückgabe.
+- Backend-BET_BOOST-Powerups: Settlement-Logik für BET_BOOST_30 (+30 %) und BET_BOOST_100 (+100 %) auf die Hauptwette; additives Stacking mehrerer Booster; kein Boost bei Push oder Loss; Blackjack-Basis (2,5×) plus Boost korrekt berechnet.
+- Backend-Middleware und Utilities: Request-Validierung, Error Handling, 404, API-Key-Guard, Auth-Guard, Rate Limiting, Rate-Limit-Store (vollständiger `TypeOrmRateLimitStore`-Lebenszyklus: init, get, increment, decrement, resetKey, resetAll, shutdown), Passwort-, Geld- und Token-Utilities sowie Logger-Utility (JSON-strukturierte Ausgabe, Level-Filterung für info/warn/error/debug, Error-Objekt-Serialisierung, Produktionssuppression für debug).
+- Backend-Fairness-Utilities: `buildFairnessPayload` mit Server-Seed-Enthüllung bei Settlement, Seed-Verschleierung bei laufenden oder nicht gestarteten Runden.
+- Backend-Runden-Geschäftslogik (reine Funktionen, kein TypeORM): `evaluateHand` (Ass-Handling soft/hard, Blackjack-Erkennung, Bust-Reduktion, Mehrfach-Asse); `resolveMainBet` (Gewinn/Verlust/Push-Entscheidung mit korrekten Multiplikatoren: 2,5× Blackjack, 2× Gewinn, 1× Push, 0× Verlust); `evaluateSideBet` (FIRST_CARD_COLOR, FIRST_CARD_SUIT, FIRST_CARD_RANK, FIRST_DEALER_CARD-Kontext, Refund bei ungültigen Odds, VOID bei unbekanntem Typ).
+- Frontend-Core und UI: App, Auth-Services (inkl. vollständiger Logout-Flow), Guard, Interceptor, Token Storage, HTTP-Client-Service, BetceptionApi-Service, Wallet-Service, RNG-Service, AppShell, gemeinsame UI-Bausteine (Button, NotFound, SettingsMenu, Toast-Service, ToastContainer, DisclaimerFooter) und Format-Coins-Pipe.
+- Frontend-i18n: Internationalisierung (DE/EN/ES/FR) mit dedizierten Spec-Tests; Schlüssel für `powerup.queue`/`powerup.queued` und `common.howToPlay` verifiziert.
+- Frontend-Feature-Komponenten: Login, Register, Verify Email, AuthFacade, Homepage (inkl. responsives Layout), Blackjack-Page (inkl. Pre-Round-Queue mit exakten `consumePowerup`-Parameter-Assertions, BET_BOOST-Flows, Queue-Reset bei `onNextRound`), Controls (inkl. `canSettle`-Getter), Hand, Table, Leaderboard, Daily-Reward-Modal, HowToPlay-Modal, Hero, NeonCard, CtaPanel, Auth-Panel, CardGuess (RiskUp-Feature), Impressum, Datenschutz.
 
 **Funktionen, die aktuell nicht oder nicht ausreichend automatisiert getestet werden:**
 
-- Komplette Ende-zu-Ende-Nutzerflüsse über Browser und Backend hinweg.
-- Leistungs-, Last-, Stress- und Volumentests unter realistischen Parallelzugriffen.
 - Failover-, Recovery- und Installationsszenarien auf Infrastruktur- oder Deployment-Ebene.
 - Systematische Multi-Browser- und Multi-Geräte-Konfigurationstests.
 
@@ -125,7 +111,7 @@ Dieser Testplan adressiert die Teststufen Unit Test, Component Test, Controller/
 
 **Constraints:**
 
-- Es existiert aktuell keine im Repository sichtbare E2E-Suite, kein dediziertes Performance-Framework und keine formale Testmanagement-Datenbank.
+- Recovery- und Installationstests sind noch nicht als automatisierte Suite vorhanden.
 
 <a id="14-project-identification"></a>
 ## 1.4 Project Identification
@@ -154,16 +140,32 @@ Die folgende Auflistung enthält jene Elemente – Anwendungsfälle, funktionale
 - Authentifizierung und Session-Management: Registrierung, Login, Refresh, Logout, Auth Guards, API-Key-Schutz und Token-Utilities `(bereits implementiert)`.
 - Wallet- und Geldlogik: Kontostand, Transaktionen, Ein- und Auszahlungen, Geldkonvertierung und Buchungskonsistenz in fachlichen Happy- und Error-Pfaden `(bereits implementiert)`.
 - Blackjack-Rundenlogik: Rundenstart, Hit, Stand, Settlement, aktive Runde sowie deterministische Fairness-Decklogik `(bereits implementiert)`.
-- Spielnahe Zusatzfunktionen: Power-Up-Kauf, Power-Up-Verbrauch, Inventory, Daily Rewards und Leaderboard-Daten `(bereits implementiert)`.
+- BET_BOOST-Powerup-Logik: +30 %- und +100 %-Multiplikatoren auf die Hauptwette, additives Stacking, korrektes Verhalten bei Push und Loss `(bereits implementiert)`.
+- Spielnahe Zusatzfunktionen: Power-Up-Kauf (atomarer Upsert, Level-Gating), Qty-Anzeige-Fix, Pre-Round-Queue-Aktivierung, Power-Up-Verbrauch, Inventory, Daily Rewards und Leaderboard-Daten `(bereits implementiert)`.
 - Robustheit der HTTP-Schicht: Request-Validierung, Fehlerformatierung, 404-Verhalten und Health-Endpunkt `(bereits implementiert)`.
-- Frontend-Anwendungsbasis: Rendering der App, Auth-Services, Guard/Interceptor, Token Storage, HTTP-Client, Wallet/RNG-Services, gemeinsame UI-Bausteine und Pipes `(bereits implementiert)`.
-- Frontend-Feature-Oberflächen: Auth-Seiten, Homepage, Blackjack-Page, Leaderboard-Komponente, Daily-Reward-Modal und Event-Handling zwischen Komponenten `(bereits implementiert)`.
+- Backend-Middleware und Utilities (erweitert): Rate-Limit-Store (`TypeOrmRateLimitStore`-Lebenszyklus), Logger-Utility (JSON-Logging, Error-Serialisierung, Debug-Suppression in Produktion), Fairness-Utils (`buildFairnessPayload`) `(bereits implementiert)`.
+- Backend-Runden-Geschäftslogik (reine Funktionen): `evaluateHand`, `resolveMainBet`, `evaluateSideBet` inkl. Sidebet-Typen und FIRST_DEALER_CARD-Kontext `(bereits implementiert)`.
+- Frontend-Anwendungsbasis: Rendering der App, Auth-Services, Guard/Interceptor, Token Storage, HTTP-Client, BetceptionApi-Service, Wallet/RNG-Services, Toast-System, gemeinsame UI-Bausteine und Pipes `(bereits implementiert)`.
+- Frontend-Feature-Oberflächen: Auth-Seiten, Homepage, Blackjack-Page (Queue, BET_BOOST, Powerup-Flow), Leaderboard-Komponente, Daily-Reward-Modal, HowToPlay-Modal, Hero, NeonCard, CtaPanel, Auth-Panel, CardGuess, Impressum, Datenschutz und Event-Handling zwischen Komponenten `(bereits implementiert)`.
 - Nichtfunktionale Anforderungen zu Leistung, Wiederherstellung, Installation, Konfiguration und Lastverhalten sollen künftig mit dedizierten Tests ergänzt werden `(noch nicht implementiert)`.
 
 <a id="3-test-strategy"></a>
 # 3. Test Strategy
 
 Die Teststrategie orientiert sich am tatsächlich vorhandenen Testbestand und erweitert ihn um die im Projektkontext sinnvollen, aber noch fehlenden Testarten. Bestehende Tests sichern vor allem fachliche Logik, API-Verhalten, Eingabevalidierung und zentrale UI-Komponenten ab `(bereits implementiert)`. Nicht vorhandene Testarten werden in diesem Dokument als empfohlene Ergänzung beschrieben, damit aus dem aktuellen Unit-/Controller-Fokus ein vollständigerer Qualitätssicherungsansatz entstehen kann `(noch nicht implementiert)`.
+
+### Coverage-Ziel
+
+Das Projekt definiert eine **Mindest-Testabdeckung von 80 %** für alle vier Metriken (Statements, Branches, Functions, Lines) — gemessen jeweils separat für Backend (Jest) und Frontend (Karma/Istanbul). Dieses Ziel gilt für produktiven Quellcode; reine Infrastrukturdateien wie TypeORM-Entities, DB-Migrationen und Konfigurationsskripte können bei der Gesamtberechnung ausgeschlossen werden.
+
+| Metrik | Zielwert | Backend (aktuell) | Frontend (aktuell) |
+|---|---|---|---|
+| Statements | ≥ 80 % | **90,16 %** ✅ | ≥ 80 % ✅ |
+| Branches | ≥ 80 % | **68,77 %** ⚠️ | ≥ 63 % |
+| Functions | ≥ 80 % | **89,72 %** ✅ | ≥ 80 % ✅ |
+| Lines | ≥ 80 % | **91,24 %** ✅ | ≥ 80 % ✅ |
+
+Die Abweichungen resultieren vor allem aus nicht vollständig getesteten Branches in `round.controller.ts` (komplexe Sidebet- und Dealer-Logik) und `env.ts`/`rateLimiters.ts`. Im Frontend liegen die Branch-Coverage-Lücken vor allem bei Fehlerbehandlungspfaden in Services und seltenen Zustandswechseln in Komponenten. Der Abbau dieser Lücken — insbesondere die Round-Controller-Branch-Coverage auf ≥ 80 % — ist als offene Aufgabe im Testplan vermerkt.
 
 <a id="31-testing-types"></a>
 ## 3.1 Testing Types
@@ -184,9 +186,9 @@ Die Teststrategie orientiert sich am tatsächlich vorhandenen Testbestand und er
 | Bereich | Inhalt |
 |---|---|
 | Test Objective | Sicherstellung der korrekten Fachfunktionalität in Backend und Frontend, inklusive Dateneingabe, Verarbeitung, Rückgabe, Statuscodes, Fehlermeldungen und UI-Reaktionen. Dies ist die am stärksten ausgebaute Testart im Projekt `(bereits implementiert)` |
-| Technique | - Backend-Controller-Tests mit validen und invaliden Eingaben für Auth, User, Wallet, Shop, Inventory, Powerups, Rewards, Leaderboard, Fairness und Round ausführen `(bereits implementiert)`  Middleware- und Utility-Tests für Request-Validierung, Fehlerbehandlung, Authentifizierung, API-Key-Checks, Rate Limiting sowie Geld-, Passwort- und Token-Helfer ausführen `(bereits implementiert)` Frontend-Specs für Services, Guards, Interceptor, Pipes und Feature-Komponenten mit Fokus auf Rendering, Mapping, Event-Handling und Fehlerszenarien ausführen `(bereits implementiert)`  Nicht abgedeckte Use Cases wie vollständige Sidebet-End-to-End-Flows oder kombinierte Frontend-Backend-Happy-Paths sollten zusätzlich als systematische Funktionssuiten ergänzt werden `(noch nicht implementiert)` |
-| Completion Criteria | - Alle geplanten funktionalen Tests für vorhandene Module laufen erfolgreich durch `(bereits implementiert als Ziel, tatsächlicher Lauf für diesen Testplan wurde nicht neu ausgeführt)`  Alle identifizierten Defekte sind dokumentiert und entweder behoben oder bewusst priorisiert `(teilweise bereits implementiert / formaler Defect-Workflow nicht sichtbar)` |
-| Special Considerations | Ein Teil der Frontend-Specs prüft aktuell nur Komponentenerstellung; dort sollte die fachliche Tiefe weiter erhöht werden. Umgekehrt zeigen neue Tests wie Homepage, Leaderboard und Daily Reward Modal bereits konkreteres UI-Verhalten und sollten als Qualitätsniveau für weitere Komponenten dienen `(teilweise bereits implementiert)` |
+| Technique | - Backend-Controller-Tests mit validen und invaliden Eingaben für Auth, User, Wallet, Shop (inkl. Level-Sperre und exakte Saldo-Assertions), Inventory, Powerups, Rewards, Leaderboard, Fairness, Round (inkl. BET_BOOST-Settlement: +30 %, +100 %, Stacking, Push-Ignoranz) ausführen `(bereits implementiert)` — Middleware- und Utility-Tests für Request-Validierung, Fehlerbehandlung, Authentifizierung, API-Key-Checks, Rate Limiting, Rate-Limit-Store sowie Geld-, Passwort- und Token-Helfer ausführen `(bereits implementiert)` — Frontend-Specs für Services (Auth, Wallet, RNG, BetceptionApi, i18n), Guards, Interceptor, Pipes, Toast-System und alle Feature-Komponenten mit Fokus auf Rendering, Mapping, Event-Handling, Fehlerszenarien und exakte Parameter-Assertions ausführen `(bereits implementiert)` — Nicht abgedeckte Use Cases wie vollständige Sidebet-End-to-End-Flows oder kombinierte Frontend-Backend-Happy-Paths sollten zusätzlich als systematische Funktionssuiten ergänzt werden `(noch nicht implementiert)` |
+| Completion Criteria | - Alle geplanten funktionalen Tests für vorhandene Module laufen erfolgreich durch: **189 Backend-Tests in 27 Suites**, **259 Frontend-Tests in 37 Suites** `(erreicht)` — Alle identifizierten Defekte sind dokumentiert und entweder behoben oder bewusst priorisiert `(teilweise bereits implementiert / formaler Defect-Workflow nicht sichtbar)` |
+| Special Considerations | Powerup-Tests wurden mit präzisen Parameter-Assertions implementiert (exakter Geldbetrag, exakter Wallet-Transaktionskind, exakte `consumePowerup`-Argumente). Dieses Qualitätsniveau sollte als Standard für alle zukünftigen Controller- und Service-Tests gelten. Die Blackjack-Spec isoliert Queue- und Boost-Logik mit `TestBed.resetTestingModule()` in verschachtelten `describe`-Blöcken `(bereits implementiert)`. Die neuen reinen Funktions-Tests in `round.business-logic.test.ts` testen `evaluateHand`, `resolveMainBet` und `evaluateSideBet` vollständig ohne TypeORM-Instanziierung; `rate-limit-store.test.ts` deckt den gesamten Store-Lebenszyklus mit Repository-Mocks ab; `logger.test.ts` verifiziert alle Log-Level sowie Produktionssuppression; `fairness.utils.test.ts` prüft die Seed-Enthüllungslogik `(bereits implementiert)` |
 
 <a id="313-business-cycle-testing"></a>
 ### 3.1.3 Business Cycle Testing
@@ -215,8 +217,8 @@ Die Teststrategie orientiert sich am tatsächlich vorhandenen Testbestand und er
 |---|---|
 | Test Objective | Messung der Antwortzeiten kritischer Transaktionen (Login, Register, Round Start/Hit/Stand/Settle, Wallet Summary, Leaderboard) unter Ramp-Last mit bis zu 20 gleichzeitigen virtuellen Nutzern. |
 | Technique | Vier k6-Szenarien in `performance/k6/scenarios/`: **auth-flow.js** (Register + Login, 10 VUs), **game-flow.js** (vollständiger Blackjack-Rundenablauf: Start → Stand → Settle, 10 VUs), **wallet-flow.js** (Deposit + Summary + Transactions, 10 VUs), **leaderboard.js** (alle drei Leaderboard-Endpunkte, 20 VUs). Jedes Szenario misst p(95) über gefilterte Tags (`name:round_start`, `name:login` usw.) und wertet sie gegen die SRS-Ziele aus: < 300 ms für Spielaktionen, < 600 ms für Auth, < 1 % Fehlerrate. |
-| Completion Criteria | Alle k6-Threshold-Prüfungen (p95, Fehlerrate, Fehlerzähler) werden bestanden, wenn die Skripte gegen die dedizierte Perf-Umgebung (`docker-compose.perf.yml`) ausgeführt werden. Ergebnisse werden als JSON-Artifacts in CI gespeichert. Die Perf-Umgebung ist nach dem Multi-Stage-Dockerfile-Fix und der CRLF-Korrektur am Entrypoint vollständig lauffähig `(bereits implementiert)`. |
-| Special Considerations | Die dedizierte Umgebung (`docker-compose.perf.yml`) exponiert das Backend auf Port 3001, nutzt eine separate MySQL-Datenbank (`betception_perf`) und hebt die Rate-Limits auf (AUTH_RATE_LIMIT_MAX=1000, RATE_LIMIT_MAX=2000). Der GitHub-Actions-Workflow `perf.yml` kann manuell oder automatisch jeden Montag um 03:00 UTC ausgeführt werden. k6 läuft als Docker-Container (`grafana/k6:latest`) innerhalb von `docker-compose.perf.yml` – eine lokale k6-Installation ist nicht erforderlich `(bereits implementiert)`. |
+| Completion Criteria | Alle k6-Threshold-Prüfungen (p95, Fehlerrate, Fehlerzähler) werden bestanden, wenn die Skripte gegen die dedizierte Perf-Umgebung (`docker-compose.perf.yml`) ausgeführt werden. Ergebnisse werden als JSON-Artifacts in CI gespeichert `(bereits implementiert)`. |
+| Special Considerations | Die dedizierte Umgebung (`docker-compose.perf.yml`) exponiert das Backend auf Port 3001, nutzt eine separate MySQL-Datenbank (`betception_perf`) und hebt die Rate-Limits auf (AUTH_RATE_LIMIT_MAX=1000, RATE_LIMIT_MAX=2000). Der GitHub-Actions-Workflow `perf.yml` kann manuell ausgeführt werden. k6 läuft als Docker-Container (`grafana/k6:latest`) innerhalb von `docker-compose.perf.yml` – eine lokale k6-Installation ist nicht erforderlich `(bereits implementiert)`. |
 
 <a id="316-load-testing"></a>
 ### 3.1.6 Load Testing
@@ -337,8 +339,6 @@ Die folgende Tabelle enthält die Systemressourcen für das Testprojekt.
 | Client Test PC's | Entwicklungsrechner mit Node.js, npm, Angular CLI-fähiger Umgebung und Browser für Karma-Tests |
 | Include special configuration requirements | Chrome-/Browser-Unterstützung für Karma, Zugriff auf Docker, Node-/npm-Kompatibilität, Umgebungsvariablen für Backend-Tests |
 | Test Repository | GitHub-Repository des Projekts BetCeption |
-| Network or Subnet | TBD für zentrale CI-/Shared-Testumgebung; lokal nicht erforderlich `(noch nicht implementiert als dedizierte Testumgebung)` |
-| Server Name | TBD; aktuell repositorybasiert ohne separates Testmanagementsystem im Codebestand `(noch nicht implementiert)` |
 | Test Development PC's | Lokale Entwicklerarbeitsplätze mit VS Code, Node.js, Docker, optional MySQL Workbench |
 
 <a id="5-project-milestones"></a>
@@ -367,7 +367,7 @@ Das Testmodell besteht aktuell aus den im Repository vorhandenen Jest- und Jasmi
 Zu erzeugende bzw. zu pflegende Artefakte:
 
 - Repository-basierte Test-Suites für Backend und Frontend.
-- Coverage-Reports aus Jest und Karma Coverage.
+- Coverage-Reports aus Jest und Karma Coverage mit Mindestabdeckung von **80 % Statements, Branches, Functions und Lines**.
 - Anforderungs-zu-Test-Matrix pro Use Case und Modul.
 - Erweiterte Nichtfunktionstest-Skripte für Performance, Load, Recovery und Installation.
 

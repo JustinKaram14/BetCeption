@@ -10,6 +10,7 @@ import { SideBet } from '../../entity/SideBet.js';
 import { SidebetType } from '../../entity/SidebetType.js';
 import { User } from '../../entity/User.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
+import { PowerupConsumption } from '../../entity/PowerupConsumption.js';
 import {
   CardRank,
   CardSuit,
@@ -392,11 +393,27 @@ export async function settleRound(
       }
 
       const resolution = resolveMainBet(playerHand, dealerHand);
-      const settledAmountDecimal = multiplyMoney(mainBet.amount, resolution.multiplier);
+
+      // Sum BET_BOOST bonuses from powerups consumed in this round
+      const consumptionRepo = manager.getRepository(PowerupConsumption);
+      const consumptions = await consumptionRepo.find({
+        where: { round: { id: roundId }, user: { id: userId } },
+        relations: ['type'],
+      });
+      const betBoostBonus = consumptions.reduce((sum, c) => {
+        const m = c.type?.effectJson?.['main_multiplier'];
+        return typeof m === 'number' ? sum + m : sum;
+      }, 0);
+      const effectiveMultiplier =
+        resolution.status === MainBetStatus.WON && betBoostBonus > 0
+          ? resolution.multiplier + betBoostBonus
+          : resolution.multiplier;
+
+      const settledAmountDecimal = multiplyMoney(mainBet.amount, effectiveMultiplier);
       const settledAmountCents = decimalToCents(settledAmountDecimal);
 
       mainBet.status = resolution.status;
-      mainBet.payoutMultiplier = resolution.multiplier.toFixed(3);
+      mainBet.payoutMultiplier = effectiveMultiplier.toFixed(3);
       mainBet.settledAmount = settledAmountDecimal;
       mainBet.settledAt = new Date();
       await manager.getRepository(MainBet).save(mainBet);
@@ -1037,6 +1054,9 @@ function bufferToBigInt(buffer: Buffer): bigint {
 export const roundTestUtils = {
   buildSeededDeck,
   drawCardFromSeed,
+  evaluateHand,
+  resolveMainBet,
+  evaluateSideBet,
 };
 
 function isTerminalHandStatus(status: HandStatus) {

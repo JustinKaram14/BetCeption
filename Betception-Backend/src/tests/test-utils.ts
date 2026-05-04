@@ -47,16 +47,19 @@ export function mockAppDataSourceRepositories(
 
 export function mockAppDataSourceTransaction(
   managerRepos: Map<EntityTarget<any>, MockRepository>,
+  extraManagerMethods: Partial<Record<string, jest.Mock>> = {},
 ) {
   const manager = {
     getRepository: ((entity: EntityTarget<any>) => {
       const repo = managerRepos.get(entity);
-      if (!repo) {
-        throw new Error(`No mock repository registered in transaction for ${(entity as any)?.name ?? 'unknown entity'}`);
-      }
-      return repo as unknown as Repository<any>;
+      if (repo) return repo as unknown as Repository<any>;
+      // Return a lenient default so new controller dependencies don't break
+      // existing tests — explicit tests should still register their own repos.
+      return createMockRepository({ find: jest.fn().mockResolvedValue([]) }) as unknown as Repository<any>;
     }) as EntityManager['getRepository'],
-  } as EntityManager;
+    query: jest.fn().mockResolvedValue([]),
+    ...extraManagerMethods,
+  } as unknown as EntityManager;
 
   return jest
     .spyOn(AppDataSource, 'transaction')

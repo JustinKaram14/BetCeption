@@ -64,6 +64,28 @@
   color:var(--bg-color);
   box-shadow:0 0 15px #aaa,inset 0 0 10px #aaa;
 }
+.peek-badge{
+  position:absolute;
+  top:72px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:6;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 14px;
+  border-radius:999px;
+  border:1px solid #00e5ff;
+  background:rgba(0,229,255,.12);
+  color:#00e5ff;
+  font-size:.75rem;
+  font-weight:bold;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  box-shadow:0 0 12px rgba(0,229,255,.35);
+  white-space:nowrap;
+  animation:overlay-in .3s ease-out;
+}
 .game-level-progress{
   position:absolute;
   left:20px;

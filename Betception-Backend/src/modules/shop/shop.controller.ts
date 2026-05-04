@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { AppDataSource } from '../../db/data-source.js';
 import { PowerupType } from '../../entity/PowerupType.js';
 import { User } from '../../entity/User.js';
-import { UserPowerup } from '../../entity/UserPowerup.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
 import { decimalToCents, centsToDecimal } from '../../utils/money.js';
@@ -77,20 +76,16 @@ export async function purchasePowerup(
       user.balance = centsToDecimal(balanceCents - totalPriceCents);
       await userRepo.save(user);
 
-      const userPowerupRepo = manager.getRepository(UserPowerup);
-      let userPowerup = await userPowerupRepo.findOne({
-        where: { user: { id: user.id }, type: { id: type.id } },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!userPowerup) {
-        userPowerup = userPowerupRepo.create({
-          user,
-          type,
-          quantity: 0,
-        });
-      }
-      userPowerup.quantity += quantity;
-      await userPowerupRepo.save(userPowerup);
+      // Atomically insert or accumulate quantity — avoids findOne race conditions
+      await manager.query(
+        'INSERT INTO user_powerups (user_id, type_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
+        [userId, type.id, quantity],
+      );
+      const rows = await manager.query<Array<{ quantity: number }>>(
+        'SELECT quantity FROM user_powerups WHERE user_id = ? AND type_id = ?',
+        [userId, type.id],
+      );
+      const inventoryQuantity = Number(rows?.[0]?.quantity ?? quantity);
 
       const walletRepo = manager.getRepository(WalletTransaction);
       const walletTx = walletRepo.create({
@@ -104,7 +99,7 @@ export async function purchasePowerup(
 
       return {
         newBalance: user.balance,
-        inventoryQuantity: userPowerup.quantity,
+        inventoryQuantity,
       };
     });
 

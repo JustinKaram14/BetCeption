@@ -5,15 +5,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   HandOwnerType,
   HandStatus,
+  InventoryPowerup,
   LevelProgress,
   MainBetStatus,
+  PowerupType,
   RoundState,
   RoundStatus,
 } from '../../../../../core/api/api.types';
+import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { Table } from '../../components/table/table';
 import { Controls } from '../../components/controls/controls';
+import { PowerupMenu } from '../../components/powerup-menu/powerup-menu';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 
@@ -22,13 +26,14 @@ type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
 @Component({
   selector: 'app-blackjack',
   standalone: true,
-  imports: [NgIf, RouterLink, Table, Controls, LevelProgressComponent],
+  imports: [NgIf, RouterLink, Table, Controls, PowerupMenu, LevelProgressComponent],
   templateUrl: './blackjack.html',
   styleUrl: './blackjack.css'
 })
 export class Blackjack implements OnInit {
   private readonly rng = inject(Rng);
   private readonly wallet = inject(Wallet);
+  private readonly api = inject(BetceptionApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly i18n = inject(I18n);
   private readonly dealerRevealMs = 620;
@@ -37,7 +42,7 @@ export class Blackjack implements OnInit {
   private readonly resultPauseMs = 250;
 
   round: RoundState | null = null;
-  betAmount = 10;
+  betAmount = 0;
   balance: number | null = null;
   levelProgress: LevelProgress | null = null;
   busyAction: ActionKind | null = null;
@@ -46,6 +51,14 @@ export class Blackjack implements OnInit {
   showBlackjackBanner = false;
   showRoundOverlay = false;
   roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean; dealerInfo: string | null } | null = null;
+  showPowerupMenu = false;
+  inventory: InventoryPowerup[] = [];
+  availablePowerups: PowerupType[] = [];
+  activePowerupCodes: string[] = [];
+  pendingPowerupTypeIds: number[] = [];
+  peekCard: { rank: string; suit: string } | null = null;
+  userLevel = 1;
+  private inventoryLoaded = false;
   private bannerTimer: number | null = null;
   private resultOverlayTimer: number | null = null;
   private walletRefreshTimer: number | null = null;
@@ -138,6 +151,9 @@ export class Blackjack implements OnInit {
           if (kind === 'deal') {
             this.loadBalance();
           }
+          if (kind === 'deal') {
+            this.consumePendingQueue(round.id);
+          }
           if (kind === 'settle') {
             this.scheduleRoundOverlay(previousRound, round);
             this.walletRefreshTimer = window.setTimeout(() => {
@@ -173,8 +189,9 @@ export class Blackjack implements OnInit {
       .getSummary()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ balance, levelProgress }) => {
+        next: ({ balance, level, levelProgress }) => {
           this.balance = balance;
+          this.userLevel = level;
           const xpGained =
             preserveXpGain && this.levelProgress?.xp === levelProgress.xp
               ? this.levelProgress.xpGained
@@ -245,9 +262,95 @@ export class Blackjack implements OnInit {
     this.roundOutcome = null;
     this.round = null;
     this.info = null;
+    this.activePowerupCodes = [];
+    this.pendingPowerupTypeIds = [];
+    this.peekCard = null;
     if (this.balance !== null && this.betAmount > this.balance) {
       this.betAmount = this.balance;
     }
+  }
+
+  onOpenPowerupMenu() {
+    this.showPowerupMenu = true;
+    if (!this.inventoryLoaded) {
+      this.loadInventory();
+    }
+  }
+
+  onClosePowerupMenu() {
+    this.showPowerupMenu = false;
+  }
+
+  onToggleQueue(typeId: number) {
+    const idx = this.pendingPowerupTypeIds.indexOf(typeId);
+    if (idx >= 0) {
+      this.pendingPowerupTypeIds = this.pendingPowerupTypeIds.filter((id) => id !== typeId);
+    } else {
+      this.pendingPowerupTypeIds = [...this.pendingPowerupTypeIds, typeId];
+    }
+  }
+
+  onPurchasePowerup(payload: { typeId: number; quantity: number }) {
+    this.api
+      .purchasePowerup(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.balance = res.balance;
+          this.loadInventory();
+        },
+        error: (err) => {
+          this.error = this.extractError(err);
+        },
+      });
+  }
+
+  onActivatePowerup(payload: { typeId: number; roundId: string }) {
+    this.api
+      .consumePowerup({ typeId: payload.typeId, quantity: 1, roundId: payload.roundId })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const code = res.powerup.code;
+          if (!this.activePowerupCodes.includes(code)) {
+            this.activePowerupCodes = [...this.activePowerupCodes, code];
+          }
+          if (code === 'peek' && res.powerup.effect) {
+            const effect = res.powerup.effect as Record<string, unknown>;
+            const rank = typeof effect['rank'] === 'string' ? effect['rank'] : null;
+            const suit = typeof effect['suit'] === 'string' ? effect['suit'] : null;
+            if (rank && suit) {
+              this.peekCard = { rank, suit };
+            }
+          }
+          this.loadInventory();
+        },
+        error: (err) => {
+          this.error = this.extractError(err);
+        },
+      });
+  }
+
+  private loadInventory() {
+    this.api
+      .listInventory()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.inventory = res.items;
+          this.inventoryLoaded = true;
+        },
+        error: () => null,
+      });
+    this.api
+      .listPowerups()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.availablePowerups = res.items;
+        },
+        error: () => null,
+      });
   }
 
   private buildRoundOutcome(round: RoundState): typeof this.roundOutcome {
@@ -329,6 +432,33 @@ export class Blackjack implements OnInit {
     }
     window.clearTimeout(this.resultOverlayTimer);
     this.resultOverlayTimer = null;
+  }
+
+  private consumePendingQueue(roundId: string) {
+    const ids = [...this.pendingPowerupTypeIds];
+    this.pendingPowerupTypeIds = [];
+    if (ids.length === 0) return;
+
+    let remaining = ids.length;
+    for (const typeId of ids) {
+      this.api
+        .consumePowerup({ typeId, quantity: 1, roundId })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            const code = res.powerup.code;
+            if (!this.activePowerupCodes.includes(code)) {
+              this.activePowerupCodes = [...this.activePowerupCodes, code];
+            }
+            remaining--;
+            if (remaining === 0) this.loadInventory();
+          },
+          error: () => {
+            remaining--;
+            if (remaining === 0) this.loadInventory();
+          },
+        });
+    }
   }
 
   private clearWalletRefreshTimer() {

@@ -3,6 +3,14 @@ import { NgClass, NgFor, NgIf, DecimalPipe } from '@angular/common';
 import { HandStatus, RoundStatus } from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
 
+const POWERUP_LABELS: Record<string, string> = {
+  MULTI_PLUS: '💊 Multiplikator',
+  JOKER_CARD: '🃏 Joker',
+  NO_LOSS: '🛡️ Schutz',
+  BET_BOOST_30: '💰 +30%',
+  BET_BOOST_100: '🚀 ×2',
+};
+
 @Component({
   selector: 'app-controls',
   standalone: true,
@@ -19,12 +27,14 @@ export class Controls {
   @Input() playerHandStatus: HandStatus | null = null;
   @Input() busy = false;
 
+  @Input() activePowerupCodes: string[] = [];
+
   @Output() placeBet = new EventEmitter<number>();
   @Output() resetBet = new EventEmitter<void>();
   @Output() deal = new EventEmitter<void>();
   @Output() hit = new EventEmitter<void>();
   @Output() stand = new EventEmitter<void>();
-  @Output() settle = new EventEmitter<void>();
+  @Output() openPowerupMenu = new EventEmitter<void>();
 
   readonly chips = [1, 5, 25, 100, 500];
 
@@ -58,12 +68,7 @@ export class Controls {
   }
 
   get canSettle() {
-    const roundOpen =
-      this.roundStatus &&
-      this.roundStatus !== RoundStatus.SETTLED &&
-      this.roundStatus !== RoundStatus.ABORTED;
-    const playerDone = this.playerHandStatus && this.playerHandStatus !== HandStatus.ACTIVE;
-    return !!roundOpen && !!playerDone && !this.busy;
+    return this.roundStatus === RoundStatus.IN_PROGRESS && this.playerHandStatus !== HandStatus.ACTIVE && !this.busy;
   }
 
   get isRoundActive() {
@@ -77,5 +82,9 @@ export class Controls {
   onChip(amount: number) {
     if (this.isRoundActive || this.busy) return;
     this.placeBet.emit(amount);
+  }
+
+  getPowerupLabel(code: string): string {
+    return POWERUP_LABELS[code] ?? code;
   }
 }
