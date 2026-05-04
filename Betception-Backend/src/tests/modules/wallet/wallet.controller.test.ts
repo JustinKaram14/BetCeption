@@ -41,6 +41,15 @@ describe('wallet.controller', () => {
         balance: 123.45,
         xp: 10,
         level: 2,
+        levelProgress: {
+          level: 2,
+          xp: 10,
+          currentLevelXp: 500,
+          nextLevelXp: 1175,
+          xpIntoLevel: 0,
+          xpToNextLevel: 1165,
+          progressPercent: 0,
+        },
         lastDailyRewardAt: '2025-01-01',
       });
     });

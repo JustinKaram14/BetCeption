@@ -1,6 +1,6 @@
 import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { NgIf, AsyncPipe } from '@angular/common';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, catchError, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { HeroComponent } from '../../components/hero/hero';
@@ -13,17 +13,18 @@ import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-
 import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-footer/disclaimer-footer';
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
 import { SettingsMenuComponent } from '../../../../../shared/ui/settings-menu/settings-menu';
+import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { I18n } from '../../../../../core/i18n/i18n';
-import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types';
+import { LoginRequest, RegisterRequest, WalletSummary } from '../../../../../core/api/api.types';
 import type { AuthUser } from '../../../../../core/api/api.types';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -49,6 +50,22 @@ export class HomepageComponent {
   showRewardModal = false;
   showHowToPlayModal = false;
   rewardState: DailyRewardState = { kind: 'loading' };
+  walletSummary: WalletSummary | null = null;
+
+  constructor() {
+    this.isAuthenticated$
+      .pipe(
+        switchMap((isAuthenticated) =>
+          isAuthenticated
+            ? this.wallet.getSummary().pipe(catchError(() => of(null)))
+            : of(null),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((summary) => {
+        this.walletSummary = summary;
+      });
+  }
 
   onLogin(payload: LoginRequest) {
     this.runAuthRequest(
@@ -102,6 +119,7 @@ export class HomepageComponent {
             balance: res.balance,
             eligibleAt: res.eligibleAt,
           };
+          this.refreshWalletSummary();
         },
         error: (err) => {
           const status = err?.status;
@@ -148,6 +166,17 @@ export class HomepageComponent {
         complete: () => {
           this.authLoading = false;
         },
+      });
+  }
+
+  private refreshWalletSummary() {
+    this.wallet.getSummary()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (summary) => {
+          this.walletSummary = summary;
+        },
+        error: () => null,
       });
   }
 

@@ -22,6 +22,11 @@
                 <strong>{{ (user$ | async)?.username }}</strong>
               </div>
               <button class="btn logout-btn" data-testid="logout-button" type="button" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
+              <app-level-progress
+                class="user-level-progress"
+                [progress]="walletSummary?.levelProgress ?? null"
+                orientation="horizontal"
+              ></app-level-progress>
             </div>
         </ng-container>
 

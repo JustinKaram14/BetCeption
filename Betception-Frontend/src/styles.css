@@ -57,20 +57,98 @@
 
 /* Reset / Base */
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body{
+  width:100%;
+  max-width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
 body{
   font-family:var(--font-main);
   color:#fff;
   background:var(--bg-color);
   background-image: radial-gradient(circle at 50% 50%, rgba(56, 17, 98, 0.40), var(--bg-color) 70%);
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
+  min-width:0;
+  touch-action:pan-y;
   user-select:none;
 }
+app-root{
+  display:block;
+  width:100%;
+  min-width:0;
+  overflow-x:hidden;
+}
+table{max-width:100%}
+img,svg,canvas{max-width:100%}
 a{text-decoration:none}
 button{font-family:var(--font-main)}
 button:not(:disabled),a.btn,.btn:not(:disabled){cursor:pointer}
 button:disabled,.btn:disabled{cursor:not-allowed}
+
+html.is-safari body,
+html.is-safari button,
+html.is-safari input,
+html.is-safari select,
+html.is-safari textarea{
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+html.is-safari .title{
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-stroke:.01em rgba(0,255,255,.28);
+  text-shadow:0 0 3px var(--secondary-glow),0 0 9px rgba(0,255,255,.85),0 0 18px rgba(106,13,173,.8);
+}
+
+html.is-safari .subtitle{
+  text-shadow:0 0 4px var(--accent-glow),0 0 12px rgba(255,0,255,.78),0 0 26px rgba(106,13,173,.62);
+}
+
+html.is-safari .leaderboard-heading h2,
+html.is-safari .user-panel__greeting strong,
+html.is-safari .settings-button,
+html.is-safari .how-to-play-btn{
+  -webkit-font-smoothing:antialiased;
+  text-shadow:0 0 4px currentColor,0 0 10px rgba(0,255,255,.48);
+}
+
+html.is-safari .btn,
+html.is-safari button{
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+
+html.is-safari .btn:hover:not(:disabled),
+html.is-safari .how-to-play-btn:hover,
+html.is-safari .settings-button:hover,
+html.is-safari .play-panel .play-btn:hover,
+html.is-safari .logout-btn:hover:not(:disabled),
+html.is-safari .home-btn:hover:not(:disabled),
+html.is-safari .btn-neue-runde:hover:not(:disabled),
+html.is-safari .btn-aufhoeren:hover{
+  transform:none;
+}
+
+@media (hover:none), (pointer:coarse){
+  button:hover,
+  .btn:hover:not(:disabled),
+  .how-to-play-btn:hover,
+  .settings-button:hover,
+  .play-panel .play-btn:hover,
+  .language-arrow:hover,
+  .leaderboard-tab:hover,
+  .logout-btn:hover:not(:disabled),
+  .home-btn:hover:not(:disabled),
+  .btn-neue-runde:hover:not(:disabled),
+  .btn-aufhoeren:hover,
+  .chip:hover:not(:disabled){
+    transform:none !important;
+  }
+}
 
 .btn{
   display:inline-flex;
