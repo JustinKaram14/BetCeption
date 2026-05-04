@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
+import { buildLevelProgress } from '../progression/progression.js';
 import type { UserIdParams } from './user.schema.js';
 
 export function getCurrentUser(req: Request, res: Response) {
@@ -24,5 +25,5 @@ export async function getUserById(
     return res.status(404).json({ message: 'User not found' });
   }
 
-  return res.json({ user });
+  return res.json({ user: { ...user, levelProgress: buildLevelProgress(user) } });
 }

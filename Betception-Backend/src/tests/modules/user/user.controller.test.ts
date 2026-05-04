@@ -41,7 +41,16 @@ describe('user.controller', () => {
 
       await getUserById(req as any, res);
 
-      expect(res.json).toHaveBeenCalledWith({ user });
+      expect(res.json).toHaveBeenCalledWith({
+        user: expect.objectContaining({
+          id: '1',
+          username: 'player',
+          levelProgress: expect.objectContaining({
+            level: 1,
+            xp: 0,
+          }),
+        }),
+      });
     });
 
     it('returns 404 when the user is missing', async () => {

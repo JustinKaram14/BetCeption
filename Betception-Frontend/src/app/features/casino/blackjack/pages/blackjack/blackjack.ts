@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   HandOwnerType,
   HandStatus,
+  LevelProgress,
   MainBetStatus,
   RoundState,
   RoundStatus,
@@ -14,13 +15,14 @@ import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { Table } from '../../components/table/table';
 import { Controls } from '../../components/controls/controls';
 import { I18n } from '../../../../../core/i18n/i18n';
+import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 
 type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
 
 @Component({
   selector: 'app-blackjack',
   standalone: true,
-  imports: [NgIf, RouterLink, Table, Controls],
+  imports: [NgIf, RouterLink, Table, Controls, LevelProgressComponent],
   templateUrl: './blackjack.html',
   styleUrl: './blackjack.css'
 })
@@ -37,6 +39,7 @@ export class Blackjack implements OnInit {
   round: RoundState | null = null;
   betAmount = 10;
   balance: number | null = null;
+  levelProgress: LevelProgress | null = null;
   busyAction: ActionKind | null = null;
   error: string | null = null;
   info: string | null = null;
@@ -45,6 +48,7 @@ export class Blackjack implements OnInit {
   roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean; dealerInfo: string | null } | null = null;
   private bannerTimer: number | null = null;
   private resultOverlayTimer: number | null = null;
+  private walletRefreshTimer: number | null = null;
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -52,6 +56,7 @@ export class Blackjack implements OnInit {
         window.clearTimeout(this.bannerTimer);
       }
       this.clearResultOverlayTimer();
+      this.clearWalletRefreshTimer();
     });
   }
 
@@ -126,12 +131,19 @@ export class Blackjack implements OnInit {
         next: ({ round }) => {
           const previousRound = this.round;
           this.round = round;
+          if (round.playerProgress) {
+            this.levelProgress = round.playerProgress;
+          }
           this.triggerBanner(round);
-          if (kind === 'deal' || kind === 'settle') {
+          if (kind === 'deal') {
             this.loadBalance();
           }
           if (kind === 'settle') {
             this.scheduleRoundOverlay(previousRound, round);
+            this.walletRefreshTimer = window.setTimeout(() => {
+              this.loadBalance(true);
+              this.walletRefreshTimer = null;
+            }, 1500);
           }
           this.busyAction = null;
 
@@ -156,12 +168,19 @@ export class Blackjack implements OnInit {
       });
   }
 
-  private loadBalance() {
+  private loadBalance(preserveXpGain = false) {
     this.wallet
       .getSummary()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ balance }) => (this.balance = balance),
+        next: ({ balance, levelProgress }) => {
+          this.balance = balance;
+          const xpGained =
+            preserveXpGain && this.levelProgress?.xp === levelProgress.xp
+              ? this.levelProgress.xpGained
+              : 0;
+          this.levelProgress = { ...levelProgress, xpGained };
+        },
         error: () => null,
       });
   }
@@ -310,6 +329,14 @@ export class Blackjack implements OnInit {
     }
     window.clearTimeout(this.resultOverlayTimer);
     this.resultOverlayTimer = null;
+  }
+
+  private clearWalletRefreshTimer() {
+    if (!this.walletRefreshTimer) {
+      return;
+    }
+    window.clearTimeout(this.walletRefreshTimer);
+    this.walletRefreshTimer = null;
   }
 
   private extractError(error: unknown): string {

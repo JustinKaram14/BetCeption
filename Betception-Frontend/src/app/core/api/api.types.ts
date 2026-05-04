@@ -33,7 +33,19 @@ export interface UserProfile {
   balance: number;
   xp: number;
   level: number;
+  levelProgress?: LevelProgress;
   lastDailyRewardAt: string | null;
+}
+
+export interface LevelProgress {
+  level: number;
+  xp: number;
+  currentLevelXp: number;
+  nextLevelXp: number;
+  xpIntoLevel: number;
+  xpToNextLevel: number;
+  progressPercent: number;
+  xpGained?: number;
 }
 
 export interface UserResponse {
@@ -132,6 +144,7 @@ export interface WalletSummary {
   balance: number;
   xp: number;
   level: number;
+  levelProgress: LevelProgress;
   lastDailyRewardAt: string | null;
 }
 
@@ -315,6 +328,7 @@ export interface RoundState {
   playerHand: RoundHand;
   dealerHand: RoundHand;
   sideBets: RoundSideBet[];
+  playerProgress: LevelProgress | null;
   fairness: FairnessPayload;
 }
 

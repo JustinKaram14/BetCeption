@@ -1,8 +1,9 @@
 .home-container{
-  width:100%;min-height:100vh;
+  width:100%;max-width:100%;min-height:100vh;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:0;
   padding:34px 40px 32px;position:relative;text-align:center;
+  overflow-x:hidden;
 }
 .top-actions{
   position:absolute;
@@ -40,6 +41,7 @@
   gap:50px;margin-top:42px;width:100%;max-width:1200px;
   height:570px;
   min-height:0;
+  min-width:0;
 }
 .leaderboard-card{
   flex:1 1 0;
@@ -72,7 +74,7 @@ app-disclaimer-footer{
   100%{opacity:.6}
 }
 .user-panel{
-  display:flex;flex-direction:column;align-items:center;gap:24px;padding:16px 0;
+  display:flex;flex-direction:column;align-items:center;gap:22px;width:100%;height:100%;padding:16px 0;
 }
 .user-panel__greeting{
   font-size:1rem;color:rgba(255,255,255,.6);letter-spacing:.5px;
@@ -95,14 +97,32 @@ app-disclaimer-footer{
   border-color:rgba(255,100,130,.9);
   box-shadow:0 0 16px rgba(255,80,110,.34),inset 0 0 12px rgba(255,80,110,.12);
 }
+.user-level-progress{
+  width:min(100%, 310px);
+  margin-top:auto;
+  padding-top:4px;
+}
 @media (max-width:900px){
   .home-container{
+    width:100svw;
+    max-width:100svw;
     justify-content:flex-start;
-    padding:72px 24px 24px;
+    padding:16px 16px 24px;
   }
   .top-actions{
-    top:20px;
-    right:24px;
+    position:relative;
+    top:auto;
+    right:auto;
+    align-self:flex-end;
+    max-width:100%;
+    margin-bottom:12px;
+    gap:8px;
+  }
+  .how-to-play-btn{
+    max-width:100%;
+    padding:9px 14px;
+    font-size:.68rem;
+    letter-spacing:0;
   }
   .main-content{
     flex-direction:column;
@@ -110,18 +130,21 @@ app-disclaimer-footer{
     height:auto;
     gap:24px;
     margin-top:30px;
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
   }
   .right-column{
     flex:0 1 auto;
     width:100%;
-    max-width:600px;
+    max-width:min(600px,100%);
     gap:24px;
     height:auto;
   }
   .leaderboard-card{
     flex:0 1 auto;
     width:100%;
-    max-width:600px;
+    max-width:min(600px,100%);
     height:520px;
   }
   app-disclaimer-footer{
@@ -129,26 +152,41 @@ app-disclaimer-footer{
   }
 }
 @media (max-width:600px){
-  .home-container{padding:22px 14px 20px}
-  .top-actions{
-    position:relative;
-    top:auto;
-    right:auto;
-    align-self:flex-end;
-    margin-bottom:18px;
-  }
-  .how-to-play-btn{
-    padding:9px 14px;
-    font-size:.74rem;
+  .home-container{
+    padding:16px 12px 18px;
   }
   .main-content{
     gap:18px;
-    margin-top:24px;
+    margin-top:20px;
   }
   .right-column{
+    width:100%;
+    max-width:100%;
     gap:18px;
   }
   .leaderboard-card{
+    width:100%;
+    max-width:100%;
     height:460px;
+  }
+  app-disclaimer-footer{
+    max-width:100%;
+  }
+}
+
+@media (max-width:380px){
+  .home-container{
+    padding-inline:10px;
+  }
+  .top-actions{
+    width:100%;
+    justify-content:flex-end;
+  }
+  .how-to-play-btn{
+    padding-inline:10px;
+    font-size:.62rem;
+  }
+  .leaderboard-card{
+    height:430px;
   }
 }
