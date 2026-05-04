@@ -558,13 +558,14 @@ describe('Blackjack', () => {
       playerHand: { id: 'hand-p', ownerType: HandOwnerType.PLAYER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
       dealerHand: { id: 'hand-d', ownerType: HandOwnerType.DEALER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
       sideBets: [],
-      fairness: { roundId: 'round-1', status: RoundStatus.ABORTED, createdAt: new Date().toISOString(), startedAt: null, endedAt: null, serverSeedHash: null, serverSeed: null, revealedAt: null },
+      playerProgress: null,
+      fairness:{ roundId: 'round-1', status: RoundStatus.ABORTED, createdAt: new Date().toISOString(), startedAt: null, endedAt: null, serverSeedHash: null, serverSeed: null, revealedAt: null },
     };
 
     beforeEach(async () => {
       TestBed.resetTestingModule();
       walletPowerupMock.getSummary.and.returnValue(
-        of({ id: 'u1', username: 'neo', balance: 500, xp: 0, level: 3, lastDailyRewardAt: null }),
+        of({ id: 'u1', username: 'neo', balance: 500, xp: 0, level: 3, lastDailyRewardAt: null, levelProgress }),
       );
       rngPowerupMock.getActiveRound.and.returnValue(of({ round: abortedRound }));
       apiMock.listInventory.and.returnValue(of({ items: [] }));
