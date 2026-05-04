@@ -42,8 +42,8 @@ Gilt fuer die initiale Auslieferung: Blackjack mit Sidebets/Power-Ups, virtuelle
 Die folgenden Abschnitte folgen dem RUP-Template: Architekturdarstellung, Ziele/Randbedingungen, Use-Case-Sicht, logische Sicht, Prozess-Sicht, Einsatzsicht, Implementierungssicht, Datensicht, Groesse/Performance, Qualitaet, Risiken/Schulden.
 
 ### 1.6 Implementation Status (Sync)
-- Backend: Auth/Session, Round/Fairness, Wallet/Ledger, Leaderboard-Views und Daily-Reward-Transaktion sind implementiert. XP/Level-Progression ueber Basis-Level, Power-Up-Effekte und Double/Split fehlen noch.
-- Frontend: Auth-Panel + Blackjack-View (Deal/Hit/Stand/Settle) und Leaderboard-Tabs sind vorhanden. Shop/Inventar/Wallet/Rewards haben kein UI; Login-/Register-Seiten sind Platzhalter.
+- Backend: Auth/Session, Round/Fairness (inkl. XP/Level-Progression und BET_BOOST-Power-Ups), Wallet/Ledger, Leaderboard-Views, Daily-Reward-Transaktion und Shop/Inventory sind implementiert. Double/Split fehlen noch.
+- Frontend: Auth-Panel + Blackjack-View (Deal/Hit/Stand/Settle inkl. Level-Fortschrittsanzeige), Leaderboard-Tabs, Daily-Reward-Modal, Wallet-Service und i18n (DE/EN/ES/FR) sind vorhanden. Shop-UI und Power-Up-Inventar im Frontend fehlen noch.
 
 ## 2 Architectural Overview
 Wir nutzen das 4+1-Sichtenmodell:
@@ -77,7 +77,7 @@ Zentrale Use Cases (siehe `docs/use-cases`, Realisierung unter `docs/use-case-re
 - UC9 XP-/Level-System verwalten  
 - UC10 Daten persistieren  
 
-**Implementierungsabdeckung (Kurz):** Backend deckt UC1/3/4/5/6/8/10 ab; UC7 (Double/Split) und UC9 (Level-Aufstieg) fehlen. Frontend deckt Auth, Leaderboard und Blackjack (ohne Double/Split, ohne Sidebet-UI) ab; Shop/Inventar/Wallet/Reward fehlen.
+**Implementierungsabdeckung (Kurz):** Backend deckt UC1/2/3/4/5/6/7/8/9/10 ab; UC7 (Double/Split) fehlt noch. Frontend deckt Auth, Leaderboard, Blackjack (inkl. Level-Fortschritt, ohne Double/Split, ohne Sidebet-UI) und Daily-Reward-Modal ab; Shop-UI und Power-Up-Inventar im Frontend fehlen.
 
 ## 5 Logical View
 ### 5.1 Overview
@@ -308,7 +308,7 @@ Implementierung folgt Layering: Middleware/Router/Controller/Service/Entity, plu
 - Fairness/Pruefbarkeit: RNG-Commitment (Seed+Hash) und `/fairness`-API ermoeglichen Offline-Verifikation jeder Runde.
 
 ## 12 Risks and Technical Debt
-- Fehlende Features: Double/Split und Power-Up-Effekte im Backend, XP/Level-Aufstieg ueber Basis-Level sowie zugehoerige UI-Fluesse im Frontend.  
+- Fehlende Features: Double/Split im Backend; Shop-UI und Power-Up-Inventar-Ansicht im Frontend.  
 - Observability: `/metrics` und Swagger sind Feature-Flag-geschuetzt; produktive Monitoring-Strategie (Dashboard/Alerting) muss noch konkretisiert werden.  
 - Load-Boundaries: Performance-Ziele sind getestet fuer ca. 100 gleichzeitige Sessions; Skalierung darueber hinaus erfordert Profiling und Moeglichkeit zu horizontaler Skalierung der API.  
 - Security-Hardening: Rate-Limits und Token-Rotation vorhanden; regelmaessige Pen-Tests und Abhaengigkeits-Scans sind noch aufzusetzen.
