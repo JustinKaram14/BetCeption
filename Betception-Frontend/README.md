@@ -1,74 +1,85 @@
-# BetceptionFrontend
+# BetCeption Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.4.
+Angular-SPA für das BetCeption Blackjack-Casino.  
+Kommuniziert mit dem [BetCeption Backend](../Betception-Backend/README.md) via REST/JSON.
 
-## Development server
+## Voraussetzungen
 
-To start a local development server, run:
+- Node.js ≥ 20
+- Angular CLI: `npm install -g @angular/cli`
+- Backend läuft auf `http://localhost:3000` (s. Backend-README)
+
+## Entwicklungsserver starten
 
 ```bash
+npm install
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Öffne **http://localhost:4200** im Browser. Die App lädt automatisch neu bei Dateiänderungen.
 
-## Code scaffolding
+> Damit Login und Cookies funktionieren muss das Backend laufen (`npm start` im `Betception-Backend`-Ordner).
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## API-URL konfigurieren
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Cloud86
-
-For Cloud86, the frontend is deployed as static files. Before deploying, adjust `public/runtime-config.js` so the Angular app points to your backend URL.
-
-Example:
+Die App liest die Backend-URL aus `public/runtime-config.js`. Für lokale Entwicklung ist der Default `http://localhost:3000` gesetzt. Für andere Umgebungen (z. B. Staging, Cloud86) die Datei anpassen:
 
 ```js
+// public/runtime-config.js
 window.__BETCEPTION_CONFIG__ = {
   apiBaseUrl: 'https://api.example.com',
   includeCredentials: true,
 };
 ```
 
-The generated static output is located in `dist/Betception-Frontend/browser`. The included `public/.htaccess` enables Angular SPA routing on Apache/Plesk hosts.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Build
 
 ```bash
-ng test
+ng build               # Development-Build
+ng build --configuration production   # Production-Build (optimiert)
 ```
 
-## Running end-to-end tests
+Artefakte landen in `dist/Betception-Frontend/browser/`.  
+Für Apache/Plesk-Hosting ist eine `.htaccess` für SPA-Routing unter `public/.htaccess` enthalten.
 
-For end-to-end (e2e) testing, run:
+## Unit-Tests (Karma/Jasmine)
 
 ```bash
-ng e2e
+npm test               # interaktiv mit Chrome
+npm run test:ci        # headless, einmaliger Lauf mit Coverage (für CI)
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+37 Spec-Dateien – decken Services, Guards, Interceptors, Pipes und alle Feature-Komponenten ab.
 
-## Additional Resources
+## E2E-Tests (Playwright)
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```bash
+npm run e2e:install    # Chromium einmalig herunterladen
+npm run e2e            # Tests headless ausführen
+npm run e2e:headed     # Tests mit sichtbarem Browser
+```
+
+5 Spec-Dateien in `tests/e2e/`: Auth-Flows, Routing, Modals, Blackjack-Game, Settings.  
+Vollständiges Backend muss für E2E-Tests laufen.
+
+## Projektstruktur
+
+```
+src/app/
+├── core/
+│   ├── api/           # HttpClient-Wrapper, BetceptionApi-Service
+│   ├── auth/          # Guard, Interceptor, Token-Storage
+│   ├── i18n/          # Internationalisierung (DE/EN/ES/FR)
+│   ├── layout/        # AppShell
+│   └── services/      # Wallet-Service, RNG-Service
+├── features/
+│   ├── auth/          # Login, Register, Verify-Email
+│   ├── casino/
+│   │   ├── blackjack/ # Spieltisch, Hand, Controls
+│   │   ├── homepage/  # Hero, Leaderboard, Daily-Reward-Modal, …
+│   │   └── risk-up/   # CardGuess-Komponente
+│   └── legal/         # Impressum, Datenschutz
+└── shared/
+    ├── pipes/         # FormatCoins
+    └── ui/            # Button, Toast, NotFound, …
+```
