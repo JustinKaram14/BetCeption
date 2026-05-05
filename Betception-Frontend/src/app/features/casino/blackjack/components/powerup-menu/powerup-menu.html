@@ -9,13 +9,13 @@
       <!-- Inventory Section -->
       <div class="section">
         <h3 class="section-title">{{ i18n.t('powerup.inventory') }}</h3>
-        <div class="empty-hint" *ngIf="inventory.length === 0">
+        <div class="empty-hint" *ngIf="ownedInventory.length === 0">
           {{ i18n.t('powerup.empty') }}
         </div>
-        <div class="pill-grid" *ngIf="inventory.length > 0">
+        <div class="pill-grid" *ngIf="ownedInventory.length > 0">
           <div
             class="pill-card"
-            *ngFor="let item of inventory"
+            *ngFor="let item of ownedInventory"
             [style.--pill-color]="getColor(getInventoryCode(item))"
           >
             <div class="pill-icon">{{ getIcon(getInventoryCode(item)) }}</div>
@@ -26,7 +26,7 @@
             <div class="pill-actions">
               <span class="pill-qty">×{{ item.quantity }}</span>
               <button
-                *ngIf="!roundActive"
+                *ngIf="!isActionPowerup(item)"
                 class="btn btn-queue"
                 [class.btn-queue--active]="isQueued(item)"
                 type="button"
@@ -35,15 +35,9 @@
               >
                 {{ isQueued(item) ? i18n.t('powerup.queued') : i18n.t('powerup.queue') }}
               </button>
-              <button
-                *ngIf="roundActive"
-                class="btn btn-activate"
-                type="button"
-                [disabled]="!canActivate(item)"
-                (click)="onActivate(item)"
-              >
-                {{ i18n.t('powerup.activate') }}
-              </button>
+              <span *ngIf="isActionPowerup(item)" class="pill-ingame-badge">
+                {{ i18n.t('powerup.ingame') }}
+              </span>
             </div>
           </div>
         </div>

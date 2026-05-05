@@ -125,6 +125,33 @@ export class Blackjack implements OnInit {
     this.runAction('settle', this.rng.settle(this.round.id));
   }
 
+  get ownedInventory(): InventoryPowerup[] {
+    return this.inventory.filter(item => item.quantity > 0);
+  }
+
+  get hasPeekCard(): boolean {
+    return this.ownedInventory.some(item => item.type?.code === 'PEEK_CARD');
+  }
+
+  get hasUndoHit(): boolean {
+    return this.ownedInventory.some(item => item.type?.code === 'UNDO_HIT');
+  }
+
+  get hasCardSwap(): boolean {
+    return this.ownedInventory.some(item => item.type?.code === 'CARD_SWAP');
+  }
+
+  get lastPlayerCardId(): string | null {
+    const cards = this.round?.playerHand?.cards ?? [];
+    return cards.length > 2 ? cards[cards.length - 1].id : null;
+  }
+
+  get canUseActionPowerups(): boolean {
+    return this.round?.status === RoundStatus.IN_PROGRESS &&
+      this.round?.playerHand?.status === HandStatus.ACTIVE &&
+      !this.busyAction;
+  }
+
   get isRoundActive() {
     const status = this.round?.status;
     return (
@@ -316,24 +343,47 @@ export class Blackjack implements OnInit {
       });
   }
 
-  onActivatePowerup(payload: { typeId: number; roundId: string }) {
+  onPeekCard() {
+    if (!this.round) return;
     this.api
-      .consumePowerup({ typeId: payload.typeId, quantity: 1, roundId: payload.roundId })
+      .peekCard(this.round.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          const code = res.powerup.code;
-          if (!this.activePowerupCodes.includes(code)) {
-            this.activePowerupCodes = [...this.activePowerupCodes, code];
-          }
-          if (code === 'peek' && res.powerup.effect) {
-            const effect = res.powerup.effect as Record<string, unknown>;
-            const rank = typeof effect['rank'] === 'string' ? effect['rank'] : null;
-            const suit = typeof effect['suit'] === 'string' ? effect['suit'] : null;
-            if (rank && suit) {
-              this.peekCard = { rank, suit };
-            }
-          }
+          this.peekCard = { rank: res.rank, suit: res.suit };
+          this.loadInventory();
+        },
+        error: (err) => {
+          this.error = this.extractError(err);
+        },
+      });
+  }
+
+  onUndoHit() {
+    if (!this.round) return;
+    this.api
+      .undoHit(this.round.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.round = res.round;
+          this.loadInventory();
+        },
+        error: (err) => {
+          this.error = this.extractError(err);
+        },
+      });
+  }
+
+  onSwapLastCard() {
+    const cardId = this.lastPlayerCardId;
+    if (!this.round || !cardId) return;
+    this.api
+      .swapCard(this.round.id, cardId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.round = res.round;
           this.loadInventory();
         },
         error: (err) => {

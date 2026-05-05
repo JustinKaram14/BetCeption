@@ -35,6 +35,8 @@ const POWERUP_COLORS: Record<string, string> = {
   SIDEBET_MEGA: '#e040fb',
 };
 
+const ACTION_POWERUP_CODES = new Set(['PEEK_CARD', 'CARD_SWAP', 'UNDO_HIT']);
+
 @Component({
   selector: 'app-powerup-menu',
   standalone: true,
@@ -46,6 +48,10 @@ export class PowerupMenu {
   readonly i18n = inject(I18n);
 
   @Input() inventory: InventoryPowerup[] = [];
+
+  get ownedInventory(): InventoryPowerup[] {
+    return this.inventory.filter(item => item.quantity > 0);
+  }
   @Input() availablePowerups: PowerupType[] = [];
   @Input() roundId: string | null = null;
   @Input() roundActive = false;
@@ -54,7 +60,6 @@ export class PowerupMenu {
   @Input() pendingTypeIds: number[] = [];
 
   @Output() purchase = new EventEmitter<{ typeId: number; quantity: number }>();
-  @Output() activate = new EventEmitter<{ typeId: number; roundId: string }>();
   @Output() toggleQueue = new EventEmitter<number>();
   @Output() close = new EventEmitter<void>();
 
@@ -76,13 +81,12 @@ export class PowerupMenu {
     this.selectedQuantities = { ...this.selectedQuantities, [typeId]: qty };
   }
 
-  canActivate(item: InventoryPowerup): boolean {
-    return this.roundActive && this.roundId !== null && item.quantity > 0;
+  isActionPowerup(item: InventoryPowerup): boolean {
+    return ACTION_POWERUP_CODES.has(this.getInventoryCode(item));
   }
 
-  onActivate(item: InventoryPowerup) {
-    if (!this.canActivate(item) || !this.roundId || !item.type) return;
-    this.activate.emit({ typeId: item.type.id, roundId: this.roundId });
+  canQueue(item: InventoryPowerup): boolean {
+    return !this.roundActive && !this.isActionPowerup(item) && item.quantity > 0;
   }
 
   onPurchase(powerup: PowerupType) {
@@ -101,10 +105,6 @@ export class PowerupMenu {
 
   isQueued(item: InventoryPowerup): boolean {
     return this.pendingTypeIds.includes(this.getInventoryTypeId(item));
-  }
-
-  canQueue(item: InventoryPowerup): boolean {
-    return !this.roundActive && item.quantity > 0;
   }
 
   onToggleQueue(item: InventoryPowerup) {

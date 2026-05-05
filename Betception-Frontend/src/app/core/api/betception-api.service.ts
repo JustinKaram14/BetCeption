@@ -3,6 +3,8 @@ import {
   BalanceLeaderboardItem,
   ConsumePowerupRequest,
   ConsumePowerupResponse,
+  PeekCardResponse,
+  SwapCardRequest,
   CrateListResponse,
   CurrentUserResponse,
   DailyRewardResponse,
@@ -142,6 +144,18 @@ export class BetceptionApi {
       '/powerups/consume',
       payload,
     );
+  }
+
+  peekCard(roundId: string) {
+    return this.http.get<PeekCardResponse>(`/round/peek/${roundId}`);
+  }
+
+  swapCard(roundId: string, cardId: string) {
+    return this.http.post<RoundResponse>(`/round/swap-card/${roundId}`, { cardId } as SwapCardRequest);
+  }
+
+  undoHit(roundId: string) {
+    return this.http.post<RoundResponse>(`/round/undo/${roundId}`);
   }
 
   getFairnessRound(roundId: string) {
