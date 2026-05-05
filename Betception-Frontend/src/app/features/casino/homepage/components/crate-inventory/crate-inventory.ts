@@ -8,7 +8,7 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
-import { DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { CrateReward, UserCrateItem } from '../../../../../core/api/api.types';
@@ -39,7 +39,7 @@ type SpinPhase = 'idle' | 'loading' | 'spinning' | 'done';
 @Component({
   selector: 'app-crate-inventory',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, DecimalPipe],
+  imports: [NgIf, NgFor, DecimalPipe],
   templateUrl: './crate-inventory.html',
   styleUrl: './crate-inventory.css',
 })
