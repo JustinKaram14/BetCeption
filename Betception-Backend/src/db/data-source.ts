@@ -9,6 +9,7 @@ import { AddUserCrates1700000000003 } from './migrations/1700000000003-AddUserCr
 import { AddCrateRewardToWalletKind1700000000004 } from './migrations/1700000000004-AddCrateRewardToWalletKind.js';
 import { AddStreakToUsersAndClaims1700000000005 } from './migrations/1700000000005-AddStreakToUsersAndClaims.js';
 import { AddXpBoostExpiry1700000000006 } from './migrations/1700000000006-AddXpBoostExpiry.js';
+import { SeedPowerupTypes1700000000007 } from './migrations/1700000000007-SeedPowerupTypes.js';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -18,7 +19,7 @@ export const AppDataSource = new DataSource({
   password: env.db.password,
   database: env.db.database,
   entities: ENTITIES,
-  migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001, AddUsernameToWinningsView1700000000002, AddUserCrates1700000000003, AddCrateRewardToWalletKind1700000000004, AddStreakToUsersAndClaims1700000000005, AddXpBoostExpiry1700000000006],
+  migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001, AddUsernameToWinningsView1700000000002, AddUserCrates1700000000003, AddCrateRewardToWalletKind1700000000004, AddStreakToUsersAndClaims1700000000005, AddXpBoostExpiry1700000000006, SeedPowerupTypes1700000000007],
   synchronize: false,
   logging: env.nodeEnv === 'development',
 });
