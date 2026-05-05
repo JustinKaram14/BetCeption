@@ -117,7 +117,11 @@ type TranslationKey =
   | 'powerup.peek.reveal'
   | 'powerup.locked'
   | 'powerup.queue'
-  | 'powerup.queued';
+  | 'powerup.queued'
+  | 'powerup.ingame'
+  | 'powerup.peekBtn'
+  | 'powerup.undoBtn'
+  | 'powerup.swapBtn';
 
 type TranslationMap = Record<TranslationKey, string>;
 
@@ -237,8 +241,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.button': '⚡ Power-ups',
     'powerup.peek.reveal': 'Dealer 2. Karte:',
     'powerup.locked': 'Ab Level {{level}}',
-    'powerup.queue': 'Vormerken',
-    'powerup.queued': 'Vorgemerkt',
+    'powerup.queue': 'Aktivieren',
+    'powerup.queued': '✓ Aktiviert',
+    'powerup.ingame': 'Im Spiel',
+    'powerup.peekBtn': '👁️ Karte ansehen',
+    'powerup.undoBtn': '↩️ Karte zurück',
+    'powerup.swapBtn': '🔄 Karte tauschen',
   },
   en: {
     'auth.createAccount': 'CREATE ACCOUNT',
@@ -353,8 +361,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.button': '⚡ Power-ups',
     'powerup.peek.reveal': 'Dealer 2nd card:',
     'powerup.locked': 'From Level {{level}}',
-    'powerup.queue': 'Queue',
-    'powerup.queued': 'Queued',
+    'powerup.queue': 'Activate',
+    'powerup.queued': '✓ Active',
+    'powerup.ingame': 'In-Game',
+    'powerup.peekBtn': '👁️ Peek Card',
+    'powerup.undoBtn': '↩️ Undo Hit',
+    'powerup.swapBtn': '🔄 Swap Card',
   },
   es: {
     'auth.createAccount': 'CREAR CUENTA',
@@ -469,8 +481,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.button': '⚡ Power-ups',
     'powerup.peek.reveal': '2ª carta dealer:',
     'powerup.locked': 'Desde Nivel {{level}}',
-    'powerup.queue': 'Reservar',
-    'powerup.queued': 'Reservado',
+    'powerup.queue': 'Activar',
+    'powerup.queued': '✓ Activo',
+    'powerup.ingame': 'En juego',
+    'powerup.peekBtn': '👁️ Ver carta',
+    'powerup.undoBtn': '↩️ Deshacer',
+    'powerup.swapBtn': '🔄 Cambiar carta',
   },
   fr: {
     'auth.createAccount': 'CRÉER UN COMPTE',
@@ -585,8 +601,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.button': '⚡ Power-ups',
     'powerup.peek.reveal': '2e carte dealer:',
     'powerup.locked': 'Dès Niveau {{level}}',
-    'powerup.queue': 'Réserver',
-    'powerup.queued': 'Réservé',
+    'powerup.queue': 'Activer',
+    'powerup.queued': '✓ Actif',
+    'powerup.ingame': 'En jeu',
+    'powerup.peekBtn': '👁️ Voir carte',
+    'powerup.undoBtn': '↩️ Annuler',
+    'powerup.swapBtn': '🔄 Échanger',
   },
 };
 
