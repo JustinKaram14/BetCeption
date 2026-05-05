@@ -22,7 +22,7 @@ Spielern die aktuellen Ranglisten performant bereitstellen, optional mit Hervorh
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 - **currentUserRank:** Rang des eingeloggten Users innerhalb der abgefragten Seite.  
-- **Views:** `leaderboard_balance_view`, `leaderboard_level_view`, `leaderboard_weekly_winnings_view`.
+- **Views:** `leaderboard_balance`, `leaderboard_level`, `leaderboard_weekly_winnings`.
 
 ### 1.4 References
 - ../use-cases/uc4-leaderboard-anzeigen.md  
@@ -64,15 +64,15 @@ sequenceDiagram
   Note over FE: Bearer-Token nur für currentUserRank
 
   FE->>API: GET /leaderboard/balance?limit=10
-  API->>DB: Query leaderboard_balance_view ORDER BY balance DESC LIMIT 10
+  API->>DB: Query leaderboard_balance ORDER BY balance DESC LIMIT 10
   API-->>FE: 200 {items, currentUserRank?}
 
   FE->>API: GET /leaderboard/level?limit=10
-  API->>DB: Query leaderboard_level_view ORDER BY level DESC, xp DESC
+  API->>DB: Query leaderboard_level ORDER BY level DESC, xp DESC
   API-->>FE: 200 {items, currentUserRank?}
 
   FE->>API: GET /leaderboard/winnings?limit=10
-  API->>DB: Query leaderboard_weekly_winnings_view ORDER BY netWinnings7d DESC
+  API->>DB: Query leaderboard_weekly_winnings ORDER BY netWinnings7d DESC
   API-->>FE: 200 {items, currentUserRank?}
 
   alt Token ungültig/fehlt

@@ -200,8 +200,11 @@ CREATE TABLE IF NOT EXISTS powerup_consumptions (
   type_id TINYINT UNSIGNED NOT NULL,
   round_id BIGINT UNSIGNED NULL,
   consumed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_pu_cons_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  CONSTRAINT fk_pu_cons_type FOREIGN KEY (type_id) REFERENCES powerup_types(id) ON DELETE RESTRICT
+  CONSTRAINT fk_pu_cons_user  FOREIGN KEY (user_id)  REFERENCES users(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_pu_cons_type  FOREIGN KEY (type_id)  REFERENCES powerup_types(id) ON DELETE RESTRICT,
+  CONSTRAINT fk_pu_cons_round FOREIGN KEY (round_id) REFERENCES rounds(id)  ON DELETE SET NULL,
+  INDEX ix_pu_cons_user_type (user_id, type_id),
+  INDEX ix_pu_cons_round (round_id)
 ) ENGINE=InnoDB;
 
 -- =============================
@@ -217,27 +220,27 @@ CREATE TABLE IF NOT EXISTS rate_limit_counters (
 -- =============================
 -- Leaderboards (Views)
 -- =============================
+
 DROP VIEW IF EXISTS leaderboard_balance;
 CREATE ALGORITHM=MERGE VIEW leaderboard_balance AS
 SELECT u.id AS user_id, u.username, u.balance
-FROM users u
-ORDER BY u.balance DESC;
+FROM users u;
 
 DROP VIEW IF EXISTS leaderboard_weekly_winnings;
-CREATE ALGORITHM=MERGE VIEW leaderboard_weekly_winnings AS
+CREATE ALGORITHM=TEMPTABLE VIEW leaderboard_weekly_winnings AS
 SELECT
   wt.user_id,
+  u.username,
   SUM(wt.amount) AS net_winnings_7d
 FROM wallet_transactions wt
+JOIN users u ON u.id = wt.user_id
 WHERE wt.created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)
-GROUP BY wt.user_id
-ORDER BY net_winnings_7d DESC;
+GROUP BY wt.user_id, u.username;
 
 DROP VIEW IF EXISTS leaderboard_level;
 CREATE ALGORITHM=MERGE VIEW leaderboard_level AS
 SELECT id AS user_id, username, level, xp
-FROM users
-ORDER BY level DESC, xp DESC;
+FROM users;
 
 -- =============================
 -- Seed Sidebet Types
