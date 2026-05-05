@@ -250,6 +250,19 @@
   box-shadow: 0 0 14px var(--pill-color, #00e5ff);
 }
 
+.pill-ingame-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 200, 0, 0.12);
+  border: 1px solid rgba(255, 200, 0, 0.4);
+  color: #fbbf24;
+  white-space: nowrap;
+}
+
 .btn-buy {
   border-color: #ffd700;
   color: #ffd700;

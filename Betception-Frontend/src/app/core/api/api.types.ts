@@ -400,6 +400,15 @@ export interface ConsumePowerupResponse {
   roundId: string | null;
 }
 
+export interface PeekCardResponse {
+  rank: string;
+  suit: string;
+}
+
+export interface SwapCardRequest {
+  cardId: string;
+}
+
 export interface FairnessRoundResponse {
   round: FairnessPayload;
 }

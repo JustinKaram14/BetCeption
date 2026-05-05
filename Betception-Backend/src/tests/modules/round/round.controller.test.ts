@@ -2,9 +2,12 @@ import {
   getActiveRound,
   getRound,
   hitRound,
+  peekCard,
   settleRound,
   standRound,
   startRound,
+  swapCard,
+  undoHit,
 } from '../../../modules/round/round.controller.js';
 import { Card } from '../../../entity/Card.js';
 import { Hand } from '../../../entity/Hand.js';
@@ -16,6 +19,7 @@ import { SideBet } from '../../../entity/SideBet.js';
 import { SidebetType } from '../../../entity/SidebetType.js';
 import { User } from '../../../entity/User.js';
 import { UserCrate } from '../../../entity/UserCrate.js';
+import { UserPowerup } from '../../../entity/UserPowerup.js';
 import { WalletTransaction } from '../../../entity/WalletTransaction.js';
 import {
   CardRank,
@@ -1434,6 +1438,387 @@ describe('round.controller', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ round: expect.objectContaining({ id: 'round-1' }) }),
       );
+    });
+  });
+
+  describe('peekCard', () => {
+    it('returns the peeked card on success', async () => {
+      const round = createRoundFixture();
+      const mockUserPowerup = {
+        id: 'up-1', quantity: 1,
+        user: { id: 'user-1', level: 5 },
+        type: { code: 'PEEK_CARD', minLevel: 1 },
+      } as unknown as UserPowerup;
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userPowerupRepo = createMockRepository<UserPowerup>({
+        findOne: jest.fn().mockResolvedValue(mockUserPowerup),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const consumptionRepo = createMockRepository<PowerupConsumption>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'cons-1', ...d })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, userPowerupRepo],
+        [PowerupConsumption, consumptionRepo],
+      ]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await peekCard(req as any, res);
+
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ rank: expect.any(String), suit: expect.any(String) }),
+      );
+    });
+
+    it('returns 409 when round is not IN_PROGRESS', async () => {
+      const round = createRoundFixture({ status: RoundStatus.SETTLED });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, createMockRepository<UserPowerup>()],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+      ]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await peekCard(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Round is not in progress', code: 'ROUND_NOT_ACTIVE' });
+    });
+
+    it('returns 400 when player hand is locked (stood)', async () => {
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 18, cards: [], user: { id: 'user-1' } },
+        ],
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, createMockRepository<UserPowerup>()],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+      ]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await peekCard(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Cannot peek when hand is not active', code: 'HAND_LOCKED' });
+    });
+
+    it('returns 404 when PEEK_CARD powerup is not in inventory', async () => {
+      const round = createRoundFixture();
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userPowerupRepo = createMockRepository<UserPowerup>({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, userPowerupRepo],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+      ]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await peekCard(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ message: 'PEEK_CARD not in inventory', code: 'POWERUP_NOT_OWNED' });
+    });
+  });
+
+  describe('undoHit', () => {
+    it('removes the last player card and returns the updated round', async () => {
+      const round = createRoundFixture({
+        hands: [
+          {
+            id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17,
+            cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)],
+            user: null,
+          },
+          {
+            id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.ACTIVE, handValue: 18,
+            cards: [
+              createCard('p1', CardRank.TEN, CardSuit.SPADES, 1),
+              createCard('p2', CardRank.FIVE, CardSuit.DIAMONDS, 2),
+              createCard('p3', CardRank.THREE, CardSuit.CLUBS, 3),
+            ],
+            user: { id: 'user-1' },
+          },
+        ],
+      });
+      const mockUserPowerup = {
+        id: 'up-1', quantity: 1,
+        user: { id: 'user-1', level: 5 },
+        type: { code: 'UNDO_HIT', minLevel: 1 },
+      } as unknown as UserPowerup;
+
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userPowerupRepo = createMockRepository<UserPowerup>({
+        findOne: jest.fn().mockResolvedValue(mockUserPowerup),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const consumptionRepo = createMockRepository<PowerupConsumption>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'cons-1', ...d })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const cardRepo = createMockRepository<Card>({
+        remove: jest.fn().mockResolvedValue(undefined),
+      });
+      const handRepo = createMockRepository<Hand>({
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, userPowerupRepo],
+        [PowerupConsumption, consumptionRepo],
+        [Card, cardRepo],
+        [Hand, handRepo],
+      ]));
+      mockAppDataSourceRepositories(new Map([[Round, createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) })]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await undoHit(req as any, res);
+
+      expect(cardRepo.remove).toHaveBeenCalled();
+      expect(handRepo.save).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ round: expect.objectContaining({ id: 'round-1' }) }),
+      );
+    });
+
+    it('returns 409 when round is not IN_PROGRESS', async () => {
+      const round = createRoundFixture({ status: RoundStatus.SETTLED });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, createMockRepository<UserPowerup>()],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+        [Card, createMockRepository<Card>()],
+        [Hand, createMockRepository<Hand>()],
+      ]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await undoHit(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Round is not in progress', code: 'ROUND_NOT_ACTIVE' });
+    });
+
+    it('returns 400 when player hand has 2 or fewer cards (cannot undo initial deal)', async () => {
+      const round = createRoundFixture();
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, createMockRepository<UserPowerup>()],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+        [Card, createMockRepository<Card>()],
+        [Hand, createMockRepository<Hand>()],
+      ]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await undoHit(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Cannot undo the initial deal', code: 'CANNOT_UNDO' });
+    });
+
+    it('returns 404 when UNDO_HIT powerup is not in inventory', async () => {
+      const round = createRoundFixture({
+        hands: [
+          {
+            id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17,
+            cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)],
+            user: null,
+          },
+          {
+            id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.ACTIVE, handValue: 18,
+            cards: [
+              createCard('p1', CardRank.TEN, CardSuit.SPADES, 1),
+              createCard('p2', CardRank.FIVE, CardSuit.DIAMONDS, 2),
+              createCard('p3', CardRank.THREE, CardSuit.CLUBS, 3),
+            ],
+            user: { id: 'user-1' },
+          },
+        ],
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userPowerupRepo = createMockRepository<UserPowerup>({ findOne: jest.fn().mockResolvedValue(null) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, userPowerupRepo],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+        [Card, createMockRepository<Card>()],
+        [Hand, createMockRepository<Hand>()],
+      ]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await undoHit(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ message: 'UNDO_HIT not in inventory', code: 'POWERUP_NOT_OWNED' });
+    });
+  });
+
+  describe('swapCard', () => {
+    it('swaps the specified card and returns the updated round', async () => {
+      const round = createRoundFixture();
+      const mockUserPowerup = {
+        id: 'up-1', quantity: 1,
+        user: { id: 'user-1', level: 5 },
+        type: { code: 'CARD_SWAP', minLevel: 1 },
+      } as unknown as UserPowerup;
+
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userPowerupRepo = createMockRepository<UserPowerup>({
+        findOne: jest.fn().mockResolvedValue(mockUserPowerup),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const consumptionRepo = createMockRepository<PowerupConsumption>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'cons-1', ...d })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const cardRepo = createMockRepository<Card>({
+        save: jest.fn().mockImplementation(async (entity) => entity),
+      });
+      const handRepo = createMockRepository<Hand>({
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, userPowerupRepo],
+        [PowerupConsumption, consumptionRepo],
+        [Card, cardRepo],
+        [Hand, handRepo],
+      ]));
+      mockAppDataSourceRepositories(new Map([[Round, createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) })]]));
+
+      const req = createMockRequest({
+        user: { sub: 'user-1' } as any,
+        params: { roundId: 'round-1' },
+        body: { cardId: 'player-1' },
+      });
+      const res = createMockResponse();
+
+      await swapCard(req as any, res);
+
+      expect(cardRepo.save).toHaveBeenCalled();
+      expect(handRepo.save).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ round: expect.objectContaining({ id: 'round-1' }) }),
+      );
+    });
+
+    it('returns 409 when round is not IN_PROGRESS', async () => {
+      const round = createRoundFixture({ status: RoundStatus.SETTLED });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, createMockRepository<UserPowerup>()],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+        [Card, createMockRepository<Card>()],
+        [Hand, createMockRepository<Hand>()],
+      ]));
+
+      const req = createMockRequest({
+        user: { sub: 'user-1' } as any,
+        params: { roundId: 'round-1' },
+        body: { cardId: 'player-1' },
+      });
+      const res = createMockResponse();
+
+      await swapCard(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Round is not in progress', code: 'ROUND_NOT_ACTIVE' });
+    });
+
+    it('returns 400 when player hand is locked (busted)', async () => {
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [], user: null },
+          {
+            id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.BUSTED, handValue: 22,
+            cards: [createCard('player-1', CardRank.TEN, CardSuit.SPADES, 1), createCard('player-2', CardRank.EIGHT, CardSuit.DIAMONDS, 2)],
+            user: { id: 'user-1' },
+          },
+        ],
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, createMockRepository<UserPowerup>()],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+        [Card, createMockRepository<Card>()],
+        [Hand, createMockRepository<Hand>()],
+      ]));
+
+      const req = createMockRequest({
+        user: { sub: 'user-1' } as any,
+        params: { roundId: 'round-1' },
+        body: { cardId: 'player-1' },
+      });
+      const res = createMockResponse();
+
+      await swapCard(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Cannot swap when hand is not active', code: 'HAND_LOCKED' });
+    });
+
+    it('returns 404 when CARD_SWAP powerup is not in inventory', async () => {
+      const round = createRoundFixture();
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userPowerupRepo = createMockRepository<UserPowerup>({ findOne: jest.fn().mockResolvedValue(null) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [UserPowerup, userPowerupRepo],
+        [PowerupConsumption, createMockRepository<PowerupConsumption>()],
+        [Card, createMockRepository<Card>()],
+        [Hand, createMockRepository<Hand>()],
+      ]));
+
+      const req = createMockRequest({
+        user: { sub: 'user-1' } as any,
+        params: { roundId: 'round-1' },
+        body: { cardId: 'player-1' },
+      });
+      const res = createMockResponse();
+
+      await swapCard(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ message: 'CARD_SWAP not in inventory', code: 'POWERUP_NOT_OWNED' });
     });
   });
 });
