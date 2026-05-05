@@ -417,10 +417,14 @@ export class Blackjack implements OnInit {
         (index === 1 && previousDealerCards.length === 2),
     );
 
-    const revealDuration = hadHiddenDealerCard ? this.dealerRevealMs : 0;
+    const sequentialRevealCount = hadHiddenDealerCard ? Math.max(0, settledDealerCards.length - 1) : 0;
+    const revealDuration =
+      sequentialRevealCount > 0
+        ? this.dealerRevealMs + (sequentialRevealCount - 1) * this.dealerFollowUpCardStepMs
+        : 0;
     const drawDuration =
       newDealerCardCount > 0
-        ? revealDuration + (newDealerCardCount - 1) * this.dealerFollowUpCardStepMs + this.cardAnimationMs
+        ? revealDuration + this.cardAnimationMs
         : revealDuration;
 
     return Math.max(this.cardAnimationMs, drawDuration + this.resultPauseMs);
