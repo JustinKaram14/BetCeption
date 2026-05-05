@@ -49,6 +49,27 @@ type TranslationKey =
   | 'controls.round'
   | 'controls.settle'
   | 'controls.stand'
+  | 'crate.continue'
+  | 'crate.empty'
+  | 'crate.errorAlreadyOpened'
+  | 'crate.errorNotFound'
+  | 'crate.errorUnauthenticated'
+  | 'crate.inventory'
+  | 'crate.level'
+  | 'crate.loadError'
+  | 'crate.loading'
+  | 'crate.open'
+  | 'crate.opened'
+  | 'crate.openError'
+  | 'crate.opening'
+  | 'crate.pillFallback'
+  | 'crate.rewardReceived'
+  | 'crate.tier.common'
+  | 'crate.tier.epic'
+  | 'crate.tier.rare'
+  | 'crate.tierBadge'
+  | 'crate.title'
+  | 'crate.unopened'
   | 'daily.alreadyCopy'
   | 'daily.alreadyTitle'
   | 'daily.availableNow'
@@ -184,6 +205,27 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'controls.round': 'Runde',
     'controls.settle': 'Abrechnen',
     'controls.stand': 'Halten',
+    'crate.continue': 'Weiter',
+    'crate.empty': 'Noch keine Kisten vorhanden. Steige im Level auf, um Kisten zu erhalten.',
+    'crate.errorAlreadyOpened': 'Diese Kiste wurde bereits geöffnet.',
+    'crate.errorNotFound': 'Diese Kiste wurde nicht gefunden.',
+    'crate.errorUnauthenticated': 'Bitte logge dich ein, um Kisten zu öffnen.',
+    'crate.inventory': 'Inventar',
+    'crate.level': 'Level',
+    'crate.loadError': 'Kisten konnten nicht geladen werden.',
+    'crate.loading': 'Lädt...',
+    'crate.open': 'Öffnen',
+    'crate.opened': 'Geöffnet',
+    'crate.openError': 'Fehler beim Öffnen der Kiste.',
+    'crate.opening': 'Kiste wird geöffnet...',
+    'crate.pillFallback': 'Pille',
+    'crate.rewardReceived': '{{reward}} erhalten',
+    'crate.tier.common': 'Gewöhnlich',
+    'crate.tier.epic': 'Episch',
+    'crate.tier.rare': 'Selten',
+    'crate.tierBadge': '{{tier}} {{label}}-Kiste',
+    'crate.title': 'Kisten',
+    'crate.unopened': 'Ungeöffnet ({{count}})',
     'daily.alreadyCopy': 'Du hast deine tägliche Belohnung heute schon abgeholt.',
     'daily.alreadyTitle': 'Bereits abgeholt!',
     'daily.availableNow': 'Jetzt verfügbar!',
@@ -314,6 +356,27 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'controls.round': 'Round',
     'controls.settle': 'Settle',
     'controls.stand': 'Stand',
+    'crate.continue': 'Continue',
+    'crate.empty': 'No crates yet. Level up to earn crates.',
+    'crate.errorAlreadyOpened': 'This crate has already been opened.',
+    'crate.errorNotFound': 'This crate was not found.',
+    'crate.errorUnauthenticated': 'Please log in to open crates.',
+    'crate.inventory': 'Inventory',
+    'crate.level': 'Level',
+    'crate.loadError': 'Could not load crates.',
+    'crate.loading': 'Loading...',
+    'crate.open': 'Open',
+    'crate.opened': 'Opened',
+    'crate.openError': 'Failed to open crate.',
+    'crate.opening': 'Opening crate...',
+    'crate.pillFallback': 'Pill',
+    'crate.rewardReceived': 'Received {{reward}}',
+    'crate.tier.common': 'Common',
+    'crate.tier.epic': 'Epic',
+    'crate.tier.rare': 'Rare',
+    'crate.tierBadge': '{{tier}} {{label}} Crate',
+    'crate.title': 'Crates',
+    'crate.unopened': 'Unopened ({{count}})',
     'daily.alreadyCopy': 'You already claimed your daily reward today.',
     'daily.alreadyTitle': 'Already claimed!',
     'daily.availableNow': 'Available now!',
@@ -444,6 +507,27 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'controls.round': 'Ronda',
     'controls.settle': 'Resolver',
     'controls.stand': 'Plantar',
+    'crate.continue': 'Continuar',
+    'crate.empty': 'Aún no tienes cajas. Sube de nivel para conseguir cajas.',
+    'crate.errorAlreadyOpened': 'Esta caja ya fue abierta.',
+    'crate.errorNotFound': 'No se encontró esta caja.',
+    'crate.errorUnauthenticated': 'Inicia sesión para abrir cajas.',
+    'crate.inventory': 'Inventario',
+    'crate.level': 'Nivel',
+    'crate.loadError': 'No se pudieron cargar las cajas.',
+    'crate.loading': 'Cargando...',
+    'crate.open': 'Abrir',
+    'crate.opened': 'Abiertas',
+    'crate.openError': 'No se pudo abrir la caja.',
+    'crate.opening': 'Abriendo caja...',
+    'crate.pillFallback': 'Píldora',
+    'crate.rewardReceived': 'Has recibido {{reward}}',
+    'crate.tier.common': 'Común',
+    'crate.tier.epic': 'Épica',
+    'crate.tier.rare': 'Rara',
+    'crate.tierBadge': '{{tier}} Caja {{label}}',
+    'crate.title': 'Cajas',
+    'crate.unopened': 'Sin abrir ({{count}})',
     'daily.alreadyCopy': 'Ya reclamaste tu recompensa diaria hoy.',
     'daily.alreadyTitle': '¡Ya reclamada!',
     'daily.availableNow': '¡Disponible ahora!',
@@ -574,6 +658,27 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'controls.round': 'Manche',
     'controls.settle': 'Régler',
     'controls.stand': 'Rester',
+    'crate.continue': 'Continuer',
+    'crate.empty': 'Aucune caisse disponible. Monte de niveau pour en gagner.',
+    'crate.errorAlreadyOpened': 'Cette caisse a déjà été ouverte.',
+    'crate.errorNotFound': 'Cette caisse est introuvable.',
+    'crate.errorUnauthenticated': 'Connecte-toi pour ouvrir des caisses.',
+    'crate.inventory': 'Inventaire',
+    'crate.level': 'Niveau',
+    'crate.loadError': 'Impossible de charger les caisses.',
+    'crate.loading': 'Chargement...',
+    'crate.open': 'Ouvrir',
+    'crate.opened': 'Ouvertes',
+    'crate.openError': 'Impossible d’ouvrir la caisse.',
+    'crate.opening': 'Ouverture de la caisse...',
+    'crate.pillFallback': 'Pilule',
+    'crate.rewardReceived': '{{reward}} reçu',
+    'crate.tier.common': 'Commune',
+    'crate.tier.epic': 'Épique',
+    'crate.tier.rare': 'Rare',
+    'crate.tierBadge': '{{tier}} Caisse {{label}}',
+    'crate.title': 'Caisses',
+    'crate.unopened': 'Non ouvertes ({{count}})',
     'daily.alreadyCopy': "Tu as déjà récupéré ta récompense quotidienne aujourd'hui.",
     'daily.alreadyTitle': 'Déjà récupérée !',
     'daily.availableNow': 'Disponible maintenant!',
