@@ -13,6 +13,7 @@ export type MockRepository<T = any> = {
   save: MockFn;
   update: MockFn;
   delete: MockFn;
+  remove: MockFn;
   count: MockFn;
 };
 
@@ -26,6 +27,7 @@ export function createMockRepository<T>(overrides: Partial<MockRepository<T>> = 
     save: jest.fn((entity) => entity),
     update: jest.fn(),
     delete: jest.fn(),
+    remove: jest.fn(),
     count: jest.fn(),
   };
   return { ...defaults, ...overrides };
