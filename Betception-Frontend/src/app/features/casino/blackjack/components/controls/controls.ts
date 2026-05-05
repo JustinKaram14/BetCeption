@@ -1,15 +1,13 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgClass, NgFor, NgIf, DecimalPipe } from '@angular/common';
-import { HandStatus, RoundStatus } from '../../../../../core/api/api.types';
+import {
+  ActivePowerup,
+  HandStatus,
+  PowerPillCode,
+  PowerPillColor,
+  RoundStatus,
+} from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
-
-const POWERUP_LABELS: Record<string, string> = {
-  MULTI_PLUS: '💊 Multiplikator',
-  JOKER_CARD: '🃏 Joker',
-  NO_LOSS: '🛡️ Schutz',
-  BET_BOOST_30: '💰 +30%',
-  BET_BOOST_100: '🚀 ×2',
-};
 
 @Component({
   selector: 'app-controls',
@@ -26,8 +24,9 @@ export class Controls {
   @Input() roundStatus: RoundStatus | null = null;
   @Input() playerHandStatus: HandStatus | null = null;
   @Input() busy = false;
-
-  @Input() activePowerupCodes: string[] = [];
+  @Input() activePowerup: ActivePowerup | null = null;
+  @Input() pillPulse: PowerPillColor | null = null;
+  @Input() pillExpiredCode: PowerPillCode | null = null;
 
   @Output() placeBet = new EventEmitter<number>();
   @Output() resetBet = new EventEmitter<void>();
@@ -79,12 +78,51 @@ export class Controls {
     );
   }
 
+  get pillCode(): PowerPillCode | null {
+    return this.activePowerup?.type.code ?? this.pillExpiredCode ?? null;
+  }
+
+  get pillSlotClasses(): Record<string, boolean> {
+    const code = this.pillCode;
+    return {
+      'pill-slot--empty': !this.activePowerup && !this.pillExpiredCode,
+      'pill-slot--active': !!this.activePowerup,
+      'pill-slot--red': code === 'RED_PILL',
+      'pill-slot--blue': code === 'BLUE_PILL',
+      'pill-slot--pulse-red': this.pillPulse === 'red',
+      'pill-slot--pulse-blue': this.pillPulse === 'blue',
+      'pill-slot--pop': !!this.pillExpiredCode,
+    };
+  }
+
+  get pillUses(): number | null {
+    return this.activePowerup?.usesRemaining ?? null;
+  }
+
+  get pillAriaLabel(): string {
+    if (!this.activePowerup) return 'Open power pill shop';
+    return `${this.activePillTitle}: ${this.activePillDescription}`;
+  }
+
+  get activePillTitle(): string {
+    return this.activePowerup?.type.code === 'BLUE_PILL'
+      ? this.i18n.t('powerup.bluePill')
+      : this.i18n.t('powerup.redPill');
+  }
+
+  get activePillDescription(): string {
+    return this.activePowerup?.type.code === 'BLUE_PILL'
+      ? this.i18n.t('powerup.bluePillDescription')
+      : this.i18n.t('powerup.redPillDescription');
+  }
+
   onChip(amount: number) {
     if (this.isRoundActive || this.busy) return;
     this.placeBet.emit(amount);
   }
 
-  getPowerupLabel(code: string): string {
-    return POWERUP_LABELS[code] ?? code;
+  onPillSlot() {
+    if (this.activePowerup || this.busy) return;
+    this.openPowerupMenu.emit();
   }
 }

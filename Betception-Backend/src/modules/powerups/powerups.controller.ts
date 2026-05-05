@@ -89,6 +89,7 @@ export async function consumePowerup(
         const userRepo = manager.getRepository(User);
         const user = await userRepo.findOne({
           where: { id: userId },
+          relations: ['activePowerupType'],
           lock: { mode: 'pessimistic_write' },
         });
         if (user) {

@@ -104,11 +104,16 @@ app-disclaimer-footer{
   flex:1 1 auto;min-width:120px;
 }
 .crate-inventory-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
   color:rgba(200,160,255,.92);
   border-color:rgba(150,80,255,.55);
   background:linear-gradient(180deg,rgba(30,12,50,.82),rgba(10,8,15,.92));
   text-shadow:0 0 8px rgba(150,80,255,.35);
   box-shadow:0 0 12px rgba(150,80,255,.14),inset 0 0 10px rgba(150,80,255,.08);
+}
+.btn-icon{
+  width:17px;height:17px;flex:0 0 17px;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor)
 }
 .crate-inventory-btn:hover:not(:disabled){
   background:linear-gradient(180deg,rgba(150,80,255,.18),rgba(20,8,30,.95));

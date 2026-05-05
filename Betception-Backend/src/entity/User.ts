@@ -4,6 +4,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   Index,
+  JoinColumn,
+  ManyToOne,
   Relation,
 } from 'typeorm';
 import { Session } from './Session.js';
@@ -14,6 +16,7 @@ import { WalletTransaction } from './WalletTransaction.js';
 import { DailyRewardClaim } from './DailyRewardClaim.js';
 import { UserPowerup } from './UserPowerup.js';
 import { PowerupConsumption } from './PowerupConsumption.js';
+import { PowerupType } from './PowerupType.js';
 
 @Entity({ name: 'users' })
 @Index(['email'])
@@ -59,6 +62,13 @@ export class User {
 
   @Column({ name: 'xp_boost_expires_at', type: 'timestamp', nullable: true })
   xpBoostExpiresAt: Date | null = null;
+
+  @ManyToOne(() => PowerupType, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'active_powerup_type_id' })
+  activePowerupType!: Relation<PowerupType> | null;
+
+  @Column({ name: 'active_powerup_uses_remaining', type: 'int', unsigned: true, default: () => '0' })
+  activePowerupUsesRemaining: number = 0;
 
   @Column({
     name: 'created_at',

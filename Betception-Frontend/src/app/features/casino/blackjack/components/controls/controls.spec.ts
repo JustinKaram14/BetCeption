@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Controls } from './controls';
-import { HandStatus, RoundStatus } from '../../../../../core/api/api.types';
+import { ActivePowerup, HandStatus, RoundStatus } from '../../../../../core/api/api.types';
 
 describe('Controls', () => {
   let component: Controls;
@@ -214,5 +214,43 @@ describe('Controls', () => {
       const chipBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="chip-25"]');
       expect(chipBtn.disabled).toBeTrue();
     });
+
+    it('keeps an active pill slot hoverable while blocking shop clicks', () => {
+      component.activePowerup = redPill();
+      fixture.detectChanges();
+      const spy = spyOn(component.openPowerupMenu, 'emit');
+
+      const pillBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="powerup-button"]');
+      expect(pillBtn.disabled).toBeFalse();
+      expect(pillBtn.getAttribute('aria-disabled')).toBe('true');
+
+      component.onPillSlot();
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('renders the active pill tooltip with the localized effect text', () => {
+      component.activePowerup = redPill();
+      fixture.detectChanges();
+
+      const tooltipText: HTMLElement = fixture.nativeElement.querySelector('.pill-slot__tooltip-text');
+      expect(tooltipText.textContent?.trim()).toContain('Gewinn');
+      expect(tooltipText.textContent).not.toContain('Hauptgewinn');
+    });
   });
 });
+
+function redPill(): ActivePowerup {
+  return {
+    type: {
+      id: 1,
+      code: 'RED_PILL',
+      title: 'Red Pill',
+      description: null,
+      minLevel: 1,
+      price: 300,
+      effect: null,
+    },
+    usesRemaining: 3,
+  };
+}

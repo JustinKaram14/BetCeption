@@ -31,6 +31,7 @@ type TranslationKey =
   | 'blackjack.won'
   | 'blackjack.wonHeadline'
   | 'blackjack.wonPayout'
+  | 'common.cancel'
   | 'common.close'
   | 'common.coins'
   | 'common.dealer'
@@ -69,6 +70,7 @@ type TranslationKey =
   | 'hand.status.busted'
   | 'hand.status.stood'
   | 'hand.status.surrendered'
+  | 'home.crates'
   | 'home.dailyRewards'
   | 'home.enter'
   | 'home.loggedInAs'
@@ -120,6 +122,14 @@ type TranslationKey =
   | 'powerup.queued'
   | 'powerup.ingame'
   | 'powerup.peekBtn'
+  | 'powerup.pillShopTitle'
+  | 'powerup.pillShopSubtitle'
+  | 'powerup.redPill'
+  | 'powerup.redPillDescription'
+  | 'powerup.bluePill'
+  | 'powerup.bluePillDescription'
+  | 'powerup.slotOccupied'
+  | 'powerup.unavailable'
   | 'powerup.undoBtn'
   | 'powerup.swapBtn';
 
@@ -156,6 +166,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': 'Gewonnen!',
     'blackjack.wonHeadline': 'GEWONNEN!',
     'blackjack.wonPayout': 'Gewonnen! Auszahlung: {{amount}} Coins',
+    'common.cancel': 'Abbrechen',
     'common.close': 'Schließen',
     'common.coins': 'Coins',
     'common.dealer': 'Dealer',
@@ -194,6 +205,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'hand.status.busted': 'Busted',
     'hand.status.stood': 'Stand',
     'hand.status.surrendered': 'Surrender',
+    'home.crates': 'Kisten',
     'home.dailyRewards': 'TÄGLICHE BELOHNUNG',
     'home.enter': 'BETCEPTION STARTEN',
     'home.loggedInAs': 'Eingeloggt als',
@@ -245,6 +257,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.queued': '✓ Aktiviert',
     'powerup.ingame': 'Im Spiel',
     'powerup.peekBtn': '👁️ Karte ansehen',
+    'powerup.pillShopTitle': 'Power-Pille kaufen',
+    'powerup.pillShopSubtitle': 'Aktiviere eine Pille für 3 Runden. Es kann immer nur eine Pille aktiv sein.',
+    'powerup.redPill': 'Rote Pille',
+    'powerup.redPillDescription': '1:5 Chance auf x3 Auszahlung bei einem Gewinn.',
+    'powerup.bluePill': 'Blaue Pille',
+    'powerup.bluePillDescription': '1:8 Chance auf eine Schutzrunde bei Verlust: kein Verlust.',
+    'powerup.slotOccupied': 'Slot belegt',
+    'powerup.unavailable': 'Nicht verfügbar',
     'powerup.undoBtn': '↩️ Karte zurück',
     'powerup.swapBtn': '🔄 Karte tauschen',
   },
@@ -276,6 +296,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': 'Won!',
     'blackjack.wonHeadline': 'WON!',
     'blackjack.wonPayout': 'Won! Payout: {{amount}} Coins',
+    'common.cancel': 'Cancel',
     'common.close': 'Close',
     'common.coins': 'Coins',
     'common.dealer': 'Dealer',
@@ -314,6 +335,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'hand.status.busted': 'Busted',
     'hand.status.stood': 'Stood',
     'hand.status.surrendered': 'Surrender',
+    'home.crates': 'Crates',
     'home.dailyRewards': 'DAILY REWARDS',
     'home.enter': 'ENTER BETCEPTION',
     'home.loggedInAs': 'Logged in as',
@@ -365,6 +387,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.queued': '✓ Active',
     'powerup.ingame': 'In-Game',
     'powerup.peekBtn': '👁️ Peek Card',
+    'powerup.pillShopTitle': 'Purchase Power Pill',
+    'powerup.pillShopSubtitle': 'Activate one pill for 3 rounds. Only one pill can be active at a time.',
+    'powerup.redPill': 'Red Pill',
+    'powerup.redPillDescription': '1:5 chance to trigger x3 payout on a win.',
+    'powerup.bluePill': 'Blue Pill',
+    'powerup.bluePillDescription': '1:8 chance to protect a losing round with no loss.',
+    'powerup.slotOccupied': 'Slot occupied',
+    'powerup.unavailable': 'Unavailable',
     'powerup.undoBtn': '↩️ Undo Hit',
     'powerup.swapBtn': '🔄 Swap Card',
   },
@@ -396,6 +426,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': '¡Ganaste!',
     'blackjack.wonHeadline': '¡GANASTE!',
     'blackjack.wonPayout': '¡Ganaste! Pago: {{amount}} Coins',
+    'common.cancel': 'Cancelar',
     'common.close': 'Cerrar',
     'common.coins': 'Coins',
     'common.dealer': 'Dealer',
@@ -434,6 +465,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'hand.status.busted': 'Pasado',
     'hand.status.stood': 'Plantado',
     'hand.status.surrendered': 'Rendido',
+    'home.crates': 'Cajas',
     'home.dailyRewards': 'RECOMPENSAS DIARIAS',
     'home.enter': 'ENTRAR A BETCEPTION',
     'home.loggedInAs': 'Sesión iniciada como',
@@ -485,6 +517,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.queued': '✓ Activo',
     'powerup.ingame': 'En juego',
     'powerup.peekBtn': '👁️ Ver carta',
+    'powerup.pillShopTitle': 'Comprar power pill',
+    'powerup.pillShopSubtitle': 'Activa una píldora durante 3 rondas. Solo puede haber una activa.',
+    'powerup.redPill': 'Píldora roja',
+    'powerup.redPillDescription': 'Probabilidad 1:5 de activar pago x3 en una victoria.',
+    'powerup.bluePill': 'Píldora azul',
+    'powerup.bluePillDescription': 'Probabilidad 1:8 de proteger una ronda perdida sin pérdida.',
+    'powerup.slotOccupied': 'Ranura ocupada',
+    'powerup.unavailable': 'No disponible',
     'powerup.undoBtn': '↩️ Deshacer',
     'powerup.swapBtn': '🔄 Cambiar carta',
   },
@@ -516,6 +556,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': 'Gagné !',
     'blackjack.wonHeadline': 'GAGNÉ !',
     'blackjack.wonPayout': 'Gagné ! Gain : {{amount}} Coins',
+    'common.cancel': 'Annuler',
     'common.close': 'Fermer',
     'common.coins': 'Coins',
     'common.dealer': 'Dealer',
@@ -554,6 +595,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'hand.status.busted': 'Sauté',
     'hand.status.stood': 'Resté',
     'hand.status.surrendered': 'Abandon',
+    'home.crates': 'Caisses',
     'home.dailyRewards': 'RÉCOMPENSE QUOTIDIENNE',
     'home.enter': 'ENTRER DANS BETCEPTION',
     'home.loggedInAs': 'Connecté en tant que',
@@ -605,6 +647,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'powerup.queued': '✓ Actif',
     'powerup.ingame': 'En jeu',
     'powerup.peekBtn': '👁️ Voir carte',
+    'powerup.pillShopTitle': 'Acheter une power pill',
+    'powerup.pillShopSubtitle': 'Active une pilule pour 3 manches. Une seule pilule peut être active.',
+    'powerup.redPill': 'Pilule rouge',
+    'powerup.redPillDescription': 'Chance 1:5 de déclencher un gain x3 sur une victoire.',
+    'powerup.bluePill': 'Pilule bleue',
+    'powerup.bluePillDescription': 'Chance 1:8 de protéger une manche perdue sans perte.',
+    'powerup.slotOccupied': 'Emplacement occupé',
+    'powerup.unavailable': 'Indisponible',
     'powerup.undoBtn': '↩️ Annuler',
     'powerup.swapBtn': '🔄 Échanger',
   },

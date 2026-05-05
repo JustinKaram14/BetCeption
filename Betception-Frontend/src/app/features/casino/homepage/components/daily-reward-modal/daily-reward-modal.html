@@ -1,32 +1,38 @@
 <div class="dr-overlay" (click)="onOverlayClick($event)">
   <div class="dr-card" role="dialog" aria-modal="true">
-
-    <!-- Header -->
     <div class="dr-header">
-      <div class="dr-header__info">
-        <span class="dr-title">🎁 Tägliche Belohnung</span>
-        <span class="dr-streak-badge" *ngIf="loginStreak > 0">🔥 {{ loginStreak }} Tage Streak</span>
+      <div>
+        <span class="dr-kicker">30 Tage</span>
+        <div class="dr-title-row">
+          <svg class="dr-title-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 9h16v11H4z" />
+            <path d="M3 6h18v3H3z" />
+            <path d="M12 6v14" />
+            <path d="M12 6C9.4 2.9 6.4 3.2 6.4 5.2 6.4 7.1 9.4 7.1 12 6Z" />
+            <path d="M12 6c2.6-3.1 5.6-2.8 5.6-.8 0 1.9-3 1.9-5.6.8Z" />
+          </svg>
+          <h2 class="dr-title">Tägliche Belohnung</h2>
+        </div>
       </div>
-      <button class="dr-close" (click)="onClose()" aria-label="Schließen">✕</button>
+      <div class="dr-header-actions">
+        <span class="dr-streak-badge" *ngIf="loginStreak > 0">{{ loginStreak }} Tage Streak</span>
+        <button class="dr-close" type="button" (click)="onClose()" aria-label="Schließen">X</button>
+      </div>
     </div>
 
-    <!-- Streak reset notice -->
     <div class="dr-reset-banner" *ngIf="!loading && streakWasReset">
-      ⚠️ Dein Streak wurde zurückgesetzt – heute startest du neu bei Tag 1!
+      Dein Streak wurde zurückgesetzt. Heute startest du wieder bei Tag 1.
     </div>
 
-    <!-- Loading -->
     <div class="dr-loading" *ngIf="loading">
       <div class="dr-spinner"></div>
-      <p>Wird geladen…</p>
+      <p>Belohnungen werden geladen...</p>
     </div>
 
-    <!-- Error (no data) -->
     <div class="dr-error-panel" *ngIf="!loading && error && !schedule.length">
       <p>{{ error }}</p>
     </div>
 
-    <!-- 30-day grid -->
     <div class="dr-grid" *ngIf="!loading && schedule.length">
       <div
         *ngFor="let item of schedule"
@@ -35,38 +41,34 @@
         [class.dr-day--current]="getDayState(item.day) === 'current'"
         [class.dr-day--milestone]="item.isMilestone"
         [class.dr-day--powerup]="item.kind === 'powerup'"
+        [attr.data-reward]="rewardTone(item)"
       >
         <span class="dr-day__num">Tag {{ item.day }}</span>
-        <span class="dr-day__icon">{{ item.icon }}</span>
-        <span class="dr-day__label">{{ item.label }}</span>
-        <span class="dr-day__check" *ngIf="getDayState(item.day) === 'claimed'">✓</span>
+        <span class="dr-day__mark" aria-hidden="true"></span>
+        <span class="dr-day__kind">{{ rewardKindLabel(item) }}</span>
+        <span class="dr-day__label">{{ rewardLabel(item) }}</span>
+        <span class="dr-day__check" *ngIf="getDayState(item.day) === 'claimed'" aria-hidden="true"></span>
       </div>
     </div>
 
-    <!-- Post-claim result -->
-    <div class="dr-result" *ngIf="justClaimedReward">
-      <span class="dr-result__icon">{{ justClaimedReward.icon }}</span>
-      <span class="dr-result__text">+{{ justClaimedReward.label }} erhalten!</span>
+    <div class="dr-result" *ngIf="justClaimedReward" [attr.data-reward]="rewardTone(justClaimedReward)">
+      <span class="dr-result__mark" aria-hidden="true"></span>
+      <span class="dr-result__text">{{ rewardLabel(justClaimedReward) }} erhalten</span>
     </div>
 
-    <!-- Footer -->
     <div class="dr-footer" *ngIf="!loading">
-
       <ng-container *ngIf="isEligible && !justClaimedDay">
-        <button class="dr-claim-btn" [disabled]="claiming" (click)="onClaim()">
-          <span *ngIf="!claiming">🎁 Heute abholen</span>
-          <span *ngIf="claiming">Wird abgeholt…</span>
+        <button class="btn dr-claim-btn" type="button" [disabled]="claiming" (click)="onClaim()">
+          <span *ngIf="!claiming">Heute abholen</span>
+          <span *ngIf="claiming">Wird abgeholt...</span>
         </button>
         <p class="dr-error-msg" *ngIf="error">{{ error }}</p>
       </ng-container>
 
       <ng-container *ngIf="!isEligible || justClaimedDay !== null">
-        <p class="dr-cooldown">Nächste Belohnung in: <strong>{{ countdownText }}</strong></p>
-        <button class="dr-close-btn" (click)="onClose()">OK</button>
+        <p class="dr-cooldown">Nächste Belohnung in <strong>{{ countdownText }}</strong></p>
+        <button class="btn dr-close-btn" type="button" (click)="onClose()">OK</button>
       </ng-container>
-
     </div>
-
   </div>
 </div>
-

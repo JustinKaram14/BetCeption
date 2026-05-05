@@ -13,10 +13,6 @@
       </svg>
     </a>
 
-    <div class="peek-badge" *ngIf="peekCard !== null && isRoundActive">
-      {{ i18n.t('powerup.peek.reveal') }} {{ peekCard.rank }}{{ peekCard.suit }}
-    </div>
-
     <app-level-progress
       class="game-level-progress"
       [progress]="levelProgress"
@@ -36,12 +32,18 @@
     <!-- Level-Up Crate notification -->
     <div class="levelup-crate-toast" *ngIf="levelUpCrate">
       <div class="levelup-crate-inner">
-        <div class="levelup-crate-icon" [attr.data-tier]="levelUpCrate.tier">🎁</div>
+        <div class="levelup-crate-icon" [attr.data-tier]="levelUpCrate.tier" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M4 8 12 4l8 4-8 4-8-4Z" />
+            <path d="M4 8v8l8 4 8-4V8" />
+            <path d="M12 12v8" />
+          </svg>
+        </div>
         <div class="levelup-crate-text">
           <strong>Level Up!</strong>
           <span>Du hast eine <em>{{ levelUpCrate.tierLabel }}</em> Kiste erhalten!</span>
         </div>
-        <button class="btn levelup-crate-dismiss" (click)="onDismissLevelUpCrate()">✕</button>
+        <button class="btn levelup-crate-dismiss" (click)="onDismissLevelUpCrate()">X</button>
       </div>
     </div>
 
@@ -67,35 +69,15 @@
       </div>
     </div>
 
-    <!-- Mid-round action powerup buttons -->
-    <div class="powerup-action-bar" *ngIf="canUseActionPowerups">
-      <button
-        class="btn btn-action-powerup"
-        type="button"
-        *ngIf="hasPeekCard && !peekCard"
-        (click)="onPeekCard()"
-      >{{ i18n.t('powerup.peekBtn') }}</button>
-      <button
-        class="btn btn-action-powerup"
-        type="button"
-        *ngIf="hasUndoHit && (round?.playerHand?.cards?.length ?? 0) > 2"
-        (click)="onUndoHit()"
-      >{{ i18n.t('powerup.undoBtn') }}</button>
-      <button
-        class="btn btn-action-powerup"
-        type="button"
-        *ngIf="hasCardSwap && lastPlayerCardId"
-        (click)="onSwapLastCard()"
-      >{{ i18n.t('powerup.swapBtn') }}</button>
-    </div>
-
     <app-controls
       [betAmount]="betAmount"
       [balance]="balance"
       [roundStatus]="round?.status ?? null"
       [playerHandStatus]="playerHandStatus"
       [busy]="!!busyAction"
-      [activePowerupCodes]="activePowerupCodes"
+      [activePowerup]="activePowerup"
+      [pillPulse]="pillPulse"
+      [pillExpiredCode]="pillExpiredCode"
       (placeBet)="onPlaceBet($event)"
       (resetBet)="onResetBet()"
       (deal)="onDeal()"
@@ -109,13 +91,11 @@
     *ngIf="showPowerupMenu"
     [inventory]="inventory"
     [availablePowerups]="availablePowerups"
-    [roundId]="round?.id ?? null"
-    [roundActive]="isRoundActive"
+    [activePowerup]="activePowerup"
     [balance]="balance"
     [userLevel]="userLevel"
-    [pendingTypeIds]="pendingPowerupTypeIds"
     (purchase)="onPurchasePowerup($event)"
-    (toggleQueue)="onToggleQueue($event)"
+    (equip)="onEquipPowerup($event)"
     (close)="onClosePowerupMenu()"
   ></app-powerup-menu>
 </div>

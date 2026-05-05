@@ -29,6 +29,16 @@ import {
 import { centsToDecimal, decimalToCents, multiplyMoney } from '../../utils/money.js';
 import { buildFairnessPayload } from '../fairness/fairness.utils.js';
 import { buildLevelProgress, calculateRoundXp, countWonSideBets, levelFromXp } from '../progression/progression.js';
+import {
+  BLUE_PILL_TRIGGER_DENOMINATOR,
+  getPowerPillColor,
+  isPowerPillCode,
+  RED_PILL_TRIGGER_DENOMINATOR,
+  serializeActivePowerup,
+  shouldTriggerPowerPill,
+  type PowerPillCode,
+  type PowerPillColor,
+} from '../powerups/power-pills.js';
 import type { RoundIdParams, StartRoundInput, SwapCardBody } from './round.schema.js';
 
 type RoundWithRelations = Round & {
@@ -62,6 +72,11 @@ type SideBetResolution = {
 
 type SerializeRoundOptions = {
   xpGained?: number;
+};
+
+type TriggeredPowerupEffect = {
+  code: PowerPillCode;
+  color: PowerPillColor;
 };
 
 const ACTIVE_ROUND_STATUSES = [
@@ -104,6 +119,7 @@ export async function startRound(
       const userRepo = manager.getRepository(User);
       const user = await userRepo.findOne({
         where: { id: userId },
+        relations: ['activePowerupType'],
         lock: { mode: 'pessimistic_write' },
       });
       if (!user) {
@@ -396,53 +412,41 @@ export async function settleRound(
       }
 
       const resolution = resolveMainBet(playerHand, dealerHand);
-
-      // Sum BET_BOOST bonuses from powerups consumed in this round
-      const consumptionRepo = manager.getRepository(PowerupConsumption);
-      const consumptions = await consumptionRepo.find({
-        where: { round: { id: roundId }, user: { id: userId } },
-        relations: ['type'],
+      const userRepo = manager.getRepository(User);
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        relations: ['activePowerupType'],
+        lock: { mode: 'pessimistic_write' },
       });
+      if (!user) {
+        throw new RoundFlowError(404, 'USER_NOT_FOUND', 'User not found');
+      }
 
-      const hasJoker = consumptions.some((c) => c.type?.effectJson?.['joker'] === 1);
-      const hasInsurance = consumptions.some((c) => c.type?.effectJson?.['insurance'] === 1);
-      const noLossChance = consumptions.reduce((sum, c) => {
-        const nlc = c.type?.effectJson?.['no_loss_chance'];
-        return typeof nlc === 'number' ? sum + nlc : sum;
-      }, 0);
-      const betBoostBonus = consumptions.reduce((sum, c) => {
-        const m = c.type?.effectJson?.['main_multiplier'];
-        const cr = c.type?.effectJson?.['coin_rush'];
-        if (typeof m === 'number') return sum + m;
-        if (typeof cr === 'number') return sum + cr;
-        return sum;
-      }, 0);
-      let xpMultiplier = 1;
-      const sideBetMultiplierBonus = consumptions.reduce((sum, c) => {
-        const mb = c.type?.effectJson?.['multiplier_bonus'];
-        const smb = c.type?.effectJson?.['sidebet_multiplier_bonus'];
-        if (typeof mb === 'number') return sum + mb;
-        if (typeof smb === 'number') return sum + smb;
-        return sum;
-      }, 0);
-
+      const activePowerupBefore = serializeActivePowerup(user);
+      const activePowerupCode = activePowerupBefore?.type.code;
       let finalResolution = { ...resolution };
-      if (hasJoker && finalResolution.status === MainBetStatus.LOST && playerHand.status === HandStatus.BUSTED) {
-        finalResolution = { status: MainBetStatus.PUSH, multiplier: PAYOUT_PUSH };
-      }
-      if (hasInsurance && finalResolution.status === MainBetStatus.LOST && dealerHand.status === HandStatus.BLACKJACK) {
+      let effectiveMultiplier = finalResolution.multiplier;
+      let triggeredPowerupEffect: TriggeredPowerupEffect | null = null;
+      let expiredPowerup: TriggeredPowerupEffect | null = null;
+
+      if (
+        activePowerupCode === 'BLUE_PILL' &&
+        finalResolution.status === MainBetStatus.LOST &&
+        shouldTriggerPowerPill(BLUE_PILL_TRIGGER_DENOMINATOR)
+      ) {
         finalResolution = { status: MainBetStatus.REFUNDED, multiplier: PAYOUT_PUSH };
-      }
-      if (noLossChance > 0 && finalResolution.status === MainBetStatus.LOST) {
-        if (crypto.randomInt(1000) < Math.round(Math.min(noLossChance, 1) * 1000)) {
-          finalResolution = { status: MainBetStatus.REFUNDED, multiplier: PAYOUT_PUSH };
-        }
+        effectiveMultiplier = PAYOUT_PUSH;
+        triggeredPowerupEffect = { code: activePowerupCode, color: getPowerPillColor(activePowerupCode) };
       }
 
-      const effectiveMultiplier =
-        finalResolution.status === MainBetStatus.WON && betBoostBonus > 0
-          ? finalResolution.multiplier + betBoostBonus
-          : finalResolution.multiplier;
+      if (
+        activePowerupCode === 'RED_PILL' &&
+        finalResolution.status === MainBetStatus.WON &&
+        shouldTriggerPowerPill(RED_PILL_TRIGGER_DENOMINATOR)
+      ) {
+        effectiveMultiplier = finalResolution.multiplier * 3;
+        triggeredPowerupEffect = { code: activePowerupCode, color: getPowerPillColor(activePowerupCode) };
+      }
 
       const settledAmountDecimal = multiplyMoney(mainBet.amount, effectiveMultiplier);
       const settledAmountCents = decimalToCents(settledAmountDecimal);
@@ -454,15 +458,6 @@ export async function settleRound(
       await manager.getRepository(MainBet).save(mainBet);
 
       const walletRepo = manager.getRepository(WalletTransaction);
-      const userRepo = manager.getRepository(User);
-      const user = await userRepo.findOne({
-        where: { id: userId },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!user) {
-        throw new RoundFlowError(404, 'USER_NOT_FOUND', 'User not found');
-      }
-      xpMultiplier = (user.xpBoostExpiresAt && user.xpBoostExpiresAt > new Date()) ? 2 : 1;
 
       let pendingCredit = 0n;
       const walletTxs: WalletTransaction[] = [];
@@ -491,7 +486,7 @@ export async function settleRound(
       const settledSideBetStatuses: SideBetStatus[] = [];
       for (const sideBet of playerSideBets) {
         if (sideBet.status !== SideBetStatus.PLACED) continue;
-        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id, sideBetMultiplierBonus);
+        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id);
         settledSideBetStatuses.push(outcome.status);
         const payoutDecimal = multiplyMoney(sideBet.amount, outcome.multiplier);
         const payoutCents = decimalToCents(payoutDecimal);
@@ -529,7 +524,7 @@ export async function settleRound(
         playerHandStatus: playerHand.status,
         wonSideBets: countWonSideBets(settledSideBetStatuses),
       });
-      const boostedXp = Math.round(baseXp * xpMultiplier);
+      const boostedXp = baseXp;
       const oldLevel = Math.max(1, Math.floor(user.level ?? 1));
       user.xp = Math.max(0, Math.floor(user.xp ?? 0)) + boostedXp;
       user.level = Math.max(Math.max(1, Math.floor(user.level ?? 1)), levelFromXp(user.xp));
@@ -538,13 +533,28 @@ export async function settleRound(
       if (user.level > oldLevel) {
         const crateRepo = manager.getRepository(UserCrate);
         const tier = getTierForLevel(user.level);
-        const TIER_LABELS = ['Common', 'Rare', 'Epic', 'Legendary', 'Elite'];
+        const TIER_LABELS = ['Common', 'Rare', 'Epic'];
         const crate = crateRepo.create({ user, tier, acquiredLevel: user.level });
         await crateRepo.save(crate);
         levelUpCrate = { id: crate.id, tier, tierLabel: TIER_LABELS[tier - 1] ?? 'Common', acquiredLevel: user.level };
       }
 
-      const progress = { xpGained: boostedXp, progress: buildLevelProgress(user), levelUpCrate };
+      if (isPowerPillCode(activePowerupCode)) {
+        user.activePowerupUsesRemaining = Math.max(0, user.activePowerupUsesRemaining - 1);
+        if (user.activePowerupUsesRemaining === 0) {
+          expiredPowerup = { code: activePowerupCode, color: getPowerPillColor(activePowerupCode) };
+          user.activePowerupType = null;
+        }
+      }
+
+      const progress = {
+        xpGained: boostedXp,
+        progress: buildLevelProgress(user),
+        levelUpCrate,
+        activePowerup: serializeActivePowerup(user),
+        triggeredPowerupEffect,
+        expiredPowerup,
+      };
       await userRepo.save(user);
 
       if (walletTxs.length) {
@@ -567,6 +577,9 @@ export async function settleRound(
         xpGained: settlementProgress.xpGained,
       }),
       levelUpCrate: settlementProgress.levelUpCrate ?? null,
+      activePowerup: settlementProgress.activePowerup,
+      triggeredPowerupEffect: settlementProgress.triggeredPowerupEffect,
+      expiredPowerup: settlementProgress.expiredPowerup,
     });
   } catch (error) {
     return handleRoundError(res, error);

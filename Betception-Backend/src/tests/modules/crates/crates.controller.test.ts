@@ -1,4 +1,5 @@
-import { listCrates, openCrate, getTierForLevel } from '../../../modules/crates/crates.controller.js';
+import crypto from 'crypto';
+import { listCrates, openCrate, getTierForLevel, getPowerupRewardQuantityForTier } from '../../../modules/crates/crates.controller.js';
 import { UserCrate } from '../../../entity/UserCrate.js';
 import { UserPowerup } from '../../../entity/UserPowerup.js';
 import { PowerupType } from '../../../entity/PowerupType.js';
@@ -19,14 +20,26 @@ describe('getTierForLevel', () => {
     [1, 1], [5, 1],
     [6, 2], [10, 2],
     [11, 3], [20, 3],
-    [21, 4], [35, 4],
-    [36, 5], [100, 5],
+    [21, 3], [35, 3],
+    [36, 3], [100, 3],
   ])('level %i → tier %i', (level, expectedTier) => {
     expect(getTierForLevel(level)).toBe(expectedTier);
   });
 });
 
 // ─── listCrates ───────────────────────────────────────────────────────────────
+
+describe('getPowerupRewardQuantityForTier', () => {
+  it.each([
+    [1, 1],
+    [2, 2],
+    [3, 3],
+    [4, 3],
+    [5, 3],
+  ])('tier %i yields %i pill(s)', (tier, expectedCount) => {
+    expect(getPowerupRewardQuantityForTier(tier)).toBe(expectedCount);
+  });
+});
 
 describe('listCrates', () => {
   it('returns 401 when the user is not authenticated', async () => {
@@ -145,6 +158,7 @@ describe('listCrates', () => {
     const { items } = (res.json as jest.Mock).mock.calls[0][0];
     expect(items[0].reward?.kind).toBe('powerup');
     expect(items[0].reward?.powerup?.code).toBe('JOKER_CARD');
+    expect(items[0].reward?.powerup?.quantity).toBe(3);
   });
 });
 
@@ -301,6 +315,80 @@ describe('openCrate', () => {
       expect.objectContaining({
         crate: expect.objectContaining({ opened: true }),
         balance: expect.any(Number),
+      }),
+    );
+  });
+
+  it('adds three pills for a tier 3 powerup reward', async () => {
+    jest.spyOn(crypto, 'randomInt').mockReturnValue(0 as never);
+
+    const powerup = { id: 1, code: 'RED_PILL', title: 'Red Pill' } as PowerupType;
+    const existingPowerup = {
+      id: 'user-powerup-1',
+      quantity: 2,
+      user: { id: 'user-1' } as User,
+      type: powerup,
+    } as UserPowerup;
+    const crate: Partial<UserCrate> = {
+      id: 'crate-3',
+      tier: 3,
+      acquiredLevel: 12,
+      opened: false,
+      openedAt: null,
+      rewardKind: null,
+      rewardCoins: null,
+      rewardPowerupType: null,
+      user: { id: 'user-1' } as User,
+    };
+    const user = { id: 'user-1', balance: '500.00', level: 12 } as User;
+
+    const crateRepo = createMockRepository<UserCrate>({
+      findOne: jest.fn().mockResolvedValue(crate),
+      save: jest.fn().mockImplementation(async (c) => c),
+    });
+    const userRepo = createMockRepository<User>({
+      findOne: jest.fn().mockResolvedValue(user),
+    });
+    const walletRepo = createMockRepository<WalletTransaction>();
+    const powerupRepo = createMockRepository<PowerupType>({
+      findOne: jest.fn().mockResolvedValue(powerup),
+    });
+    const userPowerupRepo = createMockRepository<UserPowerup>({
+      findOne: jest.fn().mockResolvedValue(existingPowerup),
+      save: jest.fn().mockImplementation(async (up) => up),
+    });
+
+    mockAppDataSourceTransaction(
+      new Map<any, any>([
+        [UserCrate, crateRepo],
+        [User, userRepo],
+        [WalletTransaction, walletRepo],
+        [PowerupType, powerupRepo],
+        [UserPowerup, userPowerupRepo],
+      ]),
+    );
+
+    const req = createMockRequest({
+      user: { sub: 'user-1' } as any,
+      params: { crateId: 'crate-3' },
+    });
+    const res = createMockResponse();
+
+    await openCrate(req as any, res);
+
+    expect(existingPowerup.quantity).toBe(5);
+    expect(userPowerupRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ quantity: 5 }),
+    );
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        crate: expect.objectContaining({
+          tier: 3,
+          reward: expect.objectContaining({
+            kind: 'powerup',
+            powerup: expect.objectContaining({ code: 'RED_PILL', quantity: 3 }),
+          }),
+        }),
       }),
     );
   });
