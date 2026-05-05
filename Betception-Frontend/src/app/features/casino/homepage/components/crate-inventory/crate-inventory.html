@@ -2,7 +2,7 @@
   <div class="crate-modal">
     <div class="crate-modal__header">
       <div>
-        <span class="crate-kicker">Inventar</span>
+        <span class="crate-kicker">{{ i18n.t('crate.inventory') }}</span>
         <div class="crate-title-row">
           <svg class="crate-title-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M4 8 12 4l8 4-8 4-8-4Z" />
@@ -10,22 +10,22 @@
             <path d="M12 12v8" />
             <path d="m8 10 8-4" />
           </svg>
-          <h2>Kisten</h2>
+          <h2>{{ i18n.t('crate.title') }}</h2>
         </div>
       </div>
-      <button class="crate-close-btn" type="button" (click)="onClose()" aria-label="Schließen">X</button>
+      <button class="crate-close-btn" type="button" (click)="onClose()" [attr.aria-label]="i18n.t('common.close')">X</button>
     </div>
 
     <div class="crate-modal__body">
       <div class="crate-loading" *ngIf="loading">
         <div class="crate-spinner"></div>
-        <span>Lädt...</span>
+        <span>{{ i18n.t('crate.loading') }}</span>
       </div>
       <div class="crate-error" *ngIf="error">{{ error }}</div>
 
       <ng-container *ngIf="!loading">
         <div class="crate-section" *ngIf="unopenedCrates.length > 0">
-          <h3 class="crate-section-title">Ungeöffnet ({{ unopenedCrates.length }})</h3>
+          <h3 class="crate-section-title">{{ i18n.t('crate.unopened', { count: unopenedCrates.length }) }}</h3>
           <div class="crate-grid">
             <div
               class="crate-card crate-card--closed"
@@ -36,18 +36,18 @@
                 <span>{{ tierName(crate.tier) }}</span>
               </div>
               <div class="crate-card__info">
-                <span class="crate-card__label">{{ crate.tierLabel }}</span>
-                <span class="crate-card__level">Level {{ crate.acquiredLevel }}</span>
+                <span class="crate-card__label">{{ tierLabel(crate.tier, crate.tierLabel) }}</span>
+                <span class="crate-card__level">{{ i18n.t('crate.level') }} {{ crate.acquiredLevel }}</span>
               </div>
               <button class="btn crate-open-btn" type="button" (click)="onOpen(crate)" [disabled]="spinPhase !== 'idle'">
-                Öffnen
+                {{ i18n.t('crate.open') }}
               </button>
             </div>
           </div>
         </div>
 
         <div class="crate-section" *ngIf="openedCrates.length > 0">
-          <h3 class="crate-section-title crate-section-title--opened">Geöffnet</h3>
+          <h3 class="crate-section-title crate-section-title--opened">{{ i18n.t('crate.opened') }}</h3>
           <div class="crate-grid crate-grid--opened">
             <div
               class="crate-card crate-card--opened"
@@ -59,7 +59,7 @@
                 <span>{{ tierName(crate.tier) }}</span>
               </div>
               <div class="crate-card__info">
-                <span class="crate-card__label">{{ crate.tierLabel }}</span>
+                <span class="crate-card__label">{{ tierLabel(crate.tier, crate.tierLabel) }}</span>
                 <span class="crate-card__reward" *ngIf="crate.reward">{{ rewardLabel(crate.reward) }}</span>
               </div>
             </div>
@@ -67,7 +67,7 @@
         </div>
 
         <div class="crate-empty" *ngIf="crates.length === 0">
-          Noch keine Kisten vorhanden. Steige im Level auf, um Kisten zu erhalten.
+          {{ i18n.t('crate.empty') }}
         </div>
       </ng-container>
     </div>
@@ -78,13 +78,13 @@
   <div class="spin-scene">
     <div class="spin-scene__header">
       <span class="spin-tier-badge" [attr.data-tier]="spinTier">
-        {{ tierName(spinTier) }} {{ spinTierLabel }}-Kiste
+        {{ tierBadgeLabel(spinTier, spinTierLabel) }}
       </span>
     </div>
 
     <div class="spin-loading-wrap" *ngIf="spinPhase === 'loading'">
       <div class="spin-spinner"></div>
-      <p class="spin-loading-text">Kiste wird geöffnet...</p>
+      <p class="spin-loading-text">{{ i18n.t('crate.opening') }}</p>
     </div>
 
     <ng-container *ngIf="spinPhase === 'spinning' || spinPhase === 'done'">
@@ -126,9 +126,9 @@
           [attr.data-pill]="spinReward?.powerup?.code"
         >
           <span class="spin-result__mark" aria-hidden="true"></span>
-          <span class="spin-result__label">{{ rewardLabel(spinReward) }} erhalten</span>
+          <span class="spin-result__label">{{ i18n.t('crate.rewardReceived', { reward: rewardLabel(spinReward) }) }}</span>
         </div>
-        <button class="btn spin-result__btn" type="button" (click)="onDismissReveal()">Weiter</button>
+        <button class="btn spin-result__btn" type="button" (click)="onDismissReveal()">{{ i18n.t('crate.continue') }}</button>
       </div>
     </ng-container>
   </div>

@@ -12,6 +12,7 @@ import { NgFor, NgIf } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { CrateReward, UserCrateItem } from '../../../../../core/api/api.types';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 const ITEM_SLOT_PX = 118;
 const SPIN_COUNT = 60;
@@ -50,6 +51,7 @@ export class CrateInventoryComponent implements OnInit {
 
   private readonly api = inject(BetceptionApi);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18n);
 
   crates: UserCrateItem[] = [];
   loading = true;
@@ -73,18 +75,33 @@ export class CrateInventoryComponent implements OnInit {
     return `T${Math.max(1, Math.min(3, tier))}`;
   }
 
-  pillLabel(code: string | undefined, fallback = 'Pille'): string {
-    if (code === 'RED_PILL') return 'Rote Pille';
-    if (code === 'BLUE_PILL') return 'Blaue Pille';
-    if (fallback === 'Red Pill') return 'Rote Pille';
-    if (fallback === 'Blue Pill') return 'Blaue Pille';
+  tierLabel(tier: number, fallback = ''): string {
+    const normalized = Math.max(1, Math.min(3, Math.floor(tier)));
+    if (normalized === 1) return this.i18n.t('crate.tier.common');
+    if (normalized === 2) return this.i18n.t('crate.tier.rare');
+    if (normalized === 3) return this.i18n.t('crate.tier.epic');
+    return fallback;
+  }
+
+  tierBadgeLabel(tier: number, fallback = ''): string {
+    return this.i18n.t('crate.tierBadge', {
+      tier: this.tierName(tier),
+      label: this.tierLabel(tier, fallback),
+    });
+  }
+
+  pillLabel(code: string | undefined, fallback = this.i18n.t('crate.pillFallback')): string {
+    if (code === 'RED_PILL') return this.i18n.t('powerup.redPill');
+    if (code === 'BLUE_PILL') return this.i18n.t('powerup.bluePill');
+    if (fallback === 'Red Pill') return this.i18n.t('powerup.redPill');
+    if (fallback === 'Blue Pill') return this.i18n.t('powerup.bluePill');
     return fallback;
   }
 
   rewardLabel(reward: CrateReward | null): string {
     if (!reward) return '';
     if (reward.kind === 'coins') {
-      return `${(reward.coins ?? 0).toLocaleString('de-DE')} Coins`;
+      return `${this.formatNumber(reward.coins ?? 0)} ${this.i18n.t('common.coins')}`;
     }
     return this.pillRewardLabel(reward);
   }
@@ -127,7 +144,7 @@ export class CrateInventoryComponent implements OnInit {
         },
         error: (err) => {
           this.spinPhase = 'idle';
-          this.error = err?.error?.message ?? 'Fehler beim Oeffnen der Kiste';
+          this.error = this.extractCrateError(err);
         },
       });
   }
@@ -175,7 +192,7 @@ export class CrateInventoryComponent implements OnInit {
           kind: winner.kind,
           amount: winner.coins ?? 0,
           label: winner.kind === 'coins'
-            ? `${(winner.coins ?? 0).toLocaleString('de-DE')} Coins`
+            ? `${this.formatNumber(winner.coins ?? 0)} ${this.i18n.t('common.coins')}`
             : this.pillRewardLabel(winner),
           pillCode: winner.powerup?.code === 'RED_PILL' || winner.powerup?.code === 'BLUE_PILL'
             ? winner.powerup.code
@@ -202,7 +219,7 @@ export class CrateInventoryComponent implements OnInit {
       return {
         kind: 'coins',
         amount,
-        label: `${amount.toLocaleString('de-DE')} Coins`,
+        label: `${this.formatNumber(amount)} ${this.i18n.t('common.coins')}`,
         tier: fakeTier,
         isWinner: false,
       };
@@ -210,9 +227,33 @@ export class CrateInventoryComponent implements OnInit {
   }
 
   private pillRewardLabel(reward: CrateReward): string {
-    const label = this.pillLabel(reward.powerup?.code, reward.powerup?.title ?? 'Pille');
+    const label = this.pillLabel(reward.powerup?.code, reward.powerup?.title ?? this.i18n.t('crate.pillFallback'));
     const quantity = Math.max(1, Math.floor(reward.powerup?.quantity ?? 1));
     return quantity > 1 ? `${quantity}x ${label}` : label;
+  }
+
+  private formatNumber(value: number): string {
+    return value.toLocaleString(this.currentLocale());
+  }
+
+  private currentLocale(): string {
+    switch (this.i18n.language()) {
+      case 'en': return 'en-US';
+      case 'es': return 'es-ES';
+      case 'fr': return 'fr-FR';
+      default: return 'de-DE';
+    }
+  }
+
+  private extractCrateError(err: unknown): string {
+    const code = typeof err === 'object' && err !== null && 'error' in err
+      ? (err as { error?: { code?: string } }).error?.code
+      : undefined;
+
+    if (code === 'UNAUTHENTICATED') return this.i18n.t('crate.errorUnauthenticated');
+    if (code === 'CRATE_NOT_FOUND') return this.i18n.t('crate.errorNotFound');
+    if (code === 'ALREADY_OPENED') return this.i18n.t('crate.errorAlreadyOpened');
+    return this.i18n.t('crate.openError');
   }
 
   private clearTimers(): void {
@@ -231,6 +272,7 @@ export class CrateInventoryComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
+          this.error = this.i18n.t('crate.loadError');
           this.loading = false;
         },
       });
