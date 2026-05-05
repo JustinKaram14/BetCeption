@@ -78,4 +78,5 @@ export enum WalletTransactionKind {
   BET_REFUND = 'bet_refund',
   ADJUSTMENT = 'adjustment',
   REWARD = 'reward',
+  CRATE_REWARD = 'crate_reward',
 }

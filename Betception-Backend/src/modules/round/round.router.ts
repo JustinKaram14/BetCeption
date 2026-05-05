@@ -8,10 +8,14 @@ import {
   getActiveRound,
   getRound,
   settleRound,
+  peekCard,
+  swapCard,
+  undoHit,
 } from './round.controller.js';
 import {
   RoundIdParamsSchema,
   StartRoundSchema,
+  SwapCardBodySchema,
 } from './round.schema.js';
 
 export const roundRouter = Router();
@@ -39,4 +43,20 @@ roundRouter.post(
   '/settle/:roundId',
   validateRequest(RoundIdParamsSchema, 'params'),
   settleRound,
+);
+roundRouter.get(
+  '/peek/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  peekCard,
+);
+roundRouter.post(
+  '/swap-card/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  validateRequest(SwapCardBodySchema),
+  swapCard,
+);
+roundRouter.post(
+  '/undo/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  undoHit,
 );

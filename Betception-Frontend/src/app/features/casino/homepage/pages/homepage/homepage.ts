@@ -8,8 +8,9 @@ import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
-import { DailyRewardModalComponent, DailyRewardState } from '../../components/daily-reward-modal/daily-reward-modal';
+import { DailyRewardModalComponent } from '../../components/daily-reward-modal/daily-reward-modal';
 import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
+import { CrateInventoryComponent } from '../../components/crate-inventory/crate-inventory';
 import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-footer/disclaimer-footer';
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
 import { SettingsMenuComponent } from '../../../../../shared/ui/settings-menu/settings-menu';
@@ -24,7 +25,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, CrateInventoryComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -49,7 +50,7 @@ export class HomepageComponent {
   authLoading = false;
   showRewardModal = false;
   showHowToPlayModal = false;
-  rewardState: DailyRewardState = { kind: 'loading' };
+  showCrateInventory = false;
   walletSummary: WalletSummary | null = null;
 
   constructor() {
@@ -105,34 +106,13 @@ export class HomepageComponent {
       this.toast.error(this.i18n.t('home.toast.loginRequiredReward'));
       return;
     }
-
-    this.rewardState = { kind: 'loading' };
     this.showRewardModal = true;
+  }
 
-    this.wallet.claimDailyReward()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.rewardState = {
-            kind: 'success',
-            claimedAmount: res.claimedAmount,
-            balance: res.balance,
-            eligibleAt: res.eligibleAt,
-          };
-          this.refreshWalletSummary();
-        },
-        error: (err) => {
-          const status = err?.status;
-          if (status === 409) {
-            const eligibleAt = err?.error?.eligibleAt ?? new Date().toISOString();
-            this.rewardState = { kind: 'already-claimed', eligibleAt };
-          } else {
-            const message = err?.error?.message ?? this.i18n.t('home.toast.unknownError');
-            this.toast.error(message);
-            this.showRewardModal = false;
-          }
-        },
-      });
+  onRewardClaimed(balance: number) {
+    if (this.walletSummary) {
+      this.walletSummary = { ...this.walletSummary, balance };
+    }
   }
 
   closeRewardModal() {
@@ -145,6 +125,20 @@ export class HomepageComponent {
 
   closeHowToPlay() {
     this.showHowToPlayModal = false;
+  }
+
+  openCrateInventory() {
+    this.showCrateInventory = true;
+  }
+
+  closeCrateInventory() {
+    this.showCrateInventory = false;
+  }
+
+  onCrateBalanceUpdated(balance: number) {
+    if (this.walletSummary) {
+      this.walletSummary = { ...this.walletSummary, balance };
+    }
   }
 
   private runAuthRequest(
@@ -166,17 +160,6 @@ export class HomepageComponent {
         complete: () => {
           this.authLoading = false;
         },
-      });
-  }
-
-  private refreshWalletSummary() {
-    this.wallet.getSummary()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (summary) => {
-          this.walletSummary = summary;
-        },
-        error: () => null,
       });
   }
 

@@ -11,6 +11,9 @@ import { SidebetType } from '../../entity/SidebetType.js';
 import { User } from '../../entity/User.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { PowerupConsumption } from '../../entity/PowerupConsumption.js';
+import { UserPowerup } from '../../entity/UserPowerup.js';
+import { UserCrate } from '../../entity/UserCrate.js';
+import { getTierForLevel } from '../crates/crates.controller.js';
 import {
   CardRank,
   CardSuit,
@@ -25,8 +28,8 @@ import {
 } from '../../entity/enums.js';
 import { centsToDecimal, decimalToCents, multiplyMoney } from '../../utils/money.js';
 import { buildFairnessPayload } from '../fairness/fairness.utils.js';
-import { awardRoundXp, buildLevelProgress, countWonSideBets } from '../progression/progression.js';
-import type { RoundIdParams, StartRoundInput } from './round.schema.js';
+import { buildLevelProgress, calculateRoundXp, countWonSideBets, levelFromXp } from '../progression/progression.js';
+import type { RoundIdParams, StartRoundInput, SwapCardBody } from './round.schema.js';
 
 type RoundWithRelations = Round & {
   hands: (Hand & { cards: Card[]; user: User | null })[];
@@ -400,19 +403,51 @@ export async function settleRound(
         where: { round: { id: roundId }, user: { id: userId } },
         relations: ['type'],
       });
+
+      const hasJoker = consumptions.some((c) => c.type?.effectJson?.['joker'] === 1);
+      const hasInsurance = consumptions.some((c) => c.type?.effectJson?.['insurance'] === 1);
+      const noLossChance = consumptions.reduce((sum, c) => {
+        const nlc = c.type?.effectJson?.['no_loss_chance'];
+        return typeof nlc === 'number' ? sum + nlc : sum;
+      }, 0);
       const betBoostBonus = consumptions.reduce((sum, c) => {
         const m = c.type?.effectJson?.['main_multiplier'];
-        return typeof m === 'number' ? sum + m : sum;
+        const cr = c.type?.effectJson?.['coin_rush'];
+        if (typeof m === 'number') return sum + m;
+        if (typeof cr === 'number') return sum + cr;
+        return sum;
       }, 0);
+      let xpMultiplier = 1;
+      const sideBetMultiplierBonus = consumptions.reduce((sum, c) => {
+        const mb = c.type?.effectJson?.['multiplier_bonus'];
+        const smb = c.type?.effectJson?.['sidebet_multiplier_bonus'];
+        if (typeof mb === 'number') return sum + mb;
+        if (typeof smb === 'number') return sum + smb;
+        return sum;
+      }, 0);
+
+      let finalResolution = { ...resolution };
+      if (hasJoker && finalResolution.status === MainBetStatus.LOST && playerHand.status === HandStatus.BUSTED) {
+        finalResolution = { status: MainBetStatus.PUSH, multiplier: PAYOUT_PUSH };
+      }
+      if (hasInsurance && finalResolution.status === MainBetStatus.LOST && dealerHand.status === HandStatus.BLACKJACK) {
+        finalResolution = { status: MainBetStatus.REFUNDED, multiplier: PAYOUT_PUSH };
+      }
+      if (noLossChance > 0 && finalResolution.status === MainBetStatus.LOST) {
+        if (crypto.randomInt(1000) < Math.round(Math.min(noLossChance, 1) * 1000)) {
+          finalResolution = { status: MainBetStatus.REFUNDED, multiplier: PAYOUT_PUSH };
+        }
+      }
+
       const effectiveMultiplier =
-        resolution.status === MainBetStatus.WON && betBoostBonus > 0
-          ? resolution.multiplier + betBoostBonus
-          : resolution.multiplier;
+        finalResolution.status === MainBetStatus.WON && betBoostBonus > 0
+          ? finalResolution.multiplier + betBoostBonus
+          : finalResolution.multiplier;
 
       const settledAmountDecimal = multiplyMoney(mainBet.amount, effectiveMultiplier);
       const settledAmountCents = decimalToCents(settledAmountDecimal);
 
-      mainBet.status = resolution.status;
+      mainBet.status = finalResolution.status;
       mainBet.payoutMultiplier = effectiveMultiplier.toFixed(3);
       mainBet.settledAmount = settledAmountDecimal;
       mainBet.settledAt = new Date();
@@ -427,13 +462,14 @@ export async function settleRound(
       if (!user) {
         throw new RoundFlowError(404, 'USER_NOT_FOUND', 'User not found');
       }
+      xpMultiplier = (user.xpBoostExpiresAt && user.xpBoostExpiresAt > new Date()) ? 2 : 1;
 
       let pendingCredit = 0n;
       const walletTxs: WalletTransaction[] = [];
       if (settledAmountCents > 0n) {
         const kind =
-          resolution.status === MainBetStatus.PUSH ||
-          resolution.status === MainBetStatus.REFUNDED
+          finalResolution.status === MainBetStatus.PUSH ||
+          finalResolution.status === MainBetStatus.REFUNDED
             ? WalletTransactionKind.BET_REFUND
             : WalletTransactionKind.BET_WIN;
         walletTxs.push(
@@ -455,7 +491,7 @@ export async function settleRound(
       const settledSideBetStatuses: SideBetStatus[] = [];
       for (const sideBet of playerSideBets) {
         if (sideBet.status !== SideBetStatus.PLACED) continue;
-        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id);
+        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id, sideBetMultiplierBonus);
         settledSideBetStatuses.push(outcome.status);
         const payoutDecimal = multiplyMoney(sideBet.amount, outcome.multiplier);
         const payoutCents = decimalToCents(payoutDecimal);
@@ -488,11 +524,27 @@ export async function settleRound(
         user.balance = centsToDecimal(balance + pendingCredit);
       }
 
-      const progress = awardRoundXp(user, {
-        mainBetStatus: resolution.status,
+      const baseXp = calculateRoundXp({
+        mainBetStatus: finalResolution.status,
         playerHandStatus: playerHand.status,
         wonSideBets: countWonSideBets(settledSideBetStatuses),
       });
+      const boostedXp = Math.round(baseXp * xpMultiplier);
+      const oldLevel = Math.max(1, Math.floor(user.level ?? 1));
+      user.xp = Math.max(0, Math.floor(user.xp ?? 0)) + boostedXp;
+      user.level = Math.max(Math.max(1, Math.floor(user.level ?? 1)), levelFromXp(user.xp));
+
+      let levelUpCrate: { id: string; tier: number; tierLabel: string; acquiredLevel: number } | null = null;
+      if (user.level > oldLevel) {
+        const crateRepo = manager.getRepository(UserCrate);
+        const tier = getTierForLevel(user.level);
+        const TIER_LABELS = ['Common', 'Rare', 'Epic', 'Legendary', 'Elite'];
+        const crate = crateRepo.create({ user, tier, acquiredLevel: user.level });
+        await crateRepo.save(crate);
+        levelUpCrate = { id: crate.id, tier, tierLabel: TIER_LABELS[tier - 1] ?? 'Common', acquiredLevel: user.level };
+      }
+
+      const progress = { xpGained: boostedXp, progress: buildLevelProgress(user), levelUpCrate };
       await userRepo.save(user);
 
       if (walletTxs.length) {
@@ -514,7 +566,115 @@ export async function settleRound(
       round: serializeRound(updatedRound, userId, {
         xpGained: settlementProgress.xpGained,
       }),
+      levelUpCrate: settlementProgress.levelUpCrate ?? null,
     });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function peekCard(req: Request<RoundIdParams>, res: Response) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+
+    const nextCard = await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+      const playerHand = getPlayerHand(round, userId);
+      if (!playerHand || playerHand.status !== HandStatus.ACTIVE) {
+        throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot peek when hand is not active');
+      }
+      await consumeRoundPowerupByCode(manager, userId, roundId, 'PEEK_CARD');
+      const usedCards = collectUsedCards(round);
+      return peekNextCard(round.serverSeed, usedCards);
+    });
+
+    return res.json({ rank: nextCard.rank, suit: nextCard.suit });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function swapCard(
+  req: Request<RoundIdParams, unknown, SwapCardBody>,
+  res: Response,
+) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+    const { cardId } = req.body;
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+      const playerHand = getPlayerHand(round, userId);
+      if (!playerHand || playerHand.status !== HandStatus.ACTIVE) {
+        throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot swap when hand is not active');
+      }
+      const cardToSwap = (playerHand.cards ?? []).find((c) => c.id === cardId);
+      if (!cardToSwap) {
+        throw new RoundFlowError(404, 'CARD_NOT_FOUND', 'Card not found in player hand');
+      }
+      await consumeRoundPowerupByCode(manager, userId, roundId, 'CARD_SWAP');
+      const usedCards = collectUsedCards(round);
+      const newCard = drawCardFromSeed(round.serverSeed, usedCards);
+      cardToSwap.rank = newCard.rank;
+      cardToSwap.suit = newCard.suit;
+      await manager.getRepository(Card).save(cardToSwap);
+      recalcHand(playerHand);
+      await manager.getRepository(Hand).save(playerHand);
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId) });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function undoHit(req: Request<RoundIdParams>, res: Response) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+      const playerHand = getPlayerHand(round, userId);
+      if (!playerHand) {
+        throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
+      }
+      const cards = sortCards(playerHand.cards ?? []);
+      if (cards.length <= 2) {
+        throw new RoundFlowError(400, 'CANNOT_UNDO', 'Cannot undo the initial deal');
+      }
+      if (playerHand.status !== HandStatus.ACTIVE && playerHand.status !== HandStatus.BUSTED) {
+        throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot undo when hand is not active or busted');
+      }
+      await consumeRoundPowerupByCode(manager, userId, roundId, 'UNDO_HIT');
+      const lastCard = cards[cards.length - 1];
+      await manager.getRepository(Card).remove(lastCard);
+      playerHand.cards = cards.slice(0, -1);
+      playerHand.status = HandStatus.ACTIVE;
+      recalcHand(playerHand);
+      await manager.getRepository(Hand).save(playerHand);
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId) });
   } catch (error) {
     return handleRoundError(res, error);
   }
@@ -676,6 +836,40 @@ async function loadRoundOrFail(
   return round;
 }
 
+async function consumeRoundPowerupByCode(
+  manager: EntityManager,
+  userId: string,
+  roundId: string,
+  powerupCode: string,
+): Promise<void> {
+  const userPowerupRepo = manager.getRepository(UserPowerup);
+  const consumptionRepo = manager.getRepository(PowerupConsumption);
+  const userPowerup = await userPowerupRepo.findOne({
+    where: { user: { id: userId }, type: { code: powerupCode } },
+    relations: ['user', 'type'],
+    lock: { mode: 'pessimistic_write' },
+  });
+  if (!userPowerup) {
+    throw new RoundFlowError(404, 'POWERUP_NOT_OWNED', `${powerupCode} not in inventory`);
+  }
+  if (userPowerup.quantity < 1) {
+    throw new RoundFlowError(400, 'INSUFFICIENT_STOCK', `No ${powerupCode} available`);
+  }
+  if (userPowerup.user.level < userPowerup.type.minLevel) {
+    throw new RoundFlowError(403, 'LEVEL_TOO_LOW', 'Player level too low to use this power-up');
+  }
+  const roundRepo = manager.getRepository(Round);
+  const round = await roundRepo.findOne({ where: { id: roundId } });
+  if (!round) {
+    throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+  }
+  userPowerup.quantity -= 1;
+  await userPowerupRepo.save(userPowerup);
+  await consumptionRepo.save(
+    consumptionRepo.create({ user: userPowerup.user, type: userPowerup.type, round }),
+  );
+}
+
 function serializeRound(
   round: RoundWithRelations,
   userId: string,
@@ -786,6 +980,20 @@ function drawCardFromSeed(serverSeed: string | null, used: Set<string>): DeckCar
     const key = cardKey(card);
     if (!used.has(key)) {
       used.add(key);
+      return card;
+    }
+  }
+  throw new RoundFlowError(500, 'DECK_EMPTY', 'No cards left in the deck');
+}
+
+function peekNextCard(serverSeed: string | null, used: Set<string>): DeckCard {
+  if (!serverSeed) {
+    throw new RoundFlowError(500, 'SERVER_SEED_MISSING', 'Round is missing a server seed');
+  }
+  const orderedDeck = buildSeededDeck(serverSeed);
+  for (const card of orderedDeck) {
+    const key = cardKey(card);
+    if (!used.has(key)) {
       return card;
     }
   }
@@ -927,8 +1135,13 @@ function evaluateSideBet(
   sideBet: SideBet & { type: SidebetType },
   round: RoundWithRelations,
   userId: string,
+  oddsBonus = 0,
 ): SideBetResolution {
-  const oddsValue = Number(sideBet.odds ?? sideBet.type.baseOdds ?? 0);
+  const baseOddsValue = Number(sideBet.odds ?? sideBet.type.baseOdds ?? 0);
+  const oddsValue =
+    oddsBonus > 0 && Number.isFinite(baseOddsValue) && baseOddsValue > 0
+      ? baseOddsValue * (1 + oddsBonus)
+      : baseOddsValue;
   if (!Number.isFinite(oddsValue) || oddsValue <= 0) {
     return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
   }

@@ -51,6 +51,15 @@ export class User {
   @Column({ name: 'last_daily_reward_at', type: 'date', nullable: true })
   lastDailyRewardAt: string | null = null;
 
+  @Column({ name: 'login_streak', type: 'int', unsigned: true, default: () => '0' })
+  loginStreak: number = 0;
+
+  @Column({ name: 'streak_expires_at', type: 'date', nullable: true })
+  streakExpiresAt: string | null = null;
+
+  @Column({ name: 'xp_boost_expires_at', type: 'timestamp', nullable: true })
+  xpBoostExpiresAt: Date | null = null;
+
   @Column({
     name: 'created_at',
     type: 'timestamp',
