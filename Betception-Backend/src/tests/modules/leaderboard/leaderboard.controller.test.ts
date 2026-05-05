@@ -73,7 +73,7 @@ describe('leaderboard.controller', () => {
 
   it('returns weekly winnings leaderboard data', async () => {
     const rows = [
-      { userId: '3', netWinnings7d: '250.00' },
+      { userId: '3', username: 'gamma', netWinnings7d: '250.00' },
     ] as LeaderboardWeeklyWinningsView[];
     const repo = createMockRepository<LeaderboardWeeklyWinningsView>({
       findAndCount: jest.fn().mockResolvedValue([rows, 1]),
@@ -91,7 +91,7 @@ describe('leaderboard.controller', () => {
       total: 1,
       limit: 1,
       offset: 0,
-      items: [{ rank: 1, userId: '3', netWinnings7d: 250 }],
+      items: [{ rank: 1, userId: '3', username: 'gamma', netWinnings7d: 250 }],
       currentUserRank: null,
     });
   });
