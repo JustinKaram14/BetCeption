@@ -9,6 +9,14 @@ const POWERUP_ICONS: Record<string, string> = {
   NO_LOSS: '🛡️',
   BET_BOOST_30: '💰',
   BET_BOOST_100: '🚀',
+  PEEK_CARD: '👁️',
+  CARD_SWAP: '🔄',
+  UNDO_HIT: '↩️',
+  XP_BOOST: '⚡',
+  DAILY_BOOST: '🌟',
+  COIN_RUSH: '💎',
+  INSURANCE_FREE: '🔒',
+  SIDEBET_MEGA: '🎯',
 };
 
 const POWERUP_COLORS: Record<string, string> = {
@@ -17,6 +25,14 @@ const POWERUP_COLORS: Record<string, string> = {
   NO_LOSS: '#4ade80',
   BET_BOOST_30: '#ff9800',
   BET_BOOST_100: '#ff4500',
+  PEEK_CARD: '#00bcd4',
+  CARD_SWAP: '#ff69b4',
+  UNDO_HIT: '#ff6b6b',
+  XP_BOOST: '#b0ff00',
+  DAILY_BOOST: '#ffec3d',
+  COIN_RUSH: '#00e5ff',
+  INSURANCE_FREE: '#1de9b6',
+  SIDEBET_MEGA: '#e040fb',
 };
 
 @Component({

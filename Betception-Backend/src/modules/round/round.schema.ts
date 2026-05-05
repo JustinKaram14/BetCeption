@@ -38,5 +38,10 @@ export const RoundIdParamsSchema = z.object({
     .regex(/^\d+$/, { message: 'roundId must be a numeric identifier' }),
 });
 
+export const SwapCardBodySchema = z.object({
+  cardId: z.string().regex(/^\d+$/, { message: 'cardId must be a numeric identifier' }),
+});
+
 export type StartRoundInput = z.infer<typeof StartRoundSchema>;
 export type RoundIdParams = z.infer<typeof RoundIdParamsSchema>;
+export type SwapCardBody = z.infer<typeof SwapCardBodySchema>;

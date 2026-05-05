@@ -136,6 +136,7 @@ export enum WalletTransactionKind {
   BET_REFUND = 'bet_refund',
   ADJUSTMENT = 'adjustment',
   REWARD = 'reward',
+  CRATE_REWARD = 'crate_reward',
 }
 
 export interface WalletSummary {
@@ -192,9 +193,34 @@ export interface WalletAdjustmentResponse {
 }
 
 export interface DailyRewardResponse {
+  claimedDay: number;
+  reward: DayRewardScheduleItem;
   claimedAmount: number;
   balance: number;
   eligibleAt: string;
+  loginStreak: number;
+  streakReset: boolean;
+}
+
+export interface DayRewardScheduleItem {
+  day: number;
+  kind: 'coins' | 'powerup';
+  coins?: number;
+  powerupCode?: string;
+  powerupLabel?: string;
+  isMilestone: boolean;
+  label: string;
+  icon: string;
+}
+
+export interface DailyRewardStatusResponse {
+  loginStreak: number;
+  currentDay: number;
+  lastClaimedAt: string | null;
+  eligibleAt: string | null;
+  isEligible: boolean;
+  schedule: DayRewardScheduleItem[];
+  streakReset: boolean;
 }
 
 export interface PowerupType {
@@ -334,6 +360,7 @@ export interface RoundState {
 
 export interface RoundResponse {
   round: RoundState;
+  levelUpCrate?: LevelUpCrate | null;
 }
 
 export interface SideBetPlacement {
@@ -388,4 +415,39 @@ export interface FairnessHistoryResponse {
   pageSize: number;
   total: number;
   items: FairnessPayload[];
+}
+
+// ── Crate system ──────────────────────────────────────────────────────────────
+
+export interface LevelUpCrate {
+  id: string;
+  tier: number;
+  tierLabel: string;
+  acquiredLevel: number;
+}
+
+export interface CrateReward {
+  kind: 'coins' | 'powerup';
+  coins: number | null;
+  powerup: { id: number; code: string; title: string } | null;
+}
+
+export interface UserCrateItem {
+  id: string;
+  tier: number;
+  tierLabel: string;
+  acquiredLevel: number;
+  acquiredAt: string;
+  opened: boolean;
+  openedAt: string | null;
+  reward: CrateReward | null;
+}
+
+export interface CrateListResponse {
+  items: UserCrateItem[];
+}
+
+export interface OpenCrateResponse {
+  crate: UserCrateItem;
+  balance: number;
 }

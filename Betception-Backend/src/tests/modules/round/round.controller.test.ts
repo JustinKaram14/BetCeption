@@ -15,6 +15,7 @@ import { Round } from '../../../entity/Round.js';
 import { SideBet } from '../../../entity/SideBet.js';
 import { SidebetType } from '../../../entity/SidebetType.js';
 import { User } from '../../../entity/User.js';
+import { UserCrate } from '../../../entity/UserCrate.js';
 import { WalletTransaction } from '../../../entity/WalletTransaction.js';
 import {
   CardRank,
@@ -1305,6 +1306,105 @@ describe('round.controller', () => {
       expect(mainBetRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ status: MainBetStatus.PUSH, payoutMultiplier: '1.000' }),
       );
+    });
+  });
+
+  describe('settleRound — level-up crate', () => {
+    it('creates a UserCrate when the player levels up during settlement', async () => {
+      // Player: TEN + KING = 20 (STOOD), Dealer: TEN + SEVEN = 17 → PLAYER WINS → XP awarded
+      // User starts at level 1 with xp=490 (just 10 XP below level 2 threshold of 500).
+      // A win awards 85 XP base (25 base + 60 win), which pushes xp to 575 → level 2.
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17,
+            cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 20,
+            cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.KING, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
+        ],
+      });
+      // xp=490, level=1 — one win (85 XP) pushes to 575 → level 2
+      const user = { id: 'user-1', balance: '90.00', xp: 490, level: 1 } as User;
+
+      const crateRepo = createMockRepository<UserCrate>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'crate-new', ...d })),
+        save: jest.fn().mockImplementation(async (c) => c),
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round), save: jest.fn().mockResolvedValue(undefined) });
+      const handRepo = createMockRepository<Hand>({ save: jest.fn().mockResolvedValue(undefined) });
+      const mainBetRepo = createMockRepository<MainBet>({ save: jest.fn().mockResolvedValue(undefined) });
+      const sideBetRepo = createMockRepository<SideBet>({ save: jest.fn().mockResolvedValue(undefined) });
+      const walletRepo = createMockRepository<WalletTransaction>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'tx-1', ...d })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const userRepo = createMockRepository<User>({ findOne: jest.fn().mockResolvedValue(user), save: jest.fn().mockResolvedValue(undefined) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo], [Hand, handRepo], [MainBet, mainBetRepo],
+        [SideBet, sideBetRepo], [WalletTransaction, walletRepo], [User, userRepo],
+        [Card, createMockRepository<Card>()], [UserCrate, crateRepo],
+      ]));
+      mockAppDataSourceRepositories(new Map([[Round, createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) })]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await settleRound(req as any, res);
+
+      // A crate should have been created for tier 1 (level 2 → tier 1)
+      expect(crateRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ tier: 1, acquiredLevel: 2 }),
+      );
+      expect(crateRepo.save).toHaveBeenCalled();
+
+      // Response should include levelUpCrate
+      const json = (res.json as jest.Mock).mock.calls[0][0];
+      expect(json.levelUpCrate).not.toBeNull();
+      expect(json.levelUpCrate).toMatchObject({ tier: 1, tierLabel: 'Common', acquiredLevel: 2 });
+    });
+
+    it('does not create a crate when the player does not level up', async () => {
+      // Player: TEN + SIX = 16 (STOOD), Dealer: TEN + KING = 20 → PLAYER LOSES → small XP
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 20,
+            cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 16,
+            cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.SIX, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
+        ],
+      });
+      // xp=0, level=1 — a loss awards only 25 XP, not enough to reach level 2 (needs 500)
+      const user = { id: 'user-1', balance: '90.00', xp: 0, level: 1 } as User;
+
+      const crateRepo = createMockRepository<UserCrate>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'crate-new', ...d })),
+        save: jest.fn().mockImplementation(async (c) => c),
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round), save: jest.fn().mockResolvedValue(undefined) });
+      const handRepo = createMockRepository<Hand>({ save: jest.fn().mockResolvedValue(undefined) });
+      const mainBetRepo = createMockRepository<MainBet>({ save: jest.fn().mockResolvedValue(undefined) });
+      const sideBetRepo = createMockRepository<SideBet>({ save: jest.fn().mockResolvedValue(undefined) });
+      const walletRepo = createMockRepository<WalletTransaction>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'tx-1', ...d })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const userRepo = createMockRepository<User>({ findOne: jest.fn().mockResolvedValue(user), save: jest.fn().mockResolvedValue(undefined) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo], [Hand, handRepo], [MainBet, mainBetRepo],
+        [SideBet, sideBetRepo], [WalletTransaction, walletRepo], [User, userRepo],
+        [Card, createMockRepository<Card>()], [UserCrate, crateRepo],
+      ]));
+      mockAppDataSourceRepositories(new Map([[Round, createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) })]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await settleRound(req as any, res);
+
+      expect(crateRepo.create).not.toHaveBeenCalled();
+      const json = (res.json as jest.Mock).mock.calls[0][0];
+      expect(json.levelUpCrate).toBeNull();
     });
   });
 

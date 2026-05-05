@@ -1,46 +1,71 @@
-<div class="modal-overlay" data-testid="daily-reward-overlay" (click)="onOverlayClick($event)">
-  <div class="modal-card" data-testid="daily-reward-card" role="dialog" aria-modal="true" tabindex="-1">
+<div class="dr-overlay" (click)="onOverlayClick($event)">
+  <div class="dr-card" role="dialog" aria-modal="true">
+
+    <!-- Header -->
+    <div class="dr-header">
+      <div class="dr-header__info">
+        <span class="dr-title">🎁 Tägliche Belohnung</span>
+        <span class="dr-streak-badge" *ngIf="loginStreak > 0">🔥 {{ loginStreak }} Tage Streak</span>
+      </div>
+      <button class="dr-close" (click)="onClose()" aria-label="Schließen">✕</button>
+    </div>
+
+    <!-- Streak reset notice -->
+    <div class="dr-reset-banner" *ngIf="!loading && streakWasReset">
+      ⚠️ Dein Streak wurde zurückgesetzt – heute startest du neu bei Tag 1!
+    </div>
 
     <!-- Loading -->
-    <div *ngIf="state.kind === 'loading'" class="modal-body loading">
-      <div class="spinner"></div>
-      <p>{{ i18n.t('daily.loading') }}</p>
+    <div class="dr-loading" *ngIf="loading">
+      <div class="dr-spinner"></div>
+      <p>Wird geladen…</p>
     </div>
 
-    <!-- Success -->
-    <div *ngIf="state.kind === 'success'" class="modal-body success">
-      <div class="reward-icon">&#127873;</div>
-      <h2>{{ i18n.t('daily.title') }}</h2>
-      <p class="amount">+{{ state.claimedAmount }} Coins</p>
-      <p class="balance">{{ i18n.t('daily.balance') }}: <strong>{{ state.balance }}</strong></p>
-      <p class="cooldown">{{ i18n.t('daily.next') }}: {{ countdownText }}</p>
-      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+    <!-- Error (no data) -->
+    <div class="dr-error-panel" *ngIf="!loading && error && !schedule.length">
+      <p>{{ error }}</p>
     </div>
 
-    <!-- Already claimed -->
-    <div *ngIf="state.kind === 'already-claimed'" class="modal-body already-claimed">
-      <div class="reward-icon">&#9200;</div>
-      <h2>{{ i18n.t('daily.alreadyTitle') }}</h2>
-      <p>{{ i18n.t('daily.alreadyCopy') }}</p>
-      <p class="cooldown">{{ i18n.t('daily.next') }}: {{ countdownText }}</p>
-      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+    <!-- 30-day grid -->
+    <div class="dr-grid" *ngIf="!loading && schedule.length">
+      <div
+        *ngFor="let item of schedule"
+        class="dr-day"
+        [class.dr-day--claimed]="getDayState(item.day) === 'claimed'"
+        [class.dr-day--current]="getDayState(item.day) === 'current'"
+        [class.dr-day--milestone]="item.isMilestone"
+      >
+        <span class="dr-day__num">Tag {{ item.day }}</span>
+        <span class="dr-day__icon">{{ item.icon }}</span>
+        <span class="dr-day__label">{{ item.label }}</span>
+        <span class="dr-day__check" *ngIf="getDayState(item.day) === 'claimed'">✓</span>
+      </div>
     </div>
 
-    <!-- Not logged in -->
-    <div *ngIf="state.kind === 'not-logged-in'" class="modal-body not-logged-in">
-      <div class="reward-icon">&#128274;</div>
-      <h2>{{ i18n.t('daily.notLoggedTitle') }}</h2>
-      <p>{{ i18n.t('daily.notLoggedCopy') }}</p>
-      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+    <!-- Post-claim result -->
+    <div class="dr-result" *ngIf="justClaimedReward">
+      <span class="dr-result__icon">{{ justClaimedReward.icon }}</span>
+      <span class="dr-result__text">+{{ justClaimedReward.label }} erhalten!</span>
     </div>
 
-    <!-- Error -->
-    <div *ngIf="state.kind === 'error'" class="modal-body error">
-      <div class="reward-icon">&#10060;</div>
-      <h2>{{ i18n.t('daily.errorTitle') }}</h2>
-      <p>{{ state.message }}</p>
-      <button #closeAction class="btn close-btn" data-testid="daily-reward-close" (click)="closed.emit()">{{ i18n.t('common.ok') }}</button>
+    <!-- Footer -->
+    <div class="dr-footer" *ngIf="!loading">
+
+      <ng-container *ngIf="isEligible && !justClaimedDay">
+        <button class="dr-claim-btn" [disabled]="claiming" (click)="onClaim()">
+          <span *ngIf="!claiming">🎁 Heute abholen</span>
+          <span *ngIf="claiming">Wird abgeholt…</span>
+        </button>
+        <p class="dr-error-msg" *ngIf="error">{{ error }}</p>
+      </ng-container>
+
+      <ng-container *ngIf="!isEligible || justClaimedDay !== null">
+        <p class="dr-cooldown">Nächste Belohnung in: <strong>{{ countdownText }}</strong></p>
+        <button class="dr-close-btn" (click)="onClose()">OK</button>
+      </ng-container>
+
     </div>
 
   </div>
 </div>
+

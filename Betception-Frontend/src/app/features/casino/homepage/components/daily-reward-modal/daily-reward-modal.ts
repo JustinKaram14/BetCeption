@@ -1,21 +1,19 @@
 import {
-  AfterViewChecked,
   Component,
-  ElementRef,
+  DestroyRef,
   EventEmitter,
   HostListener,
-  Input,
-  OnChanges,
   OnDestroy,
   OnInit,
   Output,
-  SimpleChanges,
-  ViewChild,
   inject,
 } from '@angular/core';
-import { NgIf } from '@angular/common';
-import { I18n } from '../../../../../core/i18n/i18n';
+import { NgIf, NgFor } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BetceptionApi } from '../../../../../core/api/betception-api.service';
+import type { DayRewardScheduleItem } from '../../../../../core/api/api.types';
 
+/** Kept for backward-compat with any external consumers; no longer used internally. */
 export type DailyRewardState =
   | { kind: 'loading' }
   | { kind: 'success'; claimedAmount: number; balance: number; eligibleAt: string }
@@ -26,22 +24,36 @@ export type DailyRewardState =
 @Component({
   selector: 'app-daily-reward-modal',
   standalone: true,
-  imports: [NgIf],
+  imports: [NgIf, NgFor],
   templateUrl: './daily-reward-modal.html',
   styleUrls: ['./daily-reward-modal.css'],
 })
-export class DailyRewardModalComponent implements OnInit, OnDestroy, OnChanges, AfterViewChecked {
-  readonly i18n = inject(I18n);
+export class DailyRewardModalComponent implements OnInit, OnDestroy {
+  private readonly api = inject(BetceptionApi);
+  private readonly destroyRef = inject(DestroyRef);
 
-  @Input() state: DailyRewardState = { kind: 'loading' };
   @Output() closed = new EventEmitter<void>();
-  @ViewChild('closeAction') private closeAction?: ElementRef<HTMLButtonElement>;
+  @Output() claimed = new EventEmitter<number>();
 
-  private tickInterval: ReturnType<typeof setInterval> | null = null;
-  private hasFocusedCloseAction = false;
+  loading = true;
+  claiming = false;
+  error: string | null = null;
+
+  schedule: DayRewardScheduleItem[] = [];
+  loginStreak = 0;
+  currentDay = 1;
+  isEligible = false;
+  eligibleAt: string | null = null;
+  streakWasReset = false;
+
+  justClaimedDay: number | null = null;
+  justClaimedReward: DayRewardScheduleItem | null = null;
+
   now = Date.now();
+  private tickInterval: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
+    this.loadStatus();
     this.tickInterval = setInterval(() => { this.now = Date.now(); }, 30_000);
   }
 
@@ -49,35 +61,52 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy, OnChanges, 
     if (this.tickInterval) clearInterval(this.tickInterval);
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['state']) {
-      this.hasFocusedCloseAction = false;
+  getDayState(day: number): 'claimed' | 'current' | 'upcoming' {
+    const effective = this.justClaimedDay ?? this.currentDay - 1;
+    if (day <= effective) return 'claimed';
+    if (day === (this.justClaimedDay !== null ? this.currentDay : this.currentDay)) {
+      if (day === this.currentDay && this.justClaimedDay === null) return 'current';
     }
-  }
-
-  ngAfterViewChecked() {
-    if (this.hasFocusedCloseAction || !this.closeAction) {
-      return;
-    }
-
-    this.closeAction.nativeElement.focus();
-    this.hasFocusedCloseAction = true;
+    return day < this.currentDay ? 'claimed' : day === this.currentDay ? 'current' : 'upcoming';
   }
 
   get countdownText(): string {
-    if (this.state.kind !== 'success' && this.state.kind !== 'already-claimed') {
-      return '';
-    }
-    const eligible = new Date(this.state.eligibleAt);
-    const diff = eligible.getTime() - this.now;
-    if (diff <= 0) return this.i18n.t('daily.availableNow');
+    if (!this.eligibleAt) return 'Jetzt verfügbar';
+    const diff = new Date(this.eligibleAt).getTime() - this.now;
+    if (diff <= 0) return 'Jetzt verfügbar';
     const hours = Math.floor(diff / 3_600_000);
     const minutes = Math.floor((diff % 3_600_000) / 60_000);
     return `${hours}h ${minutes}m`;
   }
 
+  onClaim() {
+    if (!this.isEligible || this.claiming) return;
+    this.claiming = true;
+    this.error = null;
+    this.api.claimDailyReward()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.claiming = false;
+          this.justClaimedDay = res.claimedDay;
+          this.justClaimedReward = res.reward;
+          this.loginStreak = res.loginStreak;
+          this.currentDay = (res.loginStreak % 30) + 1;
+          this.isEligible = false;
+          this.eligibleAt = res.eligibleAt;
+          this.claimed.emit(res.balance);
+        },
+        error: (err) => {
+          this.claiming = false;
+          this.error = err?.error?.message ?? 'Fehler beim Abholen';
+        },
+      });
+  }
+
+  onClose() { this.closed.emit(); }
+
   onOverlayClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
+    if ((event.target as HTMLElement).classList.contains('dr-overlay')) {
       this.closed.emit();
     }
   }
@@ -87,4 +116,26 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy, OnChanges, 
     event.preventDefault();
     this.closed.emit();
   }
+
+  private loadStatus() {
+    this.loading = true;
+    this.api.getDailyRewardStatus()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.loading = false;
+          this.schedule = res.schedule;
+          this.loginStreak = res.loginStreak;
+          this.currentDay = res.currentDay;
+          this.isEligible = res.isEligible;
+          this.eligibleAt = res.eligibleAt;
+          this.streakWasReset = res.streakReset;
+        },
+        error: () => {
+          this.loading = false;
+          this.error = 'Status konnte nicht geladen werden';
+        },
+      });
+  }
 }
+

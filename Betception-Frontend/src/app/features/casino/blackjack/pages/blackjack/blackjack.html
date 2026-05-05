@@ -33,6 +33,18 @@
 
     <div class="message error" *ngIf="error">{{ error }}</div>
 
+    <!-- Level-Up Crate notification -->
+    <div class="levelup-crate-toast" *ngIf="levelUpCrate">
+      <div class="levelup-crate-inner">
+        <div class="levelup-crate-icon" [attr.data-tier]="levelUpCrate.tier">🎁</div>
+        <div class="levelup-crate-text">
+          <strong>Level Up!</strong>
+          <span>Du hast eine <em>{{ levelUpCrate.tierLabel }}</em> Kiste erhalten!</span>
+        </div>
+        <button class="btn levelup-crate-dismiss" (click)="onDismissLevelUpCrate()">✕</button>
+      </div>
+    </div>
+
     <!-- Round-over overlay -->
     <div class="round-over-overlay" *ngIf="showRoundOverlay">
       <div class="round-over-card">
