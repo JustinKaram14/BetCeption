@@ -71,6 +71,7 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
   }
 
   get countdownText(): string {
+    if (this.loading) return '';
     if (!this.eligibleAt) return 'Jetzt verfügbar';
     const diff = new Date(this.eligibleAt).getTime() - this.now;
     if (diff <= 0) return 'Jetzt verfügbar';
