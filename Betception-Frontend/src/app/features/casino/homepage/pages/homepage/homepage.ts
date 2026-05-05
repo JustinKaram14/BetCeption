@@ -44,6 +44,11 @@ export class HomepageComponent {
     return window.outerWidth <= 900;
   }
 
+  get crateButtonLabel(): string {
+    this.i18n.language();
+    return this.i18n.t('home.crates');
+  }
+
   @HostListener('window:resize')
   onWindowResize(): void { /* triggers change detection so isNarrow getter re-evaluates */ }
 

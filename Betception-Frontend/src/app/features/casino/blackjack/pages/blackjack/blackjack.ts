@@ -3,12 +3,15 @@ import { NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  ActivePowerup,
   HandOwnerType,
   HandStatus,
   InventoryPowerup,
   LevelProgress,
   LevelUpCrate,
   MainBetStatus,
+  PowerPillCode,
+  PowerPillColor,
   PowerupType,
   RoundState,
   RoundStatus,
@@ -55,15 +58,17 @@ export class Blackjack implements OnInit {
   showPowerupMenu = false;
   inventory: InventoryPowerup[] = [];
   availablePowerups: PowerupType[] = [];
-  activePowerupCodes: string[] = [];
-  pendingPowerupTypeIds: number[] = [];
-  peekCard: { rank: string; suit: string } | null = null;
+  activePowerup: ActivePowerup | null = null;
+  pillPulse: PowerPillColor | null = null;
+  pillExpiredCode: PowerPillCode | null = null;
   userLevel = 1;
   levelUpCrate: LevelUpCrate | null = null;
   private inventoryLoaded = false;
   private bannerTimer: number | null = null;
   private resultOverlayTimer: number | null = null;
   private walletRefreshTimer: number | null = null;
+  private pillPulseTimer: number | null = null;
+  private pillPopTimer: number | null = null;
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -72,11 +77,13 @@ export class Blackjack implements OnInit {
       }
       this.clearResultOverlayTimer();
       this.clearWalletRefreshTimer();
+      this.clearPillTimers();
     });
   }
 
   ngOnInit() {
     this.loadBalance();
+    this.loadInventory();
     this.resumeActiveRoundIfAny();
   }
 
@@ -125,33 +132,6 @@ export class Blackjack implements OnInit {
     this.runAction('settle', this.rng.settle(this.round.id));
   }
 
-  get ownedInventory(): InventoryPowerup[] {
-    return this.inventory.filter(item => item.quantity > 0);
-  }
-
-  get hasPeekCard(): boolean {
-    return this.ownedInventory.some(item => item.type?.code === 'PEEK_CARD');
-  }
-
-  get hasUndoHit(): boolean {
-    return this.ownedInventory.some(item => item.type?.code === 'UNDO_HIT');
-  }
-
-  get hasCardSwap(): boolean {
-    return this.ownedInventory.some(item => item.type?.code === 'CARD_SWAP');
-  }
-
-  get lastPlayerCardId(): string | null {
-    const cards = this.round?.playerHand?.cards ?? [];
-    return cards.length > 2 ? cards[cards.length - 1].id : null;
-  }
-
-  get canUseActionPowerups(): boolean {
-    return this.round?.status === RoundStatus.IN_PROGRESS &&
-      this.round?.playerHand?.status === HandStatus.ACTIVE &&
-      !this.busyAction;
-  }
-
   get isRoundActive() {
     const status = this.round?.status;
     return (
@@ -174,15 +154,13 @@ export class Blackjack implements OnInit {
           const { round } = response;
           const previousRound = this.round;
           this.round = round;
+          this.applyPowerupResponse(response);
           if (round.playerProgress) {
             this.levelProgress = round.playerProgress;
           }
           this.triggerBanner(round);
           if (kind === 'deal') {
             this.loadBalance();
-          }
-          if (kind === 'deal') {
-            this.consumePendingQueue(round.id);
           }
           if (kind === 'settle') {
             if (response.levelUpCrate) {
@@ -295,9 +273,6 @@ export class Blackjack implements OnInit {
     this.roundOutcome = null;
     this.round = null;
     this.info = null;
-    this.activePowerupCodes = [];
-    this.pendingPowerupTypeIds = [];
-    this.peekCard = null;
     this.levelUpCrate = null;
     if (this.balance !== null && this.betAmount > this.balance) {
       this.betAmount = this.balance;
@@ -309,6 +284,7 @@ export class Blackjack implements OnInit {
   }
 
   onOpenPowerupMenu() {
+    if (this.activePowerup) return;
     this.showPowerupMenu = true;
     if (!this.inventoryLoaded) {
       this.loadInventory();
@@ -319,15 +295,6 @@ export class Blackjack implements OnInit {
     this.showPowerupMenu = false;
   }
 
-  onToggleQueue(typeId: number) {
-    const idx = this.pendingPowerupTypeIds.indexOf(typeId);
-    if (idx >= 0) {
-      this.pendingPowerupTypeIds = this.pendingPowerupTypeIds.filter((id) => id !== typeId);
-    } else {
-      this.pendingPowerupTypeIds = [...this.pendingPowerupTypeIds, typeId];
-    }
-  }
-
   onPurchasePowerup(payload: { typeId: number; quantity: number }) {
     this.api
       .purchasePowerup(payload)
@@ -335,7 +302,9 @@ export class Blackjack implements OnInit {
       .subscribe({
         next: (res) => {
           this.balance = res.balance;
+          this.activePowerup = res.activePowerup;
           this.loadInventory();
+          this.showPowerupMenu = false;
         },
         error: (err) => {
           this.error = this.extractError(err);
@@ -343,48 +312,15 @@ export class Blackjack implements OnInit {
       });
   }
 
-  onPeekCard() {
-    if (!this.round) return;
+  onEquipPowerup(payload: { typeId: number }) {
     this.api
-      .peekCard(this.round.id)
+      .equipPowerup(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
-          this.peekCard = { rank: res.rank, suit: res.suit };
+          this.activePowerup = res.activePowerup;
           this.loadInventory();
-        },
-        error: (err) => {
-          this.error = this.extractError(err);
-        },
-      });
-  }
-
-  onUndoHit() {
-    if (!this.round) return;
-    this.api
-      .undoHit(this.round.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.round = res.round;
-          this.loadInventory();
-        },
-        error: (err) => {
-          this.error = this.extractError(err);
-        },
-      });
-  }
-
-  onSwapLastCard() {
-    const cardId = this.lastPlayerCardId;
-    if (!this.round || !cardId) return;
-    this.api
-      .swapCard(this.round.id, cardId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.round = res.round;
-          this.loadInventory();
+          this.showPowerupMenu = false;
         },
         error: (err) => {
           this.error = this.extractError(err);
@@ -399,6 +335,7 @@ export class Blackjack implements OnInit {
       .subscribe({
         next: (res) => {
           this.inventory = res.items;
+          this.activePowerup = res.activePowerup;
           this.inventoryLoaded = true;
         },
         error: () => null,
@@ -491,6 +428,44 @@ export class Blackjack implements OnInit {
     return Math.max(this.cardAnimationMs, drawDuration + this.resultPauseMs);
   }
 
+  private applyPowerupResponse(response: {
+    activePowerup?: ActivePowerup | null;
+    triggeredPowerupEffect?: { color: PowerPillColor } | null;
+    expiredPowerup?: { code: PowerPillCode } | null;
+  }) {
+    if ('activePowerup' in response) {
+      this.activePowerup = response.activePowerup ?? null;
+    }
+    if (response.triggeredPowerupEffect) {
+      this.triggerPillPulse(response.triggeredPowerupEffect.color);
+    }
+    if (response.expiredPowerup) {
+      this.triggerPillPop(response.expiredPowerup.code);
+    }
+  }
+
+  private triggerPillPulse(color: PowerPillColor) {
+    if (this.pillPulseTimer) {
+      window.clearTimeout(this.pillPulseTimer);
+    }
+    this.pillPulse = color;
+    this.pillPulseTimer = window.setTimeout(() => {
+      this.pillPulse = null;
+      this.pillPulseTimer = null;
+    }, 760);
+  }
+
+  private triggerPillPop(code: PowerPillCode) {
+    if (this.pillPopTimer) {
+      window.clearTimeout(this.pillPopTimer);
+    }
+    this.pillExpiredCode = code;
+    this.pillPopTimer = window.setTimeout(() => {
+      this.pillExpiredCode = null;
+      this.pillPopTimer = null;
+    }, 560);
+  }
+
   private clearResultOverlayTimer() {
     if (!this.resultOverlayTimer) {
       return;
@@ -499,39 +474,23 @@ export class Blackjack implements OnInit {
     this.resultOverlayTimer = null;
   }
 
-  private consumePendingQueue(roundId: string) {
-    const ids = [...this.pendingPowerupTypeIds];
-    this.pendingPowerupTypeIds = [];
-    if (ids.length === 0) return;
-
-    let remaining = ids.length;
-    for (const typeId of ids) {
-      this.api
-        .consumePowerup({ typeId, quantity: 1, roundId })
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (res) => {
-            const code = res.powerup.code;
-            if (!this.activePowerupCodes.includes(code)) {
-              this.activePowerupCodes = [...this.activePowerupCodes, code];
-            }
-            remaining--;
-            if (remaining === 0) this.loadInventory();
-          },
-          error: () => {
-            remaining--;
-            if (remaining === 0) this.loadInventory();
-          },
-        });
-    }
-  }
-
   private clearWalletRefreshTimer() {
     if (!this.walletRefreshTimer) {
       return;
     }
     window.clearTimeout(this.walletRefreshTimer);
     this.walletRefreshTimer = null;
+  }
+
+  private clearPillTimers() {
+    if (this.pillPulseTimer) {
+      window.clearTimeout(this.pillPulseTimer);
+      this.pillPulseTimer = null;
+    }
+    if (this.pillPopTimer) {
+      window.clearTimeout(this.pillPopTimer);
+      this.pillPopTimer = null;
+    }
   }
 
   private extractError(error: unknown): string {

@@ -1,4 +1,13 @@
 <div class="play-panel">
   <button class="btn play-btn" data-testid="enter-game-button" type="button" (click)="enter.emit()">{{ i18n.t('home.enter') }}</button>
-  <button class="btn rewards-btn" data-testid="daily-rewards-button" type="button" (click)="rewards.emit()">&#127873; {{ i18n.t('home.dailyRewards') }}</button>
+  <button class="btn rewards-btn" data-testid="daily-rewards-button" type="button" (click)="rewards.emit()">
+    <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 9h16v11H4z" />
+      <path d="M3 6h18v3H3z" />
+      <path d="M12 6v14" />
+      <path d="M12 6C9.4 2.9 6.4 3.2 6.4 5.2 6.4 7.1 9.4 7.1 12 6Z" />
+      <path d="M12 6c2.6-3.1 5.6-2.8 5.6-.8 0 1.9-3 1.9-5.6.8Z" />
+    </svg>
+    {{ i18n.t('home.dailyRewards') }}
+  </button>
 </div>

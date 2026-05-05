@@ -13,9 +13,26 @@ import {
 
 describe('shop.controller', () => {
   describe('listPowerups', () => {
-    it('returns available power-ups ordered by level and price', async () => {
+    it('returns only public power pills', async () => {
       const powerups = [
-        { id: 1, code: 'BOOST', title: 'XP Boost', description: null, minLevel: 1, price: '10.00', effectJson: { xp: 10 } },
+        {
+          id: 1,
+          code: 'RED_PILL',
+          title: 'Red Pill',
+          description: '1:5 chance to trigger x3 payout on main wins.',
+          minLevel: 1,
+          price: '300.00',
+          effectJson: { color: 'red', uses: 3 },
+        },
+        {
+          id: 2,
+          code: 'BLUE_PILL',
+          title: 'Blue Pill',
+          description: '1:8 chance to trigger safe-round protection (no loss).',
+          minLevel: 1,
+          price: '300.00',
+          effectJson: { color: 'blue', uses: 3 },
+        },
       ] as PowerupType[];
       const powerupRepo = createMockRepository<PowerupType>({
         find: jest.fn().mockResolvedValue(powerups),
@@ -27,16 +44,30 @@ describe('shop.controller', () => {
 
       await listPowerups(req as any, res);
 
+      expect(powerupRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ code: expect.any(Object) }),
+        }),
+      );
       expect(res.json).toHaveBeenCalledWith({
         items: [
           {
             id: 1,
-            code: 'BOOST',
-            title: 'XP Boost',
-            description: null,
+            code: 'RED_PILL',
+            title: 'Red Pill',
+            description: '1:5 chance to trigger x3 payout on main wins.',
             minLevel: 1,
-            price: 10,
-            effect: { xp: 10 },
+            price: 300,
+            effect: { color: 'red', uses: 3 },
+          },
+          {
+            id: 2,
+            code: 'BLUE_PILL',
+            title: 'Blue Pill',
+            description: '1:8 chance to trigger safe-round protection (no loss).',
+            minLevel: 1,
+            price: 300,
+            effect: { color: 'blue', uses: 3 },
           },
         ],
       });
@@ -44,16 +75,22 @@ describe('shop.controller', () => {
   });
 
   describe('purchasePowerup', () => {
-    it('deducts balance, updates inventory, and logs wallet transaction', async () => {
+    it('deducts balance, equips the pill, and logs wallet transaction', async () => {
       const powerupType = {
         id: 1,
-        price: '25.00',
+        code: 'RED_PILL',
+        title: 'Red Pill',
+        description: '1:5 chance to trigger x3 payout on main wins.',
+        price: '300.00',
         minLevel: 1,
+        effectJson: { color: 'red', uses: 3 },
       } as PowerupType;
       const user = {
         id: '1',
         level: 5,
-        balance: '100.00',
+        balance: '500.00',
+        activePowerupType: null,
+        activePowerupUsesRemaining: 0,
       } as User;
 
       const typeRepo = createMockRepository<PowerupType>({
@@ -68,53 +105,66 @@ describe('shop.controller', () => {
         save: jest.fn().mockResolvedValue(undefined),
       });
 
-      mockAppDataSourceRepositories(new Map([[PowerupType, typeRepo]]));
       const transactionRepos = new Map<any, any>();
+      transactionRepos.set(PowerupType, typeRepo);
       transactionRepos.set(User, userRepo);
       transactionRepos.set(WalletTransaction, walletRepo);
-
-      // query mock: first call = INSERT upsert, second call = SELECT quantity
-      const queryMock = jest.fn()
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce([{ quantity: 3 }]);
-      mockAppDataSourceTransaction(transactionRepos, { query: queryMock });
+      mockAppDataSourceTransaction(transactionRepos);
 
       const req = createMockRequest({
         user: { sub: '1' } as any,
-        body: { typeId: 1, quantity: 2 },
+        body: { typeId: 1, quantity: 1 },
       });
       const res = createMockResponse();
 
       await purchasePowerup(req as any, res);
 
       expect(userRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ balance: '50.00' }),
-      );
-      expect(queryMock).toHaveBeenCalledWith(
-        expect.stringContaining('ON DUPLICATE KEY UPDATE'),
-        ['1', 1, 2],
+        expect.objectContaining({
+          balance: '200.00',
+          activePowerupType: powerupType,
+          activePowerupUsesRemaining: 3,
+        }),
       );
       expect(walletRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ amount: '-50.00', kind: WalletTransactionKind.ADJUSTMENT }),
+        expect.objectContaining({ amount: '-300.00', kind: WalletTransactionKind.ADJUSTMENT }),
       );
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         message: 'Power-up purchased',
-        balance: 50,
-        quantity: 3,
+        balance: 200,
+        quantity: 0,
+        activePowerup: {
+          type: {
+            id: 1,
+            code: 'RED_PILL',
+            title: 'Red Pill',
+            description: '1:5 chance to trigger x3 payout on main wins.',
+            minLevel: 1,
+            price: 300,
+            effect: { color: 'red', uses: 3 },
+          },
+          usesRemaining: 3,
+        },
       });
     });
 
     it('returns 400 when user does not have enough funds', async () => {
       const powerupType = {
         id: 1,
-        price: '50.00',
+        code: 'BLUE_PILL',
+        title: 'Blue Pill',
+        description: null,
+        price: '300.00',
         minLevel: 1,
+        effectJson: { color: 'blue', uses: 3 },
       } as PowerupType;
       const user = {
         id: '1',
         level: 5,
         balance: '10.00',
+        activePowerupType: null,
+        activePowerupUsesRemaining: 0,
       } as User;
 
       const typeRepo = createMockRepository<PowerupType>({
@@ -125,8 +175,8 @@ describe('shop.controller', () => {
       });
       const walletRepo = createMockRepository<WalletTransaction>();
 
-      mockAppDataSourceRepositories(new Map([[PowerupType, typeRepo]]));
       const transactionRepos = new Map<any, any>();
+      transactionRepos.set(PowerupType, typeRepo);
       transactionRepos.set(User, userRepo);
       transactionRepos.set(WalletTransaction, walletRepo);
       mockAppDataSourceTransaction(transactionRepos);
@@ -150,7 +200,7 @@ describe('shop.controller', () => {
       const typeRepo = createMockRepository<PowerupType>({
         findOne: jest.fn().mockResolvedValue(null),
       });
-      mockAppDataSourceRepositories(new Map([[PowerupType, typeRepo]]));
+      mockAppDataSourceTransaction(new Map<any, any>([[PowerupType, typeRepo]]));
 
       const req = createMockRequest({
         body: { typeId: 99, quantity: 1 },
@@ -160,19 +210,29 @@ describe('shop.controller', () => {
       await purchasePowerup(req as any, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Power-up not found' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Power-up not found',
+        code: 'POWERUP_NOT_FOUND',
+      });
     });
 
     it('returns 403 when user level is too low', async () => {
-      const powerupType = { id: 1, price: '10.00', minLevel: 10 } as PowerupType;
-      const user = { id: '1', level: 3, balance: '100.00' } as User;
+      const powerupType = {
+        id: 1,
+        code: 'RED_PILL',
+        title: 'Red Pill',
+        description: null,
+        price: '300.00',
+        minLevel: 10,
+        effectJson: { color: 'red', uses: 3 },
+      } as PowerupType;
+      const user = { id: '1', level: 3, balance: '500.00', activePowerupType: null, activePowerupUsesRemaining: 0 } as User;
 
       const typeRepo = createMockRepository<PowerupType>({ findOne: jest.fn().mockResolvedValue(powerupType) });
       const userRepo = createMockRepository<User>({ findOne: jest.fn().mockResolvedValue(user) });
       const walletRepo = createMockRepository<WalletTransaction>();
 
-      mockAppDataSourceRepositories(new Map([[PowerupType, typeRepo]]));
-      mockAppDataSourceTransaction(new Map<any, any>([[User, userRepo], [WalletTransaction, walletRepo]]));
+      mockAppDataSourceTransaction(new Map<any, any>([[PowerupType, typeRepo], [User, userRepo], [WalletTransaction, walletRepo]]));
 
       const req = createMockRequest({ user: { sub: '1' } as any, body: { typeId: 1, quantity: 1 } });
       const res = createMockResponse();
@@ -181,6 +241,42 @@ describe('shop.controller', () => {
 
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.json).toHaveBeenCalledWith({ message: 'Power-up locked for your current level', code: 'LEVEL_TOO_LOW' });
+    });
+
+    it('returns 409 when another pill is already active', async () => {
+      const powerupType = {
+        id: 1,
+        code: 'RED_PILL',
+        title: 'Red Pill',
+        description: null,
+        price: '300.00',
+        minLevel: 1,
+        effectJson: { color: 'red', uses: 3 },
+      } as PowerupType;
+      const user = {
+        id: '1',
+        level: 5,
+        balance: '500.00',
+        activePowerupType: powerupType,
+        activePowerupUsesRemaining: 2,
+      } as User;
+
+      const typeRepo = createMockRepository<PowerupType>({ findOne: jest.fn().mockResolvedValue(powerupType) });
+      const userRepo = createMockRepository<User>({ findOne: jest.fn().mockResolvedValue(user) });
+      const walletRepo = createMockRepository<WalletTransaction>();
+
+      mockAppDataSourceTransaction(new Map<any, any>([[PowerupType, typeRepo], [User, userRepo], [WalletTransaction, walletRepo]]));
+
+      const req = createMockRequest({ user: { sub: '1' } as any, body: { typeId: 1, quantity: 1 } });
+      const res = createMockResponse();
+
+      await purchasePowerup(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'A power pill is already active',
+        code: 'ACTIVE_POWERUP_SLOT_OCCUPIED',
+      });
     });
   });
 });

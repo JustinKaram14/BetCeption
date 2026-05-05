@@ -12,6 +12,8 @@ import {
   FairnessHistoryQuery,
   FairnessHistoryResponse,
   FairnessRoundResponse,
+  EquipPowerupRequest,
+  EquipPowerupResponse,
   InventoryResponse,
   LeaderboardQuery,
   LeaderboardResponse,
@@ -92,6 +94,13 @@ export class BetceptionApi {
 
   listInventory() {
     return this.http.get<InventoryResponse>('/inventory/powerups');
+  }
+
+  equipPowerup(payload: EquipPowerupRequest) {
+    return this.http.post<EquipPowerupResponse>(
+      '/inventory/powerups/equip',
+      payload,
+    );
   }
 
   getBalanceLeaderboard(query: LeaderboardQuery = {}) {

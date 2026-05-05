@@ -64,28 +64,6 @@
   color:var(--bg-color);
   box-shadow:0 0 15px #aaa,inset 0 0 10px #aaa;
 }
-.peek-badge{
-  position:absolute;
-  top:72px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:6;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:5px 14px;
-  border-radius:999px;
-  border:1px solid #00e5ff;
-  background:rgba(0,229,255,.12);
-  color:#00e5ff;
-  font-size:.75rem;
-  font-weight:bold;
-  letter-spacing:1px;
-  text-transform:uppercase;
-  box-shadow:0 0 12px rgba(0,229,255,.35);
-  white-space:nowrap;
-  animation:overlay-in .3s ease-out;
-}
 .game-level-progress{
   position:absolute;
   left:20px;
@@ -189,28 +167,6 @@
   background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(8,10,18,.96));
   box-shadow:0 0 16px rgba(255,255,255,.16),inset 0 0 12px rgba(255,255,255,.07);
 }
-/* ── Mid-round action powerup buttons ─────────────────── */
-.powerup-action-bar{
-  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
-  margin:6px 0;
-}
-.btn-action-powerup{
-  padding:6px 14px;
-  border-radius:999px;
-  border:1px solid #f59e0b;
-  background:rgba(245,158,11,.12);
-  color:#f59e0b;
-  font-size:.72rem;
-  font-weight:700;
-  letter-spacing:.6px;
-  text-transform:uppercase;
-  cursor:pointer;
-  transition:background .15s,box-shadow .15s;
-}
-.btn-action-powerup:hover{
-  background:rgba(245,158,11,.28);
-  box-shadow:0 0 10px rgba(245,158,11,.4);
-}
 /* ── Level-up crate toast ─────────────────────────────── */
 .levelup-crate-toast{
   position:absolute;
@@ -234,9 +190,10 @@
   box-shadow:0 0 24px rgba(167,139,250,.3);
 }
 .levelup-crate-icon{
-  font-size:1.6rem;flex-shrink:0;
+  width:34px;height:34px;display:grid;place-items:center;flex-shrink:0;color:#c4b5fd;
   animation:crate-pulse 1.2s ease-in-out infinite;
 }
+.levelup-crate-icon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px currentColor)}
 @keyframes crate-pulse{
   0%,100%{transform:scale(1);}
   50%{transform:scale(1.12);}

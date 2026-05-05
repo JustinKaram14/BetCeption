@@ -225,12 +225,25 @@ export interface DailyRewardStatusResponse {
 
 export interface PowerupType {
   id: number;
-  code: string;
+  code: PowerPillCode;
   title: string;
   description: string | null;
   minLevel: number;
   price: number;
   effect: Record<string, unknown> | null;
+}
+
+export type PowerPillCode = 'RED_PILL' | 'BLUE_PILL';
+export type PowerPillColor = 'red' | 'blue';
+
+export interface ActivePowerup {
+  type: PowerupType;
+  usesRemaining: number;
+}
+
+export interface TriggeredPowerupEffect {
+  code: PowerPillCode;
+  color: PowerPillColor;
 }
 
 export interface PowerupListResponse {
@@ -239,13 +252,24 @@ export interface PowerupListResponse {
 
 export interface PurchasePowerupRequest {
   typeId: number;
-  quantity: number;
+  quantity?: number;
 }
 
 export interface PurchasePowerupResponse {
   message: string;
   balance: number;
   quantity: number;
+  activePowerup: ActivePowerup | null;
+}
+
+export interface EquipPowerupRequest {
+  typeId: number;
+}
+
+export interface EquipPowerupResponse {
+  message: string;
+  quantity: number;
+  activePowerup: ActivePowerup | null;
 }
 
 export interface InventoryPowerup {
@@ -257,6 +281,7 @@ export interface InventoryPowerup {
 
 export interface InventoryResponse {
   items: InventoryPowerup[];
+  activePowerup: ActivePowerup | null;
 }
 
 export interface LeaderboardQuery {
@@ -361,6 +386,9 @@ export interface RoundState {
 export interface RoundResponse {
   round: RoundState;
   levelUpCrate?: LevelUpCrate | null;
+  activePowerup?: ActivePowerup | null;
+  triggeredPowerupEffect?: TriggeredPowerupEffect | null;
+  expiredPowerup?: TriggeredPowerupEffect | null;
 }
 
 export interface SideBetPlacement {
@@ -438,7 +466,7 @@ export interface LevelUpCrate {
 export interface CrateReward {
   kind: 'coins' | 'powerup';
   coins: number | null;
-  powerup: { id: number; code: string; title: string } | null;
+  powerup: { id: number; code: string; title: string; quantity?: number } | null;
 }
 
 export interface UserCrateItem {

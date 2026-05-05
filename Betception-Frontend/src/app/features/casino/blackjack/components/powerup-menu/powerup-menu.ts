@@ -1,46 +1,33 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { NgFor, NgIf, DecimalPipe } from '@angular/common';
-import { InventoryPowerup, PowerupType } from '../../../../../core/api/api.types';
+import { DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
+import {
+  ActivePowerup,
+  InventoryPowerup,
+  PowerPillCode,
+  PowerupType,
+} from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
 
-const POWERUP_ICONS: Record<string, string> = {
-  MULTI_PLUS: '💊',
-  JOKER_CARD: '🃏',
-  NO_LOSS: '🛡️',
-  BET_BOOST_30: '💰',
-  BET_BOOST_100: '🚀',
-  PEEK_CARD: '👁️',
-  CARD_SWAP: '🔄',
-  UNDO_HIT: '↩️',
-  XP_BOOST: '⚡',
-  DAILY_BOOST: '🌟',
-  COIN_RUSH: '💎',
-  INSURANCE_FREE: '🔒',
-  SIDEBET_MEGA: '🎯',
-};
+const PILL_CODES: PowerPillCode[] = ['RED_PILL', 'BLUE_PILL'];
 
-const POWERUP_COLORS: Record<string, string> = {
-  MULTI_PLUS: '#ffd700',
-  JOKER_CARD: '#a855f7',
-  NO_LOSS: '#4ade80',
-  BET_BOOST_30: '#ff9800',
-  BET_BOOST_100: '#ff4500',
-  PEEK_CARD: '#00bcd4',
-  CARD_SWAP: '#ff69b4',
-  UNDO_HIT: '#ff6b6b',
-  XP_BOOST: '#b0ff00',
-  DAILY_BOOST: '#ffec3d',
-  COIN_RUSH: '#00e5ff',
-  INSURANCE_FREE: '#1de9b6',
-  SIDEBET_MEGA: '#e040fb',
+const PILL_COPY: Record<
+  PowerPillCode,
+  { color: string; accentClass: string }
+> = {
+  RED_PILL: {
+    color: '#ff3b45',
+    accentClass: 'pill-card--red',
+  },
+  BLUE_PILL: {
+    color: '#12e5ee',
+    accentClass: 'pill-card--blue',
+  },
 };
-
-const ACTION_POWERUP_CODES = new Set(['PEEK_CARD', 'CARD_SWAP', 'UNDO_HIT']);
 
 @Component({
   selector: 'app-powerup-menu',
   standalone: true,
-  imports: [NgFor, NgIf, DecimalPipe],
+  imports: [NgFor, NgIf, NgClass, DecimalPipe],
   templateUrl: './powerup-menu.html',
   styleUrl: './powerup-menu.css',
 })
@@ -48,83 +35,75 @@ export class PowerupMenu {
   readonly i18n = inject(I18n);
 
   @Input() inventory: InventoryPowerup[] = [];
-
-  get ownedInventory(): InventoryPowerup[] {
-    return this.inventory.filter(item => item.quantity > 0);
-  }
   @Input() availablePowerups: PowerupType[] = [];
-  @Input() roundId: string | null = null;
-  @Input() roundActive = false;
+  @Input() activePowerup: ActivePowerup | null = null;
   @Input() balance: number | null = null;
   @Input() userLevel = 1;
-  @Input() pendingTypeIds: number[] = [];
 
   @Output() purchase = new EventEmitter<{ typeId: number; quantity: number }>();
-  @Output() toggleQueue = new EventEmitter<number>();
+  @Output() equip = new EventEmitter<{ typeId: number }>();
   @Output() close = new EventEmitter<void>();
 
-  selectedQuantities: Record<number, number> = {};
+  readonly pillCodes = PILL_CODES;
 
-  getIcon(code: string): string {
-    return POWERUP_ICONS[code] ?? '✨';
+  getCopy(code: PowerPillCode) {
+    return PILL_COPY[code];
   }
 
-  getColor(code: string): string {
-    return POWERUP_COLORS[code] ?? '#00e5ff';
+  getPillTitle(code: PowerPillCode): string {
+    return this.i18n.t(code === 'RED_PILL' ? 'powerup.redPill' : 'powerup.bluePill');
   }
 
-  getQuantity(typeId: number): number {
-    return this.selectedQuantities[typeId] ?? 1;
+  getPillDescription(code: PowerPillCode): string {
+    return this.i18n.t(code === 'RED_PILL' ? 'powerup.redPillDescription' : 'powerup.bluePillDescription');
   }
 
-  setQuantity(typeId: number, qty: number) {
-    this.selectedQuantities = { ...this.selectedQuantities, [typeId]: qty };
+  getPowerup(code: PowerPillCode): PowerupType | null {
+    return this.availablePowerups.find((powerup) => powerup.code === code)
+      ?? this.inventory.find((item) => item.type?.code === code)?.type
+      ?? null;
   }
 
-  isActionPowerup(item: InventoryPowerup): boolean {
-    return ACTION_POWERUP_CODES.has(this.getInventoryCode(item));
+  getPrice(code: PowerPillCode): number {
+    return this.getPowerup(code)?.price ?? 300;
   }
 
-  canQueue(item: InventoryPowerup): boolean {
-    return !this.roundActive && !this.isActionPowerup(item) && item.quantity > 0;
+  getOwnedQuantity(code: PowerPillCode): number {
+    return this.inventory.find((item) => item.type?.code === code)?.quantity ?? 0;
   }
 
-  onPurchase(powerup: PowerupType) {
-    const qty = this.getQuantity(powerup.id);
-    this.purchase.emit({ typeId: powerup.id, quantity: qty });
+  isLocked(code: PowerPillCode): boolean {
+    const powerup = this.getPowerup(code);
+    return !!powerup && powerup.minLevel > this.userLevel;
   }
 
-  canAfford(price: number, qty: number): boolean {
+  canAfford(code: PowerPillCode): boolean {
     if (this.balance === null) return true;
-    return this.balance >= price * qty;
+    return this.balance >= this.getPrice(code);
   }
 
-  isLocked(powerup: PowerupType): boolean {
-    return powerup.minLevel > this.userLevel;
+  getButtonLabel(code: PowerPillCode): string {
+    if (!this.getPowerup(code)) return this.i18n.t('powerup.unavailable');
+    if (this.activePowerup) return this.i18n.t('powerup.slotOccupied');
+    const quantity = this.getOwnedQuantity(code);
+    if (quantity > 0) return `${this.i18n.t('powerup.activate')} (x${quantity})`;
+    return `${this.i18n.t('powerup.buy')} ($${this.getPrice(code).toFixed(0)})`;
   }
 
-  isQueued(item: InventoryPowerup): boolean {
-    return this.pendingTypeIds.includes(this.getInventoryTypeId(item));
+  canUse(code: PowerPillCode): boolean {
+    const powerup = this.getPowerup(code);
+    if (!powerup || this.activePowerup || this.isLocked(code)) return false;
+    return this.getOwnedQuantity(code) > 0 || this.canAfford(code);
   }
 
-  onToggleQueue(item: InventoryPowerup) {
-    if (!this.canQueue(item)) return;
-    this.toggleQueue.emit(this.getInventoryTypeId(item));
-  }
-
-  getInventoryCode(item: InventoryPowerup): string {
-    return item.type?.code ?? '';
-  }
-
-  getInventoryTitle(item: InventoryPowerup): string {
-    return item.type?.title ?? '';
-  }
-
-  getInventoryDescription(item: InventoryPowerup): string {
-    return item.type?.description ?? '';
-  }
-
-  getInventoryTypeId(item: InventoryPowerup): number {
-    return item.type?.id ?? 0;
+  onUse(code: PowerPillCode) {
+    if (!this.canUse(code)) return;
+    const powerup = this.getPowerup(code);
+    if (!powerup) return;
+    if (this.getOwnedQuantity(code) > 0) {
+      this.equip.emit({ typeId: powerup.id });
+      return;
+    }
+    this.purchase.emit({ typeId: powerup.id, quantity: 1 });
   }
 }

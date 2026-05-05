@@ -126,6 +126,7 @@ async function performWalletAdjustment(
     const walletRepo = manager.getRepository(WalletTransaction);
     const user = await userRepo.findOne({
       where: { id: userId },
+      relations: ['activePowerupType'],
       lock: { mode: 'pessimistic_write' },
     });
     if (!user) {
