@@ -1,0 +1,561 @@
+:host {
+  display: contents;
+}
+
+.crate-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* ── Modal ─────────────────────────────────────────────── */
+.crate-modal {
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(100, 60, 255, 0.3);
+}
+
+.crate-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #e0d7ff;
+  }
+}
+
+.crate-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.crate-modal__body {
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Section ───────────────────────────────────────────── */
+.crate-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a78bfa;
+
+  &.crate-section-title--opened {
+    color: rgba(255, 255, 255, 0.35);
+  }
+}
+
+/* ── Grid ──────────────────────────────────────────────── */
+.crate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+
+  &.crate-grid--opened {
+    opacity: 0.55;
+  }
+}
+
+/* ── Crate card ────────────────────────────────────────── */
+.crate-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  transition: border-color 0.2s;
+
+  &.crate-card--closed {
+    border-color: rgba(167, 139, 250, 0.3);
+
+    &:hover {
+      border-color: rgba(167, 139, 250, 0.7);
+    }
+  }
+
+  &[data-tier='1'] { border-color: rgba(34, 197, 94, 0.35); }
+  &[data-tier='2'] { border-color: rgba(59, 130, 246, 0.35); }
+  &[data-tier='3'] { border-color: rgba(168, 85, 247, 0.35); }
+  &[data-tier='4'] { border-color: rgba(234, 179, 8, 0.35); }
+  &[data-tier='5'] { border-color: rgba(239, 68, 68, 0.35); }
+}
+
+.crate-card__tier-icon {
+  font-size: 1.75rem;
+}
+
+.crate-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.crate-card__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e0d7ff;
+}
+
+.crate-card__level {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.crate-card__reward {
+  font-size: 0.78rem;
+  color: #a3e635;
+}
+
+.crate-open-btn {
+  margin-top: 0.25rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/* ── Empty / loading ───────────────────────────────────── */
+.crate-empty,
+.crate-loading {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.crate-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ── Reward reveal overlay ─────────────────────────────── */
+.crate-reveal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.crate-reveal-card {
+  position: relative;
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.25rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: hidden;
+  animation: reveal-pop 0.35s ease;
+}
+
+@keyframes reveal-pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.crate-reveal-glow {
+  position: absolute;
+  inset: -60px;
+  border-radius: 50%;
+  opacity: 0.15;
+  pointer-events: none;
+  filter: blur(60px);
+
+  &[data-tier='1'] { background: radial-gradient(circle, #22c55e, transparent 70%); }
+  &[data-tier='2'] { background: radial-gradient(circle, #3b82f6, transparent 70%); }
+  &[data-tier='3'] { background: radial-gradient(circle, #a855f7, transparent 70%); }
+  &[data-tier='4'] { background: radial-gradient(circle, #eab308, transparent 70%); }
+  &[data-tier='5'] { background: radial-gradient(circle, #ef4444, transparent 70%); }
+}
+
+.crate-reveal-icon {
+  font-size: 3.5rem;
+  animation: reveal-bounce 0.5s 0.1s ease both;
+}
+
+@keyframes reveal-bounce {
+  0%   { transform: scale(0.5); }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.crate-reveal-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #e0d7ff;
+}
+
+.crate-reveal-tier {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.crate-reveal-dismiss {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: white;
+  border: none;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CS:GO-Style Roulette Strip – Spin Overlay
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Fullscreen backdrop ───────────────────────────────── */
+.spin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.88);
+  padding: 1rem;
+}
+
+/* ── Main scene box ────────────────────────────────────── */
+.spin-scene {
+  width: 100%;
+  max-width: 840px;
+  background: #12121f;
+  border-radius: 1.25rem;
+  padding: 1.75rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow:
+    0 0 0 1px rgba(168, 85, 247, 0.25),
+    0 0 40px rgba(168, 85, 247, 0.35),
+    0 0 80px rgba(168, 85, 247, 0.15);
+}
+
+/* ── Tier badge ────────────────────────────────────────── */
+.spin-tier-badge {
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #fff;
+  border: 1px solid currentColor;
+
+  &[data-tier='1'] { background: rgba(34, 197, 94, 0.2);  border-color: #22c55e; color: #22c55e; }
+  &[data-tier='2'] { background: rgba(59, 130, 246, 0.2);  border-color: #3b82f6; color: #3b82f6; }
+  &[data-tier='3'] { background: rgba(168, 85, 247, 0.2);  border-color: #a855f7; color: #a855f7; }
+  &[data-tier='4'] { background: rgba(234, 179, 8, 0.2);   border-color: #eab308; color: #eab308; }
+  &[data-tier='5'] { background: rgba(239, 68, 68, 0.2);   border-color: #ef4444; color: #ef4444; }
+}
+
+/* ── Loading spinner ───────────────────────────────────── */
+.spin-loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+}
+
+.spin-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(168, 85, 247, 0.2);
+  border-top-color: #a855f7;
+  border-radius: 50%;
+  animation: spin-spinner 0.75s linear infinite;
+}
+
+@keyframes spin-spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Viewport wrapper (holds arrows + viewport) ────────── */
+.spin-viewport-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* ── Indicator arrows ──────────────────────────────────── */
+.spin-arrow--top,
+.spin-arrow--bottom {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.spin-arrow--top {
+  top: -10px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 12px solid #f97316;
+}
+
+.spin-arrow--bottom {
+  bottom: -10px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 12px solid #f97316;
+}
+
+/* ── Strip viewport ────────────────────────────────────── */
+.spin-viewport {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  overflow: hidden;
+}
+
+/* ── Edge fade gradients ───────────────────────────────── */
+.spin-fade--left,
+.spin-fade--right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.spin-fade--left {
+  left: 0;
+  background: linear-gradient(to right, #12121f, transparent);
+}
+
+.spin-fade--right {
+  right: 0;
+  background: linear-gradient(to left, #12121f, transparent);
+}
+
+/* ── Center indicator line ─────────────────────────────── */
+.spin-center-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: #f97316;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ── Scrolling track ───────────────────────────────────── */
+.spin-track {
+  display: flex;
+  gap: 8px;
+  will-change: transform;
+  /* no transition by default — JS sets translateX directly */
+}
+
+.spin-track--animated {
+  transition: transform 5200ms cubic-bezier(0.05, 0.8, 0.35, 1.0);
+}
+
+/* ── Individual reel item ──────────────────────────────── */
+.spin-item {
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+  background: #1c1c30;
+  border-radius: 0.6rem;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  gap: 0.3rem;
+
+  &[data-tier='1'] { border-color: rgba(34, 197, 94, 0.45); }
+  &[data-tier='2'] { border-color: rgba(59, 130, 246, 0.45); }
+  &[data-tier='3'] { border-color: rgba(168, 85, 247, 0.45); }
+  &[data-tier='4'] { border-color: rgba(234, 179, 8, 0.45); }
+  &[data-tier='5'] { border-color: rgba(239, 68, 68, 0.45); }
+
+  &.spin-item--winner {
+    border-width: 2px;
+    animation: winner-pulse 1s ease-in-out infinite;
+
+    &[data-tier='1'] { border-color: #22c55e; box-shadow: 0 0 16px #22c55e, 0 0 32px rgba(34, 197, 94, 0.5); }
+    &[data-tier='2'] { border-color: #3b82f6; box-shadow: 0 0 16px #3b82f6, 0 0 32px rgba(59, 130, 246, 0.5); }
+    &[data-tier='3'] { border-color: #a855f7; box-shadow: 0 0 16px #a855f7, 0 0 32px rgba(168, 85, 247, 0.5); }
+    &[data-tier='4'] { border-color: #eab308; box-shadow: 0 0 16px #eab308, 0 0 32px rgba(234, 179, 8, 0.5); }
+    &[data-tier='5'] { border-color: #ef4444; box-shadow: 0 0 16px #ef4444, 0 0 32px rgba(239, 68, 68, 0.5); }
+  }
+}
+
+@keyframes winner-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+/* ── Rarity bar (top edge of item) ────────────────────── */
+.spin-item__rarity-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 0;
+}
+
+.spin-item[data-tier='1'] .spin-item__rarity-bar { background: #22c55e; }
+.spin-item[data-tier='2'] .spin-item__rarity-bar { background: #3b82f6; }
+.spin-item[data-tier='3'] .spin-item__rarity-bar { background: #a855f7; }
+.spin-item[data-tier='4'] .spin-item__rarity-bar { background: #eab308; }
+.spin-item[data-tier='5'] .spin-item__rarity-bar { background: #ef4444; }
+
+/* ── Item icon ─────────────────────────────────────────── */
+.spin-item__icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+/* ── Item label ────────────────────────────────────────── */
+.spin-item__label {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  max-width: 90px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+
+/* ── Result section (shown after spin) ─────────────────── */
+.spin-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  animation: result-fadein 0.5s ease both;
+}
+
+@keyframes result-fadein {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Result card ───────────────────────────────────────── */
+.spin-result__card {
+  position: relative;
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.25rem;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  overflow: hidden;
+}
+
+/* ── Result glow (same tier colours as reveal) ─────────── */
+.spin-result__glow {
+  position: absolute;
+  inset: -60px;
+  border-radius: 50%;
+  opacity: 0.18;
+  pointer-events: none;
+  filter: blur(60px);
+
+  &[data-tier='1'] { background: radial-gradient(circle, #22c55e, transparent 70%); }
+  &[data-tier='2'] { background: radial-gradient(circle, #3b82f6, transparent 70%); }
+  &[data-tier='3'] { background: radial-gradient(circle, #a855f7, transparent 70%); }
+  &[data-tier='4'] { background: radial-gradient(circle, #eab308, transparent 70%); }
+  &[data-tier='5'] { background: radial-gradient(circle, #ef4444, transparent 70%); }
+}
+
+/* ── Result confirm button ─────────────────────────────── */
+.spin-result__btn {
+  padding: 0.55rem 1.75rem;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: white;
+  border: none;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: opacity 0.15s, transform 0.1s;
+
+  &:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}

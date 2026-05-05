@@ -20,9 +20,12 @@ CREATE TABLE IF NOT EXISTS users (
   balance           DECIMAL(18,2) NOT NULL DEFAULT 0.00,
   xp                INT NOT NULL DEFAULT 0,
   level             INT NOT NULL DEFAULT 1,
-  last_login_at     TIMESTAMP NULL,
+  last_login_at       TIMESTAMP NULL,
   last_daily_reward_at DATE NULL,
-  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  login_streak        INT UNSIGNED NOT NULL DEFAULT 0,
+  streak_expires_at   DATE NULL,
+  xp_boost_expires_at TIMESTAMP NULL DEFAULT NULL,
+  created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -148,7 +151,7 @@ CREATE TABLE IF NOT EXISTS side_bets (
 CREATE TABLE IF NOT EXISTS wallet_transactions (
   id          BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   user_id     BIGINT UNSIGNED NOT NULL,
-  kind        ENUM('deposit','withdraw','bet_place','bet_win','bet_refund','adjustment','reward') NOT NULL,
+  kind        ENUM('deposit','withdraw','bet_place','bet_win','bet_refund','adjustment','reward','crate_reward') NOT NULL,
   amount      DECIMAL(18,2) NOT NULL,  -- signed (+/-)
   ref_table   VARCHAR(32) NULL,
   ref_id      BIGINT UNSIGNED NULL,
@@ -164,6 +167,7 @@ CREATE TABLE IF NOT EXISTS daily_reward_claims (
   id         BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   user_id    BIGINT UNSIGNED NOT NULL,
   claim_date DATE NOT NULL,
+  streak_day INT UNSIGNED NOT NULL DEFAULT 1,
   amount     DECIMAL(18,2) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY ux_daily_reward (user_id, claim_date),
@@ -202,6 +206,25 @@ CREATE TABLE IF NOT EXISTS powerup_consumptions (
   consumed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_pu_cons_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_pu_cons_type FOREIGN KEY (type_id) REFERENCES powerup_types(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- =============================
+-- Level-Up Crates
+-- =============================
+CREATE TABLE IF NOT EXISTS user_crates (
+  id                      BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  user_id                 BIGINT UNSIGNED NOT NULL,
+  tier                    TINYINT UNSIGNED NOT NULL,
+  acquired_level          INT NOT NULL,
+  acquired_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  opened                  BOOLEAN NOT NULL DEFAULT FALSE,
+  opened_at               TIMESTAMP NULL,
+  reward_kind             ENUM('coins','powerup') NULL,
+  reward_coins            DECIMAL(18,2) NULL,
+  reward_powerup_type_id  TINYINT UNSIGNED NULL,
+  CONSTRAINT fk_crates_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_crates_powerup FOREIGN KEY (reward_powerup_type_id) REFERENCES powerup_types(id) ON DELETE SET NULL,
+  INDEX ix_crates_user (user_id, opened)
 ) ENGINE=InnoDB;
 
 -- =============================
@@ -268,7 +291,23 @@ INSERT INTO powerup_types (code, title, description, min_level, price, effect_js
 ('BET_BOOST_30','Wett-Boost +30%','Erhöht deinen Gewinn um +30% bei einem Sieg', 4, 750,
  JSON_OBJECT('main_multiplier', 0.3)),
 ('BET_BOOST_100','Wett-Dobler','Verdoppelt deinen Gewinn bei einem Sieg', 9, 2000,
- JSON_OBJECT('main_multiplier', 1.0))
+ JSON_OBJECT('main_multiplier', 1.0)),
+('PEEK_CARD','Blick-Pille','Zeigt die nächste Deck-Karte vor deinem Zug an', 2, 300,
+ JSON_OBJECT('peek', 1)),
+('CARD_SWAP','Tausch-Pille','Tausche eine Handkarte gegen eine neue aus dem Deck', 4, 800,
+ JSON_OBJECT('card_swap', 1)),
+('UNDO_HIT','Rückgängig-Pille','Nimm die zuletzt gezogene Karte zurück', 3, 600,
+ JSON_OBJECT('undo_hit', 1)),
+('XP_BOOST','XP-Pille','Verdoppelt dein XP für die nächsten 10 Minuten', 1, 800,
+ JSON_OBJECT('xp_multiplier', 2, 'timed', true, 'duration_minutes', 10)),
+('DAILY_BOOST','Daily-Dobler','Verdoppelt deinen nächsten Daily Reward', 1, 150,
+ JSON_OBJECT('daily_multiplier', 2)),
+('COIN_RUSH','Coin-Rush','+25% Coin-Gewinn bei einem Sieg in dieser Runde', 2, 400,
+ JSON_OBJECT('coin_rush', 0.25)),
+('INSURANCE_FREE','Versicherungs-Pille','Kostenlose Versicherung: Dealer-Blackjack gibt deinen Einsatz zurück', 5, 900,
+ JSON_OBJECT('insurance', 1)),
+('SIDEBET_MEGA','Mega-Sidebet','Erhöht alle Sidebet-Multiplikatoren um +50%', 6, 1200,
+ JSON_OBJECT('sidebet_multiplier_bonus', 0.5))
 ON DUPLICATE KEY UPDATE
   title = VALUES(title),
   description = VALUES(description),

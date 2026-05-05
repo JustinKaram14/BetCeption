@@ -7,6 +7,7 @@ import {
   HandStatus,
   InventoryPowerup,
   LevelProgress,
+  LevelUpCrate,
   MainBetStatus,
   PowerupType,
   RoundState,
@@ -58,6 +59,7 @@ export class Blackjack implements OnInit {
   pendingPowerupTypeIds: number[] = [];
   peekCard: { rank: string; suit: string } | null = null;
   userLevel = 1;
+  levelUpCrate: LevelUpCrate | null = null;
   private inventoryLoaded = false;
   private bannerTimer: number | null = null;
   private resultOverlayTimer: number | null = null;
@@ -141,7 +143,8 @@ export class Blackjack implements OnInit {
     request$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ round }) => {
+        next: (response) => {
+          const { round } = response;
           const previousRound = this.round;
           this.round = round;
           if (round.playerProgress) {
@@ -155,6 +158,9 @@ export class Blackjack implements OnInit {
             this.consumePendingQueue(round.id);
           }
           if (kind === 'settle') {
+            if (response.levelUpCrate) {
+              this.levelUpCrate = response.levelUpCrate;
+            }
             this.scheduleRoundOverlay(previousRound, round);
             this.walletRefreshTimer = window.setTimeout(() => {
               this.loadBalance(true);
@@ -265,9 +271,14 @@ export class Blackjack implements OnInit {
     this.activePowerupCodes = [];
     this.pendingPowerupTypeIds = [];
     this.peekCard = null;
+    this.levelUpCrate = null;
     if (this.balance !== null && this.betAmount > this.balance) {
       this.betAmount = this.balance;
     }
+  }
+
+  onDismissLevelUpCrate() {
+    this.levelUpCrate = null;
   }
 
   onOpenPowerupMenu() {

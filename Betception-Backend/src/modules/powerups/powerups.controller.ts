@@ -3,8 +3,11 @@ import { AppDataSource } from '../../db/data-source.js';
 import { UserPowerup } from '../../entity/UserPowerup.js';
 import { PowerupConsumption } from '../../entity/PowerupConsumption.js';
 import { Round } from '../../entity/Round.js';
+import { User } from '../../entity/User.js';
 import { HandOwnerType, RoundStatus } from '../../entity/enums.js';
 import type { ConsumePowerupInput } from './powerups.schema.js';
+
+const XP_BOOST_DURATION_MS = 10 * 60 * 1000;
 
 class PowerupConsumptionError extends Error {
   constructor(
@@ -45,23 +48,27 @@ export async function consumePowerup(
       }
 
       let round: Round | null = null;
-      if (roundId) {
-        const roundRepo = manager.getRepository(Round);
-        round = await roundRepo.findOne({
-          where: { id: roundId },
-          relations: { hands: { user: true } },
-        });
-        if (!round) {
-          throw new PowerupConsumptionError(404, 'ROUND_NOT_FOUND', 'Round not found');
-        }
-        const ownsRound = (round.hands ?? []).some(
-          (hand) => hand.ownerType === HandOwnerType.PLAYER && hand.user?.id === userId,
-        );
-        if (!ownsRound) {
-          throw new PowerupConsumptionError(403, 'ROUND_NOT_OWNED', 'Round does not belong to the user');
-        }
-        if (round.status === RoundStatus.SETTLED || round.status === RoundStatus.ABORTED) {
-          throw new PowerupConsumptionError(409, 'ROUND_INACTIVE', 'Cannot attach power-ups to inactive rounds');
+      const isTimedXpBoost = userPowerup.type.code === 'XP_BOOST';
+
+      if (!isTimedXpBoost) {
+        if (roundId) {
+          const roundRepo = manager.getRepository(Round);
+          round = await roundRepo.findOne({
+            where: { id: roundId },
+            relations: { hands: { user: true } },
+          });
+          if (!round) {
+            throw new PowerupConsumptionError(404, 'ROUND_NOT_FOUND', 'Round not found');
+          }
+          const ownsRound = (round.hands ?? []).some(
+            (hand) => hand.ownerType === HandOwnerType.PLAYER && hand.user?.id === userId,
+          );
+          if (!ownsRound) {
+            throw new PowerupConsumptionError(403, 'ROUND_NOT_OWNED', 'Round does not belong to the user');
+          }
+          if (round.status === RoundStatus.SETTLED || round.status === RoundStatus.ABORTED) {
+            throw new PowerupConsumptionError(409, 'ROUND_INACTIVE', 'Cannot attach power-ups to inactive rounds');
+          }
         }
       }
 
@@ -77,6 +84,22 @@ export async function consumePowerup(
       );
       await consumptionRepo.save(entries);
 
+      let xpBoostExpiresAt: Date | null = null;
+      if (isTimedXpBoost) {
+        const userRepo = manager.getRepository(User);
+        const user = await userRepo.findOne({
+          where: { id: userId },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (user) {
+          const now = Date.now();
+          const currentExpiry = user.xpBoostExpiresAt ? user.xpBoostExpiresAt.getTime() : 0;
+          xpBoostExpiresAt = new Date(Math.max(now, currentExpiry) + XP_BOOST_DURATION_MS * quantity);
+          user.xpBoostExpiresAt = xpBoostExpiresAt;
+          await userRepo.save(user);
+        }
+      }
+
       return {
         consumed: entries.length,
         remaining: userPowerup.quantity,
@@ -87,6 +110,7 @@ export async function consumePowerup(
           effect: userPowerup.type.effectJson,
         },
         roundId: round?.id ?? null,
+        xpBoostExpiresAt: xpBoostExpiresAt?.toISOString() ?? null,
       };
     });
 
