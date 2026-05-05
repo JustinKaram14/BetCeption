@@ -8,6 +8,7 @@ import { PowerupType } from '../../entity/PowerupType.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
 import { DAILY_STREAK_REWARDS } from '../../config/rewards.js';
 import { centsToDecimal, decimalToCents } from '../../utils/money.js';
+import { pickRandomPowerPillCode, POWER_PILL_META } from '../powerups/power-pills.js';
 
 function nextEligibleFrom(date: Date): string {
   const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1));
@@ -67,6 +68,7 @@ export async function claimDailyReward(req: Request, res: Response) {
       const userRepo = manager.getRepository(User);
       const user = await userRepo.findOne({
         where: { id: userId },
+        relations: ['activePowerupType'],
         lock: { mode: 'pessimistic_write' },
       });
       if (!user) throw new RewardError(404, 'USER_NOT_FOUND', 'User not found');
@@ -82,7 +84,7 @@ export async function claimDailyReward(req: Request, res: Response) {
 
       const currentStreak = user.loginStreak ?? 0;
       const clampedDay = (currentStreak % 30) + 1;
-      const reward = DAILY_STREAK_REWARDS[clampedDay - 1];
+      let reward = DAILY_STREAK_REWARDS[clampedDay - 1];
 
       let claimedCoins = 0;
       let claimAmountDecimal = '0.00';
@@ -92,9 +94,11 @@ export async function claimDailyReward(req: Request, res: Response) {
         claimAmountDecimal = centsToDecimal(coinCents);
         claimedCoins = reward.coins!;
         user.balance = centsToDecimal(decimalToCents(user.balance) + coinCents);
-      } else if (reward.kind === 'powerup' && reward.powerupCode) {
+      } else if (reward.kind === 'powerup') {
+        const powerupCode = pickRandomPowerPillCode();
+        const meta = POWER_PILL_META[powerupCode];
         const powerupTypeRepo = manager.getRepository(PowerupType);
-        const powerupType = await powerupTypeRepo.findOne({ where: { code: reward.powerupCode } });
+        const powerupType = await powerupTypeRepo.findOne({ where: { code: powerupCode } });
         if (powerupType) {
           const userPowerupRepo = manager.getRepository(UserPowerup);
           const existing = await userPowerupRepo.findOne({
@@ -108,6 +112,13 @@ export async function claimDailyReward(req: Request, res: Response) {
               userPowerupRepo.create({ user, type: powerupType, quantity: 1 }),
             );
           }
+          reward = {
+            ...reward,
+            powerupCode,
+            powerupLabel: meta.title,
+            label: meta.title,
+            icon: meta.color === 'red' ? 'RED' : 'BLUE',
+          };
         }
       }
 

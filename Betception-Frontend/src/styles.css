@@ -89,6 +89,49 @@ button{font-family:var(--font-main)}
 button:not(:disabled),a.btn,.btn:not(:disabled){cursor:pointer}
 button:disabled,.btn:disabled{cursor:not-allowed}
 
+.pill-slot__tooltip{
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 10px);
+  width:240px;
+  max-width:calc(100vw - 32px);
+  padding:10px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  color:#e9fbff;
+  text-align:left;
+  text-transform:none;
+  line-height:1.25;
+  background:rgba(8,9,20,.96);
+  border:1px solid var(--pill-accent);
+  border-radius:8px;
+  box-shadow:0 0 16px rgba(0,255,255,.22),inset 0 0 10px rgba(0,255,255,.08);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translate(-50%,6px);
+  transition:opacity .16s ease,visibility .16s ease,transform .16s ease;
+  z-index:30;
+}
+.pill-slot__tooltip-title{
+  color:var(--pill-accent);
+  font-size:.74rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.pill-slot__tooltip-text{
+  color:rgba(233,251,255,.84);
+  font-size:.68rem;
+  font-weight:600;
+}
+.pill-slot--active:hover .pill-slot__tooltip,
+.pill-slot--active:focus-visible .pill-slot__tooltip{
+  opacity:1;
+  visibility:visible;
+  transform:translate(-50%,0);
+}
+
 html.is-safari body,
 html.is-safari button,
 html.is-safari input,

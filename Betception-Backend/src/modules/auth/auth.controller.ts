@@ -11,6 +11,9 @@ import { hashToken } from '../../utils/tokenHash.js';
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_PATH = '/auth/refresh';
 const REFRESH_TTL_MS = env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000;
+const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
+const REGISTRATION_CONFLICT_MESSAGE = 'Registration could not be completed';
+const DUMMY_PASSWORD_HASH = '$2b$12$K/V.sNBjQhL3tgXD7I0r4.nmt.V3a5QCdJpRCFfcAY62w27j/Skrq';
 
 const refreshCookieDefaults: CookieOptions = {
   httpOnly: true,
@@ -38,10 +41,10 @@ export async function register(
   const repo = AppDataSource.getRepository(User);
 
   const emailExists = await repo.exist({ where: { email } });
-  if (emailExists) return res.status(409).json({ message: 'Email already in use' });
+  if (emailExists) return res.status(409).json({ message: REGISTRATION_CONFLICT_MESSAGE });
 
   const usernameExists = await repo.exist({ where: { username } });
-  if (usernameExists) return res.status(409).json({ message: 'Username already in use' });
+  if (usernameExists) return res.status(409).json({ message: REGISTRATION_CONFLICT_MESSAGE });
 
   const pwHash = await hashPassword(password);
   const startingBalance = Number.isFinite(env.users.initialBalance) ? env.users.initialBalance : 0;
@@ -65,12 +68,13 @@ export async function login(
   const sessionRepo = AppDataSource.getRepository(Session);
   const user = await repo.findOne({ select: ['id', 'email', 'username', 'passwordHash'], where: { email } });
   if (!user) {
-    return res.status(401).json({ message: 'User not found' });
+    await verifyPassword(password, DUMMY_PASSWORD_HASH);
+    return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
   }
 
   const ok = await verifyPassword(password, user.passwordHash);
   if (!ok) {
-    return res.status(401).json({ message: 'Invalid email or password' });
+    return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
   }
 
   await repo.update(user.id, { lastLoginAt: new Date() });

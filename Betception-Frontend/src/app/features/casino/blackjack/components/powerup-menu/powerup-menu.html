@@ -1,98 +1,34 @@
 <div class="powerup-overlay" (click)="close.emit()">
   <div class="powerup-modal" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <span class="modal-title">{{ i18n.t('powerup.title') }}</span>
-      <button class="close-btn" type="button" (click)="close.emit()">✕</button>
+    <h2 class="modal-title">{{ i18n.t('powerup.pillShopTitle') }}</h2>
+    <p class="modal-subtitle">
+      {{ i18n.t('powerup.pillShopSubtitle') }}
+    </p>
+
+    <div class="pill-options">
+      <article
+        class="pill-card"
+        *ngFor="let code of pillCodes"
+        [ngClass]="getCopy(code).accentClass"
+        [style.--pill-color]="getCopy(code).color"
+      >
+        <div class="pill-visual" aria-hidden="true"></div>
+        <h3>{{ getPillTitle(code) }}</h3>
+        <p>{{ getPillDescription(code) }}</p>
+        <button
+          class="btn btn-pill"
+          type="button"
+          [disabled]="!canUse(code)"
+          (click)="onUse(code)"
+        >
+          {{ getButtonLabel(code) }}
+        </button>
+        <span class="inventory-hint" *ngIf="getOwnedQuantity(code) > 0">
+          {{ i18n.t('powerup.inventory') }}: {{ getOwnedQuantity(code) | number:'1.0-0' }}
+        </span>
+      </article>
     </div>
 
-    <div class="modal-body">
-      <!-- Inventory Section -->
-      <div class="section">
-        <h3 class="section-title">{{ i18n.t('powerup.inventory') }}</h3>
-        <div class="empty-hint" *ngIf="ownedInventory.length === 0">
-          {{ i18n.t('powerup.empty') }}
-        </div>
-        <div class="pill-grid" *ngIf="ownedInventory.length > 0">
-          <div
-            class="pill-card"
-            *ngFor="let item of ownedInventory"
-            [style.--pill-color]="getColor(getInventoryCode(item))"
-          >
-            <div class="pill-icon">{{ getIcon(getInventoryCode(item)) }}</div>
-            <div class="pill-info">
-              <span class="pill-name">{{ getInventoryTitle(item) }}</span>
-              <span class="pill-desc">{{ getInventoryDescription(item) }}</span>
-            </div>
-            <div class="pill-actions">
-              <span class="pill-qty">×{{ item.quantity }}</span>
-              <button
-                *ngIf="!isActionPowerup(item)"
-                class="btn btn-queue"
-                [class.btn-queue--active]="isQueued(item)"
-                type="button"
-                [disabled]="!canQueue(item)"
-                (click)="onToggleQueue(item)"
-              >
-                {{ isQueued(item) ? i18n.t('powerup.queued') : i18n.t('powerup.queue') }}
-              </button>
-              <span *ngIf="isActionPowerup(item)" class="pill-ingame-badge">
-                {{ i18n.t('powerup.ingame') }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Shop Section -->
-      <div class="section">
-        <h3 class="section-title">{{ i18n.t('powerup.shop') }}</h3>
-        <div class="pill-grid">
-          <div
-            class="pill-card"
-            *ngFor="let powerup of availablePowerups"
-            [style.--pill-color]="getColor(powerup.code)"
-            [class.pill-card--locked]="isLocked(powerup)"
-          >
-            <div class="pill-icon">{{ getIcon(powerup.code) }}</div>
-            <div class="pill-info">
-              <span class="pill-name">{{ powerup.title }}</span>
-              <span class="pill-desc">{{ powerup.description }}</span>
-              <span class="pill-price" *ngIf="!isLocked(powerup)">{{ powerup.price | number:'1.0-0' }} Coins</span>
-              <span class="pill-locked-badge" *ngIf="isLocked(powerup)">🔒 {{ i18n.t('powerup.locked', { level: powerup.minLevel }) }}</span>
-            </div>
-            <div class="pill-actions" *ngIf="!isLocked(powerup)">
-              <div class="qty-selector">
-                <button
-                  class="qty-btn"
-                  type="button"
-                  [class.qty-selected]="getQuantity(powerup.id) === 1"
-                  (click)="setQuantity(powerup.id, 1)"
-                >1</button>
-                <button
-                  class="qty-btn"
-                  type="button"
-                  [class.qty-selected]="getQuantity(powerup.id) === 3"
-                  (click)="setQuantity(powerup.id, 3)"
-                >3</button>
-                <button
-                  class="qty-btn"
-                  type="button"
-                  [class.qty-selected]="getQuantity(powerup.id) === 5"
-                  (click)="setQuantity(powerup.id, 5)"
-                >5</button>
-              </div>
-              <button
-                class="btn btn-buy"
-                type="button"
-                [disabled]="!canAfford(powerup.price, getQuantity(powerup.id))"
-                (click)="onPurchase(powerup)"
-              >
-                {{ i18n.t('powerup.buy') }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <button class="btn btn-cancel" type="button" (click)="close.emit()">{{ i18n.t('common.cancel') }}</button>
   </div>
 </div>

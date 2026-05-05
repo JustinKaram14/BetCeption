@@ -8,6 +8,7 @@ import { User } from '../../entity/User.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
 import { centsToDecimal, decimalToCents } from '../../utils/money.js';
+import { pickRandomPowerPillCode } from '../powerups/power-pills.js';
 
 type CrateIdParams = { crateId: string };
 
@@ -26,20 +27,26 @@ const TIER_CONFIG: Array<{
   { label: 'Common',    minCoins: 50,   maxCoins: 400,   pillChance: 0.04 },
   { label: 'Rare',      minCoins: 200,  maxCoins: 1000,  pillChance: 0.06 },
   { label: 'Epic',      minCoins: 500,  maxCoins: 3000,  pillChance: 0.08 },
-  { label: 'Legendary', minCoins: 1000, maxCoins: 6000,  pillChance: 0.10 },
-  { label: 'Elite',     minCoins: 2000, maxCoins: 10000, pillChance: 0.12 },
 ];
 
 export function getTierForLevel(level: number): number {
   if (level <= 5)  return 1;
   if (level <= 10) return 2;
-  if (level <= 20) return 3;
-  if (level <= 35) return 4;
-  return 5;
+  return 3;
+}
+
+function normalizeCrateTier(tier: number): number {
+  const numericTier = Number.isFinite(tier) ? Math.floor(tier) : 1;
+  return Math.min(3, Math.max(1, numericTier));
+}
+
+export function getPowerupRewardQuantityForTier(tier: number): number {
+  return normalizeCrateTier(tier);
 }
 
 function rollReward(tier: number): { kind: 'coins'; amount: number } | { kind: 'powerup' } {
-  const cfg = TIER_CONFIG[tier - 1] ?? TIER_CONFIG[0];
+  const normalizedTier = normalizeCrateTier(tier);
+  const cfg = TIER_CONFIG[normalizedTier - 1] ?? TIER_CONFIG[0];
   const rand = crypto.randomInt(10000) / 10000;
   if (rand < cfg.pillChance) {
     return { kind: 'powerup' };
@@ -61,7 +68,7 @@ class CrateError extends Error {
 }
 
 function serializeCrate(crate: UserCrate) {
-  const tier = Math.min(5, Math.max(1, crate.tier));
+  const tier = normalizeCrateTier(crate.tier);
   const label = TIER_CONFIG[tier - 1]?.label ?? 'Common';
   return {
     id: crate.id,
@@ -80,6 +87,7 @@ function serializeCrate(crate: UserCrate) {
                 id: crate.rewardPowerupType.id,
                 code: crate.rewardPowerupType.code,
                 title: crate.rewardPowerupType.title,
+                quantity: getPowerupRewardQuantityForTier(crate.tier),
               }
             : null,
         }
@@ -128,6 +136,7 @@ export async function openCrate(req: Request<CrateIdParams>, res: Response) {
       const userRepo = manager.getRepository(User);
       const user = await userRepo.findOne({
         where: { id: userId },
+        relations: ['activePowerupType'],
         lock: { mode: 'pessimistic_write' },
       });
       if (!user) throw new CrateError(404, 'USER_NOT_FOUND', 'User not found');
@@ -149,24 +158,20 @@ export async function openCrate(req: Request<CrateIdParams>, res: Response) {
           }),
         );
       } else {
-        // Pick a random powerup the user qualifies for
+        const powerupCode = pickRandomPowerPillCode();
         const powerupRepo = manager.getRepository(PowerupType);
-        const candidate = await powerupRepo
-          .createQueryBuilder('pt')
-          .where('pt.minLevel <= :level', { level: user.level ?? 1 })
-          .orderBy('RAND()')
-          .limit(1)
-          .getOne();
+        const candidate = await powerupRepo.findOne({ where: { code: powerupCode } });
 
         if (candidate) {
+          const quantity = getPowerupRewardQuantityForTier(crate.tier);
           crate.rewardPowerupType = candidate;
           const upRepo = manager.getRepository(UserPowerup);
           const existing = await upRepo.findOne({ where: { user: { id: userId }, type: { id: candidate.id } } });
           if (existing) {
-            existing.quantity = (existing.quantity ?? 0) + 1;
+            existing.quantity = (existing.quantity ?? 0) + quantity;
             await upRepo.save(existing);
           } else {
-            await upRepo.save(upRepo.create({ user, type: candidate, quantity: 1 }));
+            await upRepo.save(upRepo.create({ user, type: candidate, quantity }));
           }
         } else {
           // Fallback to coins if no powerup found

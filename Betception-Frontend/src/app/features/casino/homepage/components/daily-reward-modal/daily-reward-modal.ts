@@ -80,6 +80,24 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
     return `${hours}h ${minutes}m`;
   }
 
+  rewardKindLabel(item: DayRewardScheduleItem): string {
+    return item.kind === 'powerup' ? 'Pille' : 'Coins';
+  }
+
+  rewardLabel(item: DayRewardScheduleItem): string {
+    if (item.kind === 'coins') {
+      return `${item.coins?.toLocaleString('de-DE') ?? item.label} Coins`;
+    }
+    return item.powerupLabel ?? item.label;
+  }
+
+  rewardTone(item: DayRewardScheduleItem): 'coin' | 'pill-red' | 'pill-blue' | 'pill-mixed' {
+    if (item.kind === 'coins') return 'coin';
+    if (item.powerupCode === 'RED_PILL') return 'pill-red';
+    if (item.powerupCode === 'BLUE_PILL') return 'pill-blue';
+    return 'pill-mixed';
+  }
+
   onClaim() {
     if (!this.isEligible || this.claiming) return;
     this.claiming = true;

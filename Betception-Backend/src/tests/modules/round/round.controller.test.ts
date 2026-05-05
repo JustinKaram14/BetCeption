@@ -9,6 +9,7 @@ import {
   swapCard,
   undoHit,
 } from '../../../modules/round/round.controller.js';
+import crypto from 'crypto';
 import { Card } from '../../../entity/Card.js';
 import { Hand } from '../../../entity/Hand.js';
 import { MainBet } from '../../../entity/MainBet.js';
@@ -1125,7 +1126,7 @@ describe('round.controller', () => {
     });
   });
 
-  describe('settleRound — BET_BOOST powerups', () => {
+  describe('settleRound - legacy BET_BOOST powerups', () => {
     function buildWinRound() {
       return createRoundFixture({
         hands: [
@@ -1173,7 +1174,7 @@ describe('round.controller', () => {
       return { consumptionRepo, roundRepo, handRepo, mainBetRepo, sideBetRepo, walletRepo, userRepo };
     }
 
-    it('BET_BOOST_30: adds +30% to win payout (bet=10 → settled=23)', async () => {
+    it('ignores BET_BOOST_30 during settlement', async () => {
       const round = buildWinRound();
       const consumption = {
         type: { effectJson: { main_multiplier: 0.3 } } as unknown as PowerupType,
@@ -1193,13 +1194,13 @@ describe('round.controller', () => {
 
       await settleRound(req as any, res);
 
-      // bet=10, base multiplier=2.0, boost=+0.3 → effective=2.3 → settled=23.00
+      // Legacy BET_BOOST consumptions no longer affect the main-bet payout.
       expect(mainBetRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ payoutMultiplier: '2.300', settledAmount: '23.00' }),
+        expect.objectContaining({ payoutMultiplier: '2.000', settledAmount: '20.00' }),
       );
     });
 
-    it('BET_BOOST_100: doubles win payout (bet=10 → settled=30)', async () => {
+    it('ignores BET_BOOST_100 during settlement', async () => {
       const round = buildWinRound();
       const consumption = {
         type: { effectJson: { main_multiplier: 1.0 } } as unknown as PowerupType,
@@ -1219,9 +1220,9 @@ describe('round.controller', () => {
 
       await settleRound(req as any, res);
 
-      // bet=10, base multiplier=2.0, boost=+1.0 → effective=3.0 → settled=30.00
+      // Legacy BET_BOOST consumptions no longer affect the main-bet payout.
       expect(mainBetRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ payoutMultiplier: '3.000', settledAmount: '30.00' }),
+        expect.objectContaining({ payoutMultiplier: '2.000', settledAmount: '20.00' }),
       );
     });
 
@@ -1256,7 +1257,7 @@ describe('round.controller', () => {
       );
     });
 
-    it('BET_BOOST stacks additively when two boosts are consumed (bet=10 → settled=33)', async () => {
+    it('does not stack legacy BET_BOOST consumptions', async () => {
       const round = buildWinRound();
       const consumptions = [
         { type: { effectJson: { main_multiplier: 0.3 } } as unknown as PowerupType } as unknown as PowerupConsumption,
@@ -1277,9 +1278,9 @@ describe('round.controller', () => {
 
       await settleRound(req as any, res);
 
-      // bet=10, base=2.0, BET_BOOST_30(+0.3) + BET_BOOST_100(+1.0) = effective 3.3 → settled=33.00
+      // Legacy BET_BOOST consumptions no longer affect the main-bet payout.
       expect(mainBetRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ payoutMultiplier: '3.300', settledAmount: '33.00' }),
+        expect.objectContaining({ payoutMultiplier: '2.000', settledAmount: '20.00' }),
       );
     });
 
@@ -1310,6 +1311,232 @@ describe('round.controller', () => {
       expect(mainBetRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ status: MainBetStatus.PUSH, payoutMultiplier: '1.000' }),
       );
+    });
+  });
+
+  describe('settleRound - power pills', () => {
+    const redPillType = {
+      id: 1,
+      code: 'RED_PILL',
+      title: 'Red Pill',
+      description: '1:5 chance to trigger x3 payout on main wins.',
+      minLevel: 1,
+      price: '300.00',
+      effectJson: { color: 'red', uses: 3 },
+    } as PowerupType;
+    const bluePillType = {
+      id: 2,
+      code: 'BLUE_PILL',
+      title: 'Blue Pill',
+      description: '1:8 chance to trigger safe-round protection (no loss).',
+      minLevel: 1,
+      price: '300.00',
+      effectJson: { color: 'blue', uses: 3 },
+    } as PowerupType;
+
+    function buildWinRound() {
+      return createRoundFixture({
+        hands: [
+          {
+            id: 'dealer-hand',
+            ownerType: HandOwnerType.DEALER,
+            status: HandStatus.ACTIVE,
+            handValue: 17,
+            cards: [
+              createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1),
+              createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2),
+            ],
+            user: null,
+          },
+          {
+            id: 'player-hand',
+            ownerType: HandOwnerType.PLAYER,
+            status: HandStatus.STOOD,
+            handValue: 20,
+            cards: [
+              createCard('p1', CardRank.TEN, CardSuit.SPADES, 1),
+              createCard('p2', CardRank.KING, CardSuit.DIAMONDS, 2),
+            ],
+            user: { id: 'user-1' },
+          },
+        ],
+      });
+    }
+
+    function buildLossRound() {
+      return createRoundFixture({
+        hands: [
+          {
+            id: 'dealer-hand',
+            ownerType: HandOwnerType.DEALER,
+            status: HandStatus.ACTIVE,
+            handValue: 20,
+            cards: [
+              createCard('d1', CardRank.KING, CardSuit.HEARTS, 1),
+              createCard('d2', CardRank.KING, CardSuit.CLUBS, 2),
+            ],
+            user: null,
+          },
+          {
+            id: 'player-hand',
+            ownerType: HandOwnerType.PLAYER,
+            status: HandStatus.STOOD,
+            handValue: 16,
+            cards: [
+              createCard('p1', CardRank.TEN, CardSuit.SPADES, 1),
+              createCard('p2', CardRank.SIX, CardSuit.DIAMONDS, 2),
+            ],
+            user: { id: 'user-1' },
+          },
+        ],
+      });
+    }
+
+    function buildSettleRepos(round: any, userOverrides: Partial<User>) {
+      const user = {
+        id: 'user-1',
+        balance: '90.00',
+        xp: 0,
+        level: 1,
+        activePowerupType: null,
+        activePowerupUsesRemaining: 0,
+        ...userOverrides,
+      } as User;
+      const roundRepo = createMockRepository<Round>({
+        findOne: jest.fn().mockResolvedValue(round),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const handRepo = createMockRepository<Hand>({ save: jest.fn().mockResolvedValue(undefined) });
+      const mainBetRepo = createMockRepository<MainBet>({ save: jest.fn().mockResolvedValue(undefined) });
+      const sideBetRepo = createMockRepository<SideBet>({ save: jest.fn().mockResolvedValue(undefined) });
+      const walletRepo = createMockRepository<WalletTransaction>({
+        create: jest.fn().mockImplementation((d) => ({ id: 'tx-1', ...d })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+
+      return { roundRepo, handRepo, mainBetRepo, sideBetRepo, walletRepo, userRepo };
+    }
+
+    function registerSettleRepos(round: any, repos: ReturnType<typeof buildSettleRepos>) {
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, repos.roundRepo],
+        [Hand, repos.handRepo],
+        [MainBet, repos.mainBetRepo],
+        [SideBet, repos.sideBetRepo],
+        [WalletTransaction, repos.walletRepo],
+        [User, repos.userRepo],
+        [Card, createMockRepository<Card>()],
+      ]));
+      mockAppDataSourceRepositories(new Map([
+        [Round, createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) })],
+      ]));
+    }
+
+    it('triggers Red Pill on a main-bet win and multiplies payout by 3', async () => {
+      jest.spyOn(crypto, 'randomInt').mockReturnValue(0 as never);
+      const round = buildWinRound();
+      const repos = buildSettleRepos(round, {
+        activePowerupType: redPillType,
+        activePowerupUsesRemaining: 3,
+      });
+      registerSettleRepos(round, repos);
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await settleRound(req as any, res);
+
+      expect(repos.mainBetRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: MainBetStatus.WON,
+          payoutMultiplier: '6.000',
+          settledAmount: '60.00',
+        }),
+      );
+      expect(repos.userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          balance: '150.00',
+          activePowerupType: redPillType,
+          activePowerupUsesRemaining: 2,
+        }),
+      );
+      const json = (res.json as jest.Mock).mock.calls[0][0];
+      expect(json.triggeredPowerupEffect).toEqual({ code: 'RED_PILL', color: 'red' });
+      expect(json.activePowerup).toMatchObject({ type: { code: 'RED_PILL' }, usesRemaining: 2 });
+    });
+
+    it('triggers Blue Pill on a main-bet loss and refunds the bet', async () => {
+      jest.spyOn(crypto, 'randomInt').mockReturnValue(0 as never);
+      const round = buildLossRound();
+      const repos = buildSettleRepos(round, {
+        activePowerupType: bluePillType,
+        activePowerupUsesRemaining: 3,
+      });
+      registerSettleRepos(round, repos);
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await settleRound(req as any, res);
+
+      expect(repos.mainBetRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: MainBetStatus.REFUNDED,
+          payoutMultiplier: '1.000',
+          settledAmount: '10.00',
+        }),
+      );
+      expect(repos.walletRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: WalletTransactionKind.BET_REFUND,
+          amount: '10.00',
+        }),
+      );
+      expect(repos.userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          balance: '100.00',
+          activePowerupType: bluePillType,
+          activePowerupUsesRemaining: 2,
+        }),
+      );
+      const json = (res.json as jest.Mock).mock.calls[0][0];
+      expect(json.triggeredPowerupEffect).toEqual({ code: 'BLUE_PILL', color: 'blue' });
+      expect(json.activePowerup).toMatchObject({ type: { code: 'BLUE_PILL' }, usesRemaining: 2 });
+    });
+
+    it('decrements uses on every settlement and clears the slot at zero', async () => {
+      const round = buildLossRound();
+      const repos = buildSettleRepos(round, {
+        activePowerupType: redPillType,
+        activePowerupUsesRemaining: 1,
+      });
+      registerSettleRepos(round, repos);
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await settleRound(req as any, res);
+
+      expect(repos.mainBetRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: MainBetStatus.LOST,
+          payoutMultiplier: '0.000',
+        }),
+      );
+      expect(repos.userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          activePowerupType: null,
+          activePowerupUsesRemaining: 0,
+        }),
+      );
+      const json = (res.json as jest.Mock).mock.calls[0][0];
+      expect(json.triggeredPowerupEffect).toBeNull();
+      expect(json.expiredPowerup).toEqual({ code: 'RED_PILL', color: 'red' });
+      expect(json.activePowerup).toBeNull();
     });
   });
 
@@ -1359,7 +1586,9 @@ describe('round.controller', () => {
       expect(crateRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ tier: 1, acquiredLevel: 2 }),
       );
-      expect(crateRepo.save).toHaveBeenCalled();
+      expect(crateRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ tier: 1, acquiredLevel: 2 }),
+      );
 
       // Response should include levelUpCrate
       const json = (res.json as jest.Mock).mock.calls[0][0];
