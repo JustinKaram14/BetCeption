@@ -77,6 +77,7 @@ describe('powerups.controller', () => {
         effect: { multiplier: 0.2 },
       },
       roundId: 'round-1',
+      xpBoostExpiresAt: null,
     });
   });
 

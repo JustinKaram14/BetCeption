@@ -21,7 +21,10 @@
                 {{ i18n.t('home.loggedInAs') }}
                 <strong>{{ (user$ | async)?.username }}</strong>
               </div>
-              <button class="btn logout-btn" data-testid="logout-button" type="button" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
+              <div class="user-panel__actions">
+                <button class="btn logout-btn" data-testid="logout-button" type="button" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
+                <button class="btn crate-inventory-btn" type="button" (click)="openCrateInventory()">🎁 Kisten</button>
+              </div>
               <app-level-progress
                 class="user-level-progress"
                 [progress]="walletSummary?.levelProgress ?? null"
@@ -52,13 +55,19 @@
 
 <app-daily-reward-modal
   *ngIf="showRewardModal"
-  [state]="rewardState"
-  (closed)="closeRewardModal()">
+  (closed)="closeRewardModal()"
+  (claimed)="onRewardClaimed($event)">
 </app-daily-reward-modal>
 
 <app-how-to-play-modal
   *ngIf="showHowToPlayModal"
   (closed)="closeHowToPlay()">
 </app-how-to-play-modal>
+
+<app-crate-inventory
+  *ngIf="showCrateInventory"
+  (closed)="closeCrateInventory()"
+  (balanceUpdated)="onCrateBalanceUpdated($event)">
+</app-crate-inventory>
 
 <app-toast-container></app-toast-container>

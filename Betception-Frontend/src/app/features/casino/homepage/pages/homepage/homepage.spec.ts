@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, NEVER } from 'rxjs';
 import { HomepageComponent } from './homepage';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
@@ -29,7 +29,7 @@ describe('HomepageComponent', () => {
   let routerNavigateSpy: jasmine.Spy;
   const apiMock = jasmine.createSpyObj<BetceptionApi>(
     'BetceptionApi',
-    ['getBalanceLeaderboard', 'getLevelLeaderboard', 'getWinningsLeaderboard'],
+    ['getBalanceLeaderboard', 'getLevelLeaderboard', 'getWinningsLeaderboard', 'getDailyRewardStatus', 'claimDailyReward'],
   );
 
   beforeEach(async () => {
@@ -42,7 +42,7 @@ describe('HomepageComponent', () => {
         claimedAmount: 100,
         balance: 1000,
         eligibleAt: new Date().toISOString(),
-      }),
+      } as any),
     );
     apiMock.getBalanceLeaderboard.and.returnValue(
       of({ items: [], currentUserRank: null, total: 0, limit: 10, offset: 0 }),
@@ -53,6 +53,8 @@ describe('HomepageComponent', () => {
     apiMock.getWinningsLeaderboard.and.returnValue(
       of({ items: [], currentUserRank: null, total: 0, limit: 10, offset: 0 }),
     );
+    apiMock.getDailyRewardStatus.and.returnValue(NEVER as any);
+    apiMock.claimDailyReward.and.returnValue(NEVER as any);
 
     await TestBed.configureTestingModule({
       imports: [HomepageComponent],
@@ -73,6 +75,8 @@ describe('HomepageComponent', () => {
     apiMock.getBalanceLeaderboard.calls.reset();
     apiMock.getLevelLeaderboard.calls.reset();
     apiMock.getWinningsLeaderboard.calls.reset();
+    apiMock.getDailyRewardStatus.calls.reset();
+    apiMock.claimDailyReward.calls.reset();
     walletMock.claimDailyReward.calls.reset();
     routerNavigateSpy.calls.reset();
 
@@ -156,7 +160,6 @@ describe('HomepageComponent', () => {
     rewardsButton.click();
     fixture.detectChanges();
 
-    expect(walletMock.claimDailyReward).toHaveBeenCalled();
     expect(fixture.debugElement.query(By.directive(DailyRewardModalComponent))).toBeTruthy();
   });
 
@@ -255,21 +258,15 @@ describe('HomepageComponent', () => {
     expect(component.showRewardModal).toBeFalse();
   });
 
-  it('sets already-claimed state on 409 reward error', () => {
+  it('sets showRewardModal to true when authenticated user calls onRewards', () => {
     authFacadeMock.isAuthenticated.and.returnValue(true);
-    const eligibleAt = '2026-04-30T10:00:00.000Z';
-    walletMock.claimDailyReward.and.returnValue(throwError(() => ({ status: 409, error: { eligibleAt } })));
     component.onRewards();
-    expect(component.rewardState).toEqual({ kind: 'already-claimed', eligibleAt });
+    expect(component.showRewardModal).toBeTrue();
   });
 
-  it('closes reward modal and shows toast on non-409 reward error', () => {
-    authFacadeMock.isAuthenticated.and.returnValue(true);
-    const toastSpy = spyOn((component as any).toast, 'error');
-    walletMock.claimDailyReward.and.returnValue(throwError(() => ({ status: 500, error: { message: 'Server error' } })));
+  it('closes reward modal via closeRewardModal', () => {
     component.showRewardModal = true;
-    component.onRewards();
-    expect(toastSpy).toHaveBeenCalled();
+    component.closeRewardModal();
     expect(component.showRewardModal).toBeFalse();
   });
 

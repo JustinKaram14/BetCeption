@@ -1,17 +1,28 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NEVER } from 'rxjs';
 
 import { DailyRewardModalComponent } from './daily-reward-modal';
+import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 
 describe('DailyRewardModalComponent', () => {
   let component: DailyRewardModalComponent;
   let fixture: ComponentFixture<DailyRewardModalComponent>;
   let clearIntervalSpy: jasmine.Spy;
+  let apiMock: jasmine.SpyObj<BetceptionApi>;
 
   beforeEach(async () => {
     localStorage.clear();
+    apiMock = jasmine.createSpyObj<BetceptionApi>('BetceptionApi', [
+      'getDailyRewardStatus',
+      'claimDailyReward',
+    ]);
+    apiMock.getDailyRewardStatus.and.returnValue(NEVER as any);
+    apiMock.claimDailyReward.and.returnValue(NEVER as any);
+
     await TestBed.configureTestingModule({
       imports: [DailyRewardModalComponent],
+      providers: [{ provide: BetceptionApi, useValue: apiMock }],
     }).compileComponents();
 
     spyOn(window, 'setInterval').and.returnValue(123 as any);
@@ -23,13 +34,10 @@ describe('DailyRewardModalComponent', () => {
 
   it('shows a formatted countdown for success state', () => {
     component.now = new Date('2026-04-28T10:00:00.000Z').getTime();
-    component.state = {
-      kind: 'success',
-      claimedAmount: 250,
-      balance: 1000,
-      eligibleAt: '2026-04-28T11:30:00.000Z',
-    };
-
+    fixture.detectChanges();
+    component.loading = false;
+    component.isEligible = false;
+    component.eligibleAt = '2026-04-28T11:30:00.000Z';
     fixture.detectChanges();
 
     expect(component.countdownText).toBe('1h 30m');
@@ -38,35 +46,27 @@ describe('DailyRewardModalComponent', () => {
 
   it('shows immediate availability when the cooldown has expired', () => {
     component.now = new Date('2026-04-28T12:00:00.000Z').getTime();
-    component.state = {
-      kind: 'already-claimed',
-      eligibleAt: '2026-04-28T11:59:00.000Z',
-    };
-
+    fixture.detectChanges();
+    component.loading = false;
+    component.eligibleAt = '2026-04-28T11:59:00.000Z';
     fixture.detectChanges();
 
     expect(component.countdownText.startsWith('Jetzt')).toBeTrue();
   });
 
-  it('focuses the close button when a dismissible state is rendered', fakeAsync(() => {
-    component.state = { kind: 'not-logged-in' };
-
+  it('renders dialog with correct ARIA attributes', fakeAsync(() => {
     fixture.detectChanges();
     tick();
 
-    const closeButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="daily-reward-close"]');
-    const dialog: HTMLDivElement = fixture.nativeElement.querySelector('[data-testid="daily-reward-card"]');
-
+    const dialog: HTMLDivElement = fixture.nativeElement.querySelector('.dr-card');
     expect(dialog.getAttribute('role')).toBe('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(document.activeElement).toBe(closeButton);
   }));
 
-  it('returns an empty countdown for non-cooldown states', () => {
-    component.state = { kind: 'loading' };
-
+  it('returns an empty countdown when in loading state', () => {
     fixture.detectChanges();
-
+    // loading = true is set by ngOnInit → loadStatus() before NEVER resolves
+    expect(component.loading).toBeTrue();
     expect(component.countdownText).toBe('');
   });
 
@@ -74,11 +74,11 @@ describe('DailyRewardModalComponent', () => {
     spyOn(component.closed, 'emit');
     fixture.detectChanges();
 
-    const overlay = fixture.debugElement.query(By.css('.modal-overlay'));
+    const overlay = fixture.debugElement.query(By.css('.dr-overlay'));
     overlay.triggerEventHandler('click', {
       target: {
         classList: {
-          contains: (value: string) => value === 'modal-overlay',
+          contains: (value: string) => value === 'dr-overlay',
         },
       },
     });
@@ -90,7 +90,7 @@ describe('DailyRewardModalComponent', () => {
     spyOn(component.closed, 'emit');
     fixture.detectChanges();
 
-    const overlay = fixture.debugElement.query(By.css('.modal-overlay'));
+    const overlay = fixture.debugElement.query(By.css('.dr-overlay'));
     overlay.triggerEventHandler('click', {
       target: {
         classList: {
@@ -104,8 +104,9 @@ describe('DailyRewardModalComponent', () => {
 
   it('emits closed when escape is pressed', () => {
     spyOn(component.closed, 'emit');
-    component.state = { kind: 'error', message: 'Oops' };
-
+    fixture.detectChanges();
+    component.error = 'Oops';
+    component.loading = false;
     fixture.detectChanges();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 

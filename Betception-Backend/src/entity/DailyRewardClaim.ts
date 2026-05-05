@@ -22,6 +22,9 @@ export class DailyRewardClaim {
   @Column({ name: 'claim_date', type: 'date' })
   claimDate!: string;
 
+  @Column({ name: 'streak_day', type: 'int', unsigned: true, default: () => '1' })
+  streakDay!: number;
+
   @Column({
     type: 'decimal',
     precision: 18,

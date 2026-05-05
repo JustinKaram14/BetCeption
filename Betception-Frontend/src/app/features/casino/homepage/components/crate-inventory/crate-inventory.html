@@ -1,0 +1,138 @@
+<!-- ── Inventory Modal ──────────────────────────────────────────────────── -->
+<div class="crate-overlay" role="dialog" aria-modal="true">
+  <div class="crate-modal">
+    <div class="crate-modal__header">
+      <h2>🎁 Kisten-Inventar</h2>
+      <button class="crate-close-btn" (click)="onClose()" aria-label="Schließen">✕</button>
+    </div>
+
+    <div class="crate-modal__body">
+      <div class="crate-loading" *ngIf="loading">Lädt...</div>
+      <div class="crate-error"   *ngIf="error">{{ error }}</div>
+
+      <ng-container *ngIf="!loading">
+        <!-- Unopened crates -->
+        <div class="crate-section" *ngIf="unopenedCrates.length > 0">
+          <h3 class="crate-section-title">Ungeöffnet ({{ unopenedCrates.length }})</h3>
+          <div class="crate-grid">
+            <div class="crate-card crate-card--closed"
+                 *ngFor="let crate of unopenedCrates"
+                 [attr.data-tier]="crate.tier">
+              <div class="crate-card__tier-icon">{{ tierEmoji(crate.tier) }}</div>
+              <div class="crate-card__info">
+                <span class="crate-card__label">{{ crate.tierLabel }}</span>
+                <span class="crate-card__level">Level {{ crate.acquiredLevel }}</span>
+              </div>
+              <button class="btn crate-open-btn"
+                      (click)="onOpen(crate)"
+                      [disabled]="spinPhase !== 'idle'">
+                Öffnen
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opened crates -->
+        <div class="crate-section" *ngIf="openedCrates.length > 0">
+          <h3 class="crate-section-title crate-section-title--opened">Geöffnet</h3>
+          <div class="crate-grid crate-grid--opened">
+            <div class="crate-card crate-card--opened"
+                 *ngFor="let crate of openedCrates"
+                 [attr.data-tier]="crate.tier">
+              <div class="crate-card__tier-icon">{{ tierEmoji(crate.tier) }}</div>
+              <div class="crate-card__info">
+                <span class="crate-card__label">{{ crate.tierLabel }}</span>
+                <span class="crate-card__reward" *ngIf="crate.reward?.kind === 'coins'">
+                  🪙 {{ crate.reward!.coins | number:'1.0-0' }} Coins
+                </span>
+                <span class="crate-card__reward" *ngIf="crate.reward?.kind === 'powerup'">
+                  💊 {{ crate.reward!.powerup?.title ?? 'Pille' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="crate-empty" *ngIf="crates.length === 0">
+          Noch keine Kisten vorhanden. Steige im Level auf, um Kisten zu erhalten!
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- ── CS:GO Spin Overlay ──────────────────────────────────────────────── -->
+<div class="spin-overlay" *ngIf="spinPhase !== 'idle'">
+  <div class="spin-scene">
+
+    <!-- Tier badge -->
+    <div class="spin-scene__header">
+      <span class="spin-tier-badge" [attr.data-tier]="spinTier">
+        {{ tierEmoji(spinTier) }} {{ spinTierLabel }}-Kiste
+      </span>
+    </div>
+
+    <!-- ── Loading ── -->
+    <div class="spin-loading-wrap" *ngIf="spinPhase === 'loading'">
+      <div class="spin-spinner"></div>
+      <p class="spin-loading-text">Kiste wird geöffnet…</p>
+    </div>
+
+    <!-- ── Strip ── -->
+    <ng-container *ngIf="spinPhase === 'spinning' || spinPhase === 'done'">
+
+      <div class="spin-viewport-wrap">
+        <!-- Orange arrows mark the winning position -->
+        <div class="spin-arrow spin-arrow--top"></div>
+        <div class="spin-arrow spin-arrow--bottom"></div>
+
+        <!-- Scrollable item strip -->
+        <div class="spin-viewport" #spinViewport>
+          <!-- Edge fade-outs -->
+          <div class="spin-fade spin-fade--left"></div>
+          <div class="spin-fade spin-fade--right"></div>
+          <!-- Centre line -->
+          <div class="spin-center-line"></div>
+
+          <!-- The scrolling track -->
+          <div class="spin-track"
+               [style.transform]="'translateX(' + spinTranslateX + 'px)'"
+               [class.spin-track--animated]="spinAnimating">
+            <div class="spin-item"
+                 *ngFor="let item of spinItems"
+                 [class.spin-item--winner]="item.isWinner && spinPhase === 'done'"
+                 [attr.data-tier]="item.tier">
+              <div class="spin-item__rarity-bar"></div>
+              <div class="spin-item__icon">
+                <ng-container *ngIf="item.kind === 'coins'">🪙</ng-container>
+                <ng-container *ngIf="item.kind === 'powerup'">💊</ng-container>
+              </div>
+              <div class="spin-item__label">{{ item.label }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Result card (appears after strip stops) ── -->
+      <div class="spin-result" *ngIf="spinPhase === 'done'">
+        <div class="spin-result__card" [attr.data-tier]="spinTier">
+          <div class="spin-result__glow"></div>
+          <span class="spin-result__icon">
+            <ng-container *ngIf="spinReward?.kind === 'coins'">🪙</ng-container>
+            <ng-container *ngIf="spinReward?.kind === 'powerup'">💊</ng-container>
+          </span>
+          <span class="spin-result__label">
+            <ng-container *ngIf="spinReward?.kind === 'coins'">
+              +{{ spinReward?.coins ?? 0 | number:'1.0-0' }} Coins erhalten!
+            </ng-container>
+            <ng-container *ngIf="spinReward?.kind === 'powerup'">
+              {{ spinReward?.powerup?.title ?? 'Pille' }} freigeschaltet!
+            </ng-container>
+          </span>
+        </div>
+        <button class="btn spin-result__btn" (click)="onDismissReveal()">Weiter</button>
+      </div>
+
+    </ng-container>
+  </div>
+</div>

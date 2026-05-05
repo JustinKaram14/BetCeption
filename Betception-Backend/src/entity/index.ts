@@ -11,6 +11,7 @@ import { DailyRewardClaim } from './DailyRewardClaim.js';
 import { PowerupType } from './PowerupType.js';
 import { UserPowerup } from './UserPowerup.js';
 import { PowerupConsumption } from './PowerupConsumption.js';
+import { UserCrate } from './UserCrate.js';
 import { LeaderboardBalanceView } from './LeaderboardBalanceView.js';
 import { LeaderboardWeeklyWinningsView } from './LeaderboardWeeklyWinningsView.js';
 import { LeaderboardLevelView } from './LeaderboardLevelView.js';
@@ -31,6 +32,7 @@ export {
   PowerupType,
   UserPowerup,
   PowerupConsumption,
+  UserCrate,
   LeaderboardBalanceView,
   LeaderboardWeeklyWinningsView,
   LeaderboardLevelView,
@@ -51,6 +53,7 @@ export const ENTITIES = [
   PowerupType,
   UserPowerup,
   PowerupConsumption,
+  UserCrate,
   LeaderboardBalanceView,
   LeaderboardWeeklyWinningsView,
   LeaderboardLevelView,

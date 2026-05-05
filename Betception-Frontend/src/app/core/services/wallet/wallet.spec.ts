@@ -40,7 +40,7 @@ describe('Wallet', () => {
   });
 
   it('claimDailyReward delegates to api.claimDailyReward', () => {
-    const reward = { claimedAmount: 100, balance: 1100, eligibleAt: '' };
+    const reward = { claimedAmount: 100, balance: 1100, eligibleAt: '' } as any;
     apiMock.claimDailyReward.and.returnValue(of(reward));
 
     let result: any;

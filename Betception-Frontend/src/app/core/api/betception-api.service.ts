@@ -3,8 +3,10 @@ import {
   BalanceLeaderboardItem,
   ConsumePowerupRequest,
   ConsumePowerupResponse,
+  CrateListResponse,
   CurrentUserResponse,
   DailyRewardResponse,
+  DailyRewardStatusResponse,
   FairnessHistoryQuery,
   FairnessHistoryResponse,
   FairnessRoundResponse,
@@ -12,6 +14,7 @@ import {
   LeaderboardQuery,
   LeaderboardResponse,
   LevelLeaderboardItem,
+  OpenCrateResponse,
   PurchasePowerupRequest,
   PurchasePowerupResponse,
   PowerupListResponse,
@@ -68,6 +71,10 @@ export class BetceptionApi {
 
   claimDailyReward() {
     return this.http.post<DailyRewardResponse>('/rewards/daily/claim');
+  }
+
+  getDailyRewardStatus() {
+    return this.http.get<DailyRewardStatusResponse>('/rewards/daily/status');
   }
 
   listPowerups() {
@@ -146,5 +153,13 @@ export class BetceptionApi {
       '/fairness/rounds/history',
       { params: query },
     );
+  }
+
+  listCrates() {
+    return this.http.get<CrateListResponse>('/crates');
+  }
+
+  openCrate(crateId: string) {
+    return this.http.post<OpenCrateResponse>(`/crates/${crateId}/open`);
   }
 }
