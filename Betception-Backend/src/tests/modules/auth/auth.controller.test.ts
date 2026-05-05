@@ -13,6 +13,9 @@ import * as jwtUtils from '../../../utils/jwt.js';
 import { hashToken } from '../../../utils/tokenHash.js';
 import { env } from '../../../config/env.js';
 
+const invalidCredentialsResponse = { message: 'Invalid email or password' };
+const registrationConflictResponse = { message: 'Registration could not be completed' };
+
 describe('auth.controller', () => {
   describe('register', () => {
     it('creates a new user when email and username are available', async () => {
@@ -53,7 +56,7 @@ describe('auth.controller', () => {
       await register(req as any, res);
 
       expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Email already in use' });
+      expect(res.json).toHaveBeenCalledWith(registrationConflictResponse);
     });
 
     it('rejects duplicate usernames', async () => {
@@ -71,7 +74,42 @@ describe('auth.controller', () => {
       await register(req as any, res);
 
       expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Username already in use' });
+      expect(res.json).toHaveBeenCalledWith(registrationConflictResponse);
+    });
+
+    it('uses the same public response for duplicate email and username conflicts', async () => {
+      const repoMap = new Map<any, any>();
+      const emailRepo = createMockRepository<User>({
+        exist: jest.fn().mockResolvedValue(true),
+      });
+      repoMap.set(User, emailRepo);
+      mockAppDataSourceRepositories(repoMap);
+
+      const emailReq = createMockRequest({
+        body: { email: 'user@example.com', password: 'secret123', username: 'player' },
+      });
+      const emailRes = createMockResponse();
+
+      await register(emailReq as any, emailRes);
+
+      const usernameRepo = createMockRepository<User>({
+        exist: jest.fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(true),
+      });
+      repoMap.set(User, usernameRepo);
+
+      const usernameReq = createMockRequest({
+        body: { email: 'new@example.com', password: 'secret123', username: 'player' },
+      });
+      const usernameRes = createMockResponse();
+
+      await register(usernameReq as any, usernameRes);
+
+      expect(emailRes.status).toHaveBeenCalledWith(409);
+      expect(usernameRes.status).toHaveBeenCalledWith(409);
+      expect(emailRes.json).toHaveBeenCalledWith(registrationConflictResponse);
+      expect(usernameRes.json).toHaveBeenCalledWith(registrationConflictResponse);
     });
   });
 
@@ -119,6 +157,7 @@ describe('auth.controller', () => {
       repoMap.set(User, userRepo);
       repoMap.set(Session, sessionRepo);
       mockAppDataSourceRepositories(repoMap);
+      jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(false);
 
       const req = createMockRequest({
         body: { email: 'missing@example.com', password: 'secret123' },
@@ -128,7 +167,8 @@ describe('auth.controller', () => {
       await login(req as any, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
+      expect(res.json).toHaveBeenCalledWith(invalidCredentialsResponse);
+      expect(passwordUtils.verifyPassword).toHaveBeenCalledWith('secret123', expect.any(String));
     });
 
     it('rejects wrong passwords', async () => {
@@ -152,7 +192,46 @@ describe('auth.controller', () => {
       await login(req as any, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid email or password' });
+      expect(res.json).toHaveBeenCalledWith(invalidCredentialsResponse);
+    });
+
+    it('uses the same public response for unknown users and wrong passwords', async () => {
+      const repoMap = new Map<any, any>();
+      const missingUserRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+      const missingSessionRepo = createMockRepository<Session>();
+      repoMap.set(User, missingUserRepo);
+      repoMap.set(Session, missingSessionRepo);
+      mockAppDataSourceRepositories(repoMap);
+      jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(false);
+
+      const missingReq = createMockRequest({
+        body: { email: 'missing@example.com', password: 'secret123' },
+      });
+      const missingRes = createMockResponse();
+
+      await login(missingReq as any, missingRes);
+
+      const user = { id: '1', email: 'user@example.com', username: 'player', passwordHash: 'hash' } as User;
+      const wrongPasswordRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      const wrongPasswordSessionRepo = createMockRepository<Session>();
+      repoMap.set(User, wrongPasswordRepo);
+      repoMap.set(Session, wrongPasswordSessionRepo);
+
+      const wrongPasswordReq = createMockRequest({
+        body: { email: 'user@example.com', password: 'wrongpassword' },
+      });
+      const wrongPasswordRes = createMockResponse();
+
+      await login(wrongPasswordReq as any, wrongPasswordRes);
+
+      expect(missingRes.status).toHaveBeenCalledWith(401);
+      expect(wrongPasswordRes.status).toHaveBeenCalledWith(401);
+      expect(missingRes.json).toHaveBeenCalledWith(invalidCredentialsResponse);
+      expect(wrongPasswordRes.json).toHaveBeenCalledWith(invalidCredentialsResponse);
     });
   });
 
