@@ -34,6 +34,7 @@
         [class.dr-day--claimed]="getDayState(item.day) === 'claimed'"
         [class.dr-day--current]="getDayState(item.day) === 'current'"
         [class.dr-day--milestone]="item.isMilestone"
+        [class.dr-day--powerup]="item.kind === 'powerup'"
       >
         <span class="dr-day__num">Tag {{ item.day }}</span>
         <span class="dr-day__icon">{{ item.icon }}</span>
