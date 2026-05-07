@@ -59,6 +59,34 @@ describe('BetceptionApi', () => {
     req.flush({ user: {} });
   });
 
+  it('calls GET /users/me/profile for getOwnProfile()', () => {
+    service.getOwnProfile().subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/users/me/profile'));
+    expect(req.request.method).toBe('GET');
+    req.flush({ user: {} });
+  });
+
+  it('calls PATCH /users/me/profile for updateOwnProfile()', () => {
+    service.updateOwnProfile({ username: 'neo', email: 'neo@example.com' }).subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/users/me/profile'));
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ username: 'neo', email: 'neo@example.com' });
+    req.flush({ user: {} });
+  });
+
+  it('calls PATCH /users/me/password for changeOwnPassword()', () => {
+    const payload = {
+      currentPassword: 'current-password',
+      newPassword: 'new-password',
+      confirmPassword: 'new-password',
+    };
+    service.changeOwnPassword(payload).subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/users/me/password'));
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ success: true });
+  });
+
   it('calls GET /wallet/transactions for getWalletTransactions()', () => {
     service.getWalletTransactions().subscribe();
     const req = httpMock.expectOne((r) => r.url.includes('/wallet/transactions'));
@@ -71,6 +99,13 @@ describe('BetceptionApi', () => {
     const req = httpMock.expectOne((r) => r.url.includes('/wallet/transactions'));
     expect(req.request.params.get('limit')).toBe('10');
     req.flush({ items: [] });
+  });
+
+  it('calls GET /wallet/transactions/summary for getWalletTransactionsSummary()', () => {
+    service.getWalletTransactionsSummary().subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/wallet/transactions/summary'));
+    expect(req.request.method).toBe('GET');
+    req.flush({ totalWins: 0, totalLossesOrBets: 0, netTotal: 0, transactionCount: 0 });
   });
 
   it('calls POST /wallet/deposit for depositFunds()', () => {

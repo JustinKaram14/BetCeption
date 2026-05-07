@@ -10,7 +10,7 @@ import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { DailyRewardModalComponent } from '../../components/daily-reward-modal/daily-reward-modal';
 import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
-import { CrateInventoryComponent } from '../../components/crate-inventory/crate-inventory';
+import { ProfileModalComponent } from '../../components/profile-modal/profile-modal';
 import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-footer/disclaimer-footer';
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
 import { SettingsMenuComponent } from '../../../../../shared/ui/settings-menu/settings-menu';
@@ -25,7 +25,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, CrateInventoryComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, ProfileModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -44,9 +44,8 @@ export class HomepageComponent {
     return window.outerWidth <= 900;
   }
 
-  get crateButtonLabel(): string {
-    this.i18n.language();
-    return this.i18n.t('home.crates');
+  get profileButtonLabel(): string {
+    return 'Profil';
   }
 
   @HostListener('window:resize')
@@ -55,7 +54,7 @@ export class HomepageComponent {
   authLoading = false;
   showRewardModal = false;
   showHowToPlayModal = false;
-  showCrateInventory = false;
+  showProfileModal = false;
   walletSummary: WalletSummary | null = null;
 
   constructor() {
@@ -132,12 +131,12 @@ export class HomepageComponent {
     this.showHowToPlayModal = false;
   }
 
-  openCrateInventory() {
-    this.showCrateInventory = true;
+  openProfileModal() {
+    this.showProfileModal = true;
   }
 
-  closeCrateInventory() {
-    this.showCrateInventory = false;
+  closeProfileModal() {
+    this.showProfileModal = false;
   }
 
   onCrateBalanceUpdated(balance: number) {

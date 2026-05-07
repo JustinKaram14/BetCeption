@@ -3,6 +3,7 @@ import {
   DestroyRef,
   ElementRef,
   EventEmitter,
+  Input,
   OnInit,
   Output,
   ViewChild,
@@ -44,6 +45,8 @@ type SpinPhase = 'idle' | 'loading' | 'spinning' | 'done';
   styleUrl: './crate-inventory.css',
 })
 export class CrateInventoryComponent implements OnInit {
+  @Input() embedded = false;
+
   @Output() closed = new EventEmitter<void>();
   @Output() balanceUpdated = new EventEmitter<number>();
 
