@@ -58,6 +58,36 @@ export async function getWalletTransactions(req: Request, res: Response) {
   });
 }
 
+export async function getWalletTransactionsSummary(req: Request, res: Response) {
+  const userId = String(req.user?.sub);
+  const repo = AppDataSource.getRepository(WalletTransaction);
+  const items = await repo.find({
+    where: { user: { id: userId } },
+    select: ['amount'],
+  });
+
+  let totalWinsCents = 0n;
+  let totalLossesOrBetsCents = 0n;
+  let netTotalCents = 0n;
+
+  for (const tx of items) {
+    const amountCents = decimalToCents(tx.amount);
+    netTotalCents += amountCents;
+    if (amountCents > 0n) {
+      totalWinsCents += amountCents;
+    } else if (amountCents < 0n) {
+      totalLossesOrBetsCents += -amountCents;
+    }
+  }
+
+  return res.json({
+    totalWins: centsToNumber(totalWinsCents),
+    totalLossesOrBets: centsToNumber(totalLossesOrBetsCents),
+    netTotal: centsToNumber(netTotalCents),
+    transactionCount: items.length,
+  });
+}
+
 class WalletAdjustmentError extends Error {
   constructor(
     public statusCode: number,

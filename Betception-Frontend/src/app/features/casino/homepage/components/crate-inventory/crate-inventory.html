@@ -1,6 +1,11 @@
-<div class="crate-overlay" role="dialog" aria-modal="true">
-  <div class="crate-modal">
-    <div class="crate-modal__header">
+<div
+  class="crate-overlay"
+  [class.crate-overlay--embedded]="embedded"
+  [attr.role]="embedded ? null : 'dialog'"
+  [attr.aria-modal]="embedded ? null : true"
+>
+  <div class="crate-modal" [class.crate-modal--embedded]="embedded">
+    <div class="crate-modal__header" *ngIf="!embedded">
       <div>
         <span class="crate-kicker">{{ i18n.t('crate.inventory') }}</span>
         <div class="crate-title-row">
@@ -16,7 +21,7 @@
       <button class="crate-close-btn" type="button" (click)="onClose()" [attr.aria-label]="i18n.t('common.close')">X</button>
     </div>
 
-    <div class="crate-modal__body">
+    <div class="crate-modal__body" [class.crate-modal__body--embedded]="embedded">
       <div class="crate-loading" *ngIf="loading">
         <div class="crate-spinner"></div>
         <span>{{ i18n.t('crate.loading') }}</span>

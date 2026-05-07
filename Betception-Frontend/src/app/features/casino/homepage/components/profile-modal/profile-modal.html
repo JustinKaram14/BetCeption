@@ -1,0 +1,226 @@
+<div class="profile-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+  <section class="profile-modal">
+    <header class="profile-header">
+      <div>
+        <span class="profile-kicker">Account</span>
+        <div class="profile-title-row">
+          <svg class="profile-title-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+            <path d="M4 21a8 8 0 0 1 16 0" />
+          </svg>
+          <h2 id="profile-modal-title">Profil</h2>
+        </div>
+      </div>
+      <button class="profile-close" type="button" (click)="close()" aria-label="Schliessen">X</button>
+    </header>
+
+    <nav class="profile-tabs" aria-label="Profilbereiche">
+      <button
+        type="button"
+        class="profile-tab"
+        *ngFor="let tab of tabs"
+        [class.active]="tab.id === activeTab"
+        (click)="selectTab(tab.id)"
+      >
+        {{ tab.label }}
+      </button>
+    </nav>
+
+    <div class="profile-content">
+      <section class="transactions-tab" *ngIf="activeTab === 'transactions'">
+        <div class="profile-state" *ngIf="transactionsLoading && transactions.length === 0">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span>Transaktionen werden geladen...</span>
+        </div>
+
+        <div class="profile-error" *ngIf="transactionsError">
+          {{ transactionsError }}
+          <button class="btn profile-inline-btn" type="button" (click)="loadTransactions(true)">Neu laden</button>
+        </div>
+
+        <ng-container *ngIf="!transactionsLoading || transactions.length > 0">
+          <div class="summary-grid" *ngIf="transactionSummary">
+            <div class="summary-card summary-card--positive">
+              <span>Gesamt gewonnen</span>
+              <strong>{{ formatCoins(transactionSummary.totalWins) }}</strong>
+            </div>
+            <div class="summary-card summary-card--negative">
+              <span>Eingesetzt / verloren</span>
+              <strong>{{ formatCoins(transactionSummary.totalLossesOrBets) }}</strong>
+            </div>
+            <div class="summary-card" [class.summary-card--positive]="transactionSummary.netTotal > 0" [class.summary-card--negative]="transactionSummary.netTotal < 0">
+              <span>Netto-Ergebnis</span>
+              <strong>{{ formatSignedCoins(transactionSummary.netTotal) }}</strong>
+            </div>
+            <div class="summary-card">
+              <span>Transaktionen</span>
+              <strong>{{ transactionSummary.transactionCount | number:'1.0-0' }}</strong>
+            </div>
+          </div>
+
+          <div class="transaction-empty" *ngIf="!transactionsError && !transactionsLoading && transactions.length === 0">
+            Noch keine Wallet-Transaktionen vorhanden.
+          </div>
+
+          <div class="transaction-list" *ngIf="transactions.length > 0">
+            <div class="transaction-row transaction-row--head">
+              <span>Zeitpunkt</span>
+              <span>Typ</span>
+              <span>Referenz</span>
+              <span>Betrag</span>
+            </div>
+            <div
+              class="transaction-row"
+              *ngFor="let transaction of transactions"
+              [class.transaction-row--positive]="transaction.amount > 0"
+              [class.transaction-row--negative]="transaction.amount < 0"
+            >
+              <span class="transaction-date">{{ formatDate(transaction.createdAt) }}</span>
+              <span>{{ kindLabel(transaction.kind) }}</span>
+              <span class="transaction-ref">{{ referenceLabel(transaction) }}</span>
+              <strong class="transaction-amount">{{ formatSignedCoins(transaction.amount) }}</strong>
+            </div>
+          </div>
+
+          <div class="transactions-footer" *ngIf="transactions.length > 0">
+            <span>{{ transactions.length | number:'1.0-0' }} / {{ transactionTotal | number:'1.0-0' }}</span>
+            <button
+              class="btn profile-inline-btn"
+              type="button"
+              (click)="loadMoreTransactions()"
+              [disabled]="!hasMoreTransactions || transactionsLoading"
+            >
+              Mehr laden
+            </button>
+          </div>
+        </ng-container>
+      </section>
+
+      <section class="crates-tab" *ngIf="activeTab === 'crates'">
+        <app-crate-inventory
+          [embedded]="true"
+          (balanceUpdated)="onCrateBalanceUpdated($event)"
+        ></app-crate-inventory>
+      </section>
+
+      <section class="profile-tab-panel" *ngIf="activeTab === 'profile'">
+        <div class="profile-state" *ngIf="profileLoading">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span>Profildaten werden geladen...</span>
+        </div>
+
+        <div class="profile-error" *ngIf="profileError">
+          {{ profileError }}
+          <button class="btn profile-inline-btn" type="button" (click)="loadProfile()">Neu laden</button>
+        </div>
+
+        <ng-container *ngIf="profile && !profileLoading">
+          <div class="profile-overview">
+            <div class="profile-fact">
+              <span>Username</span>
+              <strong>{{ profile.username }}</strong>
+            </div>
+            <div class="profile-fact">
+              <span>E-Mail</span>
+              <strong>{{ profile.email }}</strong>
+            </div>
+            <div class="profile-fact">
+              <span>Level</span>
+              <strong>{{ profile.level }}</strong>
+            </div>
+            <div class="profile-fact">
+              <span>Guthaben</span>
+              <strong>{{ formatCoins(profile.balance) }}</strong>
+            </div>
+            <div class="profile-fact">
+              <span>Erstellt</span>
+              <strong>{{ formatDate(profile.createdAt) }}</strong>
+            </div>
+          </div>
+
+          <app-level-progress
+            class="profile-level-progress"
+            [progress]="profile.levelProgress"
+            orientation="horizontal"
+          ></app-level-progress>
+
+          <div class="profile-forms">
+            <form class="profile-form" (ngSubmit)="saveProfile()" #profileEditForm="ngForm">
+              <h3>Accountdaten</h3>
+              <label>
+                <span>Username</span>
+                <input
+                  name="username"
+                  type="text"
+                  minlength="3"
+                  maxlength="32"
+                  required
+                  [(ngModel)]="profileForm.username"
+                />
+              </label>
+              <label>
+                <span>E-Mail</span>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  [(ngModel)]="profileForm.email"
+                />
+              </label>
+              <label>
+                <span>Passwort</span>
+                <input type="text" value="••••••••" disabled aria-label="Passwort verborgen" />
+              </label>
+              <button class="btn profile-submit" type="submit" [disabled]="profileSaving || profileEditForm.invalid">
+                {{ profileSaving ? 'Speichert...' : 'Profil speichern' }}
+              </button>
+            </form>
+
+            <form class="profile-form" (ngSubmit)="changePassword()" #passwordEditForm="ngForm">
+              <h3>Passwort aendern</h3>
+              <label>
+                <span>Aktuelles Passwort</span>
+                <input
+                  name="currentPassword"
+                  type="password"
+                  required
+                  autocomplete="current-password"
+                  [(ngModel)]="passwordForm.currentPassword"
+                />
+              </label>
+              <label>
+                <span>Neues Passwort</span>
+                <input
+                  name="newPassword"
+                  type="password"
+                  required
+                  minlength="8"
+                  autocomplete="new-password"
+                  [(ngModel)]="passwordForm.newPassword"
+                />
+              </label>
+              <label>
+                <span>Neues Passwort bestaetigen</span>
+                <input
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  minlength="8"
+                  autocomplete="new-password"
+                  [(ngModel)]="passwordForm.confirmPassword"
+                />
+              </label>
+              <button class="btn profile-submit" type="submit" [disabled]="passwordSaving || passwordEditForm.invalid">
+                {{ passwordSaving ? 'Speichert...' : 'Passwort speichern' }}
+              </button>
+            </form>
+          </div>
+        </ng-container>
+      </section>
+    </div>
+  </section>
+</div>

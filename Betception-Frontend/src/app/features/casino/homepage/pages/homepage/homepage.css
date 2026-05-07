@@ -103,7 +103,7 @@ app-disclaimer-footer{
 .user-panel__actions .btn{
   flex:1 1 auto;min-width:120px;
 }
-.crate-inventory-btn{
+.profile-btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   color:rgba(200,160,255,.92);
   border-color:rgba(150,80,255,.55);
@@ -115,7 +115,7 @@ app-disclaimer-footer{
   width:17px;height:17px;flex:0 0 17px;fill:none;stroke:currentColor;stroke-width:1.8;
   stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px currentColor)
 }
-.crate-inventory-btn:hover:not(:disabled){
+.profile-btn:hover:not(:disabled){
   background:linear-gradient(180deg,rgba(150,80,255,.18),rgba(20,8,30,.95));
   color:#e8d5ff;
   border-color:rgba(180,100,255,.9);

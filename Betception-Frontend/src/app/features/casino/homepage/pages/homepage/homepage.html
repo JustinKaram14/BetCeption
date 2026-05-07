@@ -23,14 +23,12 @@
               </div>
               <div class="user-panel__actions">
                 <button class="btn logout-btn" data-testid="logout-button" type="button" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
-                <button class="btn crate-inventory-btn" type="button" (click)="openCrateInventory()">
+                <button class="btn profile-btn" data-testid="profile-button" type="button" (click)="openProfileModal()">
                   <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M4 8 12 4l8 4-8 4-8-4Z" />
-                    <path d="M4 8v8l8 4 8-4V8" />
-                    <path d="M12 12v8" />
-                    <path d="m8 10 8-4" />
+                    <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                    <path d="M4 21a8 8 0 0 1 16 0" />
                   </svg>
-                  {{ crateButtonLabel }}
+                  {{ profileButtonLabel }}
                 </button>
               </div>
               <app-level-progress
@@ -72,10 +70,10 @@
   (closed)="closeHowToPlay()">
 </app-how-to-play-modal>
 
-<app-crate-inventory
-  *ngIf="showCrateInventory"
-  (closed)="closeCrateInventory()"
+<app-profile-modal
+  *ngIf="showProfileModal"
+  (closed)="closeProfileModal()"
   (balanceUpdated)="onCrateBalanceUpdated($event)">
-</app-crate-inventory>
+</app-profile-modal>
 
 <app-toast-container></app-toast-container>

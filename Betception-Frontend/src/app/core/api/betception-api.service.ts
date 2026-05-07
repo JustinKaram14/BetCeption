@@ -19,6 +19,7 @@ import {
   LeaderboardResponse,
   LevelLeaderboardItem,
   OpenCrateResponse,
+  OwnProfileResponse,
   PurchasePowerupRequest,
   PurchasePowerupResponse,
   PowerupListResponse,
@@ -29,7 +30,11 @@ import {
   WalletSummaryResponse,
   WalletTransactionsQuery,
   WalletTransactionsResponse,
+  WalletTransactionsSummaryResponse,
   WinningsLeaderboardItem,
+  ChangeOwnPasswordRequest,
+  ChangeOwnPasswordResponse,
+  UpdateOwnProfileRequest,
   UserResponse,
 } from './api.types';
 import { HttpClient } from './http-client';
@@ -48,6 +53,18 @@ export class BetceptionApi {
     return this.http.get<UserResponse>(`/users/${userId}`);
   }
 
+  getOwnProfile() {
+    return this.http.get<OwnProfileResponse>('/users/me/profile');
+  }
+
+  updateOwnProfile(payload: UpdateOwnProfileRequest) {
+    return this.http.patch<OwnProfileResponse>('/users/me/profile', payload);
+  }
+
+  changeOwnPassword(payload: ChangeOwnPasswordRequest) {
+    return this.http.patch<ChangeOwnPasswordResponse>('/users/me/password', payload);
+  }
+
   getWalletSummary() {
     return this.http.get<WalletSummaryResponse>('/wallet');
   }
@@ -57,6 +74,10 @@ export class BetceptionApi {
       '/wallet/transactions',
       { params: query },
     );
+  }
+
+  getWalletTransactionsSummary() {
+    return this.http.get<WalletTransactionsSummaryResponse>('/wallet/transactions/summary');
   }
 
   depositFunds(payload: WalletAdjustmentRequest) {

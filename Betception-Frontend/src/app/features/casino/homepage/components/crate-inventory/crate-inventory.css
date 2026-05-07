@@ -2,6 +2,8 @@
 .crate-overlay,.spin-overlay{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.84)}
 .spin-overlay{z-index:950}
 .crate-modal,.spin-scene{width:min(760px,96vw);max-height:88vh;overflow:auto;border:1px solid rgba(0,255,255,.42);border-radius:8px;background:linear-gradient(180deg,rgba(14,18,30,.97),rgba(5,8,16,.98))}
+.crate-overlay--embedded{position:static;inset:auto;z-index:auto;display:block;padding:0;background:transparent}
+.crate-modal--embedded{width:100%;max-height:none;overflow:visible;border:0;border-radius:0;background:transparent}
 .crate-modal__header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:20px 22px;border-bottom:1px solid rgba(0,255,255,.18)}
 .crate-kicker{display:block;margin-bottom:4px;color:rgba(255,255,255,.42);font-size:.68rem;text-transform:uppercase;letter-spacing:.16em}
 .crate-modal h2{margin:0;font-family:var(--font-display);font-size:1.65rem;color:var(--secondary-glow)}
@@ -9,6 +11,7 @@
 .crate-close-btn{width:34px;height:34px;border:1px solid rgba(255,255,255,.18);border-radius:8px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.72);font-weight:900;cursor:pointer}
 .crate-close-btn:hover{color:#fff;border-color:rgba(0,255,255,.5)}
 .crate-modal__body{padding:20px 22px;display:flex;flex-direction:column;gap:18px}
+.crate-modal__body--embedded{padding:0}
 .crate-section-title{margin:0 0 10px;color:rgba(255,255,255,.62);font-size:.78rem;text-transform:uppercase;letter-spacing:.12em}
 .crate-section-title--opened{color:rgba(255,255,255,.38)}
 .crate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}

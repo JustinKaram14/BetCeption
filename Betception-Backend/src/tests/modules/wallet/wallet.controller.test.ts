@@ -1,6 +1,7 @@
 import {
   getWalletSummary,
   getWalletTransactions,
+  getWalletTransactionsSummary,
   depositFunds,
   withdrawFunds,
 } from '../../../modules/wallet/wallet.controller.js';
@@ -109,6 +110,37 @@ describe('wallet.controller', () => {
             createdAt: new Date('2025-01-01T00:00:00Z'),
           },
         ],
+      });
+    });
+  });
+
+  describe('getWalletTransactionsSummary', () => {
+    it('summarizes only transactions queried for the authenticated user', async () => {
+      const transactions = [
+        { amount: '100.25' },
+        { amount: '-35.10' },
+        { amount: '10.00' },
+        { amount: '-5.15' },
+      ] as WalletTransaction[];
+      const walletRepo = createMockRepository<WalletTransaction>({
+        find: jest.fn().mockResolvedValue(transactions),
+      });
+      mockAppDataSourceRepositories(new Map([[WalletTransaction, walletRepo]]));
+
+      const req = createMockRequest({ user: { sub: '1' } as any });
+      const res = createMockResponse();
+
+      await getWalletTransactionsSummary(req, res);
+
+      expect(walletRepo.find).toHaveBeenCalledWith({
+        where: { user: { id: '1' } },
+        select: ['amount'],
+      });
+      expect(res.json).toHaveBeenCalledWith({
+        totalWins: 110.25,
+        totalLossesOrBets: 40.25,
+        netTotal: 70,
+        transactionCount: 4,
       });
     });
   });
