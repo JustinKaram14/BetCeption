@@ -128,6 +128,14 @@ export enum SideBetStatus {
   VOID = 'void',
 }
 
+export type BetceptionSideBetCode =
+  | 'CARD_EXACT'
+  | 'WINNER'
+  | 'PILL_TRIGGER'
+  | 'PLAYER_BLACKJACK';
+
+export type BetceptionWinner = 'PLAYER' | 'DEALER';
+
 export enum WalletTransactionKind {
   DEPOSIT = 'deposit',
   WITHDRAW = 'withdraw',
@@ -355,8 +363,26 @@ export interface RoundSideBet {
   predictedSuit: CardSuit | null;
   predictedRank: CardRank | null;
   targetContext: SideBetTargetContext;
+  selection: Record<string, unknown> | null;
   settledAmount: string | null;
   settledAt: string | null;
+}
+
+export interface BetceptionResolutionStep {
+  id: string;
+  kind: 'MAIN_BET' | BetceptionSideBetCode | string;
+  status: MainBetStatus | SideBetStatus;
+  amount: string;
+  payout: string | null;
+  multiplier: string | null;
+  selection: Record<string, unknown> | null;
+}
+
+export interface BetceptionResolution {
+  depthLevel: number;
+  totalPayout: string;
+  totalStake: string;
+  steps: BetceptionResolutionStep[];
 }
 
 export interface FairnessPayload {
@@ -389,15 +415,18 @@ export interface RoundResponse {
   activePowerup?: ActivePowerup | null;
   triggeredPowerupEffect?: TriggeredPowerupEffect | null;
   expiredPowerup?: TriggeredPowerupEffect | null;
+  betceptionResolution?: BetceptionResolution | null;
 }
 
 export interface SideBetPlacement {
-  typeId: number;
+  typeId?: number;
+  typeCode?: BetceptionSideBetCode;
   amount: number;
   predictedColor?: SideBetColor;
   predictedSuit?: CardSuit;
   predictedRank?: CardRank;
   targetContext?: SideBetTargetContext;
+  selection?: Record<string, unknown>;
 }
 
 export interface StartRoundRequest {

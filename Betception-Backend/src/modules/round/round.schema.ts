@@ -15,20 +15,35 @@ const moneySchema = z
     message: 'Amount must have at most two decimal places',
   });
 
+export const BetceptionSideBetCodeSchema = z.enum([
+  'CARD_EXACT',
+  'WINNER',
+  'PILL_TRIGGER',
+  'PLAYER_BLACKJACK',
+]);
+
+const sideBetSelectionSchema = z.record(z.unknown()).optional();
+
 export const StartRoundSchema = z.object({
   betAmount: moneySchema,
   sideBets: z
     .array(
-      z.object({
-        typeId: z.number().int().positive(),
-        amount: moneySchema,
-        predictedColor: z.nativeEnum(SideBetColor).optional(),
-        predictedSuit: z.nativeEnum(CardSuit).optional(),
-        predictedRank: z.nativeEnum(CardRank).optional(),
-        targetContext: z.nativeEnum(SideBetTargetContext).optional(),
-      }),
+      z
+        .object({
+          typeId: z.number().int().positive().optional(),
+          typeCode: BetceptionSideBetCodeSchema.optional(),
+          amount: moneySchema,
+          predictedColor: z.nativeEnum(SideBetColor).optional(),
+          predictedSuit: z.nativeEnum(CardSuit).optional(),
+          predictedRank: z.nativeEnum(CardRank).optional(),
+          targetContext: z.nativeEnum(SideBetTargetContext).optional(),
+          selection: sideBetSelectionSchema,
+        })
+        .refine((value) => value.typeId || value.typeCode, {
+          message: 'typeId or typeCode is required',
+        }),
     )
-    .max(5)
+    .max(24)
     .default([]),
 });
 
@@ -43,5 +58,6 @@ export const SwapCardBodySchema = z.object({
 });
 
 export type StartRoundInput = z.infer<typeof StartRoundSchema>;
+export type BetceptionSideBetCode = z.infer<typeof BetceptionSideBetCodeSchema>;
 export type RoundIdParams = z.infer<typeof RoundIdParamsSchema>;
 export type SwapCardBody = z.infer<typeof SwapCardBodySchema>;

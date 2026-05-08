@@ -10,4 +10,17 @@ describe('HeroComponent', () => {
     const fixture = TestBed.createComponent(HeroComponent);
     expect(fixture.componentInstance).toBeTruthy();
   });
+
+  it('renders the localized homepage subtitle', async () => {
+    await TestBed.configureTestingModule({
+      imports: [HeroComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(HeroComponent);
+    fixture.componentInstance.i18n.setLanguage('en');
+    fixture.detectChanges();
+
+    const subtitle: HTMLElement = fixture.nativeElement.querySelector('.subtitle');
+    expect(subtitle.textContent?.trim()).toBe('Where reality is just another variable.');
+  });
 });

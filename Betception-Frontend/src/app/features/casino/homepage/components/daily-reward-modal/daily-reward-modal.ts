@@ -12,6 +12,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import type { DayRewardScheduleItem } from '../../../../../core/api/api.types';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 /** Kept for backward-compat with any external consumers; no longer used internally. */
 export type DailyRewardState =
@@ -31,6 +32,7 @@ export type DailyRewardState =
 export class DailyRewardModalComponent implements OnInit, OnDestroy {
   private readonly api = inject(BetceptionApi);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18n);
 
   @Output() closed = new EventEmitter<void>();
   @Output() claimed = new EventEmitter<number>();
@@ -72,22 +74,24 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
 
   get countdownText(): string {
     if (this.loading) return '';
-    if (!this.eligibleAt) return 'Jetzt verfügbar';
+    if (!this.eligibleAt) return this.i18n.t('daily.availableNow');
     const diff = new Date(this.eligibleAt).getTime() - this.now;
-    if (diff <= 0) return 'Jetzt verfügbar';
+    if (diff <= 0) return this.i18n.t('daily.availableNow');
     const hours = Math.floor(diff / 3_600_000);
     const minutes = Math.floor((diff % 3_600_000) / 60_000);
     return `${hours}h ${minutes}m`;
   }
 
   rewardKindLabel(item: DayRewardScheduleItem): string {
-    return item.kind === 'powerup' ? 'Pille' : 'Coins';
+    return item.kind === 'powerup' ? this.i18n.t('daily.kindPill') : this.i18n.t('common.coins');
   }
 
   rewardLabel(item: DayRewardScheduleItem): string {
     if (item.kind === 'coins') {
-      return `${item.coins?.toLocaleString('de-DE') ?? item.label} Coins`;
+      return `${item.coins?.toLocaleString(this.numberLocale()) ?? item.label} ${this.i18n.t('common.coins')}`;
     }
+    if (item.powerupCode === 'RED_PILL') return this.i18n.t('powerup.redPill');
+    if (item.powerupCode === 'BLUE_PILL') return this.i18n.t('powerup.bluePill');
     return item.powerupLabel ?? item.label;
   }
 
@@ -117,7 +121,7 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.claiming = false;
-          this.error = err?.error?.message ?? 'Fehler beim Abholen';
+          this.error = err?.error?.message ?? this.i18n.t('daily.claimError');
         },
       });
   }
@@ -152,9 +156,19 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loading = false;
-          this.error = 'Status konnte nicht geladen werden';
+          this.error = this.i18n.t('daily.statusLoadError');
         },
       });
+  }
+
+  private numberLocale() {
+    const locales: Record<string, string> = {
+      de: 'de-DE',
+      en: 'en-US',
+      es: 'es-ES',
+      fr: 'fr-FR',
+    };
+    return locales[this.i18n.language()] ?? 'de-DE';
   }
 }
 

@@ -56,6 +56,8 @@ type PreparedSideBet = {
   predictedSuit: CardSuit | null;
   predictedRank: CardRank | null;
   targetContext: SideBetTargetContext;
+  selectionJson: Record<string, unknown> | null;
+  odds: string | null;
 };
 
 type HandEvaluation = {
@@ -79,6 +81,36 @@ type TriggeredPowerupEffect = {
   color: PowerPillColor;
 };
 
+type BetceptionSideBetCode =
+  | 'CARD_EXACT'
+  | 'WINNER'
+  | 'PILL_TRIGGER'
+  | 'PLAYER_BLACKJACK';
+
+type BetceptionWinner = 'PLAYER' | 'DEALER';
+
+type SideBetEvaluationContext = {
+  rawMainBetStatus: MainBetStatus;
+  triggeredPowerupEffect: TriggeredPowerupEffect | null;
+};
+
+type BetceptionResolutionStep = {
+  id: string;
+  kind: 'MAIN_BET' | BetceptionSideBetCode | string;
+  status: MainBetStatus | SideBetStatus;
+  amount: string;
+  payout: string | null;
+  multiplier: string | null;
+  selection: Record<string, unknown> | null;
+};
+
+type BetceptionResolution = {
+  depthLevel: number;
+  totalPayout: string;
+  totalStake: string;
+  steps: BetceptionResolutionStep[];
+};
+
 const ACTIVE_ROUND_STATUSES = [
   RoundStatus.CREATED,
   RoundStatus.DEALING,
@@ -89,6 +121,20 @@ const PAYOUT_BLACKJACK = 2.5;
 const PAYOUT_WIN = 2;
 const PAYOUT_PUSH = 1;
 const PAYOUT_LOSS = 0;
+
+const BETCEPTION_SIDE_BET_CODES = new Set<string>([
+  'CARD_EXACT',
+  'WINNER',
+  'PILL_TRIGGER',
+  'PLAYER_BLACKJACK',
+]);
+
+const DEFAULT_BETCEPTION_ODDS: Record<BetceptionSideBetCode, number> = {
+  CARD_EXACT: 12,
+  WINNER: 2,
+  PILL_TRIGGER: 5,
+  PLAYER_BLACKJACK: 12,
+};
 
 const TEN_VALUE_RANKS = new Set([CardRank.KING, CardRank.QUEEN, CardRank.JACK, CardRank.TEN]);
 
@@ -131,7 +177,7 @@ export async function startRound(
         throw new RoundFlowError(400, 'INVALID_BET', 'Bet amount must be positive');
       }
 
-      const preparedSideBets = await prepareSideBets(input.sideBets ?? [], manager);
+      const preparedSideBets = await prepareSideBets(input.sideBets ?? [], manager, user);
       const totalSideBetCents = preparedSideBets.reduce(
         (sum, sideBet) => sum + sideBet.amountCents,
         0n,
@@ -213,7 +259,8 @@ export async function startRound(
           predictedSuit: prepared.predictedSuit,
           predictedRank: prepared.predictedRank,
           targetContext: prepared.targetContext,
-          odds: prepared.type.baseOdds,
+          selectionJson: prepared.selectionJson,
+          odds: prepared.odds,
         });
         await sideBetRepo.save(sideBet);
         savedSideBets.push(sideBet);
@@ -484,9 +531,14 @@ export async function settleRound(
         (sideBet) => sideBet.user.id === userId,
       );
       const settledSideBetStatuses: SideBetStatus[] = [];
+      const sideBetResolutionSteps: BetceptionResolutionStep[] = [];
+      let sideBetPayoutTotal = 0n;
       for (const sideBet of playerSideBets) {
         if (sideBet.status !== SideBetStatus.PLACED) continue;
-        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id);
+        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id, 0, {
+          rawMainBetStatus: resolution.status,
+          triggeredPowerupEffect,
+        });
         settledSideBetStatuses.push(outcome.status);
         const payoutDecimal = multiplyMoney(sideBet.amount, outcome.multiplier);
         const payoutCents = decimalToCents(payoutDecimal);
@@ -496,6 +548,7 @@ export async function settleRound(
         sideBet.settledAmount = payoutDecimal;
         sideBet.odds = sideBet.odds ?? sideBet.type.baseOdds;
         await sideBetRepo.save(sideBet);
+        sideBetResolutionSteps.push(buildSideBetResolutionStep(sideBet));
 
         if (payoutCents > 0n) {
           const kind = outcome.isRefund
@@ -511,6 +564,7 @@ export async function settleRound(
             }),
           );
           pendingCredit += payoutCents;
+          sideBetPayoutTotal += payoutCents;
         }
       }
 
@@ -547,6 +601,14 @@ export async function settleRound(
         }
       }
 
+      const betceptionResolution = buildBetceptionResolution({
+        mainBet,
+        sideBets: playerSideBets,
+        sideBetResolutionSteps,
+        mainBetPayoutCents: settledAmountCents,
+        sideBetPayoutTotal,
+      });
+
       const progress = {
         xpGained: boostedXp,
         progress: buildLevelProgress(user),
@@ -554,6 +616,7 @@ export async function settleRound(
         activePowerup: serializeActivePowerup(user),
         triggeredPowerupEffect,
         expiredPowerup,
+        betceptionResolution,
       };
       await userRepo.save(user);
 
@@ -580,6 +643,7 @@ export async function settleRound(
       activePowerup: settlementProgress.activePowerup,
       triggeredPowerupEffect: settlementProgress.triggeredPowerupEffect,
       expiredPowerup: settlementProgress.expiredPowerup,
+      betceptionResolution: settlementProgress.betceptionResolution,
     });
   } catch (error) {
     return handleRoundError(res, error);
@@ -732,16 +796,27 @@ async function ensureNoActiveRound(userId: string, manager: EntityManager) {
 async function prepareSideBets(
   inputs: StartRoundInput['sideBets'],
   manager: EntityManager,
+  user: User,
 ): Promise<PreparedSideBet[]> {
   if (!inputs.length) return [];
 
   const typeRepo = manager.getRepository(SidebetType);
-  const uniqueIds = [...new Set(inputs.map((item) => item.typeId))];
-  const types = await typeRepo.findBy({ id: In(uniqueIds) });
+  const uniqueIds = [...new Set(inputs.map((item) => item.typeId).filter((id): id is number => typeof id === 'number'))];
+  const uniqueCodes = [...new Set(inputs.flatMap((item) => item.typeCode ? [item.typeCode] : []))];
+  const where = [
+    ...(uniqueIds.length ? [{ id: In(uniqueIds) }] : []),
+    ...(uniqueCodes.length ? [{ code: In(uniqueCodes) }] : []),
+  ];
+  const types = where.length ? await typeRepo.find({ where }) : [];
   const typeMap = new Map(types.map((type) => [type.id, type]));
+  const typeCodeMap = new Map(types.map((type) => [type.code, type]));
 
   return inputs.map((input, index) => {
-    const type = typeMap.get(input.typeId);
+    const type = typeof input.typeId === 'number'
+      ? typeMap.get(input.typeId)
+      : input.typeCode
+        ? typeCodeMap.get(input.typeCode)
+        : undefined;
     if (!type) {
       throw new RoundFlowError(
         400,
@@ -760,6 +835,8 @@ async function prepareSideBets(
     }
 
     validateSideBetPayload(type, input, index);
+    const selectionJson = buildSideBetSelection(type, input, user);
+    const odds = resolvePreparedSideBetOdds(type, user);
 
     return {
       type,
@@ -768,6 +845,8 @@ async function prepareSideBets(
       predictedSuit: input.predictedSuit ?? null,
       predictedRank: input.predictedRank ?? null,
       targetContext: input.targetContext ?? SideBetTargetContext.FIRST_PLAYER_CARD,
+      selectionJson,
+      odds,
     };
   });
 }
@@ -778,6 +857,30 @@ function validateSideBetPayload(
   index: number,
 ) {
   const code = type.code;
+  if (code === 'CARD_EXACT') {
+    if (!input.predictedSuit || !input.predictedRank) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        `predictedSuit and predictedRank missing for side bet ${index + 1}`,
+      );
+    }
+    return;
+  }
+  if (code === 'WINNER') {
+    const winner = readWinnerSelection(input.selection);
+    if (!winner) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        `winner missing for side bet ${index + 1}`,
+      );
+    }
+    return;
+  }
+  if (code === 'PILL_TRIGGER' || code === 'PLAYER_BLACKJACK') {
+    return;
+  }
   if (code === 'FIRST_CARD_COLOR' && !input.predictedColor) {
     throw new RoundFlowError(
       400,
@@ -799,6 +902,65 @@ function validateSideBetPayload(
       `predictedRank missing for side bet ${index + 1}`,
     );
   }
+}
+
+function buildSideBetSelection(
+  type: SidebetType,
+  input: StartRoundInput['sideBets'][number],
+  user: User,
+): Record<string, unknown> | null {
+  if (type.code === 'CARD_EXACT') {
+    return {
+      suit: input.predictedSuit,
+      rank: input.predictedRank,
+    };
+  }
+  if (type.code === 'WINNER') {
+    return {
+      winner: readWinnerSelection(input.selection),
+    };
+  }
+  if (type.code === 'PILL_TRIGGER') {
+    const code = user.activePowerupType?.code;
+    if (!isPowerPillCode(code)) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        'Pill trigger bet requires an active power pill',
+      );
+    }
+    return {
+      powerupCode: code,
+      color: getPowerPillColor(code),
+    };
+  }
+  if (type.code === 'PLAYER_BLACKJACK') {
+    return {
+      target: 'PLAYER',
+    };
+  }
+  return input.selection ?? null;
+}
+
+function resolvePreparedSideBetOdds(type: SidebetType, user: User): string | null {
+  if (type.code === 'PILL_TRIGGER') {
+    const code = user.activePowerupType?.code;
+    if (code === 'BLUE_PILL') return '8.000';
+    if (code === 'RED_PILL') return '5.000';
+  }
+  if (isBetceptionSideBetCode(type.code)) {
+    return (type.baseOdds ?? DEFAULT_BETCEPTION_ODDS[type.code].toFixed(3));
+  }
+  return type.baseOdds;
+}
+
+function readWinnerSelection(selection: Record<string, unknown> | undefined): BetceptionWinner | null {
+  const winner = selection?.['winner'];
+  return winner === 'PLAYER' || winner === 'DEALER' ? winner : null;
+}
+
+function isBetceptionSideBetCode(code: string): code is BetceptionSideBetCode {
+  return BETCEPTION_SIDE_BET_CODES.has(code);
 }
 
 async function loadRoundForUser(
@@ -907,6 +1069,7 @@ function serializeRound(
       predictedSuit: sideBet.predictedSuit,
       predictedRank: sideBet.predictedRank,
       targetContext: sideBet.targetContext,
+      selection: sideBet.selectionJson ?? null,
       settledAmount: sideBet.settledAmount,
       settledAt: sideBet.settledAt ?? null,
     }));
@@ -1144,11 +1307,75 @@ function resolveSideBetOutcome(won: boolean, oddsValue: number): SideBetResoluti
     : { status: SideBetStatus.LOST, multiplier: 0, isRefund: false };
 }
 
+function buildBetceptionResolution(input: {
+  mainBet: MainBet;
+  sideBets: (SideBet & { type: SidebetType })[];
+  sideBetResolutionSteps: BetceptionResolutionStep[];
+  mainBetPayoutCents: bigint;
+  sideBetPayoutTotal: bigint;
+}): BetceptionResolution {
+  const totalStakeCents = input.sideBets.reduce(
+    (sum, sideBet) => sum + decimalToCents(sideBet.amount),
+    decimalToCents(input.mainBet.amount),
+  );
+  const totalPayoutCents = input.mainBetPayoutCents + input.sideBetPayoutTotal;
+  return {
+    depthLevel: 1 + countBetceptionCategories(input.sideBets),
+    totalPayout: centsToDecimal(totalPayoutCents),
+    totalStake: centsToDecimal(totalStakeCents),
+    steps: [
+      {
+        id: `main-${input.mainBet.id}`,
+        kind: 'MAIN_BET',
+        status: input.mainBet.status,
+        amount: input.mainBet.amount,
+        payout: input.mainBet.settledAmount,
+        multiplier: input.mainBet.payoutMultiplier,
+        selection: null,
+      },
+      ...input.sideBetResolutionSteps,
+    ],
+  };
+}
+
+function buildSideBetResolutionStep(
+  sideBet: SideBet & { type: SidebetType },
+): BetceptionResolutionStep {
+  return {
+    id: `side-${sideBet.id}`,
+    kind: sideBet.type.code,
+    status: sideBet.status,
+    amount: sideBet.amount,
+    payout: sideBet.settledAmount,
+    multiplier: sideBet.odds,
+    selection: sideBetSelectionPayload(sideBet),
+  };
+}
+
+function countBetceptionCategories(sideBets: (SideBet & { type: SidebetType })[]) {
+  return new Set(
+    sideBets
+      .filter((sideBet) => BETCEPTION_SIDE_BET_CODES.has(sideBet.type.code))
+      .map((sideBet) => sideBet.type.code === 'CARD_EXACT' ? 'CARD_EXACT' : sideBet.type.code),
+  ).size;
+}
+
+function sideBetSelectionPayload(sideBet: SideBet): Record<string, unknown> | null {
+  if (sideBet.selectionJson) return sideBet.selectionJson;
+  const selection: Record<string, unknown> = {};
+  if (sideBet.predictedColor) selection['color'] = sideBet.predictedColor;
+  if (sideBet.predictedSuit) selection['suit'] = sideBet.predictedSuit;
+  if (sideBet.predictedRank) selection['rank'] = sideBet.predictedRank;
+  if (sideBet.targetContext) selection['targetContext'] = sideBet.targetContext;
+  return Object.keys(selection).length ? selection : null;
+}
+
 function evaluateSideBet(
   sideBet: SideBet & { type: SidebetType },
   round: RoundWithRelations,
   userId: string,
   oddsBonus = 0,
+  context?: SideBetEvaluationContext,
 ): SideBetResolution {
   const baseOddsValue = Number(sideBet.odds ?? sideBet.type.baseOdds ?? 0);
   const oddsValue =
@@ -1159,12 +1386,48 @@ function evaluateSideBet(
     return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
   }
 
+  const code = sideBet.type.code;
+  if (code === 'CARD_EXACT') {
+    const player = getPlayerHand(round, userId);
+    const won = !!player?.cards?.some(
+      (card) => card.rank === sideBet.predictedRank && card.suit === sideBet.predictedSuit,
+    );
+    return resolveSideBetOutcome(won, oddsValue);
+  }
+
+  if (code === 'WINNER') {
+    const winner = readWinnerSelection(sideBet.selectionJson ?? undefined);
+    if (!winner || !context) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    if (context.rawMainBetStatus === MainBetStatus.PUSH || context.rawMainBetStatus === MainBetStatus.REFUNDED) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    const won =
+      (winner === 'PLAYER' && context.rawMainBetStatus === MainBetStatus.WON) ||
+      (winner === 'DEALER' && context.rawMainBetStatus === MainBetStatus.LOST);
+    return resolveSideBetOutcome(won, oddsValue);
+  }
+
+  if (code === 'PILL_TRIGGER') {
+    const expectedCode = sideBet.selectionJson?.['powerupCode'];
+    if (typeof expectedCode !== 'string' || !isPowerPillCode(expectedCode) || !context) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    return resolveSideBetOutcome(context.triggeredPowerupEffect?.code === expectedCode, oddsValue);
+  }
+
+  if (code === 'PLAYER_BLACKJACK') {
+    const player = getPlayerHand(round, userId);
+    const won = player?.status === HandStatus.BLACKJACK && (player.cards?.length ?? 0) === 2;
+    return resolveSideBetOutcome(won, oddsValue);
+  }
+
   const targetCard = getTargetCard(round, sideBet.targetContext, userId);
   if (!targetCard) {
     return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
   }
 
-  const code = sideBet.type.code;
   if (code === 'FIRST_CARD_COLOR') {
     const actualColor =
       targetCard.suit === CardSuit.HEARTS || targetCard.suit === CardSuit.DIAMONDS

@@ -14,6 +14,7 @@ describe('Controls', () => {
 
     fixture = TestBed.createComponent(Controls);
     component = fixture.componentInstance;
+    component.i18n.setLanguage('de');
     fixture.detectChanges();
   });
 
