@@ -31,6 +31,50 @@ type TranslationKey =
   | 'blackjack.won'
   | 'blackjack.wonHeadline'
   | 'blackjack.wonPayout'
+  | 'betception.available'
+  | 'betception.betceptionPayout'
+  | 'betception.bigWin'
+  | 'betception.blackjackBet'
+  | 'betception.blackjackShort'
+  | 'betception.blackjackSubtitle'
+  | 'betception.blackjackTitle'
+  | 'betception.cardExactShort'
+  | 'betception.cardExactSubtitle'
+  | 'betception.cardExactTitle'
+  | 'betception.cardBets'
+  | 'betception.clearSelection'
+  | 'betception.confirmAndDeal'
+  | 'betception.continueWithout'
+  | 'betception.dealerWins'
+  | 'betception.depthLevel'
+  | 'betception.finalPayout'
+  | 'betception.hit'
+  | 'betception.mainBet'
+  | 'betception.megaWin'
+  | 'betception.miss'
+  | 'betception.pending'
+  | 'betception.pillShort'
+  | 'betception.pillSubtitle'
+  | 'betception.pillTitle'
+  | 'betception.pillBet'
+  | 'betception.pillUnavailable'
+  | 'betception.playerWins'
+  | 'betception.refund'
+  | 'betception.selectedCard'
+  | 'betception.sideBetTotal'
+  | 'betception.subtitle'
+  | 'betception.superWin'
+  | 'betception.suitClubs'
+  | 'betception.suitDiamonds'
+  | 'betception.suitHearts'
+  | 'betception.suitSpades'
+  | 'betception.title'
+  | 'betception.totalPayout'
+  | 'betception.winnerShort'
+  | 'betception.winnerSubtitle'
+  | 'betception.winnerTitle'
+  | 'betception.winnerBet'
+  | 'betception.winCelebration'
   | 'common.cancel'
   | 'common.close'
   | 'common.coins'
@@ -68,17 +112,29 @@ type TranslationKey =
   | 'crate.tier.epic'
   | 'crate.tier.rare'
   | 'crate.tierBadge'
+  | 'crate.levelUpReceived'
+  | 'crate.levelUpTitle'
   | 'crate.title'
   | 'crate.unopened'
   | 'daily.alreadyCopy'
   | 'daily.alreadyTitle'
   | 'daily.availableNow'
   | 'daily.balance'
+  | 'daily.claimError'
+  | 'daily.claiming'
+  | 'daily.claimToday'
+  | 'daily.dayLabel'
   | 'daily.errorTitle'
+  | 'daily.kindPill'
+  | 'daily.kicker'
   | 'daily.loading'
   | 'daily.next'
   | 'daily.notLoggedCopy'
   | 'daily.notLoggedTitle'
+  | 'daily.rewardReceived'
+  | 'daily.statusLoadError'
+  | 'daily.streakBadge'
+  | 'daily.streakReset'
   | 'daily.title'
   | 'footer.copy'
   | 'footer.disclaimer'
@@ -96,6 +152,7 @@ type TranslationKey =
   | 'home.enter'
   | 'home.loggedInAs'
   | 'home.logout'
+  | 'home.subtitle'
   | 'home.toast.accountCreated'
   | 'home.toast.actionFailed'
   | 'home.toast.loginRequiredPlay'
@@ -187,6 +244,50 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': 'Gewonnen!',
     'blackjack.wonHeadline': 'GEWONNEN!',
     'blackjack.wonPayout': 'Gewonnen! Auszahlung: {{amount}} Coins',
+    'betception.available': 'Verfügbar',
+    'betception.betceptionPayout': 'Betception-Auszahlung',
+    'betception.bigWin': 'BIG WIN',
+    'betception.blackjackBet': 'Blackjack-Wette',
+    'betception.blackjackShort': 'Blackjack',
+    'betception.blackjackSubtitle': 'Wette darauf, dass du mit den ersten zwei Karten Blackjack triffst. Auszahlung 12:1.',
+    'betception.blackjackTitle': 'Blackjack treffen',
+    'betception.cardExactShort': 'Karte',
+    'betception.cardExactSubtitle': 'Wähle exakte Karten, die in deiner Hand auftauchen sollen. Auszahlung 12:1.',
+    'betception.cardExactTitle': 'Kartenwette',
+    'betception.cardBets': 'Kartenwetten',
+    'betception.clearSelection': 'Auswahl leeren',
+    'betception.confirmAndDeal': 'Wetten bestätigen & austeilen',
+    'betception.continueWithout': 'Ohne Sidebets austeilen',
+    'betception.dealerWins': 'Dealer gewinnt',
+    'betception.depthLevel': 'Depth Level',
+    'betception.finalPayout': 'Gesamtauszahlung',
+    'betception.hit': 'Hit',
+    'betception.mainBet': 'Main Bet',
+    'betception.megaWin': 'MEGA WIN',
+    'betception.miss': 'Miss',
+    'betception.pending': 'Offen',
+    'betception.pillShort': 'Pille',
+    'betception.pillSubtitle': 'Wette darauf, dass deine aktive Pille diese Runde triggert. Auszahlung {{odds}}.',
+    'betception.pillTitle': 'Pillen-Trigger',
+    'betception.pillBet': 'Pillenwette',
+    'betception.pillUnavailable': 'Keine aktive Pille im Slot.',
+    'betception.playerWins': 'Spieler gewinnt',
+    'betception.refund': 'Zurück',
+    'betception.selectedCard': 'Ausgewählte Karte',
+    'betception.sideBetTotal': 'Sidebets',
+    'betception.subtitle': 'Setze auf Karten, Gewinner, Pillen-Trigger oder Blackjack. Alles wird nach der Runde nacheinander abgerechnet.',
+    'betception.superWin': 'SUPER WIN',
+    'betception.suitClubs': 'Kreuz',
+    'betception.suitDiamonds': 'Karo',
+    'betception.suitHearts': 'Herz',
+    'betception.suitSpades': 'Pik',
+    'betception.title': 'Betception Bets',
+    'betception.totalPayout': 'Auszahlung',
+    'betception.winnerShort': 'Gewinner',
+    'betception.winnerSubtitle': 'Wette darauf, ob Spieler oder Dealer diese Runde gewinnt. Push gibt den Einsatz zurück.',
+    'betception.winnerTitle': 'Gewinnerwette',
+    'betception.winnerBet': 'Gewinnerwette',
+    'betception.winCelebration': 'WIN',
     'common.cancel': 'Abbrechen',
     'common.close': 'Schließen',
     'common.coins': 'Coins',
@@ -224,17 +325,29 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'crate.tier.epic': 'Episch',
     'crate.tier.rare': 'Selten',
     'crate.tierBadge': '{{tier}} {{label}}-Kiste',
+    'crate.levelUpReceived': 'Du hast eine {{tier}} Kiste erhalten!',
+    'crate.levelUpTitle': 'Level Up!',
     'crate.title': 'Kisten',
     'crate.unopened': 'Ungeöffnet ({{count}})',
     'daily.alreadyCopy': 'Du hast deine tägliche Belohnung heute schon abgeholt.',
     'daily.alreadyTitle': 'Bereits abgeholt!',
     'daily.availableNow': 'Jetzt verfügbar!',
     'daily.balance': 'Neues Guthaben',
+    'daily.claimError': 'Fehler beim Abholen',
+    'daily.claiming': 'Wird abgeholt...',
+    'daily.claimToday': 'Heute abholen',
+    'daily.dayLabel': 'Tag {{day}}',
     'daily.errorTitle': 'Fehler',
+    'daily.kindPill': 'Pille',
+    'daily.kicker': '30 Tage',
     'daily.loading': 'Belohnung wird geladen...',
     'daily.next': 'Nächste Belohnung in',
     'daily.notLoggedCopy': 'Bitte logge dich ein, um deine tägliche Belohnung abzuholen.',
     'daily.notLoggedTitle': 'Nicht eingeloggt',
+    'daily.rewardReceived': '{{reward}} erhalten',
+    'daily.statusLoadError': 'Status konnte nicht geladen werden',
+    'daily.streakBadge': '{{days}} Tage Streak',
+    'daily.streakReset': 'Dein Streak wurde zurückgesetzt. Heute startest du wieder bei Tag 1.',
     'daily.title': 'Tägliche Belohnung!',
     'footer.copy': 'BetCeption verwendet ausschließlich virtuelles Spielgeld ohne realen Gegenwert. Es sind keine Ein- oder Auszahlungen möglich. Dies ist kein Glücksspiel im Sinne des GlüStV.',
     'footer.disclaimer': 'Kein Echtgeld - Nur virtuelle Coins.',
@@ -252,6 +365,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'home.enter': 'BETCEPTION STARTEN',
     'home.loggedInAs': 'Eingeloggt als',
     'home.logout': 'Abmelden',
+    'home.subtitle': 'Wo Realität nur eine weitere Variable ist.',
     'home.toast.accountCreated': 'Account erstellt! Eingeloggt als {{name}}.',
     'home.toast.actionFailed': 'Aktion fehlgeschlagen. Bitte versuche es erneut.',
     'home.toast.loginRequiredPlay': 'Bitte logge dich ein, um Betception Blackjack zu spielen.',
@@ -338,6 +452,50 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': 'Won!',
     'blackjack.wonHeadline': 'WON!',
     'blackjack.wonPayout': 'Won! Payout: {{amount}} Coins',
+    'betception.available': 'Available',
+    'betception.betceptionPayout': 'Betception payout',
+    'betception.bigWin': 'BIG WIN',
+    'betception.blackjackBet': 'Blackjack Bet',
+    'betception.blackjackShort': 'Blackjack',
+    'betception.blackjackSubtitle': 'Bet that your first two cards hit blackjack. Payout 12:1.',
+    'betception.blackjackTitle': 'Hit Blackjack',
+    'betception.cardExactShort': 'Card',
+    'betception.cardExactSubtitle': 'Pick exact cards that should appear in your hand. Payout 12:1.',
+    'betception.cardExactTitle': 'Card Bet',
+    'betception.cardBets': 'Card Bets',
+    'betception.clearSelection': 'Clear selection',
+    'betception.confirmAndDeal': 'Confirm bets & deal',
+    'betception.continueWithout': 'Deal without sidebets',
+    'betception.dealerWins': 'Dealer wins',
+    'betception.depthLevel': 'Depth Level',
+    'betception.finalPayout': 'Total payout',
+    'betception.hit': 'Hit',
+    'betception.mainBet': 'Main Bet',
+    'betception.megaWin': 'MEGA WIN',
+    'betception.miss': 'Miss',
+    'betception.pending': 'Pending',
+    'betception.pillShort': 'Pill',
+    'betception.pillSubtitle': 'Bet that your active pill triggers this round. Payout {{odds}}.',
+    'betception.pillTitle': 'Pill Trigger',
+    'betception.pillBet': 'Pill Bet',
+    'betception.pillUnavailable': 'No active pill in the slot.',
+    'betception.playerWins': 'Player wins',
+    'betception.refund': 'Refund',
+    'betception.selectedCard': 'Selected card',
+    'betception.sideBetTotal': 'Sidebets',
+    'betception.subtitle': 'Bet on cards, winner, pill trigger, or blackjack. Everything resolves step by step after the round.',
+    'betception.superWin': 'SUPER WIN',
+    'betception.suitClubs': 'Clubs',
+    'betception.suitDiamonds': 'Diamonds',
+    'betception.suitHearts': 'Hearts',
+    'betception.suitSpades': 'Spades',
+    'betception.title': 'Betception Bets',
+    'betception.totalPayout': 'Payout',
+    'betception.winnerShort': 'Winner',
+    'betception.winnerSubtitle': 'Bet whether player or dealer wins this round. Push refunds the stake.',
+    'betception.winnerTitle': 'Winner Bet',
+    'betception.winnerBet': 'Winner Bet',
+    'betception.winCelebration': 'WIN',
     'common.cancel': 'Cancel',
     'common.close': 'Close',
     'common.coins': 'Coins',
@@ -375,17 +533,29 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'crate.tier.epic': 'Epic',
     'crate.tier.rare': 'Rare',
     'crate.tierBadge': '{{tier}} {{label}} Crate',
+    'crate.levelUpReceived': 'You received a {{tier}} crate!',
+    'crate.levelUpTitle': 'Level Up!',
     'crate.title': 'Crates',
     'crate.unopened': 'Unopened ({{count}})',
     'daily.alreadyCopy': 'You already claimed your daily reward today.',
     'daily.alreadyTitle': 'Already claimed!',
     'daily.availableNow': 'Available now!',
     'daily.balance': 'New balance',
+    'daily.claimError': 'Failed to claim reward',
+    'daily.claiming': 'Claiming...',
+    'daily.claimToday': 'Claim today',
+    'daily.dayLabel': 'Day {{day}}',
     'daily.errorTitle': 'Error',
+    'daily.kindPill': 'Pill',
+    'daily.kicker': '30 Days',
     'daily.loading': 'Loading reward...',
     'daily.next': 'Next reward in',
     'daily.notLoggedCopy': 'Please log in to claim your daily reward.',
     'daily.notLoggedTitle': 'Not logged in',
+    'daily.rewardReceived': 'Received {{reward}}',
+    'daily.statusLoadError': 'Could not load reward status',
+    'daily.streakBadge': '{{days}} day streak',
+    'daily.streakReset': 'Your streak was reset. Today you start again at day 1.',
     'daily.title': 'Daily Reward!',
     'footer.copy': 'BetCeption only uses virtual play money with no real-world value. Deposits and withdrawals are not possible. This is not gambling.',
     'footer.disclaimer': 'No real money - virtual coins only.',
@@ -403,6 +573,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'home.enter': 'ENTER BETCEPTION',
     'home.loggedInAs': 'Logged in as',
     'home.logout': 'Log out',
+    'home.subtitle': 'Where reality is just another variable.',
     'home.toast.accountCreated': 'Account created! Logged in as {{name}}.',
     'home.toast.actionFailed': 'Action failed. Please try again.',
     'home.toast.loginRequiredPlay': 'Please log in to play Betception Blackjack.',
@@ -489,6 +660,50 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': '¡Ganaste!',
     'blackjack.wonHeadline': '¡GANASTE!',
     'blackjack.wonPayout': '¡Ganaste! Pago: {{amount}} Coins',
+    'betception.available': 'Disponible',
+    'betception.betceptionPayout': 'Pago Betception',
+    'betception.bigWin': 'GRAN PREMIO',
+    'betception.blackjackBet': 'Apuesta Blackjack',
+    'betception.blackjackShort': 'Blackjack',
+    'betception.blackjackSubtitle': 'Apuesta a que tus dos primeras cartas hacen blackjack. Pago 12:1.',
+    'betception.blackjackTitle': 'Sacar Blackjack',
+    'betception.cardExactShort': 'Carta',
+    'betception.cardExactSubtitle': 'Elige cartas exactas que deben aparecer en tu mano. Pago 12:1.',
+    'betception.cardExactTitle': 'Apuesta de carta',
+    'betception.cardBets': 'Apuestas de carta',
+    'betception.clearSelection': 'Limpiar seleccion',
+    'betception.confirmAndDeal': 'Confirmar apuestas y dar',
+    'betception.continueWithout': 'Dar sin apuestas extra',
+    'betception.dealerWins': 'Gana dealer',
+    'betception.depthLevel': 'Nivel de profundidad',
+    'betception.finalPayout': 'Pago total',
+    'betception.hit': 'Acierto',
+    'betception.mainBet': 'Apuesta principal',
+    'betception.megaWin': 'MEGA PREMIO',
+    'betception.miss': 'Fallo',
+    'betception.pending': 'Pendiente',
+    'betception.pillShort': 'Pildora',
+    'betception.pillSubtitle': 'Apuesta a que tu pildora activa se dispara esta ronda. Pago {{odds}}.',
+    'betception.pillTitle': 'Trigger de pildora',
+    'betception.pillBet': 'Apuesta de pildora',
+    'betception.pillUnavailable': 'No hay pildora activa.',
+    'betception.playerWins': 'Gana jugador',
+    'betception.refund': 'Devuelta',
+    'betception.selectedCard': 'Carta seleccionada',
+    'betception.sideBetTotal': 'Apuestas extra',
+    'betception.subtitle': 'Apuesta a cartas, ganador, trigger de pildora o blackjack. Todo se resuelve paso a paso tras la ronda.',
+    'betception.superWin': 'SUPER PREMIO',
+    'betception.suitClubs': 'Treboles',
+    'betception.suitDiamonds': 'Diamantes',
+    'betception.suitHearts': 'Corazones',
+    'betception.suitSpades': 'Picas',
+    'betception.title': 'Apuestas Betception',
+    'betception.totalPayout': 'Pago',
+    'betception.winnerShort': 'Ganador',
+    'betception.winnerSubtitle': 'Apuesta si gana jugador o dealer. Push devuelve la apuesta.',
+    'betception.winnerTitle': 'Apuesta ganador',
+    'betception.winnerBet': 'Apuesta ganador',
+    'betception.winCelebration': 'PREMIO',
     'common.cancel': 'Cancelar',
     'common.close': 'Cerrar',
     'common.coins': 'Coins',
@@ -526,17 +741,29 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'crate.tier.epic': 'Épica',
     'crate.tier.rare': 'Rara',
     'crate.tierBadge': '{{tier}} Caja {{label}}',
+    'crate.levelUpReceived': 'Has recibido una caja {{tier}}.',
+    'crate.levelUpTitle': '¡Subida de nivel!',
     'crate.title': 'Cajas',
     'crate.unopened': 'Sin abrir ({{count}})',
     'daily.alreadyCopy': 'Ya reclamaste tu recompensa diaria hoy.',
     'daily.alreadyTitle': '¡Ya reclamada!',
     'daily.availableNow': '¡Disponible ahora!',
     'daily.balance': 'Nuevo saldo',
+    'daily.claimError': 'No se pudo reclamar la recompensa',
+    'daily.claiming': 'Reclamando...',
+    'daily.claimToday': 'Reclamar hoy',
+    'daily.dayLabel': 'Día {{day}}',
     'daily.errorTitle': 'Error',
+    'daily.kindPill': 'Píldora',
+    'daily.kicker': '30 días',
     'daily.loading': 'Cargando recompensa...',
     'daily.next': 'Próxima recompensa en',
     'daily.notLoggedCopy': 'Inicia sesión para reclamar tu recompensa diaria.',
     'daily.notLoggedTitle': 'No has iniciado sesión',
+    'daily.rewardReceived': 'Has recibido {{reward}}',
+    'daily.statusLoadError': 'No se pudo cargar el estado',
+    'daily.streakBadge': 'Racha de {{days}} días',
+    'daily.streakReset': 'Tu racha se reinició. Hoy empiezas de nuevo en el día 1.',
     'daily.title': '¡Recompensa diaria!',
     'footer.copy': 'BetCeption usa solo monedas virtuales sin valor real. No hay depósitos ni retiros. Esto no es juego de azar.',
     'footer.disclaimer': 'Sin dinero real - solo coins virtuales.',
@@ -554,6 +781,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'home.enter': 'ENTRAR A BETCEPTION',
     'home.loggedInAs': 'Sesión iniciada como',
     'home.logout': 'Cerrar sesión',
+    'home.subtitle': 'Donde la realidad es solo otra variable.',
     'home.toast.accountCreated': '¡Cuenta creada! Sesión iniciada como {{name}}.',
     'home.toast.actionFailed': 'No se pudo completar la acción. Inténtalo de nuevo.',
     'home.toast.loginRequiredPlay': 'Inicia sesión para jugar Betception Blackjack.',
@@ -640,6 +868,50 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'blackjack.won': 'Gagné !',
     'blackjack.wonHeadline': 'GAGNÉ !',
     'blackjack.wonPayout': 'Gagné ! Gain : {{amount}} Coins',
+    'betception.available': 'Disponible',
+    'betception.betceptionPayout': 'Gain Betception',
+    'betception.bigWin': 'GROS GAIN',
+    'betception.blackjackBet': 'Pari blackjack',
+    'betception.blackjackShort': 'Blackjack',
+    'betception.blackjackSubtitle': 'Parie que tes deux premieres cartes font blackjack. Gain 12:1.',
+    'betception.blackjackTitle': 'Toucher Blackjack',
+    'betception.cardExactShort': 'Carte',
+    'betception.cardExactSubtitle': 'Choisis les cartes exactes qui doivent apparaitre dans ta main. Gain 12:1.',
+    'betception.cardExactTitle': 'Pari carte',
+    'betception.cardBets': 'Paris cartes',
+    'betception.clearSelection': 'Vider selection',
+    'betception.confirmAndDeal': 'Confirmer et donner',
+    'betception.continueWithout': 'Donner sans paris extra',
+    'betception.dealerWins': 'Dealer gagne',
+    'betception.depthLevel': 'Niveau de profondeur',
+    'betception.finalPayout': 'Gain total',
+    'betception.hit': 'Touche',
+    'betception.mainBet': 'Mise principale',
+    'betception.megaWin': 'MEGA GAIN',
+    'betception.miss': 'Rate',
+    'betception.pending': 'En attente',
+    'betception.pillShort': 'Pilule',
+    'betception.pillSubtitle': 'Parie que ta pilule active se declenche cette manche. Gain {{odds}}.',
+    'betception.pillTitle': 'Trigger pilule',
+    'betception.pillBet': 'Pari pilule',
+    'betception.pillUnavailable': 'Aucune pilule active.',
+    'betception.playerWins': 'Joueur gagne',
+    'betception.refund': 'Rembourse',
+    'betception.selectedCard': 'Carte choisie',
+    'betception.sideBetTotal': 'Paris extra',
+    'betception.subtitle': 'Parie sur les cartes, le gagnant, le trigger de pilule ou blackjack. Tout se regle etape par etape apres la manche.',
+    'betception.superWin': 'SUPER GAIN',
+    'betception.suitClubs': 'Trefle',
+    'betception.suitDiamonds': 'Carreau',
+    'betception.suitHearts': 'Coeur',
+    'betception.suitSpades': 'Pique',
+    'betception.title': 'Paris Betception',
+    'betception.totalPayout': 'Gain',
+    'betception.winnerShort': 'Gagnant',
+    'betception.winnerSubtitle': 'Parie si le joueur ou le dealer gagne. Push rembourse la mise.',
+    'betception.winnerTitle': 'Pari gagnant',
+    'betception.winnerBet': 'Pari gagnant',
+    'betception.winCelebration': 'GAIN',
     'common.cancel': 'Annuler',
     'common.close': 'Fermer',
     'common.coins': 'Coins',
@@ -677,17 +949,29 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'crate.tier.epic': 'Épique',
     'crate.tier.rare': 'Rare',
     'crate.tierBadge': '{{tier}} Caisse {{label}}',
+    'crate.levelUpReceived': 'Tu as reçu une caisse {{tier}} !',
+    'crate.levelUpTitle': 'Niveau supérieur !',
     'crate.title': 'Caisses',
     'crate.unopened': 'Non ouvertes ({{count}})',
     'daily.alreadyCopy': "Tu as déjà récupéré ta récompense quotidienne aujourd'hui.",
     'daily.alreadyTitle': 'Déjà récupérée !',
     'daily.availableNow': 'Disponible maintenant!',
     'daily.balance': 'Nouveau solde',
+    'daily.claimError': 'Impossible de récupérer la récompense',
+    'daily.claiming': 'Récupération...',
+    'daily.claimToday': "Récupérer aujourd'hui",
+    'daily.dayLabel': 'Jour {{day}}',
     'daily.errorTitle': 'Erreur',
+    'daily.kindPill': 'Pilule',
+    'daily.kicker': '30 jours',
     'daily.loading': 'Chargement de la récompense...',
     'daily.next': 'Prochaine récompense dans',
     'daily.notLoggedCopy': 'Connecte-toi pour récupérer ta récompense quotidienne.',
     'daily.notLoggedTitle': 'Non connecté',
+    'daily.rewardReceived': '{{reward}} reçu',
+    'daily.statusLoadError': 'Impossible de charger le statut',
+    'daily.streakBadge': 'Série de {{days}} jours',
+    'daily.streakReset': 'Ta série a été réinitialisée. Aujourd’hui tu recommences au jour 1.',
     'daily.title': 'Récompense quotidienne !',
     'footer.copy': "BetCeption utilise uniquement des coins virtuels sans valeur réelle. Les dépôts et retraits sont impossibles. Ce n'est pas un jeu d'argent.",
     'footer.disclaimer': "Pas d'argent réel - seulement des coins virtuels.",
@@ -705,6 +989,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'home.enter': 'ENTRER DANS BETCEPTION',
     'home.loggedInAs': 'Connecté en tant que',
     'home.logout': 'Déconnexion',
+    'home.subtitle': "Où la réalité n'est qu'une variable de plus.",
     'home.toast.accountCreated': 'Compte créé ! Connecté en tant que {{name}}.',
     'home.toast.actionFailed': "L'action n'a pas abouti. Réessaie.",
     'home.toast.loginRequiredPlay': 'Connecte-toi pour jouer à Betception Blackjack.',

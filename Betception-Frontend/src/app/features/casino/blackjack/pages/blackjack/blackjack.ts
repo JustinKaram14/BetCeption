@@ -1,9 +1,14 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { DecimalPipe, NgClass, NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActivePowerup,
+  BetceptionResolution,
+  BetceptionResolutionStep,
+  BetceptionWinner,
+  CardRank,
+  CardSuit,
   HandOwnerType,
   HandStatus,
   InventoryPowerup,
@@ -14,6 +19,9 @@ import {
   PowerPillColor,
   PowerupType,
   RoundState,
+  RoundSideBet,
+  SideBetPlacement,
+  SideBetStatus,
   RoundStatus,
 } from '../../../../../core/api/api.types';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
@@ -26,11 +34,30 @@ import { I18n } from '../../../../../core/i18n/i18n';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 
 type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
+type BetceptionView = 'overview' | 'cards' | 'winner' | 'pill' | 'blackjack';
+type PayoutTier = 'none' | 'win' | 'big' | 'super' | 'mega';
+type BetceptionPanelRow = {
+  id: string;
+  label: string;
+  value: string;
+  items?: string[];
+  status?: string;
+  mark?: string;
+  payout?: string;
+  revealed?: boolean;
+  won?: boolean;
+  lost?: boolean;
+  push?: boolean;
+};
+type IndexedResolutionStep = {
+  step: BetceptionResolutionStep;
+  index: number;
+};
 
 @Component({
   selector: 'app-blackjack',
   standalone: true,
-  imports: [NgIf, RouterLink, Table, Controls, PowerupMenu, LevelProgressComponent],
+  imports: [NgIf, NgFor, NgClass, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe, RouterLink, Table, Controls, PowerupMenu, LevelProgressComponent],
   templateUrl: './blackjack.html',
   styleUrl: './blackjack.css'
 })
@@ -44,6 +71,24 @@ export class Blackjack implements OnInit {
   private readonly dealerFollowUpCardStepMs = 360;
   private readonly cardAnimationMs = 650;
   private readonly resultPauseMs = 250;
+  private readonly betceptionStepMs = 620;
+  readonly betceptionChips = [1, 5, 25, 100, 500];
+  readonly cardSuits = [CardSuit.SPADES, CardSuit.HEARTS, CardSuit.DIAMONDS, CardSuit.CLUBS];
+  readonly cardRanks = [
+    CardRank.ACE,
+    CardRank.TWO,
+    CardRank.THREE,
+    CardRank.FOUR,
+    CardRank.FIVE,
+    CardRank.SIX,
+    CardRank.SEVEN,
+    CardRank.EIGHT,
+    CardRank.NINE,
+    CardRank.TEN,
+    CardRank.JACK,
+    CardRank.QUEEN,
+    CardRank.KING,
+  ];
 
   round: RoundState | null = null;
   betAmount = 0;
@@ -61,6 +106,21 @@ export class Blackjack implements OnInit {
   activePowerup: ActivePowerup | null = null;
   pillPulse: PowerPillColor | null = null;
   pillExpiredCode: PowerPillCode | null = null;
+  showBetceptionMenu = false;
+  betceptionView: BetceptionView = 'overview';
+  selectedCardSuit = CardSuit.HEARTS;
+  selectedCardRank = CardRank.JACK;
+  cardBets: Record<string, number> = {};
+  winnerChoice: BetceptionWinner | null = null;
+  winnerBetAmount = 0;
+  pillTriggerBetAmount = 0;
+  blackjackBetAmount = 0;
+  betceptionResolution: BetceptionResolution | null = null;
+  revealedResolutionStepCount = 0;
+  animatedPayoutAmount = 0;
+  finalPayoutAmount = 0;
+  finalStakeAmount = 0;
+  payoutFramePulseTier: Exclude<PayoutTier, 'none'> | null = null;
   userLevel = 1;
   levelUpCrate: LevelUpCrate | null = null;
   private inventoryLoaded = false;
@@ -69,6 +129,11 @@ export class Blackjack implements OnInit {
   private walletRefreshTimer: number | null = null;
   private pillPulseTimer: number | null = null;
   private pillPopTimer: number | null = null;
+  private payoutCountTimer: number | null = null;
+  private payoutFramePulseTimer: number | null = null;
+  private payoutFramePulseResetTimer: number | null = null;
+  private lastAnimatedPayoutTier: PayoutTier = 'none';
+  private betceptionResolutionTimers: number[] = [];
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -78,6 +143,9 @@ export class Blackjack implements OnInit {
       this.clearResultOverlayTimer();
       this.clearWalletRefreshTimer();
       this.clearPillTimers();
+      this.clearPayoutCountTimer();
+      this.clearPayoutFramePulseTimers();
+      this.clearBetceptionResolutionTimers();
     });
   }
 
@@ -85,6 +153,7 @@ export class Blackjack implements OnInit {
     this.loadBalance();
     this.loadInventory();
     this.resumeActiveRoundIfAny();
+    this.queueLocalWinDemoIfRequested();
   }
 
   get playerHandStatus(): HandStatus | null {
@@ -98,6 +167,154 @@ export class Blackjack implements OnInit {
     return null;
   }
 
+  get totalSideBetAmount() {
+    return (
+      this.cardBetTotal +
+      this.winnerBetAmount +
+      this.pillTriggerBetAmount +
+      this.blackjackBetAmount
+    );
+  }
+
+  get cardBetTotal() {
+    return this.cardBetEntries.reduce((sum, bet) => sum + bet.amount, 0);
+  }
+
+  get remainingBetceptionBalance() {
+    if (this.balance === null) return Number.POSITIVE_INFINITY;
+    return Math.max(0, this.balance - this.betAmount - this.totalSideBetAmount);
+  }
+
+  get hasFiniteRemainingBetceptionBalance() {
+    return Number.isFinite(this.remainingBetceptionBalance);
+  }
+
+  get cardBetEntries() {
+    return Object.entries(this.cardBets)
+      .map(([key, amount]) => {
+        const [suit, rank] = key.split('|') as [CardSuit, CardRank];
+        return { key, suit, rank, amount };
+      })
+      .filter((entry) => entry.amount > 0);
+  }
+
+  get currentCardBetAmount() {
+    return this.cardBets[this.cardBetKey(this.selectedCardSuit, this.selectedCardRank)] ?? 0;
+  }
+
+  get currentDepthLevel() {
+    if (this.betceptionResolution) return this.betceptionResolution.depthLevel;
+    const roundDepth = this.round ? 1 + this.roundSideBetCategoryCount() : 0;
+    if (roundDepth > 1 || this.round) return roundDepth;
+    if (this.betAmount <= 0) return 0;
+    return 1 + this.draftSideBetCategoryCount();
+  }
+
+  get showBetceptionPanel() {
+    return this.betAmount > 0 || !!this.round || !!this.betceptionResolution || this.showBetceptionMenu;
+  }
+
+  get betceptionPanelRows(): BetceptionPanelRow[] {
+    if (this.betceptionResolution) {
+      return this.resolutionPanelRows();
+    }
+
+    if (this.round) {
+      return this.roundPanelRows();
+    }
+
+    const rows: BetceptionPanelRow[] = [];
+    if (this.betAmount > 0) {
+      rows.push({
+        id: 'main-draft',
+        label: this.i18n.t('betception.mainBet'),
+        value: this.formatCoins(this.betAmount),
+      });
+    }
+    if (this.cardBetEntries.length) {
+      rows.push({
+        id: 'card-draft',
+        label: this.i18n.t('betception.cardBets'),
+        value: '',
+        items: this.cardBetEntries.map((bet) => this.cardBetPanelItem(bet.suit, bet.rank, bet.amount)),
+      });
+    }
+    if (this.winnerBetAmount > 0 && this.winnerChoice) {
+      rows.push({
+        id: 'winner-draft',
+        label: this.i18n.t('betception.winnerBet'),
+        value: `${this.winnerLabel(this.winnerChoice)} - ${this.formatCoins(this.winnerBetAmount)}`,
+      });
+    }
+    if (this.pillTriggerBetAmount > 0) {
+      rows.push({
+        id: 'pill-draft',
+        label: this.i18n.t('betception.pillBet'),
+        value: this.formatCoins(this.pillTriggerBetAmount),
+      });
+    }
+    if (this.blackjackBetAmount > 0) {
+      rows.push({
+        id: 'blackjack-draft',
+        label: this.i18n.t('betception.blackjackBet'),
+        value: this.formatCoins(this.blackjackBetAmount),
+      });
+    }
+    return rows;
+  }
+
+  trackBetceptionPanelRow(_index: number, row: BetceptionPanelRow) {
+    return row.id;
+  }
+
+  get betceptionConfirmLabel() {
+    return this.totalSideBetAmount > 0
+      ? this.i18n.t('betception.confirmAndDeal')
+      : this.i18n.t('betception.continueWithout');
+  }
+
+  get payoutTier(): PayoutTier {
+    if (this.finalPayoutAmount <= 0) return 'none';
+    return this.payoutTierFor(Math.max(1, this.animatedPayoutAmount));
+  }
+
+  get finalPayoutTier(): PayoutTier {
+    return this.payoutTierFor(this.finalPayoutAmount);
+  }
+
+  get showPayoutBurst() {
+    return this.payoutTier === 'big' || this.payoutTier === 'super' || this.payoutTier === 'mega';
+  }
+
+  get payoutCelebrationLabel() {
+    if (this.payoutTier === 'mega') return this.i18n.t('betception.megaWin');
+    if (this.payoutTier === 'super') return this.i18n.t('betception.superWin');
+    if (this.payoutTier === 'big') return this.i18n.t('betception.bigWin');
+    if (this.payoutTier === 'win') return this.i18n.t('betception.winCelebration');
+    if (this.roundOutcome?.won && this.finalPayoutAmount > 0) {
+      return this.i18n.t('betception.winCelebration');
+    }
+    return this.roundOutcome?.headline ?? this.i18n.t('blackjack.finishedHeadline');
+  }
+
+  get animatedPayoutDisplay() {
+    return this.formatCoins(this.animatedPayoutAmount);
+  }
+
+  get hasBetceptionPayout() {
+    return !!this.betceptionResolution && Number(this.betceptionResolution.totalPayout) > 0;
+  }
+
+  get betceptionPayoutDisplay() {
+    return this.betceptionResolution
+      ? this.formatCoins(Number(this.betceptionResolution.totalPayout))
+      : this.formatCoins(0);
+  }
+
+  get selectedCardLabel() {
+    return `${this.suitSymbol(this.selectedCardSuit)}${this.selectedCardRank}`;
+  }
+
   onPlaceBet(amount: number) {
     if (this.isRoundActive) return;
     const updated = Math.max(0, Math.round((this.betAmount + amount) * 100) / 100);
@@ -107,6 +324,7 @@ export class Blackjack implements OnInit {
   onResetBet() {
     if (this.isRoundActive) return;
     this.betAmount = 0;
+    this.resetBetceptionDraft();
   }
 
   onDeal() {
@@ -114,7 +332,83 @@ export class Blackjack implements OnInit {
       this.error = this.betAmount <= 0 ? this.i18n.t('blackjack.setBetError') : this.error;
       return;
     }
-    this.runAction('deal', this.rng.startRound({ betAmount: this.betAmount }));
+    this.error = null;
+    this.showBetceptionMenu = true;
+    this.betceptionView = 'overview';
+  }
+
+  onCloseBetceptionMenu() {
+    if (this.busyAction) return;
+    this.showBetceptionMenu = false;
+    this.betceptionView = 'overview';
+  }
+
+  onConfirmBetception() {
+    if (this.busyAction || this.betAmount <= 0) return;
+    const sideBets = this.buildSideBetPlacements();
+    this.showBetceptionMenu = false;
+    this.betceptionView = 'overview';
+    this.runAction('deal', this.rng.startRound({ betAmount: this.betAmount, sideBets }));
+  }
+
+  onBetceptionView(view: BetceptionView) {
+    this.betceptionView = view;
+  }
+
+  onSelectCardSuit(suit: CardSuit) {
+    this.selectedCardSuit = suit;
+  }
+
+  onSelectCardRank(rank: CardRank) {
+    this.selectedCardRank = rank;
+  }
+
+  onAddCardBet(amount: number) {
+    if (!this.canAddSideBetChip(amount)) return;
+    const key = this.cardBetKey(this.selectedCardSuit, this.selectedCardRank);
+    this.cardBets = {
+      ...this.cardBets,
+      [key]: Math.round(((this.cardBets[key] ?? 0) + amount) * 100) / 100,
+    };
+  }
+
+  onClearSelectedCardBet() {
+    const key = this.cardBetKey(this.selectedCardSuit, this.selectedCardRank);
+    const rest = { ...this.cardBets };
+    delete rest[key];
+    this.cardBets = rest;
+  }
+
+  onPickWinner(winner: BetceptionWinner) {
+    this.winnerChoice = winner;
+  }
+
+  onAddWinnerBet(amount: number) {
+    if (!this.winnerChoice || !this.canAddSideBetChip(amount)) return;
+    this.winnerBetAmount = Math.round((this.winnerBetAmount + amount) * 100) / 100;
+  }
+
+  onClearWinnerBet() {
+    this.winnerBetAmount = 0;
+    this.winnerChoice = null;
+  }
+
+  onAddPillTriggerBet(amount: number) {
+    if (!this.activePowerup || !this.canAddSideBetChip(amount)) return;
+    this.pillTriggerBetAmount = Math.round((this.pillTriggerBetAmount + amount) * 100) / 100;
+  }
+
+  onClearPillTriggerBet() {
+    this.pillTriggerBetAmount = 0;
+  }
+
+  onAddBlackjackBet(amount: number) {
+    if (!this.canAddSideBetChip(amount)) return;
+    this.blackjackBetAmount = Math.round((this.blackjackBetAmount + amount) * 100) / 100;
+  }
+
+  onClearBlackjackBet() {
+    this.blackjackBetAmount = 0;
   }
 
   onHit() {
@@ -141,11 +435,354 @@ export class Blackjack implements OnInit {
     );
   }
 
+  canAddSideBetChip(amount: number) {
+    return this.balance === null || this.betAmount + this.totalSideBetAmount + amount <= this.balance;
+  }
+
+  isSuitSelected(suit: CardSuit) {
+    return this.selectedCardSuit === suit;
+  }
+
+  isRankSelected(rank: CardRank) {
+    return this.selectedCardRank === rank;
+  }
+
+  cardBetAmount(suit: CardSuit, rank: CardRank) {
+    return this.cardBets[this.cardBetKey(suit, rank)] ?? 0;
+  }
+
+  suitSymbol(suit: CardSuit | string | null | undefined) {
+    switch (suit) {
+      case CardSuit.HEARTS:
+        return '♥';
+      case CardSuit.DIAMONDS:
+        return '♦';
+      case CardSuit.CLUBS:
+        return '♣';
+      case CardSuit.SPADES:
+        return '♠';
+      default:
+        return '';
+    }
+  }
+
+  suitName(suit: CardSuit) {
+    switch (suit) {
+      case CardSuit.HEARTS:
+        return this.i18n.t('betception.suitHearts');
+      case CardSuit.DIAMONDS:
+        return this.i18n.t('betception.suitDiamonds');
+      case CardSuit.CLUBS:
+        return this.i18n.t('betception.suitClubs');
+      case CardSuit.SPADES:
+        return this.i18n.t('betception.suitSpades');
+    }
+  }
+
+  isRedSuit(suit: CardSuit | string | null | undefined) {
+    return suit === CardSuit.HEARTS || suit === CardSuit.DIAMONDS;
+  }
+
+  winnerLabel(winner: BetceptionWinner | string | null | undefined) {
+    return winner === 'DEALER'
+      ? this.i18n.t('betception.dealerWins')
+      : this.i18n.t('betception.playerWins');
+  }
+
+  formatCoins(amount: number) {
+    return `${Math.round(amount)} ${this.i18n.t('common.coins')}`;
+  }
+
+  pillTriggerOddsLabel() {
+    return this.activePowerup?.type.code === 'BLUE_PILL' ? '8:1' : '5:1';
+  }
+
+  private buildSideBetPlacements(): SideBetPlacement[] {
+    const sideBets: SideBetPlacement[] = [];
+    for (const entry of this.cardBetEntries) {
+      sideBets.push({
+        typeCode: 'CARD_EXACT',
+        amount: entry.amount,
+        predictedSuit: entry.suit,
+        predictedRank: entry.rank,
+        selection: { suit: entry.suit, rank: entry.rank },
+      });
+    }
+    if (this.winnerBetAmount > 0 && this.winnerChoice) {
+      sideBets.push({
+        typeCode: 'WINNER',
+        amount: this.winnerBetAmount,
+        selection: { winner: this.winnerChoice },
+      });
+    }
+    if (this.pillTriggerBetAmount > 0 && this.activePowerup) {
+      sideBets.push({
+        typeCode: 'PILL_TRIGGER',
+        amount: this.pillTriggerBetAmount,
+        selection: { powerupCode: this.activePowerup.type.code },
+      });
+    }
+    if (this.blackjackBetAmount > 0) {
+      sideBets.push({
+        typeCode: 'PLAYER_BLACKJACK',
+        amount: this.blackjackBetAmount,
+        selection: { target: 'PLAYER' },
+      });
+    }
+    return sideBets;
+  }
+
+  private resetBetceptionDraft() {
+    this.cardBets = {};
+    this.winnerChoice = null;
+    this.winnerBetAmount = 0;
+    this.pillTriggerBetAmount = 0;
+    this.blackjackBetAmount = 0;
+    this.betceptionView = 'overview';
+  }
+
+  private cardBetKey(suit: CardSuit, rank: CardRank) {
+    return `${suit}|${rank}`;
+  }
+
+  private roundPanelRows(): BetceptionPanelRow[] {
+    if (!this.round) return [];
+    const rows: BetceptionPanelRow[] = [{
+      id: 'main',
+      label: this.i18n.t('betception.mainBet'),
+      value: this.formatCoins(Number(this.round.mainBet.amount)),
+    }];
+
+    const sideBets = this.round.sideBets ?? [];
+    const cardBets = sideBets.filter((sideBet) => sideBet.type === 'CARD_EXACT');
+    if (cardBets.length) {
+      rows.push({
+        id: 'side-card-group',
+        label: this.i18n.t('betception.cardBets'),
+        value: '',
+        items: cardBets.map((sideBet) => this.sideBetPanelItem(sideBet)),
+      });
+    }
+
+    for (const sideBet of sideBets.filter((bet) => bet.type !== 'CARD_EXACT')) {
+      rows.push({
+        id: `side-${sideBet.id}`,
+        label: this.panelLabelForSideBetType(sideBet.type),
+        value: this.sideBetPanelValue(sideBet),
+      });
+    }
+
+    return rows;
+  }
+
+  private resolutionPanelRows(): BetceptionPanelRow[] {
+    const indexed = this.betceptionResolution?.steps.map((step, index) => ({ step, index })) ?? [];
+    const rows: BetceptionPanelRow[] = [];
+    const main = indexed.find(({ step }) => step.kind === 'MAIN_BET');
+    if (main) {
+      rows.push(this.resolutionGroupRow('main-resolution', this.i18n.t('betception.mainBet'), this.formatCoins(Number(main.step.amount)), [main]));
+    }
+
+    const cardSteps = indexed.filter(({ step }) => step.kind === 'CARD_EXACT');
+    if (cardSteps.length) {
+      rows.push(this.resolutionGroupRow(
+        'card-resolution',
+        this.i18n.t('betception.cardBets'),
+        '',
+        cardSteps,
+        cardSteps.map(({ step }) => this.resolutionCardPanelItem(step)),
+      ));
+    }
+
+    for (const kind of ['WINNER', 'PILL_TRIGGER', 'PLAYER_BLACKJACK']) {
+      const steps = indexed.filter(({ step }) => step.kind === kind);
+      if (!steps.length) continue;
+      const step = steps[0].step;
+      rows.push(this.resolutionGroupRow(
+        `${kind.toLowerCase()}-resolution`,
+        this.panelLabelForSideBetType(kind),
+        this.resolutionPanelValue(step),
+        steps,
+      ));
+    }
+
+    return rows;
+  }
+
+  private resolutionGroupRow(
+    id: string,
+    label: string,
+    value: string,
+    steps: IndexedResolutionStep[],
+    items?: string[],
+  ): BetceptionPanelRow {
+    const revealed = steps.every(({ index }) => index < this.revealedResolutionStepCount);
+    const won = steps.some(({ step }) => this.isResolutionWin(step));
+    const lost = !won && steps.some(({ step }) => this.isResolutionLoss(step));
+    const push = !won && !lost && steps.some(({ step }) => this.isResolutionPush(step));
+    const payout = steps.reduce((sum, { step }) => sum + Number(step.payout ?? 0), 0);
+    return {
+      id,
+      label,
+      value,
+      items,
+      revealed,
+      won: revealed && won,
+      lost: revealed && lost,
+      push: revealed && push,
+      status: revealed ? this.resolutionGroupStatus({ won, lost, push }) : undefined,
+      mark: revealed ? this.resolutionGroupMark({ won, lost, push }) : undefined,
+      payout: revealed && payout > 0 ? `+${this.formatCoins(payout)}` : undefined,
+    };
+  }
+
+  private resolutionGroupStatus(result: { won: boolean; lost: boolean; push: boolean }) {
+    if (result.won) return this.i18n.t('betception.hit');
+    if (result.push) return this.i18n.t('betception.refund');
+    if (result.lost) return this.i18n.t('betception.miss');
+    return this.i18n.t('betception.pending');
+  }
+
+  private resolutionGroupMark(result: { won: boolean; lost: boolean; push: boolean }) {
+    if (result.won) return '✓';
+    if (result.push) return '↺';
+    if (result.lost) return '×';
+    return '•';
+  }
+
+  private panelLabelForSideBetType(type: string) {
+    if (type === 'CARD_EXACT') return this.i18n.t('betception.cardBets');
+    if (type === 'WINNER') return this.i18n.t('betception.winnerBet');
+    if (type === 'PILL_TRIGGER') return this.i18n.t('betception.pillBet');
+    if (type === 'PLAYER_BLACKJACK') return this.i18n.t('betception.blackjackBet');
+    return type;
+  }
+
+  private sideBetPanelValue(sideBet: RoundSideBet) {
+    if (sideBet.type === 'WINNER') {
+      return `${this.winnerLabel(sideBet.selection?.['winner'] as string)} - ${this.formatCoins(Number(sideBet.amount))}`;
+    }
+    if (sideBet.type === 'PILL_TRIGGER') {
+      return this.formatCoins(Number(sideBet.amount));
+    }
+    if (sideBet.type === 'PLAYER_BLACKJACK') {
+      return this.formatCoins(Number(sideBet.amount));
+    }
+    return this.formatCoins(Number(sideBet.amount));
+  }
+
+  private sideBetPanelItem(sideBet: RoundSideBet) {
+    const suit = (sideBet.selection?.['suit'] as CardSuit | undefined) ?? sideBet.predictedSuit;
+    const rank = (sideBet.selection?.['rank'] as CardRank | undefined) ?? sideBet.predictedRank;
+    return this.cardBetPanelItem(suit, rank, Number(sideBet.amount));
+  }
+
+  private resolutionPanelValue(step: BetceptionResolutionStep) {
+    if (step.kind === 'WINNER') {
+      return `${this.winnerLabel(step.selection?.['winner'] as string)} - ${this.formatCoins(Number(step.amount))}`;
+    }
+    return this.formatCoins(Number(step.amount));
+  }
+
+  private resolutionCardPanelItem(step: BetceptionResolutionStep) {
+    const suit = step.selection?.['suit'] as CardSuit | undefined;
+    const rank = step.selection?.['rank'] as CardRank | undefined;
+    return this.cardBetPanelItem(suit, rank, Number(step.amount));
+  }
+
+  private cardBetPanelItem(suit: CardSuit | string | null | undefined, rank: CardRank | string | null | undefined, amount: number) {
+    return `${this.suitSymbol(suit)}${rank ?? ''} - ${this.formatCoins(amount)}`;
+  }
+
+  private draftSideBetCategoryCount() {
+    return [
+      this.cardBetEntries.length > 0,
+      this.winnerBetAmount > 0,
+      this.pillTriggerBetAmount > 0,
+      this.blackjackBetAmount > 0,
+    ].filter(Boolean).length;
+  }
+
+  private roundSideBetCategoryCount() {
+    const categories = new Set<string>();
+    for (const sideBet of this.round?.sideBets ?? []) {
+      categories.add(sideBet.type === 'CARD_EXACT' ? 'CARD_EXACT' : sideBet.type);
+    }
+    return categories.size;
+  }
+
+  private sideBetLabel(
+    type: string,
+    selection: Record<string, unknown> | null,
+    predictedSuit: CardSuit | null,
+    predictedRank: CardRank | null,
+  ) {
+    if (type === 'CARD_EXACT') {
+      const suit = (selection?.['suit'] as CardSuit | undefined) ?? predictedSuit;
+      const rank = (selection?.['rank'] as CardRank | undefined) ?? predictedRank;
+      return `${this.i18n.t('betception.cardExactShort')} ${this.suitSymbol(suit)}${rank ?? ''}`;
+    }
+    if (type === 'WINNER') {
+      return `${this.i18n.t('betception.winnerShort')} ${this.winnerLabel(selection?.['winner'] as string)}`;
+    }
+    if (type === 'PILL_TRIGGER') return this.i18n.t('betception.pillShort');
+    if (type === 'PLAYER_BLACKJACK') return this.i18n.t('betception.blackjackShort');
+    return type;
+  }
+
+  private resolutionStepLabel(step: BetceptionResolutionStep) {
+    if (step.kind === 'MAIN_BET') return this.i18n.t('betception.mainBet');
+    return this.sideBetLabel(
+      step.kind,
+      step.selection,
+      (step.selection?.['suit'] as CardSuit | undefined) ?? null,
+      (step.selection?.['rank'] as CardRank | undefined) ?? null,
+    );
+  }
+
+  private resolutionStepValue(step: BetceptionResolutionStep) {
+    const amount = this.formatCoins(Number(step.amount));
+    const payout = step.payout !== null ? this.formatCoins(Number(step.payout)) : this.formatCoins(0);
+    return `${amount} → ${payout}`;
+  }
+
+  private resolutionStepStatus(step: BetceptionResolutionStep) {
+    if (this.isResolutionWin(step)) return this.i18n.t('betception.hit');
+    if (this.isResolutionPush(step)) return this.i18n.t('betception.refund');
+    if (this.isResolutionLoss(step)) return this.i18n.t('betception.miss');
+    return this.i18n.t('betception.pending');
+  }
+
+  private resolutionStepMark(step: BetceptionResolutionStep) {
+    if (this.isResolutionWin(step)) return '✓';
+    if (this.isResolutionPush(step)) return '↺';
+    if (this.isResolutionLoss(step)) return '×';
+    return '•';
+  }
+
+  private isResolutionWin(step: BetceptionResolutionStep) {
+    return step.status === MainBetStatus.WON || step.status === SideBetStatus.WON;
+  }
+
+  private isResolutionLoss(step: BetceptionResolutionStep) {
+    return step.status === MainBetStatus.LOST || step.status === SideBetStatus.LOST;
+  }
+
+  private isResolutionPush(step: BetceptionResolutionStep) {
+    return (
+      step.status === MainBetStatus.PUSH ||
+      step.status === MainBetStatus.REFUNDED ||
+      step.status === SideBetStatus.REFUNDED ||
+      step.status === SideBetStatus.VOID
+    );
+  }
+
   private runAction(kind: ActionKind, request$: ReturnType<Rng['startRound']>) {
     this.busyAction = kind;
     this.error = null;
     this.info = null;
     this.clearResultOverlayTimer();
+    this.clearBetceptionResolutionTimers();
 
     request$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -161,16 +798,18 @@ export class Blackjack implements OnInit {
           this.triggerBanner(round);
           if (kind === 'deal') {
             this.loadBalance();
+            this.resetBetceptionDraft();
           }
           if (kind === 'settle') {
             if (response.levelUpCrate) {
               this.levelUpCrate = response.levelUpCrate;
             }
-            this.scheduleRoundOverlay(previousRound, round);
+            this.scheduleBetceptionResolution(response.betceptionResolution ?? null, previousRound, round);
+            this.scheduleRoundOverlay(previousRound, round, response.betceptionResolution ?? null);
             this.walletRefreshTimer = window.setTimeout(() => {
               this.loadBalance(true);
               this.walletRefreshTimer = null;
-            }, 1500);
+            }, 1500 + this.betceptionResolutionDuration(response.betceptionResolution ?? null));
           }
           this.busyAction = null;
 
@@ -269,11 +908,20 @@ export class Blackjack implements OnInit {
 
   onNextRound() {
     this.clearResultOverlayTimer();
+    this.clearPayoutCountTimer();
+    this.clearPayoutFramePulseTimers();
     this.showRoundOverlay = false;
     this.roundOutcome = null;
     this.round = null;
     this.info = null;
     this.levelUpCrate = null;
+    this.betceptionResolution = null;
+    this.revealedResolutionStepCount = 0;
+    this.animatedPayoutAmount = 0;
+    this.finalPayoutAmount = 0;
+    this.finalStakeAmount = 0;
+    this.lastAnimatedPayoutTier = 'none';
+    this.clearBetceptionResolutionTimers();
     if (this.balance !== null && this.betAmount > this.balance) {
       this.betAmount = this.balance;
     }
@@ -387,10 +1035,16 @@ export class Blackjack implements OnInit {
     return { headline: this.i18n.t('blackjack.finishedHeadline'), detail: null, won: false, lost: false, push: false, dealerInfo };
   }
 
-  private scheduleRoundOverlay(previousRound: RoundState | null, settledRound: RoundState) {
+  private scheduleRoundOverlay(
+    previousRound: RoundState | null,
+    settledRound: RoundState,
+    resolution: BetceptionResolution | null,
+  ) {
     const info = this.buildOutcomeText(settledRound);
     const outcome = this.buildRoundOutcome(settledRound);
-    const delay = this.settlementAnimationDelay(previousRound, settledRound);
+    const delay =
+      this.settlementAnimationDelay(previousRound, settledRound) +
+      this.betceptionResolutionDuration(resolution);
 
     this.resultOverlayTimer = window.setTimeout(() => {
       if (this.round?.id !== settledRound.id) {
@@ -399,8 +1053,233 @@ export class Blackjack implements OnInit {
       this.info = info;
       this.roundOutcome = outcome;
       this.showRoundOverlay = true;
+      this.startPayoutCount(settledRound, resolution);
       this.resultOverlayTimer = null;
     }, delay);
+  }
+
+  private startPayoutCount(settledRound: RoundState, resolution: BetceptionResolution | null) {
+    this.clearPayoutCountTimer();
+    this.finalPayoutAmount = this.roundTotalPayout(settledRound, resolution);
+    this.finalStakeAmount = this.roundTotalStake(settledRound, resolution);
+    this.animatedPayoutAmount = 0;
+    this.lastAnimatedPayoutTier = 'none';
+    this.clearPayoutFramePulseTimers();
+
+    if (this.finalPayoutAmount <= 0) {
+      return;
+    }
+
+    this.runPayoutCounter();
+  }
+
+  private runPayoutCounter() {
+    if (this.finalPayoutAmount <= 0) {
+      return;
+    }
+
+    const duration = this.payoutCountDuration(this.finalPayoutTier);
+    const startedAt = Date.now();
+    this.payoutCountTimer = window.setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = progress;
+      this.animatedPayoutAmount = Math.round(this.finalPayoutAmount * eased);
+      this.updatePayoutTierPulse();
+      if (progress >= 1) {
+        this.animatedPayoutAmount = this.finalPayoutAmount;
+        this.updatePayoutTierPulse();
+        this.clearPayoutCountTimer();
+      }
+    }, 28);
+  }
+
+  private updatePayoutTierPulse() {
+    const currentTier = this.payoutTierFor(this.animatedPayoutAmount);
+    if (
+      currentTier !== this.lastAnimatedPayoutTier &&
+      currentTier !== 'none' &&
+      this.lastAnimatedPayoutTier !== 'none' &&
+      (currentTier === 'super' || currentTier === 'mega')
+    ) {
+      this.triggerPayoutFramePulse(currentTier);
+    }
+    this.lastAnimatedPayoutTier = currentTier;
+  }
+
+  private triggerPayoutFramePulse(tier: Exclude<PayoutTier, 'none'>) {
+    this.clearPayoutFramePulseTimers();
+    this.payoutFramePulseTimer = window.setTimeout(() => {
+      this.payoutFramePulseTier = tier;
+      this.payoutFramePulseResetTimer = window.setTimeout(() => {
+        this.payoutFramePulseTier = null;
+        this.payoutFramePulseResetTimer = null;
+      }, 170);
+      this.payoutFramePulseTimer = null;
+    }, 0);
+  }
+
+  private queueLocalWinDemoIfRequested() {
+    const params = new URLSearchParams(window.location.search);
+    const demoWin = params.get('demoWin');
+    if (!this.isLocalDevHost() || !this.isPayoutTierDemo(demoWin)) {
+      return;
+    }
+
+    window.setTimeout(() => this.showLocalWinDemo(demoWin), 300);
+  }
+
+  private showLocalWinDemo(tier: Exclude<PayoutTier, 'none'>) {
+    const demoByTier: Record<Exclude<PayoutTier, 'none'>, { stake: number; payout: number }> = {
+      win: { stake: 1000, payout: 1800 },
+      big: { stake: 1000, payout: 3600 },
+      super: { stake: 1000, payout: 7200 },
+      mega: { stake: 1000, payout: 10300 },
+    };
+    const demo = demoByTier[tier];
+
+    this.clearResultOverlayTimer();
+    this.clearPayoutCountTimer();
+    this.clearPayoutFramePulseTimers();
+    this.clearBetceptionResolutionTimers();
+    this.showBetceptionMenu = false;
+    this.error = null;
+    this.info = null;
+    this.round = null;
+    this.betAmount = demo.stake;
+    this.finalStakeAmount = demo.stake;
+    this.finalPayoutAmount = demo.payout;
+    this.animatedPayoutAmount = 0;
+    this.lastAnimatedPayoutTier = 'none';
+    this.roundOutcome = {
+      headline: this.i18n.t('blackjack.wonHeadline'),
+      detail: null,
+      won: true,
+      lost: false,
+      push: false,
+      dealerInfo: 'Lokale Demo',
+    };
+    this.betceptionResolution = {
+      depthLevel: 4,
+      totalStake: String(demo.stake),
+      totalPayout: String(demo.payout),
+      steps: [
+        {
+          id: 'demo-main',
+          kind: 'MAIN_BET',
+          status: MainBetStatus.WON,
+          amount: '100',
+          payout: '200',
+          multiplier: '2.000',
+          selection: null,
+        },
+        {
+          id: 'demo-card',
+          kind: 'CARD_EXACT',
+          status: SideBetStatus.WON,
+          amount: '500',
+          payout: '6000',
+          multiplier: '12.000',
+          selection: { suit: CardSuit.HEARTS, rank: CardRank.JACK },
+        },
+        {
+          id: 'demo-pill',
+          kind: 'PILL_TRIGGER',
+          status: SideBetStatus.WON,
+          amount: '100',
+          payout: '500',
+          multiplier: '5.000',
+          selection: { powerupCode: 'RED_PILL' },
+        },
+        {
+          id: 'demo-blackjack',
+          kind: 'PLAYER_BLACKJACK',
+          status: SideBetStatus.WON,
+          amount: '300',
+          payout: '3600',
+          multiplier: '12.000',
+          selection: { target: 'PLAYER' },
+        },
+      ],
+    };
+    this.revealedResolutionStepCount = this.betceptionResolution.steps.length;
+    this.showRoundOverlay = true;
+    this.runPayoutCounter();
+  }
+
+  private isLocalDevHost() {
+    return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+  }
+
+  private isPayoutTierDemo(value: string | null): value is Exclude<PayoutTier, 'none'> {
+    return value === 'win' || value === 'big' || value === 'super' || value === 'mega';
+  }
+
+  private payoutTierFor(amount: number): PayoutTier {
+    const multiplier = this.payoutMultiplierFor(amount);
+    if (multiplier <= 1.05) return 'none';
+    if (multiplier >= 10) return 'mega';
+    if (multiplier >= 6) return 'super';
+    if (multiplier >= 3) return 'big';
+    return 'win';
+  }
+
+  private payoutMultiplierFor(amount: number) {
+    if (amount <= 0) return 0;
+    if (!Number.isFinite(this.finalStakeAmount) || this.finalStakeAmount <= 0) return 1.1;
+    return amount / this.finalStakeAmount;
+  }
+
+  private payoutCountDuration(tier: PayoutTier) {
+    const multiplier = this.payoutMultiplierFor(this.finalPayoutAmount);
+    const multiplierWeight = Math.min(1200, Math.max(0, multiplier - 1) * 140);
+    if (tier === 'mega') return 4800 + multiplierWeight;
+    if (tier === 'super') return 3600 + multiplierWeight;
+    if (tier === 'big') return 2500 + multiplierWeight;
+    return 1300 + Math.min(450, multiplierWeight * 0.45);
+  }
+
+  private roundTotalPayout(settledRound: RoundState, resolution: BetceptionResolution | null) {
+    const total = resolution ? Number(resolution.totalPayout) : Number(settledRound.mainBet?.settledAmount ?? 0);
+    return Number.isFinite(total) ? Math.max(0, total) : 0;
+  }
+
+  private roundTotalStake(settledRound: RoundState, resolution: BetceptionResolution | null) {
+    if (resolution?.steps.length) {
+      const total = resolution.steps.reduce((sum, step) => sum + Number(step.amount ?? 0), 0);
+      return Number.isFinite(total) ? Math.max(0, total) : 0;
+    }
+    const stake = Number(settledRound.mainBet?.amount ?? 0);
+    return Number.isFinite(stake) ? Math.max(0, stake) : 0;
+  }
+
+  private scheduleBetceptionResolution(
+    resolution: BetceptionResolution | null,
+    previousRound: RoundState | null,
+    settledRound: RoundState,
+  ) {
+    this.clearBetceptionResolutionTimers();
+    if (!resolution) {
+      this.betceptionResolution = null;
+      this.revealedResolutionStepCount = 0;
+      return;
+    }
+
+    this.betceptionResolution = resolution;
+    this.revealedResolutionStepCount = 0;
+    const baseDelay = this.settlementAnimationDelay(previousRound, settledRound);
+    resolution.steps.forEach((_step, index) => {
+      const timer = window.setTimeout(() => {
+        if (this.round?.id !== settledRound.id) return;
+        this.revealedResolutionStepCount = index + 1;
+      }, baseDelay + index * this.betceptionStepMs);
+      this.betceptionResolutionTimers.push(timer);
+    });
+  }
+
+  private betceptionResolutionDuration(resolution: BetceptionResolution | null) {
+    if (!resolution?.steps.length) return 0;
+    return resolution.steps.length * this.betceptionStepMs + 500;
   }
 
   private settlementAnimationDelay(previousRound: RoundState | null, settledRound: RoundState) {
@@ -491,6 +1370,33 @@ export class Blackjack implements OnInit {
       window.clearTimeout(this.pillPopTimer);
       this.pillPopTimer = null;
     }
+  }
+
+  private clearBetceptionResolutionTimers() {
+    for (const timer of this.betceptionResolutionTimers) {
+      window.clearTimeout(timer);
+    }
+    this.betceptionResolutionTimers = [];
+  }
+
+  private clearPayoutCountTimer() {
+    if (!this.payoutCountTimer) {
+      return;
+    }
+    window.clearInterval(this.payoutCountTimer);
+    this.payoutCountTimer = null;
+  }
+
+  private clearPayoutFramePulseTimers() {
+    if (this.payoutFramePulseTimer) {
+      window.clearTimeout(this.payoutFramePulseTimer);
+      this.payoutFramePulseTimer = null;
+    }
+    if (this.payoutFramePulseResetTimer) {
+      window.clearTimeout(this.payoutFramePulseResetTimer);
+      this.payoutFramePulseResetTimer = null;
+    }
+    this.payoutFramePulseTier = null;
   }
 
   private extractError(error: unknown): string {

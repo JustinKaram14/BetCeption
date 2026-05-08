@@ -75,6 +75,9 @@ export class SideBet {
   })
   targetContext!: SideBetTargetContext;
 
+  @Column({ name: 'selection_json', type: 'json', nullable: true })
+  selectionJson: Record<string, unknown> | null = null;
+
   @Column({
     type: 'enum',
     enum: SideBetStatus,

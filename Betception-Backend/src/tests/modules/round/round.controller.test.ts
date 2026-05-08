@@ -215,6 +215,130 @@ describe('round.controller', () => {
         }),
       );
     });
+
+    it('creates Betception side bets and debits the combined stake', async () => {
+      const user = {
+        id: 'user-1',
+        username: 'neo',
+        balance: '500.00',
+        activePowerupType: { code: 'RED_PILL' },
+      } as unknown as User;
+
+      const handRepo = createMockRepository<Hand>({
+        findOne: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockImplementation((data) => ({ id: `${data.ownerType}-id`, ...data })),
+        save: jest.fn().mockImplementation(async (entity) => entity),
+      });
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const roundRepo = createMockRepository<Round>({
+        create: jest.fn().mockImplementation((data) => ({ id: 'round-1', createdAt: new Date('2025-01-01T00:00:00Z'), ...data })),
+        save: jest.fn().mockImplementation(async (entity) => entity),
+      });
+      const cardRepo = createMockRepository<Card>({
+        create: jest.fn().mockImplementation((data) => ({
+          id: `card-${data.hand.ownerType}-${data.drawOrder}`,
+          createdAt: new Date('2025-01-01T00:00:00Z'),
+          ...data,
+        })),
+        save: jest.fn().mockImplementation(async (entity) => entity),
+      });
+      const mainBetRepo = createMockRepository<MainBet>({
+        create: jest.fn().mockImplementation((data) => ({ id: 'bet-1', ...data })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const walletRepo = createMockRepository<WalletTransaction>({
+        create: jest.fn().mockImplementation((data) => ({ id: `tx-${walletRepo.create.mock.calls.length + 1}`, ...data })),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      let sideBetId = 0;
+      const sideBetRepo = createMockRepository<SideBet>({
+        create: jest.fn().mockImplementation((data) => ({ id: `side-${++sideBetId}`, ...data })),
+        save: jest.fn().mockImplementation(async (entity) => entity),
+      });
+      const sidebetTypeRepo = createMockRepository<SidebetType>({
+        find: jest.fn().mockResolvedValue([
+          { id: 1, code: 'CARD_EXACT', baseOdds: '12.000' },
+          { id: 2, code: 'WINNER', baseOdds: '2.000' },
+          { id: 3, code: 'PILL_TRIGGER', baseOdds: '5.000' },
+          { id: 4, code: 'PLAYER_BLACKJACK', baseOdds: '12.000' },
+        ]),
+      } as any);
+
+      const txRepos = new Map<any, any>([
+        [Hand, handRepo],
+        [User, userRepo],
+        [Round, roundRepo],
+        [Card, cardRepo],
+        [MainBet, mainBetRepo],
+        [WalletTransaction, walletRepo],
+        [SideBet, sideBetRepo],
+        [SidebetType, sidebetTypeRepo],
+      ]);
+      mockAppDataSourceTransaction(txRepos);
+
+      const loadedRoundRepo = createMockRepository<Round>({
+        findOne: jest.fn().mockResolvedValue(createRoundFixture()),
+      });
+      mockAppDataSourceRepositories(new Map([[Round, loadedRoundRepo]]));
+
+      const req = createMockRequest({
+        user: { sub: 'user-1' } as any,
+        body: {
+          betAmount: 100,
+          sideBets: [
+            { typeCode: 'CARD_EXACT', amount: 25, predictedSuit: CardSuit.HEARTS, predictedRank: CardRank.JACK },
+            { typeCode: 'WINNER', amount: 10, selection: { winner: 'DEALER' } },
+            { typeCode: 'PILL_TRIGGER', amount: 5 },
+            { typeCode: 'PLAYER_BLACKJACK', amount: 15 },
+          ],
+        },
+      });
+      const res = createMockResponse();
+
+      await startRound(req as any, res);
+
+      expect(userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ balance: '345.00' }),
+      );
+      expect(sideBetRepo.save).toHaveBeenCalledTimes(4);
+      expect(sideBetRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: '25.00',
+          predictedSuit: CardSuit.HEARTS,
+          predictedRank: CardRank.JACK,
+          selectionJson: { suit: CardSuit.HEARTS, rank: CardRank.JACK },
+          odds: '12.000',
+        }),
+      );
+      expect(sideBetRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: '10.00',
+          selectionJson: { winner: 'DEALER' },
+          odds: '2.000',
+        }),
+      );
+      expect(sideBetRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: '5.00',
+          selectionJson: { powerupCode: 'RED_PILL', color: 'red' },
+          odds: '5.000',
+        }),
+      );
+      expect(walletRepo.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ refTable: 'main_bets', amount: '-100.00' }),
+          expect.objectContaining({ refTable: 'side_bets', amount: '-25.00' }),
+          expect.objectContaining({ refTable: 'side_bets', amount: '-10.00' }),
+          expect.objectContaining({ refTable: 'side_bets', amount: '-5.00' }),
+          expect.objectContaining({ refTable: 'side_bets', amount: '-15.00' }),
+        ]),
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
     it('returns 404 when user is not found in the transaction', async () => {
       const handRepo = createMockRepository<Hand>({
         findOne: jest.fn().mockResolvedValue(null),
