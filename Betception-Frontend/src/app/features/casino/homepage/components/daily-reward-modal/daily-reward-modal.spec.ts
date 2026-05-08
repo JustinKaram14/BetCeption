@@ -54,6 +54,25 @@ describe('DailyRewardModalComponent', () => {
     expect(component.countdownText.startsWith('Jetzt')).toBeTrue();
   });
 
+  it('localizes pill reward labels through the shared language service', () => {
+    const redPillReward = {
+      day: 7,
+      kind: 'powerup' as const,
+      powerupCode: 'RED_PILL',
+      isMilestone: true,
+      label: 'Red Pill',
+      icon: 'pill',
+    };
+
+    component.i18n.setLanguage('en');
+    expect(component.rewardKindLabel(redPillReward)).toBe('Pill');
+    expect(component.rewardLabel(redPillReward)).toBe('Red Pill');
+
+    component.i18n.setLanguage('de');
+    expect(component.rewardKindLabel(redPillReward)).toBe('Pille');
+    expect(component.rewardLabel(redPillReward)).toBe('Rote Pille');
+  });
+
   it('renders dialog with correct ARIA attributes', fakeAsync(() => {
     fixture.detectChanges();
     tick();

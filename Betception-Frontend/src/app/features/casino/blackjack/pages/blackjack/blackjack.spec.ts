@@ -3,7 +3,18 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { Blackjack } from './blackjack';
-import { HandOwnerType, HandStatus, MainBetStatus, RoundStatus, type ActivePowerup, type LevelProgress } from '../../../../../core/api/api.types';
+import {
+  CardRank,
+  CardSuit,
+  HandOwnerType,
+  HandStatus,
+  MainBetStatus,
+  RoundStatus,
+  SideBetStatus,
+  type ActivePowerup,
+  type BetceptionResolution,
+  type LevelProgress,
+} from '../../../../../core/api/api.types';
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
@@ -439,15 +450,26 @@ describe('Blackjack', () => {
   });
 
   describe('onDeal', () => {
-    it('calls rng.startRound and stores the returned round', fakeAsync(() => {
+    it('opens the betception menu before starting the round', () => {
+      component.betAmount = 25;
+      component.round = null;
+
+      component.onDeal();
+
+      expect(component.showBetceptionMenu).toBeTrue();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
+    it('starts the round after confirming betception bets', fakeAsync(() => {
       const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
       rngMock.startRound.and.returnValue(of({ round: inProgress }));
 
       component.betAmount = 25;
       component.round = null;
       component.onDeal();
+      component.onConfirmBetception();
 
-      expect(rngMock.startRound).toHaveBeenCalledOnceWith({ betAmount: 25 });
+      expect(rngMock.startRound).toHaveBeenCalledOnceWith({ betAmount: 25, sideBets: [] });
       expect(component.round!.status).toBe(RoundStatus.IN_PROGRESS);
       expect(component.busyAction).toBeNull();
 
@@ -470,10 +492,133 @@ describe('Blackjack', () => {
 
       component.betAmount = 25;
       component.onDeal();
+      component.onConfirmBetception();
 
       expect(component.error).toBe('Insufficient balance');
       expect(component.busyAction).toBeNull();
     }));
+  });
+
+  describe('Betception side bets', () => {
+    const activeRedPill: ActivePowerup = {
+      type: {
+        id: 1,
+        code: 'RED_PILL',
+        title: 'Red Pill',
+        description: null,
+        minLevel: 1,
+        price: 300,
+        effect: null,
+      },
+      usesRemaining: 3,
+    };
+
+    it('sends card, winner, pill, and blackjack side bets when confirming', () => {
+      const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      rngMock.startRound.and.returnValue(of({ round: inProgress }));
+
+      component.balance = 1000;
+      component.betAmount = 100;
+      component.activePowerup = activeRedPill;
+      component.onSelectCardSuit(CardSuit.HEARTS);
+      component.onSelectCardRank(CardRank.JACK);
+      component.onAddCardBet(25);
+      component.onPickWinner('DEALER');
+      component.onAddWinnerBet(50);
+      component.onAddPillTriggerBet(5);
+      component.onAddBlackjackBet(10);
+
+      component.onConfirmBetception();
+
+      expect(rngMock.startRound).toHaveBeenCalledOnceWith({
+        betAmount: 100,
+        sideBets: [
+          {
+            typeCode: 'CARD_EXACT',
+            amount: 25,
+            predictedSuit: CardSuit.HEARTS,
+            predictedRank: CardRank.JACK,
+            selection: { suit: CardSuit.HEARTS, rank: CardRank.JACK },
+          },
+          {
+            typeCode: 'WINNER',
+            amount: 50,
+            selection: { winner: 'DEALER' },
+          },
+          {
+            typeCode: 'PILL_TRIGGER',
+            amount: 5,
+            selection: { powerupCode: 'RED_PILL' },
+          },
+          {
+            typeCode: 'PLAYER_BLACKJACK',
+            amount: 10,
+            selection: { target: 'PLAYER' },
+          },
+        ],
+      });
+    });
+
+    it('keeps the pill trigger unavailable without an active pill', () => {
+      component.balance = 1000;
+      component.betAmount = 100;
+      component.activePowerup = null;
+
+      component.onAddPillTriggerBet(25);
+      component.onDeal();
+      fixture.detectChanges();
+
+      const pillTile: HTMLButtonElement = fixture.nativeElement.querySelectorAll('.betception-tile')[2];
+      expect(component.pillTriggerBetAmount).toBe(0);
+      expect(pillTile.disabled).toBeTrue();
+      expect(pillTile.classList.contains('is-unavailable')).toBeTrue();
+    });
+
+    it('reveals Betception settlement rows one step at a time', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      const resolution: BetceptionResolution = {
+        depthLevel: 4,
+        totalStake: '100',
+        totalPayout: '1200',
+        steps: [
+          { id: 'main', kind: 'MAIN_BET', status: MainBetStatus.WON, amount: '50', payout: '100', multiplier: '2.000', selection: null },
+          { id: 'card', kind: 'CARD_EXACT', status: SideBetStatus.WON, amount: '25', payout: '300', multiplier: '12.000', selection: { suit: CardSuit.HEARTS, rank: CardRank.JACK } },
+          { id: 'winner', kind: 'WINNER', status: SideBetStatus.LOST, amount: '25', payout: '0', multiplier: '2.000', selection: { winner: 'DEALER' } },
+        ],
+      };
+      rngMock.settle.and.returnValue(of({ round: settled, betceptionResolution: resolution }));
+
+      component.round = stood;
+      component.onSettle();
+
+      expect(component.betceptionResolution).toBe(resolution);
+      expect(component.revealedResolutionStepCount).toBe(0);
+      tick(649);
+      expect(component.revealedResolutionStepCount).toBe(0);
+      tick(1);
+      expect(component.revealedResolutionStepCount).toBe(1);
+      tick(620);
+      expect(component.revealedResolutionStepCount).toBe(2);
+      tick(620);
+      expect(component.revealedResolutionStepCount).toBe(3);
+    }));
+
+    it('classifies win animations relative to total stake', () => {
+      component.finalStakeAmount = 100;
+
+      component.finalPayoutAmount = 150;
+      expect(component.finalPayoutTier).toBe('win');
+
+      component.finalPayoutAmount = 300;
+      expect(component.finalPayoutTier).toBe('big');
+
+      component.finalPayoutAmount = 600;
+      expect(component.finalPayoutTier).toBe('super');
+
+      component.finalPayoutAmount = 1000;
+      expect(component.finalPayoutTier).toBe('mega');
+    });
   });
 
   describe('onHit', () => {
