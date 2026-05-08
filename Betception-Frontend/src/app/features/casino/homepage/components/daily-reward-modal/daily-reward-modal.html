@@ -2,7 +2,7 @@
   <div class="dr-card" role="dialog" aria-modal="true">
     <div class="dr-header">
       <div>
-        <span class="dr-kicker">30 Tage</span>
+        <span class="dr-kicker">{{ i18n.t('daily.kicker') }}</span>
         <div class="dr-title-row">
           <svg class="dr-title-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M4 9h16v11H4z" />
@@ -11,22 +11,22 @@
             <path d="M12 6C9.4 2.9 6.4 3.2 6.4 5.2 6.4 7.1 9.4 7.1 12 6Z" />
             <path d="M12 6c2.6-3.1 5.6-2.8 5.6-.8 0 1.9-3 1.9-5.6.8Z" />
           </svg>
-          <h2 class="dr-title">Tägliche Belohnung</h2>
+          <h2 class="dr-title">{{ i18n.t('daily.title') }}</h2>
         </div>
       </div>
       <div class="dr-header-actions">
-        <span class="dr-streak-badge" *ngIf="loginStreak > 0">{{ loginStreak }} Tage Streak</span>
-        <button class="dr-close" type="button" (click)="onClose()" aria-label="Schließen">X</button>
+        <span class="dr-streak-badge" *ngIf="loginStreak > 0">{{ i18n.t('daily.streakBadge', { days: loginStreak }) }}</span>
+        <button class="dr-close" type="button" (click)="onClose()" [attr.aria-label]="i18n.t('common.close')">X</button>
       </div>
     </div>
 
     <div class="dr-reset-banner" *ngIf="!loading && streakWasReset">
-      Dein Streak wurde zurückgesetzt. Heute startest du wieder bei Tag 1.
+      {{ i18n.t('daily.streakReset') }}
     </div>
 
     <div class="dr-loading" *ngIf="loading">
       <div class="dr-spinner"></div>
-      <p>Belohnungen werden geladen...</p>
+      <p>{{ i18n.t('daily.loading') }}</p>
     </div>
 
     <div class="dr-error-panel" *ngIf="!loading && error && !schedule.length">
@@ -43,7 +43,7 @@
         [class.dr-day--powerup]="item.kind === 'powerup'"
         [attr.data-reward]="rewardTone(item)"
       >
-        <span class="dr-day__num">Tag {{ item.day }}</span>
+        <span class="dr-day__num">{{ i18n.t('daily.dayLabel', { day: item.day }) }}</span>
         <span class="dr-day__mark" aria-hidden="true"></span>
         <span class="dr-day__kind">{{ rewardKindLabel(item) }}</span>
         <span class="dr-day__label">{{ rewardLabel(item) }}</span>
@@ -53,21 +53,21 @@
 
     <div class="dr-result" *ngIf="justClaimedReward" [attr.data-reward]="rewardTone(justClaimedReward)">
       <span class="dr-result__mark" aria-hidden="true"></span>
-      <span class="dr-result__text">{{ rewardLabel(justClaimedReward) }} erhalten</span>
+      <span class="dr-result__text">{{ i18n.t('daily.rewardReceived', { reward: rewardLabel(justClaimedReward) }) }}</span>
     </div>
 
     <div class="dr-footer" *ngIf="!loading">
       <ng-container *ngIf="isEligible && !justClaimedDay">
         <button class="btn dr-claim-btn" type="button" [disabled]="claiming" (click)="onClaim()">
-          <span *ngIf="!claiming">Heute abholen</span>
-          <span *ngIf="claiming">Wird abgeholt...</span>
+          <span *ngIf="!claiming">{{ i18n.t('daily.claimToday') }}</span>
+          <span *ngIf="claiming">{{ i18n.t('daily.claiming') }}</span>
         </button>
         <p class="dr-error-msg" *ngIf="error">{{ error }}</p>
       </ng-container>
 
       <ng-container *ngIf="!isEligible || justClaimedDay !== null">
-        <p class="dr-cooldown">Nächste Belohnung in <strong>{{ countdownText }}</strong></p>
-        <button class="btn dr-close-btn" type="button" (click)="onClose()">OK</button>
+        <p class="dr-cooldown">{{ i18n.t('daily.next') }} <strong>{{ countdownText }}</strong></p>
+        <button class="btn dr-close-btn" type="button" (click)="onClose()">{{ i18n.t('common.ok') }}</button>
       </ng-container>
     </div>
   </div>
