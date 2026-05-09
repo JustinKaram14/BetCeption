@@ -261,7 +261,7 @@ describe('round.controller', () => {
       const sidebetTypeRepo = createMockRepository<SidebetType>({
         find: jest.fn().mockResolvedValue([
           { id: 1, code: 'CARD_EXACT', baseOdds: '12.000' },
-          { id: 2, code: 'WINNER', baseOdds: '2.000' },
+          { id: 2, code: 'DEALER_BUST', baseOdds: '3.000' },
           { id: 3, code: 'PILL_TRIGGER', baseOdds: '5.000' },
           { id: 4, code: 'PLAYER_BLACKJACK', baseOdds: '12.000' },
         ]),
@@ -290,7 +290,7 @@ describe('round.controller', () => {
           betAmount: 100,
           sideBets: [
             { typeCode: 'CARD_EXACT', amount: 25, predictedSuit: CardSuit.HEARTS, predictedRank: CardRank.JACK },
-            { typeCode: 'WINNER', amount: 10, selection: { winner: 'DEALER' } },
+            { typeCode: 'DEALER_BUST', amount: 10 },
             { typeCode: 'PILL_TRIGGER', amount: 5 },
             { typeCode: 'PLAYER_BLACKJACK', amount: 15 },
           ],
@@ -316,8 +316,8 @@ describe('round.controller', () => {
       expect(sideBetRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: '10.00',
-          selectionJson: { winner: 'DEALER' },
-          odds: '2.000',
+          selectionJson: { target: 'DEALER', outcome: 'BUST' },
+          odds: '3.000',
         }),
       );
       expect(sideBetRepo.create).toHaveBeenCalledWith(

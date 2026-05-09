@@ -178,6 +178,10 @@ export class HomepageComponent {
         return payload;
       }
       if (payload && typeof payload === 'object' && 'message' in payload) {
+        const translated = this.authErrorMessageForCode((payload as any).code);
+        if (translated) {
+          return translated;
+        }
         return String(payload.message);
       }
       if ('message' in (error as any)) {
@@ -185,5 +189,18 @@ export class HomepageComponent {
       }
     }
     return this.i18n.t('home.toast.actionFailed');
+  }
+
+  private authErrorMessageForCode(code: unknown): string | null {
+    if (code === 'EMAIL_DISPOSABLE') {
+      return this.i18n.t('auth.emailDisposable');
+    }
+    if (code === 'EMAIL_DOMAIN_INVALID') {
+      return this.i18n.t('auth.emailDomainInvalid');
+    }
+    if (code === 'EMAIL_DOMAIN_UNAVAILABLE') {
+      return this.i18n.t('auth.emailDomainUnavailable');
+    }
+    return null;
   }
 }

@@ -224,6 +224,21 @@ describe('HomepageComponent', () => {
     expect(toastSpy).toHaveBeenCalled();
   });
 
+  it('translates backend email validation errors on register', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.register.and.returnValue(throwError(() => ({
+      error: {
+        code: 'EMAIL_DISPOSABLE',
+        message: 'Disposable email addresses are not allowed.',
+      },
+    })));
+
+    component.onRegister({ email: 't@mailinator.com', username: 'new', password: 'pw' });
+
+    expect(toastSpy.calls.mostRecent().args[0]).toContain('Wegwerf-Adressen');
+    expect(authFacadeMock.login).not.toHaveBeenCalled();
+  });
+
   it('calls logout on authFacade and does not throw on success', () => {
     authFacadeMock.logout.and.returnValue(of(undefined));
     expect(() => component.onLogout()).not.toThrow();

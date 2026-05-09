@@ -976,6 +976,10 @@
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:24px;
 }
+.betception-choice-grid--single{
+  grid-template-columns:minmax(240px,520px);
+  justify-content:center;
+}
 .betception-choice-grid button{
   position:relative;
   min-height:112px;
@@ -1004,6 +1008,10 @@
 }
 .betception-choice-grid .dealer-choice{
   border-color:rgba(255,59,69,.78);
+}
+.betception-choice-grid .dealer-bust-choice{
+  min-height:132px;
+  background:linear-gradient(145deg,rgba(255,59,69,.13),rgba(255,255,255,.025));
 }
 .betception-pill-target{
   position:relative;
