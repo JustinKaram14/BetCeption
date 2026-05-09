@@ -7,6 +7,7 @@ import { signAccess, signRefresh, verifyRefresh } from '../../utils/jwt.js';
 import { env } from '../../config/env.js';
 import type { RegisterInput, LoginInput } from './auth.schema.js';
 import { hashToken } from '../../utils/tokenHash.js';
+import * as emailValidation from './email-validation.js';
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_PATH = '/auth/refresh';
@@ -38,6 +39,14 @@ export async function register(
   res: Response,
 ) {
   const { email, password, username } = req.body;
+  const emailValidationResult = await emailValidation.validateRegistrableEmail(email);
+  if (!emailValidationResult.valid) {
+    return res.status(400).json({
+      message: emailValidationResult.message,
+      code: emailValidationResult.code,
+    });
+  }
+
   const repo = AppDataSource.getRepository(User);
 
   const emailExists = await repo.exist({ where: { email } });

@@ -130,11 +130,9 @@ export enum SideBetStatus {
 
 export type BetceptionSideBetCode =
   | 'CARD_EXACT'
-  | 'WINNER'
+  | 'DEALER_BUST'
   | 'PILL_TRIGGER'
   | 'PLAYER_BLACKJACK';
-
-export type BetceptionWinner = 'PLAYER' | 'DEALER';
 
 export enum WalletTransactionKind {
   DEPOSIT = 'deposit',

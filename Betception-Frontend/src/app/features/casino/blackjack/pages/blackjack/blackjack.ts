@@ -6,7 +6,6 @@ import {
   ActivePowerup,
   BetceptionResolution,
   BetceptionResolutionStep,
-  BetceptionWinner,
   CardRank,
   CardSuit,
   HandOwnerType,
@@ -34,7 +33,7 @@ import { I18n } from '../../../../../core/i18n/i18n';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 
 type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
-type BetceptionView = 'overview' | 'cards' | 'winner' | 'pill' | 'blackjack';
+type BetceptionView = 'overview' | 'cards' | 'dealerBust' | 'pill' | 'blackjack';
 type PayoutTier = 'none' | 'win' | 'big' | 'super' | 'mega';
 type BetceptionPanelRow = {
   id: string;
@@ -111,8 +110,7 @@ export class Blackjack implements OnInit {
   selectedCardSuit = CardSuit.HEARTS;
   selectedCardRank = CardRank.JACK;
   cardBets: Record<string, number> = {};
-  winnerChoice: BetceptionWinner | null = null;
-  winnerBetAmount = 0;
+  dealerBustBetAmount = 0;
   pillTriggerBetAmount = 0;
   blackjackBetAmount = 0;
   betceptionResolution: BetceptionResolution | null = null;
@@ -170,7 +168,7 @@ export class Blackjack implements OnInit {
   get totalSideBetAmount() {
     return (
       this.cardBetTotal +
-      this.winnerBetAmount +
+      this.dealerBustBetAmount +
       this.pillTriggerBetAmount +
       this.blackjackBetAmount
     );
@@ -239,11 +237,11 @@ export class Blackjack implements OnInit {
         items: this.cardBetEntries.map((bet) => this.cardBetPanelItem(bet.suit, bet.rank, bet.amount)),
       });
     }
-    if (this.winnerBetAmount > 0 && this.winnerChoice) {
+    if (this.dealerBustBetAmount > 0) {
       rows.push({
-        id: 'winner-draft',
-        label: this.i18n.t('betception.winnerBet'),
-        value: `${this.winnerLabel(this.winnerChoice)} - ${this.formatCoins(this.winnerBetAmount)}`,
+        id: 'dealer-bust-draft',
+        label: this.i18n.t('betception.dealerBustBet'),
+        value: this.formatCoins(this.dealerBustBetAmount),
       });
     }
     if (this.pillTriggerBetAmount > 0) {
@@ -379,18 +377,13 @@ export class Blackjack implements OnInit {
     this.cardBets = rest;
   }
 
-  onPickWinner(winner: BetceptionWinner) {
-    this.winnerChoice = winner;
+  onAddDealerBustBet(amount: number) {
+    if (!this.canAddSideBetChip(amount)) return;
+    this.dealerBustBetAmount = Math.round((this.dealerBustBetAmount + amount) * 100) / 100;
   }
 
-  onAddWinnerBet(amount: number) {
-    if (!this.winnerChoice || !this.canAddSideBetChip(amount)) return;
-    this.winnerBetAmount = Math.round((this.winnerBetAmount + amount) * 100) / 100;
-  }
-
-  onClearWinnerBet() {
-    this.winnerBetAmount = 0;
-    this.winnerChoice = null;
+  onClearDealerBustBet() {
+    this.dealerBustBetAmount = 0;
   }
 
   onAddPillTriggerBet(amount: number) {
@@ -483,12 +476,6 @@ export class Blackjack implements OnInit {
     return suit === CardSuit.HEARTS || suit === CardSuit.DIAMONDS;
   }
 
-  winnerLabel(winner: BetceptionWinner | string | null | undefined) {
-    return winner === 'DEALER'
-      ? this.i18n.t('betception.dealerWins')
-      : this.i18n.t('betception.playerWins');
-  }
-
   formatCoins(amount: number) {
     return `${Math.round(amount)} ${this.i18n.t('common.coins')}`;
   }
@@ -508,11 +495,11 @@ export class Blackjack implements OnInit {
         selection: { suit: entry.suit, rank: entry.rank },
       });
     }
-    if (this.winnerBetAmount > 0 && this.winnerChoice) {
+    if (this.dealerBustBetAmount > 0) {
       sideBets.push({
-        typeCode: 'WINNER',
-        amount: this.winnerBetAmount,
-        selection: { winner: this.winnerChoice },
+        typeCode: 'DEALER_BUST',
+        amount: this.dealerBustBetAmount,
+        selection: { target: 'DEALER', outcome: 'BUST' },
       });
     }
     if (this.pillTriggerBetAmount > 0 && this.activePowerup) {
@@ -534,8 +521,7 @@ export class Blackjack implements OnInit {
 
   private resetBetceptionDraft() {
     this.cardBets = {};
-    this.winnerChoice = null;
-    this.winnerBetAmount = 0;
+    this.dealerBustBetAmount = 0;
     this.pillTriggerBetAmount = 0;
     this.blackjackBetAmount = 0;
     this.betceptionView = 'overview';
@@ -594,7 +580,7 @@ export class Blackjack implements OnInit {
       ));
     }
 
-    for (const kind of ['WINNER', 'PILL_TRIGGER', 'PLAYER_BLACKJACK']) {
+    for (const kind of ['DEALER_BUST', 'PILL_TRIGGER', 'PLAYER_BLACKJACK']) {
       const steps = indexed.filter(({ step }) => step.kind === kind);
       if (!steps.length) continue;
       const step = steps[0].step;
@@ -652,16 +638,14 @@ export class Blackjack implements OnInit {
 
   private panelLabelForSideBetType(type: string) {
     if (type === 'CARD_EXACT') return this.i18n.t('betception.cardBets');
-    if (type === 'WINNER') return this.i18n.t('betception.winnerBet');
+    if (type === 'DEALER_BUST') return this.i18n.t('betception.dealerBustBet');
     if (type === 'PILL_TRIGGER') return this.i18n.t('betception.pillBet');
     if (type === 'PLAYER_BLACKJACK') return this.i18n.t('betception.blackjackBet');
     return type;
   }
 
   private sideBetPanelValue(sideBet: RoundSideBet) {
-    if (sideBet.type === 'WINNER') {
-      return `${this.winnerLabel(sideBet.selection?.['winner'] as string)} - ${this.formatCoins(Number(sideBet.amount))}`;
-    }
+    if (sideBet.type === 'DEALER_BUST') return this.formatCoins(Number(sideBet.amount));
     if (sideBet.type === 'PILL_TRIGGER') {
       return this.formatCoins(Number(sideBet.amount));
     }
@@ -678,9 +662,7 @@ export class Blackjack implements OnInit {
   }
 
   private resolutionPanelValue(step: BetceptionResolutionStep) {
-    if (step.kind === 'WINNER') {
-      return `${this.winnerLabel(step.selection?.['winner'] as string)} - ${this.formatCoins(Number(step.amount))}`;
-    }
+    if (step.kind === 'DEALER_BUST') return this.formatCoins(Number(step.amount));
     return this.formatCoins(Number(step.amount));
   }
 
@@ -697,7 +679,7 @@ export class Blackjack implements OnInit {
   private draftSideBetCategoryCount() {
     return [
       this.cardBetEntries.length > 0,
-      this.winnerBetAmount > 0,
+      this.dealerBustBetAmount > 0,
       this.pillTriggerBetAmount > 0,
       this.blackjackBetAmount > 0,
     ].filter(Boolean).length;
@@ -722,9 +704,7 @@ export class Blackjack implements OnInit {
       const rank = (selection?.['rank'] as CardRank | undefined) ?? predictedRank;
       return `${this.i18n.t('betception.cardExactShort')} ${this.suitSymbol(suit)}${rank ?? ''}`;
     }
-    if (type === 'WINNER') {
-      return `${this.i18n.t('betception.winnerShort')} ${this.winnerLabel(selection?.['winner'] as string)}`;
-    }
+    if (type === 'DEALER_BUST') return this.i18n.t('betception.dealerBustShort');
     if (type === 'PILL_TRIGGER') return this.i18n.t('betception.pillShort');
     if (type === 'PLAYER_BLACKJACK') return this.i18n.t('betception.blackjackShort');
     return type;

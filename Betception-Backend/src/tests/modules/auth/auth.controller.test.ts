@@ -12,12 +12,17 @@ import * as passwordUtils from '../../../utils/passwords.js';
 import * as jwtUtils from '../../../utils/jwt.js';
 import { hashToken } from '../../../utils/tokenHash.js';
 import { env } from '../../../config/env.js';
+import * as emailValidation from '../../../modules/auth/email-validation.js';
 
 const invalidCredentialsResponse = { message: 'Invalid email or password' };
 const registrationConflictResponse = { message: 'Registration could not be completed' };
 
 describe('auth.controller', () => {
   describe('register', () => {
+    beforeEach(() => {
+      jest.spyOn(emailValidation, 'validateRegistrableEmail').mockResolvedValue({ valid: true });
+    });
+
     it('creates a new user when email and username are available', async () => {
       const userRepo = createMockRepository<User>({
         exist: jest.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(false),
@@ -33,6 +38,7 @@ describe('auth.controller', () => {
 
       await register(req as any, res);
 
+      expect(emailValidation.validateRegistrableEmail).toHaveBeenCalledWith('user@example.com');
       expect(passwordUtils.hashPassword).toHaveBeenCalledWith('secret123');
       expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({
         email: 'user@example.com',
@@ -41,6 +47,26 @@ describe('auth.controller', () => {
       }));
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({ message: 'Registered' });
+    });
+
+    it('rejects disposable email domains before creating a user', async () => {
+      jest.spyOn(emailValidation, 'validateRegistrableEmail').mockResolvedValueOnce({
+        valid: false,
+        code: 'EMAIL_DISPOSABLE',
+        message: 'Disposable email addresses are not allowed.',
+      });
+      const req = createMockRequest({
+        body: { email: 'user@mailinator.com', password: 'secret123', username: 'player' },
+      });
+      const res = createMockResponse();
+
+      await register(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Disposable email addresses are not allowed.',
+        code: 'EMAIL_DISPOSABLE',
+      });
     });
 
     it('rejects duplicate emails', async () => {
