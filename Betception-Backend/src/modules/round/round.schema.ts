@@ -17,7 +17,7 @@ const moneySchema = z
 
 export const BetceptionSideBetCodeSchema = z.enum([
   'CARD_EXACT',
-  'WINNER',
+  'DEALER_BUST',
   'PILL_TRIGGER',
   'PLAYER_BLACKJACK',
 ]);

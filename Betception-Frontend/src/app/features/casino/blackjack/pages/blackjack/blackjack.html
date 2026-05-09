@@ -209,11 +209,11 @@
               <small>{{ i18n.t('betception.cardExactSubtitle') }}</small>
               <b>{{ formatCoins(cardBetTotal) }}</b>
             </button>
-            <button class="betception-tile" type="button" [class.has-stake]="winnerBetAmount > 0" (click)="onBetceptionView('winner')">
-              <span class="betception-tile__icon">VS</span>
-              <strong>{{ i18n.t('betception.winnerTitle') }}</strong>
-              <small>{{ i18n.t('betception.winnerSubtitle') }}</small>
-              <b>{{ formatCoins(winnerBetAmount) }}</b>
+            <button class="betception-tile" type="button" [class.has-stake]="dealerBustBetAmount > 0" (click)="onBetceptionView('dealerBust')">
+              <span class="betception-tile__icon">BUST</span>
+              <strong>{{ i18n.t('betception.dealerBustTitle') }}</strong>
+              <small>{{ i18n.t('betception.dealerBustSubtitle') }}</small>
+              <b>{{ formatCoins(dealerBustBetAmount) }}</b>
             </button>
             <button
               class="betception-tile"
@@ -276,23 +276,19 @@
           <button class="btn betception-clear" type="button" (click)="onClearSelectedCardBet()" [disabled]="currentCardBetAmount <= 0">{{ i18n.t('betception.clearSelection') }}</button>
         </section>
 
-        <section class="betception-view" *ngSwitchCase="'winner'">
-          <h2>{{ i18n.t('betception.winnerTitle') }}</h2>
-          <p>{{ i18n.t('betception.winnerSubtitle') }}</p>
-          <div class="betception-choice-grid">
-            <button type="button" [ngClass]="{ selected: winnerChoice === 'PLAYER' }" (click)="onPickWinner('PLAYER')">
-              <span>{{ i18n.t('betception.playerWins') }}</span>
-              <b class="betception-stake-badge" *ngIf="winnerChoice === 'PLAYER' && winnerBetAmount > 0">{{ formatCoins(winnerBetAmount) }}</b>
-            </button>
-            <button type="button" class="dealer-choice" [ngClass]="{ selected: winnerChoice === 'DEALER' }" (click)="onPickWinner('DEALER')">
-              <span>{{ i18n.t('betception.dealerWins') }}</span>
-              <b class="betception-stake-badge" *ngIf="winnerChoice === 'DEALER' && winnerBetAmount > 0">{{ formatCoins(winnerBetAmount) }}</b>
+        <section class="betception-view" *ngSwitchCase="'dealerBust'">
+          <h2>{{ i18n.t('betception.dealerBustTitle') }}</h2>
+          <p>{{ i18n.t('betception.dealerBustSubtitle') }}</p>
+          <div class="betception-choice-grid betception-choice-grid--single">
+            <button type="button" class="dealer-choice dealer-bust-choice selected">
+              <span>{{ i18n.t('betception.dealerBustTarget') }}</span>
+              <b class="betception-stake-badge" *ngIf="dealerBustBetAmount > 0">{{ formatCoins(dealerBustBetAmount) }}</b>
             </button>
           </div>
           <div class="betception-chip-row">
-            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddWinnerBet(chip)" [disabled]="!winnerChoice || !canAddSideBetChip(chip)">{{ chip }}</button>
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddDealerBustBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
           </div>
-          <button class="btn betception-clear" type="button" (click)="onClearWinnerBet()" [disabled]="winnerBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
+          <button class="btn betception-clear" type="button" (click)="onClearDealerBustBet()" [disabled]="dealerBustBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
         </section>
 
         <section class="betception-view" *ngSwitchCase="'pill'">
