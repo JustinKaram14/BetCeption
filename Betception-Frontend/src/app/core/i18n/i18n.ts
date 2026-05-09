@@ -5,6 +5,9 @@ export type LanguageCode = 'de' | 'en' | 'es' | 'fr';
 
 type TranslationKey =
   | 'auth.createAccount'
+  | 'auth.emailDisposable'
+  | 'auth.emailDomainInvalid'
+  | 'auth.emailDomainUnavailable'
   | 'auth.emailInvalid'
   | 'auth.emailPlaceholder'
   | 'auth.login'
@@ -45,7 +48,11 @@ type TranslationKey =
   | 'betception.clearSelection'
   | 'betception.confirmAndDeal'
   | 'betception.continueWithout'
-  | 'betception.dealerWins'
+  | 'betception.dealerBustBet'
+  | 'betception.dealerBustShort'
+  | 'betception.dealerBustSubtitle'
+  | 'betception.dealerBustTarget'
+  | 'betception.dealerBustTitle'
   | 'betception.depthLevel'
   | 'betception.finalPayout'
   | 'betception.hit'
@@ -58,7 +65,6 @@ type TranslationKey =
   | 'betception.pillTitle'
   | 'betception.pillBet'
   | 'betception.pillUnavailable'
-  | 'betception.playerWins'
   | 'betception.refund'
   | 'betception.selectedCard'
   | 'betception.sideBetTotal'
@@ -70,10 +76,6 @@ type TranslationKey =
   | 'betception.suitSpades'
   | 'betception.title'
   | 'betception.totalPayout'
-  | 'betception.winnerShort'
-  | 'betception.winnerSubtitle'
-  | 'betception.winnerTitle'
-  | 'betception.winnerBet'
   | 'betception.winCelebration'
   | 'common.cancel'
   | 'common.close'
@@ -218,6 +220,9 @@ const STORAGE_KEY = 'betception-language';
 const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
   de: {
     'auth.createAccount': 'ACCOUNT ERSTELLEN',
+    'auth.emailDisposable': 'Bitte nutze eine echte E-Mail-Adresse. Wegwerf-Adressen sind nicht erlaubt.',
+    'auth.emailDomainInvalid': 'Diese E-Mail-Domain kann keine E-Mails empfangen. Bitte prüfe die Adresse.',
+    'auth.emailDomainUnavailable': 'Die E-Mail-Domain konnte gerade nicht geprüft werden. Bitte versuche es erneut.',
     'auth.emailInvalid': 'Bitte eine gültige E-Mail-Adresse eingeben.',
     'auth.emailPlaceholder': 'E-Mail',
     'auth.login': 'Einloggen',
@@ -258,7 +263,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.clearSelection': 'Auswahl leeren',
     'betception.confirmAndDeal': 'Wetten bestätigen & austeilen',
     'betception.continueWithout': 'Ohne Sidebets austeilen',
-    'betception.dealerWins': 'Dealer gewinnt',
+    'betception.dealerBustBet': 'Dealer-Bust-Wette',
+    'betception.dealerBustShort': 'Dealer Bust',
+    'betception.dealerBustSubtitle': 'Wette darauf, dass der Dealer diese Runde über 21 geht. Auszahlung 3:1.',
+    'betception.dealerBustTarget': 'Dealer bustet',
+    'betception.dealerBustTitle': 'Dealer Bust',
     'betception.depthLevel': 'Depth Level',
     'betception.finalPayout': 'Gesamtauszahlung',
     'betception.hit': 'Hit',
@@ -271,11 +280,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillTitle': 'Pillen-Trigger',
     'betception.pillBet': 'Pillenwette',
     'betception.pillUnavailable': 'Keine aktive Pille im Slot.',
-    'betception.playerWins': 'Spieler gewinnt',
     'betception.refund': 'Zurück',
     'betception.selectedCard': 'Ausgewählte Karte',
     'betception.sideBetTotal': 'Sidebets',
-    'betception.subtitle': 'Setze auf Karten, Gewinner, Pillen-Trigger oder Blackjack. Alles wird nach der Runde nacheinander abgerechnet.',
+    'betception.subtitle': 'Setze auf Karten, Dealer Bust, Pillen-Trigger oder Blackjack. Alles wird nach der Runde nacheinander abgerechnet.',
     'betception.superWin': 'SUPER WIN',
     'betception.suitClubs': 'Kreuz',
     'betception.suitDiamonds': 'Karo',
@@ -283,10 +291,6 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.suitSpades': 'Pik',
     'betception.title': 'Betception Bets',
     'betception.totalPayout': 'Auszahlung',
-    'betception.winnerShort': 'Gewinner',
-    'betception.winnerSubtitle': 'Wette darauf, ob Spieler oder Dealer diese Runde gewinnt. Push gibt den Einsatz zurück.',
-    'betception.winnerTitle': 'Gewinnerwette',
-    'betception.winnerBet': 'Gewinnerwette',
     'betception.winCelebration': 'WIN',
     'common.cancel': 'Abbrechen',
     'common.close': 'Schließen',
@@ -426,6 +430,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
   },
   en: {
     'auth.createAccount': 'CREATE ACCOUNT',
+    'auth.emailDisposable': 'Please use a real email address. Disposable addresses are not allowed.',
+    'auth.emailDomainInvalid': 'This email domain cannot receive email. Please check the address.',
+    'auth.emailDomainUnavailable': 'The email domain could not be checked right now. Please try again.',
     'auth.emailInvalid': 'Please enter a valid email address.',
     'auth.emailPlaceholder': 'Email',
     'auth.login': 'Login',
@@ -466,7 +473,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.clearSelection': 'Clear selection',
     'betception.confirmAndDeal': 'Confirm bets & deal',
     'betception.continueWithout': 'Deal without sidebets',
-    'betception.dealerWins': 'Dealer wins',
+    'betception.dealerBustBet': 'Dealer Bust Bet',
+    'betception.dealerBustShort': 'Dealer Bust',
+    'betception.dealerBustSubtitle': 'Bet that the dealer goes over 21 this round. Payout 3:1.',
+    'betception.dealerBustTarget': 'Dealer busts',
+    'betception.dealerBustTitle': 'Dealer Bust',
     'betception.depthLevel': 'Depth Level',
     'betception.finalPayout': 'Total payout',
     'betception.hit': 'Hit',
@@ -479,11 +490,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillTitle': 'Pill Trigger',
     'betception.pillBet': 'Pill Bet',
     'betception.pillUnavailable': 'No active pill in the slot.',
-    'betception.playerWins': 'Player wins',
     'betception.refund': 'Refund',
     'betception.selectedCard': 'Selected card',
     'betception.sideBetTotal': 'Sidebets',
-    'betception.subtitle': 'Bet on cards, winner, pill trigger, or blackjack. Everything resolves step by step after the round.',
+    'betception.subtitle': 'Bet on cards, dealer bust, pill trigger, or blackjack. Everything resolves step by step after the round.',
     'betception.superWin': 'SUPER WIN',
     'betception.suitClubs': 'Clubs',
     'betception.suitDiamonds': 'Diamonds',
@@ -491,10 +501,6 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.suitSpades': 'Spades',
     'betception.title': 'Betception Bets',
     'betception.totalPayout': 'Payout',
-    'betception.winnerShort': 'Winner',
-    'betception.winnerSubtitle': 'Bet whether player or dealer wins this round. Push refunds the stake.',
-    'betception.winnerTitle': 'Winner Bet',
-    'betception.winnerBet': 'Winner Bet',
     'betception.winCelebration': 'WIN',
     'common.cancel': 'Cancel',
     'common.close': 'Close',
@@ -634,6 +640,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
   },
   es: {
     'auth.createAccount': 'CREAR CUENTA',
+    'auth.emailDisposable': 'Usa una dirección de email real. No se permiten direcciones temporales.',
+    'auth.emailDomainInvalid': 'Este dominio de email no puede recibir correos. Revisa la dirección.',
+    'auth.emailDomainUnavailable': 'No se pudo comprobar el dominio de email ahora. Inténtalo de nuevo.',
     'auth.emailInvalid': 'Introduce un email válido.',
     'auth.emailPlaceholder': 'Email',
     'auth.login': 'Iniciar sesión',
@@ -674,7 +683,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.clearSelection': 'Limpiar seleccion',
     'betception.confirmAndDeal': 'Confirmar apuestas y dar',
     'betception.continueWithout': 'Dar sin apuestas extra',
-    'betception.dealerWins': 'Gana dealer',
+    'betception.dealerBustBet': 'Apuesta Dealer Bust',
+    'betception.dealerBustShort': 'Dealer Bust',
+    'betception.dealerBustSubtitle': 'Apuesta a que el dealer pasa de 21 esta ronda. Pago 3:1.',
+    'betception.dealerBustTarget': 'El dealer se pasa',
+    'betception.dealerBustTitle': 'Dealer Bust',
     'betception.depthLevel': 'Nivel de profundidad',
     'betception.finalPayout': 'Pago total',
     'betception.hit': 'Acierto',
@@ -687,11 +700,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillTitle': 'Trigger de pildora',
     'betception.pillBet': 'Apuesta de pildora',
     'betception.pillUnavailable': 'No hay pildora activa.',
-    'betception.playerWins': 'Gana jugador',
     'betception.refund': 'Devuelta',
     'betception.selectedCard': 'Carta seleccionada',
     'betception.sideBetTotal': 'Apuestas extra',
-    'betception.subtitle': 'Apuesta a cartas, ganador, trigger de pildora o blackjack. Todo se resuelve paso a paso tras la ronda.',
+    'betception.subtitle': 'Apuesta a cartas, dealer bust, trigger de pildora o blackjack. Todo se resuelve paso a paso tras la ronda.',
     'betception.superWin': 'SUPER PREMIO',
     'betception.suitClubs': 'Treboles',
     'betception.suitDiamonds': 'Diamantes',
@@ -699,10 +711,6 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.suitSpades': 'Picas',
     'betception.title': 'Apuestas Betception',
     'betception.totalPayout': 'Pago',
-    'betception.winnerShort': 'Ganador',
-    'betception.winnerSubtitle': 'Apuesta si gana jugador o dealer. Push devuelve la apuesta.',
-    'betception.winnerTitle': 'Apuesta ganador',
-    'betception.winnerBet': 'Apuesta ganador',
     'betception.winCelebration': 'PREMIO',
     'common.cancel': 'Cancelar',
     'common.close': 'Cerrar',
@@ -842,6 +850,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
   },
   fr: {
     'auth.createAccount': 'CRÉER UN COMPTE',
+    'auth.emailDisposable': 'Utilise une vraie adresse e-mail. Les adresses temporaires ne sont pas autorisées.',
+    'auth.emailDomainInvalid': 'Ce domaine e-mail ne peut pas recevoir de messages. Vérifie l’adresse.',
+    'auth.emailDomainUnavailable': 'Le domaine e-mail ne peut pas être vérifié maintenant. Réessaie.',
     'auth.emailInvalid': 'Saisis une adresse e-mail valide.',
     'auth.emailPlaceholder': 'E-mail',
     'auth.login': 'Connexion',
@@ -882,7 +893,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.clearSelection': 'Vider selection',
     'betception.confirmAndDeal': 'Confirmer et donner',
     'betception.continueWithout': 'Donner sans paris extra',
-    'betception.dealerWins': 'Dealer gagne',
+    'betception.dealerBustBet': 'Pari Dealer Bust',
+    'betception.dealerBustShort': 'Dealer Bust',
+    'betception.dealerBustSubtitle': 'Parie que le dealer dépasse 21 cette manche. Gain 3:1.',
+    'betception.dealerBustTarget': 'Le dealer saute',
+    'betception.dealerBustTitle': 'Dealer Bust',
     'betception.depthLevel': 'Niveau de profondeur',
     'betception.finalPayout': 'Gain total',
     'betception.hit': 'Touche',
@@ -895,11 +910,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillTitle': 'Trigger pilule',
     'betception.pillBet': 'Pari pilule',
     'betception.pillUnavailable': 'Aucune pilule active.',
-    'betception.playerWins': 'Joueur gagne',
     'betception.refund': 'Rembourse',
     'betception.selectedCard': 'Carte choisie',
     'betception.sideBetTotal': 'Paris extra',
-    'betception.subtitle': 'Parie sur les cartes, le gagnant, le trigger de pilule ou blackjack. Tout se regle etape par etape apres la manche.',
+    'betception.subtitle': 'Parie sur les cartes, dealer bust, le trigger de pilule ou blackjack. Tout se regle etape par etape apres la manche.',
     'betception.superWin': 'SUPER GAIN',
     'betception.suitClubs': 'Trefle',
     'betception.suitDiamonds': 'Carreau',
@@ -907,10 +921,6 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.suitSpades': 'Pique',
     'betception.title': 'Paris Betception',
     'betception.totalPayout': 'Gain',
-    'betception.winnerShort': 'Gagnant',
-    'betception.winnerSubtitle': 'Parie si le joueur ou le dealer gagne. Push rembourse la mise.',
-    'betception.winnerTitle': 'Pari gagnant',
-    'betception.winnerBet': 'Pari gagnant',
     'betception.winCelebration': 'GAIN',
     'common.cancel': 'Annuler',
     'common.close': 'Fermer',

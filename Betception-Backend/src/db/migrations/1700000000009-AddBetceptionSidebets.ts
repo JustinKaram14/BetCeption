@@ -22,11 +22,11 @@ export class AddBetceptionSidebets1700000000009 implements MigrationInterface {
           JSON_OBJECT('fields', JSON_ARRAY('predicted_suit','predicted_rank'), 'context', JSON_ARRAY('PLAYER_HAND'))
         ),
         (
-          'WINNER',
-          'Winner',
-          'Predict whether player or dealer wins the round',
-          2.000,
-          JSON_OBJECT('fields', JSON_ARRAY('winner'))
+          'DEALER_BUST',
+          'Dealer Bust',
+          'Predict whether the dealer busts this round',
+          3.000,
+          JSON_OBJECT('fields', JSON_ARRAY('dealer_bust'))
         ),
         (
           'PILL_TRIGGER',
@@ -53,7 +53,7 @@ export class AddBetceptionSidebets1700000000009 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       DELETE FROM sidebet_types
-      WHERE code IN ('CARD_EXACT','WINNER','PILL_TRIGGER','PLAYER_BLACKJACK')
+      WHERE code IN ('CARD_EXACT','DEALER_BUST','PILL_TRIGGER','PLAYER_BLACKJACK')
     `);
 
     const hasSelectionJson = await queryRunner.hasColumn('side_bets', 'selection_json');

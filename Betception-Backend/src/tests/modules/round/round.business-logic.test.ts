@@ -344,35 +344,31 @@ describe('evaluateSideBet', () => {
     });
   });
 
-  it('WINNER: returns WON when a dealer prediction matches a lost main bet', () => {
+  it('DEALER_BUST: returns WON when the dealer busts', () => {
     const round = makeRound([card(CardRank.TEN)], [card(CardRank.KING, CardSuit.HEARTS)]);
+    round.hands[1].status = HandStatus.BUSTED;
     const bet = makeSideBet({
-      odds: 2,
-      code: 'WINNER',
-      selectionJson: { winner: 'DEALER' },
+      odds: 3,
+      code: 'DEALER_BUST',
+      selectionJson: { target: 'DEALER', outcome: 'BUST' },
     });
 
-    expect(evaluateSideBet(bet, round, USER_ID, 0, {
-      rawMainBetStatus: MainBetStatus.LOST,
-      triggeredPowerupEffect: null,
-    })).toEqual({
-      status: SideBetStatus.WON, multiplier: 2, isRefund: false,
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 3, isRefund: false,
     });
   });
 
-  it('WINNER: refunds when the main bet pushes', () => {
+  it('DEALER_BUST: returns LOST when the dealer does not bust', () => {
     const round = makeRound([card(CardRank.TEN)], [card(CardRank.KING, CardSuit.HEARTS)]);
+    round.hands[1].status = HandStatus.STOOD;
     const bet = makeSideBet({
-      odds: 2,
-      code: 'WINNER',
-      selectionJson: { winner: 'PLAYER' },
+      odds: 3,
+      code: 'DEALER_BUST',
+      selectionJson: { target: 'DEALER', outcome: 'BUST' },
     });
 
-    expect(evaluateSideBet(bet, round, USER_ID, 0, {
-      rawMainBetStatus: MainBetStatus.PUSH,
-      triggeredPowerupEffect: null,
-    })).toEqual({
-      status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true,
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
     });
   });
 

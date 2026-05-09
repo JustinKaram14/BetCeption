@@ -83,11 +83,9 @@ type TriggeredPowerupEffect = {
 
 type BetceptionSideBetCode =
   | 'CARD_EXACT'
-  | 'WINNER'
+  | 'DEALER_BUST'
   | 'PILL_TRIGGER'
   | 'PLAYER_BLACKJACK';
-
-type BetceptionWinner = 'PLAYER' | 'DEALER';
 
 type SideBetEvaluationContext = {
   rawMainBetStatus: MainBetStatus;
@@ -124,14 +122,14 @@ const PAYOUT_LOSS = 0;
 
 const BETCEPTION_SIDE_BET_CODES = new Set<string>([
   'CARD_EXACT',
-  'WINNER',
+  'DEALER_BUST',
   'PILL_TRIGGER',
   'PLAYER_BLACKJACK',
 ]);
 
 const DEFAULT_BETCEPTION_ODDS: Record<BetceptionSideBetCode, number> = {
   CARD_EXACT: 12,
-  WINNER: 2,
+  DEALER_BUST: 3,
   PILL_TRIGGER: 5,
   PLAYER_BLACKJACK: 12,
 };
@@ -867,18 +865,7 @@ function validateSideBetPayload(
     }
     return;
   }
-  if (code === 'WINNER') {
-    const winner = readWinnerSelection(input.selection);
-    if (!winner) {
-      throw new RoundFlowError(
-        400,
-        'INVALID_SIDE_BET',
-        `winner missing for side bet ${index + 1}`,
-      );
-    }
-    return;
-  }
-  if (code === 'PILL_TRIGGER' || code === 'PLAYER_BLACKJACK') {
+  if (code === 'DEALER_BUST' || code === 'PILL_TRIGGER' || code === 'PLAYER_BLACKJACK') {
     return;
   }
   if (code === 'FIRST_CARD_COLOR' && !input.predictedColor) {
@@ -915,9 +902,10 @@ function buildSideBetSelection(
       rank: input.predictedRank,
     };
   }
-  if (type.code === 'WINNER') {
+  if (type.code === 'DEALER_BUST') {
     return {
-      winner: readWinnerSelection(input.selection),
+      target: 'DEALER',
+      outcome: 'BUST',
     };
   }
   if (type.code === 'PILL_TRIGGER') {
@@ -952,11 +940,6 @@ function resolvePreparedSideBetOdds(type: SidebetType, user: User): string | nul
     return (type.baseOdds ?? DEFAULT_BETCEPTION_ODDS[type.code].toFixed(3));
   }
   return type.baseOdds;
-}
-
-function readWinnerSelection(selection: Record<string, unknown> | undefined): BetceptionWinner | null {
-  const winner = selection?.['winner'];
-  return winner === 'PLAYER' || winner === 'DEALER' ? winner : null;
 }
 
 function isBetceptionSideBetCode(code: string): code is BetceptionSideBetCode {
@@ -1395,18 +1378,12 @@ function evaluateSideBet(
     return resolveSideBetOutcome(won, oddsValue);
   }
 
-  if (code === 'WINNER') {
-    const winner = readWinnerSelection(sideBet.selectionJson ?? undefined);
-    if (!winner || !context) {
+  if (code === 'DEALER_BUST') {
+    const dealer = getDealerHand(round);
+    if (!dealer) {
       return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
     }
-    if (context.rawMainBetStatus === MainBetStatus.PUSH || context.rawMainBetStatus === MainBetStatus.REFUNDED) {
-      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
-    }
-    const won =
-      (winner === 'PLAYER' && context.rawMainBetStatus === MainBetStatus.WON) ||
-      (winner === 'DEALER' && context.rawMainBetStatus === MainBetStatus.LOST);
-    return resolveSideBetOutcome(won, oddsValue);
+    return resolveSideBetOutcome(dealer.status === HandStatus.BUSTED, oddsValue);
   }
 
   if (code === 'PILL_TRIGGER') {

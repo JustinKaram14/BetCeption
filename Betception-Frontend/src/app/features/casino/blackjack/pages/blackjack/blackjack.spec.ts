@@ -513,7 +513,7 @@ describe('Blackjack', () => {
       usesRemaining: 3,
     };
 
-    it('sends card, winner, pill, and blackjack side bets when confirming', () => {
+    it('sends card, dealer bust, pill, and blackjack side bets when confirming', () => {
       const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
       rngMock.startRound.and.returnValue(of({ round: inProgress }));
 
@@ -523,8 +523,7 @@ describe('Blackjack', () => {
       component.onSelectCardSuit(CardSuit.HEARTS);
       component.onSelectCardRank(CardRank.JACK);
       component.onAddCardBet(25);
-      component.onPickWinner('DEALER');
-      component.onAddWinnerBet(50);
+      component.onAddDealerBustBet(50);
       component.onAddPillTriggerBet(5);
       component.onAddBlackjackBet(10);
 
@@ -541,9 +540,9 @@ describe('Blackjack', () => {
             selection: { suit: CardSuit.HEARTS, rank: CardRank.JACK },
           },
           {
-            typeCode: 'WINNER',
+            typeCode: 'DEALER_BUST',
             amount: 50,
-            selection: { winner: 'DEALER' },
+            selection: { target: 'DEALER', outcome: 'BUST' },
           },
           {
             typeCode: 'PILL_TRIGGER',
@@ -584,7 +583,7 @@ describe('Blackjack', () => {
         steps: [
           { id: 'main', kind: 'MAIN_BET', status: MainBetStatus.WON, amount: '50', payout: '100', multiplier: '2.000', selection: null },
           { id: 'card', kind: 'CARD_EXACT', status: SideBetStatus.WON, amount: '25', payout: '300', multiplier: '12.000', selection: { suit: CardSuit.HEARTS, rank: CardRank.JACK } },
-          { id: 'winner', kind: 'WINNER', status: SideBetStatus.LOST, amount: '25', payout: '0', multiplier: '2.000', selection: { winner: 'DEALER' } },
+          { id: 'dealer-bust', kind: 'DEALER_BUST', status: SideBetStatus.LOST, amount: '25', payout: '0', multiplier: '3.000', selection: { target: 'DEALER', outcome: 'BUST' } },
         ],
       };
       rngMock.settle.and.returnValue(of({ round: settled, betceptionResolution: resolution }));
