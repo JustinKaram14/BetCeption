@@ -17,12 +17,15 @@ const moneySchema = z
 
 export const BetceptionSideBetCodeSchema = z.enum([
   'CARD_EXACT',
+  'CARD_SUIT',
   'DEALER_BUST',
   'PILL_TRIGGER',
   'PLAYER_BLACKJACK',
+  'SPLIT_COUNT',
 ]);
 
 const sideBetSelectionSchema = z.record(z.unknown()).optional();
+const MAX_SIDE_BETS_PER_ROUND = 64;
 
 export const StartRoundSchema = z.object({
   betAmount: moneySchema,
@@ -43,7 +46,7 @@ export const StartRoundSchema = z.object({
           message: 'typeId or typeCode is required',
         }),
     )
-    .max(24)
+    .max(MAX_SIDE_BETS_PER_ROUND)
     .default([]),
 });
 

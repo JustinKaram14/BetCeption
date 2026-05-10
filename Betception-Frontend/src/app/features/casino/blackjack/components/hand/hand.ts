@@ -20,6 +20,7 @@ export class Hand implements OnChanges {
   @Input() hand: RoundHand | null = null;
   @Input() isActive = false;
   @Input() isDealer = false;
+  @Input() hideInactiveActiveStatus = false;
   /** Offset in ms before the first card of this hand animates in (for cross-hand stagger). */
   @Input() dealOffset = 0;
 
@@ -51,7 +52,7 @@ export class Hand implements OnChanges {
     }
     switch (this.hand?.status) {
       case HandStatus.ACTIVE:
-        return this.i18n.t('hand.status.active');
+        return this.hideInactiveActiveStatus && !this.isActive ? null : this.i18n.t('hand.status.active');
       case HandStatus.STOOD:
         return this.i18n.t('hand.status.stood');
       case HandStatus.BUSTED:

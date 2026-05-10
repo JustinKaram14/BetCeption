@@ -1,3 +1,9 @@
+:host{
+  display:block;
+  width:min(100%,1100px);
+  max-width:100%;
+  flex:0 0 auto;
+}
 .bottom-ui-container{
   display:flex;
   flex-direction:column;
@@ -61,6 +67,7 @@
   width:100%;
   max-width:100%;
   min-width:0;
+  box-sizing:border-box;
   min-height:72px;
   padding:12px 32px;
   background:rgba(255,255,255,.05);
@@ -107,24 +114,22 @@
 .center-controls{
   display:flex;
   align-items:center;
-  gap:12px;
   justify-content:center;
   min-width:0;
   width:100%;
 }
 .action-buttons{
   display:flex;
-  flex-wrap:nowrap;
-  gap:10px;
-  width:min(100%,600px);
   align-items:center;
-}
-.action-buttons .btn{
-  flex:1 1 0;
+  justify-content:center;
+  gap:10px;
+  width:auto;
+  max-width:100%;
   min-width:0;
 }
-.btn-deal{
-  flex:2 1 0;
+.action-buttons .btn{
+  width:94px;
+  flex:0 0 94px;
 }
 .btn{
   min-width:0;
@@ -160,8 +165,8 @@
 }
 .pill-slot{
   position:relative;
-  justify-self:center;
   width:90px;
+  flex:0 0 90px;
   height:32px;
   border:2px dashed rgba(255,255,255,.45);
   border-radius:999px;
@@ -249,16 +254,17 @@
   100%{opacity:0;transform:translate(-50%,-50%) scale(.2);}
 }
 .reset-btn{
-  width:118px;
-  flex:0 0 118px;
-  border-color:#aaa;
-  color:#aaa;
-  box-shadow:0 0 5px rgba(170,170,170,.5),inset 0 0 5px rgba(170,170,170,.3);
+  width:94px;
+  flex:0 0 94px;
+  height:46px;
+  border-color:rgba(0,255,255,.48);
+  color:rgba(0,255,255,.72);
+  box-shadow:0 0 5px rgba(0,255,255,.28),inset 0 0 5px rgba(0,255,255,.16);
 }
 .reset-btn:hover:not(:disabled){
-  background-color:#aaa;
+  background-color:var(--secondary-glow);
   color:var(--bg-color);
-  box-shadow:0 0 15px #aaa,inset 0 0 10px #aaa;
+  box-shadow:0 0 15px rgba(0,255,255,.8),inset 0 0 10px rgba(0,255,255,.45);
 }
 @media(max-width:1180px){
   .controls-panel{
@@ -272,64 +278,88 @@
   .panel-section-right{grid-area:right}
   .center-controls{grid-area:center}
   .action-buttons{
-    width:min(100%,540px);
+    flex-wrap:nowrap;
   }
 }
 @media(max-width:720px){
+  :host{
+    width:100%;
+  }
   .bottom-ui-container{
-    gap:10px;
-    margin-top:4px;
+    gap:8px;
+    margin-top:0;
   }
   .chip-row{
-    gap:9px;
+    gap:8px;
   }
   .chip{
-    width:44px;
-    height:44px;
-    font-size:.78rem;
+    width:42px;
+    height:42px;
+    font-size:.76rem;
     border-width:1px;
   }
   .controls-panel{
-    grid-template-columns:1fr;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
     grid-template-areas:
-      "left"
-      "right"
-      "center";
+      "left right"
+      "center center";
     align-items:stretch;
-    gap:10px;
-    min-height:0;
-    padding:10px;
+    gap:8px;
+    min-height:114px;
+    padding:9px;
     border-radius:12px;
   }
   .panel-section-right{
-    align-items:flex-start;
+    align-items:flex-end;
   }
   .center-controls{
-    flex-direction:column;
     align-items:stretch;
   }
   .action-buttons{
-    flex-wrap:wrap;
     width:100%;
-    gap:8px;
+    max-width:none;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(54px,72px));
+    justify-content:center;
+    gap:6px;
+  }
+  .action-buttons .btn{
+    width:auto;
+    flex-basis:auto;
   }
   .pill-slot{
-    width:86px;
+    width:100%;
+    flex-basis:auto;
     height:32px;
   }
+  .pill-slot__pill{
+    width:46px;
+    height:16px;
+  }
+  .pill-slot__uses{
+    right:-4px;
+    top:-7px;
+    min-width:18px;
+    height:18px;
+    font-size:.58rem;
+  }
   .info-display{
-    justify-content:space-between;
-    font-size:.72rem;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    gap:2px;
+    font-size:.66rem;
     line-height:1.2;
   }
   .btn{
-    min-height:42px;
-    padding:8px 8px;
-    font-size:.68rem;
+    min-height:40px;
+    padding:8px 4px;
+    font-size:clamp(.52rem,2.2vw,.62rem);
   }
   .reset-btn{
     width:100%;
     flex-basis:auto;
+    height:40px;
   }
   .chip-row{
     flex-wrap:wrap;
@@ -338,7 +368,7 @@
 
 @media(max-width:380px){
   .chip-row{
-    gap:7px;
+    gap:6px;
   }
   .chip{
     width:39px;
@@ -346,6 +376,17 @@
     font-size:.7rem;
   }
   .controls-panel{
-    padding:9px 8px;
+    padding:7px;
+  }
+  .action-buttons{
+    gap:5px;
+    grid-template-columns:repeat(auto-fit,minmax(50px,68px));
+  }
+  .btn{
+    font-size:.52rem;
+    padding:7px 3px;
+  }
+  .pill-slot{
+    width:100%;
   }
 }

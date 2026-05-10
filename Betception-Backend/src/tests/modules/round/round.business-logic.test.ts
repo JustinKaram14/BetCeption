@@ -344,6 +344,50 @@ describe('evaluateSideBet', () => {
     });
   });
 
+  it('CARD_SUIT: returns WON when any player hand contains the selected suit', () => {
+    const round = makeRound([
+      card(CardRank.TEN, CardSuit.SPADES, 0),
+      card(CardRank.JACK, CardSuit.HEARTS, 1),
+    ], []);
+    const bet = makeSideBet({
+      odds: 2,
+      code: 'CARD_SUIT',
+      predictedSuit: CardSuit.HEARTS,
+      selectionJson: { suit: CardSuit.HEARTS },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 2, isRefund: false,
+    });
+  });
+
+  it('CARD_EXACT: also evaluates split-hand cards', () => {
+    const round = makeRound([
+      card(CardRank.TEN, CardSuit.SPADES, 0),
+      card(CardRank.TEN, CardSuit.HEARTS, 1),
+    ], []);
+    round.hands.push({
+      ownerType: HandOwnerType.PLAYER_SPLIT,
+      user: { id: USER_ID },
+      cards: [card(CardRank.ACE, CardSuit.CLUBS, 0)],
+      status: HandStatus.ACTIVE,
+      handValue: null,
+      id: 'split-1',
+      createdAt: new Date(),
+    });
+    const bet = makeSideBet({
+      odds: 12,
+      code: 'CARD_EXACT',
+      predictedSuit: CardSuit.CLUBS,
+      predictedRank: CardRank.ACE,
+      selectionJson: { suit: CardSuit.CLUBS, rank: CardRank.ACE },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 12, isRefund: false,
+    });
+  });
+
   it('DEALER_BUST: returns WON when the dealer busts', () => {
     const round = makeRound([card(CardRank.TEN)], [card(CardRank.KING, CardSuit.HEARTS)]);
     round.hands[1].status = HandStatus.BUSTED;
@@ -414,6 +458,31 @@ describe('evaluateSideBet', () => {
       status: SideBetStatus.WON, multiplier: 12, isRefund: false,
     });
     expect(evaluateSideBet(bet, threeCardTwentyOneRound, USER_ID)).toEqual({
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
+    });
+  });
+
+  it('SPLIT_COUNT: wins only for the exact number of split hands', () => {
+    const round = makeRound([
+      card(CardRank.EIGHT, CardSuit.SPADES, 0),
+      card(CardRank.EIGHT, CardSuit.HEARTS, 1),
+    ], []);
+    round.hands.push({
+      ownerType: HandOwnerType.PLAYER_SPLIT,
+      user: { id: USER_ID },
+      cards: [card(CardRank.EIGHT, CardSuit.HEARTS, 0)],
+      status: HandStatus.ACTIVE,
+      handValue: null,
+      id: 'split-1',
+      createdAt: new Date(),
+    });
+    const winningBet = makeSideBet({ odds: 4, code: 'SPLIT_COUNT', selectionJson: { splitCount: 1 } });
+    const losingBet = makeSideBet({ odds: 18, code: 'SPLIT_COUNT', selectionJson: { splitCount: 2 } });
+
+    expect(evaluateSideBet(winningBet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 4, isRefund: false,
+    });
+    expect(evaluateSideBet(losingBet, round, USER_ID)).toEqual({
       status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
     });
   });
