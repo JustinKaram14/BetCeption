@@ -393,6 +393,8 @@ describe('Blackjack', () => {
       expect(component.showBlackjackBanner).toBeTrue();
       tick(1500);
       expect(component.showBlackjackBanner).toBeFalse();
+      expect(rngMock.dealerStep).not.toHaveBeenCalled();
+      expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
     }));
 
     it('does not show banner for non-blackjack hand after a hit', fakeAsync(() => {

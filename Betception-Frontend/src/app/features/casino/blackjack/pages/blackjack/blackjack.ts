@@ -880,20 +880,20 @@ export class Blackjack implements OnInit {
       return;
     }
 
-    if (this.shouldRunDealerTurn(round)) {
-      const delay = kind === 'stand'
-        ? this.dealerRevealMs
-        : this.dealerStepDelay(response.dealerAction ?? null);
-      this.scheduleDealerStep(round.id, delay);
-      return;
-    }
-
     if (this.shouldAutoSettle(round)) {
       const delay =
         kind === 'deal'
           ? this.initialDealDuration(round)
           : Math.max(this.cardAnimationMs, this.settlementAnimationDelay(previousRound, round));
       this.scheduleAutoSettle(round.id, delay);
+      return;
+    }
+
+    if (this.shouldRunDealerTurn(round)) {
+      const delay = kind === 'stand'
+        ? this.dealerRevealMs
+        : this.dealerStepDelay(response.dealerAction ?? null);
+      this.scheduleDealerStep(round.id, delay);
       return;
     }
 
