@@ -383,6 +383,20 @@ export interface BetceptionResolution {
   steps: BetceptionResolutionStep[];
 }
 
+export type DealerActionKind =
+  | 'REVEAL_HOLE'
+  | 'DRAW_CARD'
+  | 'STAND'
+  | 'BUST'
+  | 'BLACKJACK'
+  | 'NONE';
+
+export interface DealerAction {
+  kind: DealerActionKind;
+  cardId: string | null;
+  dealerTurnComplete: boolean;
+}
+
 export interface FairnessPayload {
   roundId: string;
   status: RoundStatus;
@@ -409,6 +423,7 @@ export interface RoundState {
 
 export interface RoundResponse {
   round: RoundState;
+  dealerAction?: DealerAction | null;
   levelUpCrate?: LevelUpCrate | null;
   activePowerup?: ActivePowerup | null;
   triggeredPowerupEffect?: TriggeredPowerupEffect | null;

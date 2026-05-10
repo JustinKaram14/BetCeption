@@ -8,6 +8,7 @@ import {
   BetceptionResolutionStep,
   CardRank,
   CardSuit,
+  DealerAction,
   HandOwnerType,
   HandStatus,
   InventoryPowerup,
@@ -17,6 +18,7 @@ import {
   PowerPillCode,
   PowerPillColor,
   PowerupType,
+  RoundResponse,
   RoundState,
   RoundSideBet,
   SideBetPlacement,
@@ -32,7 +34,7 @@ import { PowerupMenu } from '../../components/powerup-menu/powerup-menu';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 
-type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
+type ActionKind = 'deal' | 'hit' | 'stand' | 'settle' | 'dealer-step';
 type BetceptionView = 'overview' | 'cards' | 'dealerBust' | 'pill' | 'blackjack';
 type PayoutTier = 'none' | 'win' | 'big' | 'super' | 'mega';
 type BetceptionPanelRow = {
@@ -127,6 +129,8 @@ export class Blackjack implements OnInit {
   private walletRefreshTimer: number | null = null;
   private pillPulseTimer: number | null = null;
   private pillPopTimer: number | null = null;
+  private dealerFlowTimer: number | null = null;
+  dealerFlowActive = false;
   private payoutCountTimer: number | null = null;
   private payoutFramePulseTimer: number | null = null;
   private payoutFramePulseResetTimer: number | null = null;
@@ -141,6 +145,7 @@ export class Blackjack implements OnInit {
       this.clearResultOverlayTimer();
       this.clearWalletRefreshTimer();
       this.clearPillTimers();
+      this.clearDealerFlowTimer();
       this.clearPayoutCountTimer();
       this.clearPayoutFramePulseTimers();
       this.clearBetceptionResolutionTimers();
@@ -160,9 +165,18 @@ export class Blackjack implements OnInit {
 
   get activeHand(): HandOwnerType | null {
     if (this.round?.status === RoundStatus.IN_PROGRESS) {
-      return HandOwnerType.PLAYER;
+      if (this.dealerFlowActive || this.shouldRunDealerTurn(this.round)) {
+        return HandOwnerType.DEALER;
+      }
+      if (this.round.playerHand?.status === HandStatus.ACTIVE) {
+        return HandOwnerType.PLAYER;
+      }
     }
     return null;
+  }
+
+  get isBusy() {
+    return !!this.busyAction || this.dealerFlowActive;
   }
 
   get totalSideBetAmount() {
@@ -326,7 +340,7 @@ export class Blackjack implements OnInit {
   }
 
   onDeal() {
-    if (this.busyAction || this.betAmount <= 0) {
+    if (this.isBusy || this.betAmount <= 0) {
       this.error = this.betAmount <= 0 ? this.i18n.t('blackjack.setBetError') : this.error;
       return;
     }
@@ -336,13 +350,13 @@ export class Blackjack implements OnInit {
   }
 
   onCloseBetceptionMenu() {
-    if (this.busyAction) return;
+    if (this.isBusy) return;
     this.showBetceptionMenu = false;
     this.betceptionView = 'overview';
   }
 
   onConfirmBetception() {
-    if (this.busyAction || this.betAmount <= 0) return;
+    if (this.isBusy || this.betAmount <= 0) return;
     const sideBets = this.buildSideBetPlacements();
     this.showBetceptionMenu = false;
     this.betceptionView = 'overview';
@@ -405,17 +419,17 @@ export class Blackjack implements OnInit {
   }
 
   onHit() {
-    if (!this.round || this.busyAction) return;
+    if (!this.round || this.isBusy) return;
     this.runAction('hit', this.rng.hit(this.round.id));
   }
 
   onStand() {
-    if (!this.round || this.busyAction) return;
+    if (!this.round || this.isBusy) return;
     this.runAction('stand', this.rng.stand(this.round.id));
   }
 
   onSettle() {
-    if (!this.round || this.busyAction) return;
+    if (!this.round || this.isBusy) return;
     this.runAction('settle', this.rng.settle(this.round.id));
   }
 
@@ -763,6 +777,7 @@ export class Blackjack implements OnInit {
     this.info = null;
     this.clearResultOverlayTimer();
     this.clearBetceptionResolutionTimers();
+    this.clearDealerFlowTimer();
 
     request$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -781,6 +796,7 @@ export class Blackjack implements OnInit {
             this.resetBetceptionDraft();
           }
           if (kind === 'settle') {
+            this.dealerFlowActive = false;
             if (response.levelUpCrate) {
               this.levelUpCrate = response.levelUpCrate;
             }
@@ -793,25 +809,111 @@ export class Blackjack implements OnInit {
           }
           this.busyAction = null;
 
-          // Auto-settle when the player's turn is over (bust, stand, blackjack)
-          if (
-            kind !== 'settle' &&
-            round.status !== RoundStatus.SETTLED &&
-            round.status !== RoundStatus.ABORTED &&
-            round.playerHand?.status !== HandStatus.ACTIVE
-          ) {
-            window.setTimeout(() => {
-              if (this.round?.id === round.id && !this.busyAction) {
-                this.runAction('settle', this.rng.settle(round.id));
-              }
-            }, 850);
-          }
+          this.scheduleNextRoundStep(kind, response, previousRound, round);
         },
         error: (err) => {
           this.error = this.extractError(err);
           this.busyAction = null;
+          this.dealerFlowActive = false;
         },
       });
+  }
+
+  private scheduleNextRoundStep(
+    kind: ActionKind,
+    response: RoundResponse,
+    previousRound: RoundState | null,
+    round: RoundState,
+  ) {
+    if (round.status === RoundStatus.SETTLED || round.status === RoundStatus.ABORTED) {
+      this.dealerFlowActive = false;
+      return;
+    }
+
+    if (kind === 'settle') {
+      return;
+    }
+
+    if (this.shouldRunDealerTurn(round)) {
+      const delay = kind === 'stand'
+        ? this.dealerRevealMs
+        : this.dealerStepDelay(response.dealerAction ?? null);
+      this.scheduleDealerStep(round.id, delay);
+      return;
+    }
+
+    if (this.shouldAutoSettle(round)) {
+      const delay =
+        kind === 'deal'
+          ? this.initialDealDuration(round)
+          : Math.max(this.cardAnimationMs, this.settlementAnimationDelay(previousRound, round));
+      this.scheduleAutoSettle(round.id, delay);
+      return;
+    }
+
+    this.dealerFlowActive = false;
+  }
+
+  private scheduleDealerStep(roundId: string, delay: number) {
+    this.dealerFlowActive = true;
+    this.clearDealerFlowTimer();
+    this.dealerFlowTimer = window.setTimeout(() => {
+      this.dealerFlowTimer = null;
+      if (this.round?.id !== roundId || this.busyAction) return;
+      this.runAction('dealer-step', this.rng.dealerStep(roundId));
+    }, delay);
+  }
+
+  private scheduleAutoSettle(roundId: string, delay: number) {
+    this.dealerFlowActive = true;
+    this.clearDealerFlowTimer();
+    this.dealerFlowTimer = window.setTimeout(() => {
+      this.dealerFlowTimer = null;
+      if (this.round?.id !== roundId || this.busyAction) return;
+      this.runAction('settle', this.rng.settle(roundId));
+    }, delay);
+  }
+
+  private shouldRunDealerTurn(round: RoundState) {
+    return (
+      round.status === RoundStatus.IN_PROGRESS &&
+      round.playerHand?.status === HandStatus.STOOD &&
+      round.dealerHand?.status === HandStatus.ACTIVE
+    );
+  }
+
+  private shouldAutoSettle(round: RoundState) {
+    if (round.status !== RoundStatus.IN_PROGRESS) return false;
+    return (
+      round.playerHand?.status === HandStatus.BUSTED ||
+      round.playerHand?.status === HandStatus.BLACKJACK ||
+      round.dealerHand?.status === HandStatus.BLACKJACK ||
+      this.isDealerTurnComplete(round)
+    );
+  }
+
+  private isDealerTurnComplete(round: RoundState) {
+    return (
+      round.dealerHand?.status === HandStatus.STOOD ||
+      round.dealerHand?.status === HandStatus.BUSTED ||
+      round.dealerHand?.status === HandStatus.BLACKJACK
+    );
+  }
+
+  private dealerStepDelay(action: DealerAction | null) {
+    if (!action) return this.cardAnimationMs;
+    if (action.kind === 'DRAW_CARD' || action.kind === 'BUST') {
+      return this.cardAnimationMs + this.dealerFollowUpCardStepMs;
+    }
+    return this.resultPauseMs;
+  }
+
+  private initialDealDuration(round: RoundState) {
+    const cardCount = Math.max(
+      round.playerHand?.cards?.length ?? 0,
+      round.dealerHand?.cards?.length ?? 0,
+    );
+    return this.cardAnimationMs + Math.max(0, cardCount - 1) * this.dealerFollowUpCardStepMs;
   }
 
   private loadBalance(preserveXpGain = false) {
@@ -839,6 +941,11 @@ export class Blackjack implements OnInit {
       .subscribe({
         next: ({ round }) => {
           this.round = round;
+          if (this.shouldRunDealerTurn(round)) {
+            this.scheduleDealerStep(round.id, this.dealerRevealMs);
+          } else if (this.shouldAutoSettle(round)) {
+            this.scheduleAutoSettle(round.id, this.cardAnimationMs);
+          }
         },
         error: () => null, // 404 = no active round, nothing to resume
       });
@@ -888,6 +995,8 @@ export class Blackjack implements OnInit {
 
   onNextRound() {
     this.clearResultOverlayTimer();
+    this.clearDealerFlowTimer();
+    this.dealerFlowActive = false;
     this.clearPayoutCountTimer();
     this.clearPayoutFramePulseTimers();
     this.showRoundOverlay = false;
@@ -1350,6 +1459,14 @@ export class Blackjack implements OnInit {
       window.clearTimeout(this.pillPopTimer);
       this.pillPopTimer = null;
     }
+  }
+
+  private clearDealerFlowTimer() {
+    if (!this.dealerFlowTimer) {
+      return;
+    }
+    window.clearTimeout(this.dealerFlowTimer);
+    this.dealerFlowTimer = null;
   }
 
   private clearBetceptionResolutionTimers() {

@@ -8,9 +8,6 @@
     [isDealer]="true"
     [dealOffset]="200"
     [isActive]="activeHand === HandOwnerType.DEALER"
-    [revealDealerCards]="
-      activeHand === HandOwnerType.DEALER || (!!dealerHand && dealerHand.status !== HandStatus.ACTIVE)
-    "
   ></app-hand>
 
   <app-hand
