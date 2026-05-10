@@ -86,14 +86,17 @@ type TranslationKey =
   | 'common.language'
   | 'common.ok'
   | 'common.player'
+  | 'common.playerSplit'
   | 'common.settings'
   | 'controls.balance'
   | 'controls.bet'
   | 'controls.deal'
+  | 'controls.double'
   | 'controls.hit'
   | 'controls.reset'
   | 'controls.round'
   | 'controls.settle'
+  | 'controls.split'
   | 'controls.stand'
   | 'crate.continue'
   | 'crate.empty'
@@ -301,14 +304,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'common.language': 'Sprache',
     'common.ok': 'OK',
     'common.player': 'Spieler',
+    'common.playerSplit': 'Split',
     'common.settings': 'Einstellungen',
     'controls.balance': 'Guthaben',
     'controls.bet': 'Einsatz',
     'controls.deal': 'Austeilen',
+    'controls.double': 'Verdoppeln',
     'controls.hit': 'Ziehen',
     'controls.reset': 'Reset',
     'controls.round': 'Runde',
     'controls.settle': 'Abrechnen',
+    'controls.split': 'Teilen',
     'controls.stand': 'Halten',
     'crate.continue': 'Weiter',
     'crate.empty': 'Noch keine Kisten vorhanden. Steige im Level auf, um Kisten zu erhalten.',
@@ -511,14 +517,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'common.language': 'Language',
     'common.ok': 'OK',
     'common.player': 'Player',
+    'common.playerSplit': 'Split',
     'common.settings': 'Settings',
     'controls.balance': 'Balance',
     'controls.bet': 'Bet',
     'controls.deal': 'Deal',
+    'controls.double': 'Double',
     'controls.hit': 'Hit',
     'controls.reset': 'Clear',
     'controls.round': 'Round',
     'controls.settle': 'Settle',
+    'controls.split': 'Split',
     'controls.stand': 'Stand',
     'crate.continue': 'Continue',
     'crate.empty': 'No crates yet. Level up to earn crates.',
@@ -721,14 +730,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'common.language': 'Idioma',
     'common.ok': 'OK',
     'common.player': 'Jugador',
+    'common.playerSplit': 'Split',
     'common.settings': 'Ajustes',
     'controls.balance': 'Saldo',
     'controls.bet': 'Apuesta',
     'controls.deal': 'Dar',
+    'controls.double': 'Doblar',
     'controls.hit': 'Pedir',
     'controls.reset': 'Reset',
     'controls.round': 'Ronda',
     'controls.settle': 'Resolver',
+    'controls.split': 'Dividir',
     'controls.stand': 'Plantar',
     'crate.continue': 'Continuar',
     'crate.empty': 'Aún no tienes cajas. Sube de nivel para conseguir cajas.',
@@ -931,14 +943,17 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'common.language': 'Langue',
     'common.ok': 'OK',
     'common.player': 'Joueur',
+    'common.playerSplit': 'Split',
     'common.settings': 'Paramètres',
     'controls.balance': 'Solde',
     'controls.bet': 'Mise',
     'controls.deal': 'Donner',
+    'controls.double': 'Doubler',
     'controls.hit': 'Tirer',
     'controls.reset': 'Annuler',
     'controls.round': 'Manche',
     'controls.settle': 'Régler',
+    'controls.split': 'Diviser',
     'controls.stand': 'Rester',
     'crate.continue': 'Continuer',
     'crate.empty': 'Aucune caisse disponible. Monte de niveau pour en gagner.',

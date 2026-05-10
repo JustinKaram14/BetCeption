@@ -9,6 +9,7 @@ export enum RoundStatus {
 export enum HandOwnerType {
   DEALER = 'dealer',
   PLAYER = 'player',
+  PLAYER_SPLIT = 'player_split',
 }
 
 export enum HandStatus {

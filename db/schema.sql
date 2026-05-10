@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS rounds (
 CREATE TABLE IF NOT EXISTS hands (
   id              BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   round_id        BIGINT UNSIGNED NOT NULL,
-  owner_type      ENUM('dealer','player') NOT NULL,
+  owner_type      ENUM('dealer','player','player_split') NOT NULL,
   user_id         BIGINT UNSIGNED NULL,
   parent_hand_id  BIGINT UNSIGNED NULL,
   status          ENUM('active','stood','busted','blackjack','surrendered','settled') NOT NULL DEFAULT 'active',

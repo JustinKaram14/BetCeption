@@ -13,6 +13,7 @@ import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 describe('HomepageComponent', () => {
   let fixture: ComponentFixture<HomepageComponent>;
@@ -33,6 +34,7 @@ describe('HomepageComponent', () => {
   );
 
   beforeEach(async () => {
+    window.localStorage.setItem('betception-language', 'de');
     authFacadeMock.login.and.returnValue(of(null));
     authFacadeMock.register.and.returnValue(of({ message: 'ok' } as any));
     authFacadeMock.logout.and.returnValue(of(undefined));
@@ -66,6 +68,7 @@ describe('HomepageComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(I18n).setLanguage('de');
     routerNavigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
 
     authFacadeMock.login.calls.reset();
