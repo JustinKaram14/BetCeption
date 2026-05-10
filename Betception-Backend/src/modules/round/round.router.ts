@@ -12,6 +12,8 @@ import {
   peekCard,
   swapCard,
   undoHit,
+  doubleRound,
+  splitRound,
 } from './round.controller.js';
 import {
   RoundIdParamsSchema,
@@ -65,4 +67,14 @@ roundRouter.post(
   '/undo/:roundId',
   validateRequest(RoundIdParamsSchema, 'params'),
   undoHit,
+);
+roundRouter.post(
+  '/double/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  doubleRound,
+);
+roundRouter.post(
+  '/split/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  splitRound,
 );

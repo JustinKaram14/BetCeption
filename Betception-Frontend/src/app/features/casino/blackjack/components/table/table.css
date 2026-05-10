@@ -37,6 +37,13 @@
   animation:pulse 8s infinite alternate ease-in-out;
   z-index:-1;
 }
+.player-hands-row{
+  display:flex;
+  gap:24px;
+  justify-content:center;
+  flex-wrap:wrap;
+  width:100%;
+}
 @keyframes pulse{
   0%{transform:translate(-50%,-50%) scale(.9);opacity:.1}
   100%{transform:translate(-50%,-50%) scale(1.1);opacity:.15}
