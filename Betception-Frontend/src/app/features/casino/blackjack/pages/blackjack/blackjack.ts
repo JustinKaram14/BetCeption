@@ -100,6 +100,7 @@ export class Blackjack implements OnInit {
   info: string | null = null;
   showBlackjackBanner = false;
   showRoundOverlay = false;
+  roundResolutionActive = false;
   roundOutcome: { headline: string; detail: string | null; won: boolean; lost: boolean; push: boolean; dealerInfo: string | null } | null = null;
   showPowerupMenu = false;
   inventory: InventoryPowerup[] = [];
@@ -176,7 +177,7 @@ export class Blackjack implements OnInit {
   }
 
   get isBusy() {
-    return !!this.busyAction || this.dealerFlowActive;
+    return !!this.busyAction || this.dealerFlowActive || this.roundResolutionActive || this.showRoundOverlay;
   }
 
   get totalSideBetAmount() {
@@ -797,6 +798,7 @@ export class Blackjack implements OnInit {
           }
           if (kind === 'settle') {
             this.dealerFlowActive = false;
+            this.roundResolutionActive = true;
             if (response.levelUpCrate) {
               this.levelUpCrate = response.levelUpCrate;
             }
@@ -815,6 +817,7 @@ export class Blackjack implements OnInit {
           this.error = this.extractError(err);
           this.busyAction = null;
           this.dealerFlowActive = false;
+          this.roundResolutionActive = false;
         },
       });
   }
@@ -999,6 +1002,7 @@ export class Blackjack implements OnInit {
     this.dealerFlowActive = false;
     this.clearPayoutCountTimer();
     this.clearPayoutFramePulseTimers();
+    this.roundResolutionActive = false;
     this.showRoundOverlay = false;
     this.roundOutcome = null;
     this.round = null;

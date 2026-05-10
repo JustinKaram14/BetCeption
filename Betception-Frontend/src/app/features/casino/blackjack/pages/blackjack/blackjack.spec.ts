@@ -214,6 +214,22 @@ describe('Blackjack', () => {
       expect(rngMock.startRound).not.toHaveBeenCalled();
     });
 
+    it('onDeal is a no-op while round resolution is active', () => {
+      component.roundResolutionActive = true;
+      component.betAmount = 25;
+      component.onDeal();
+      expect(component.showBetceptionMenu).toBeFalse();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
+    it('onDeal is a no-op while the round overlay is visible', () => {
+      component.showRoundOverlay = true;
+      component.betAmount = 25;
+      component.onDeal();
+      expect(component.showBetceptionMenu).toBeFalse();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
     it('onDeal sets error when betAmount is 0', () => {
       component.betAmount = 0;
       component.onDeal();
@@ -267,10 +283,12 @@ describe('Blackjack', () => {
   describe('onNextRound', () => {
     it('resets round-related state', () => {
       component.showRoundOverlay = true;
+      component.roundResolutionActive = true;
       component.roundOutcome = { headline: 'Win!', detail: null, won: true, lost: false, push: false, dealerInfo: null };
       component.round = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED);
       component.onNextRound();
       expect(component.showRoundOverlay).toBeFalse();
+      expect(component.roundResolutionActive).toBeFalse();
       expect(component.round).toBeNull();
       expect(component.roundOutcome).toBeNull();
     });
@@ -687,6 +705,7 @@ describe('Blackjack', () => {
 
       expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.status).toBe(RoundStatus.SETTLED);
+      expect(component.isBusy).toBeTrue();
 
       tick(650);
       expect(component.showRoundOverlay).toBeTrue();
