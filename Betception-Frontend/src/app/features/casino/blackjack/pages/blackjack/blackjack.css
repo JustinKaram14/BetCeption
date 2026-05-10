@@ -104,15 +104,34 @@
   display:flex;
   flex-direction:column;
   gap:8px;
-  max-height:240px;
-  overflow:hidden;
+  max-height:244px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:8px;
+  pointer-events:auto;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,255,255,.58) rgba(0,255,255,.08);
+}
+.betception-panel__rows::-webkit-scrollbar{
+  width:6px;
+}
+.betception-panel__rows::-webkit-scrollbar-track{
+  border-radius:999px;
+  background:rgba(0,255,255,.08);
+  box-shadow:inset 0 0 7px rgba(0,0,0,.45);
+}
+.betception-panel__rows::-webkit-scrollbar-thumb{
+  border-radius:999px;
+  background:linear-gradient(180deg,rgba(0,255,255,.95),rgba(0,120,255,.68));
+  box-shadow:0 0 10px rgba(0,255,255,.5);
 }
 .betception-panel__row{
   display:grid;
-  grid-template-columns:minmax(0,1fr) 98px;
+  grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
-  gap:10px;
-  min-height:38px;
+  gap:7px;
+  min-height:40px;
+  flex:0 0 auto;
   padding:8px 0;
   border-bottom:1px solid rgba(255,255,255,.055);
   border-radius:0;
@@ -127,12 +146,6 @@
 }
 .betception-panel__copy{
   min-width:0;
-  display:flex;
-  align-items:baseline;
-  gap:6px;
-  flex-wrap:wrap;
-}
-.betception-panel__copy.has-items{
   display:block;
 }
 .betception-panel__copy.has-items span{
@@ -141,41 +154,52 @@
 }
 .betception-panel__copy span{
   min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+  white-space:normal;
+  overflow-wrap:anywhere;
   color:rgba(255,255,255,.9);
   font-weight:800;
 }
 .betception-panel__copy > b{
+  display:block;
+  margin-top:4px;
   color:#fff;
   font-size:.78rem;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
   opacity:.84;
 }
 .betception-panel__items{
   margin-top:6px;
   display:flex;
-  flex-wrap:wrap;
-  gap:7px 12px;
+  flex-direction:column;
+  gap:5px;
   min-width:0;
 }
 .betception-panel__items b{
+  display:block;
   color:rgba(255,255,255,.78);
   font-size:.74rem;
-  white-space:nowrap;
+  white-space:normal;
   font-weight:700;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
 }
 .betception-panel__result{
-  min-width:98px;
+  min-width:84px;
   min-height:28px;
   display:flex;
   align-items:center;
   justify-content:flex-end;
   gap:7px;
   opacity:0;
+}
+.betception-panel__result:not(.is-visible){
+  display:none;
 }
 .betception-panel__result.is-visible{
   opacity:1;
@@ -249,7 +273,7 @@
   position:absolute;
   left:20px;
   top:28px;
-  bottom:96px;
+  bottom:116px;
   z-index:4;
   width:42px;
 }
@@ -669,17 +693,29 @@
 .betception-modal__card{
   position:relative;
   width:min(1060px,100%);
-  max-height:min(760px,calc(100svh - 44px));
+  max-height:min(880px,calc(100svh - 44px));
   display:flex;
   flex-direction:column;
-  gap:18px;
-  padding:34px 44px 28px;
+  gap:14px;
+  padding:28px 40px 24px;
   border:1px solid var(--secondary-glow);
   border-radius:16px;
   background:linear-gradient(145deg,rgba(22,22,40,.96),rgba(9,8,18,.96));
   box-shadow:0 0 34px rgba(0,255,255,.28),0 0 60px rgba(255,0,255,.2),inset 0 0 24px rgba(255,255,255,.045);
   overflow:auto;
   animation:modal-casino-in .34s cubic-bezier(.16,.86,.28,1.18);
+}
+.betception-modal__card::-webkit-scrollbar{
+  width:9px;
+}
+.betception-modal__card::-webkit-scrollbar-track{
+  background:rgba(255,255,255,.035);
+  border-radius:999px;
+}
+.betception-modal__card::-webkit-scrollbar-thumb{
+  border-radius:999px;
+  background:linear-gradient(180deg,var(--secondary-glow),var(--accent-glow));
+  box-shadow:0 0 12px rgba(0,255,255,.45);
 }
 .betception-modal__close{
   position:absolute;
@@ -699,7 +735,7 @@
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:18px;
+  gap:14px;
   text-align:center;
 }
 .betception-view h2{
@@ -720,21 +756,33 @@
   color:rgba(255,255,255,.68);
   line-height:1.45;
 }
+.betception-view--cards{
+  gap:9px;
+}
+.betception-view--cards h2{
+  font-size:clamp(1.35rem,2.6vw,2.1rem);
+}
+.betception-view--cards p{
+  max-width:760px;
+  font-size:.9rem;
+  line-height:1.3;
+}
 .betception-overview-grid{
   width:100%;
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:20px 24px;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:14px 16px;
 }
 .betception-tile{
   position:relative;
-  min-height:180px;
-  padding:24px 22px;
+  grid-column:span 2;
+  min-height:138px;
+  padding:16px 16px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:10px;
+  gap:7px;
   border:1px solid rgba(0,255,255,.62);
   border-radius:12px;
   background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
@@ -743,6 +791,12 @@
   transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,filter .18s ease;
   animation:tile-rise .34s cubic-bezier(.16,.86,.28,1.18) both;
   overflow:hidden;
+}
+.betception-overview-grid .betception-tile:nth-last-child(2){
+  grid-column:2 / span 2;
+}
+.betception-overview-grid .betception-tile:last-child{
+  grid-column:4 / span 2;
 }
 .betception-tile::after{
   content:"";
@@ -805,25 +859,27 @@
   text-shadow:none;
 }
 .betception-tile__icon{
-  min-width:64px;
-  min-height:42px;
+  min-width:56px;
+  min-height:34px;
   display:grid;
   place-items:center;
   font-family:var(--font-display);
-  font-size:2rem;
+  font-size:1.55rem;
   color:var(--secondary-glow);
   text-shadow:0 0 12px var(--secondary-glow);
 }
 .betception-tile strong{
-  font-size:1.05rem;
+  font-size:.92rem;
   text-transform:uppercase;
 }
 .betception-tile small{
   color:rgba(255,255,255,.58);
-  line-height:1.35;
+  font-size:.72rem;
+  line-height:1.28;
 }
 .betception-tile b{
-  margin-top:4px;
+  margin-top:2px;
+  font-size:.76rem;
   color:var(--secondary-glow);
 }
 .pill-icon{
@@ -844,8 +900,8 @@
 }
 .betception-suits{
   display:grid;
-  grid-template-columns:repeat(4,88px);
-  gap:18px;
+  grid-template-columns:repeat(4,84px);
+  gap:12px;
   justify-content:center;
 }
 .betception-suits button,
@@ -859,8 +915,24 @@
   transition:transform .16s ease,box-shadow .16s ease,background .16s ease,filter .16s ease;
 }
 .betception-suits button{
-  height:84px;
-  font-size:2.4rem;
+  position:relative;
+  height:58px;
+  display:grid;
+  place-items:center;
+  font-size:2rem;
+  overflow:hidden;
+  background:linear-gradient(145deg,#1a1a2e,#101022);
+  box-shadow:0 0 12px rgba(0,255,255,.12),inset 0 0 14px rgba(255,255,255,.025);
+}
+.betception-suits button b{
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  transform:translateX(-50%);
+  max-width:calc(100% - 10px);
+}
+.betception-suits button span{
+  line-height:1;
 }
 .betception-suits button.red,
 .betception-card-grid button.red{
@@ -873,54 +945,109 @@
   background:rgba(0,255,255,.12);
   box-shadow:0 0 22px rgba(0,255,255,.35),0 0 36px rgba(255,0,255,.1),inset 0 0 14px rgba(0,255,255,.12);
 }
+.betception-suits button.has-bet,
 .betception-card-grid button.has-bet{
   border-color:var(--accent-glow);
   box-shadow:0 0 20px rgba(255,0,255,.38),0 0 34px rgba(106,13,173,.25),inset 0 0 16px rgba(255,0,255,.1);
 }
+.betception-suits button.is-bet-target,
+.betception-card-grid button.is-bet-target,
+.betception-suits button.has-bet.selected,
 .betception-card-grid button.has-bet.selected{
   border-color:var(--accent-glow);
   background:linear-gradient(145deg,rgba(255,0,255,.13),rgba(0,255,255,.08));
   box-shadow:0 0 24px rgba(255,0,255,.52),0 0 40px rgba(0,255,255,.18),inset 0 0 18px rgba(255,0,255,.14);
 }
 .betception-card-grid{
-  width:100%;
-  display:grid;
-  grid-template-columns:repeat(7,minmax(86px,1fr));
-  gap:12px;
+  width:min(670px,100%);
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 16px;
+  justify-content:center;
 }
 .betception-card-grid button{
   position:relative;
-  min-height:120px;
-  padding:14px 10px;
+  flex:0 0 82px;
+  width:82px;
+  max-width:82px;
+  min-height:0;
+  aspect-ratio:5 / 7;
+  padding:8px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:space-between;
   font-family:var(--font-display);
-  font-size:1.35rem;
+  font-size:1.12rem;
+  border-radius:10px;
+  background:linear-gradient(145deg,#1a1a2e,#101022);
+  box-shadow:0 0 15px rgba(0,255,255,.13),inset 0 0 16px rgba(255,255,255,.025);
 }
-.betception-card-grid button i{
+.betception-card-suit{
+  margin:auto 0;
   font-style:normal;
   font-size:1.55rem;
 }
+.betception-card-rank{
+  line-height:1;
+  font-family:var(--font-display);
+}
+.betception-card-rank--top{
+  align-self:flex-start;
+}
+.betception-card-rank--bottom{
+  align-self:flex-end;
+  transform:rotate(180deg);
+}
 .betception-card-grid button b{
   position:absolute;
-  right:8px;
-  bottom:8px;
+  left:50%;
+  right:auto;
+  bottom:7px;
+  transform:translateX(-50%);
+  max-width:calc(100% - 14px);
+  z-index:1;
 }
-.betception-stake-badge,
+.betception-suits button b,
 .betception-card-grid button b{
-  min-height:24px;
-  padding:4px 9px;
+  min-height:18px;
+  padding:3px 7px;
   border-radius:999px;
-  background:linear-gradient(90deg,#ff00ff,#00ffff);
+  border:1px solid rgba(255,0,255,.74);
+  background:
+    linear-gradient(90deg,rgba(255,0,255,.2),rgba(0,255,255,.16)),
+    rgba(6,7,18,.88);
+  color:#fff;
+  font-family:var(--font-main);
+  font-size:.52rem;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-shadow:0 0 7px rgba(255,255,255,.55);
+  box-shadow:0 0 10px rgba(255,0,255,.48),0 0 14px rgba(0,255,255,.25),inset 0 0 8px rgba(0,255,255,.09);
+  animation:card-stake-badge-pop .26s cubic-bezier(.16,.86,.28,1.18);
+}
+.betception-stake-badge{
+  min-height:24px;
+  padding:5px 11px;
+  border-radius:999px;
+  border:1px solid rgba(255,0,255,.74);
+  background:
+    linear-gradient(90deg,rgba(255,0,255,.2),rgba(0,255,255,.16)),
+    rgba(6,7,18,.88);
   color:#fff;
   font-family:var(--font-main);
   font-size:.66rem;
   font-weight:900;
   line-height:1;
-  box-shadow:0 0 12px rgba(255,0,255,.8),0 0 18px rgba(0,255,255,.45);
-  animation:stake-badge-pop .3s cubic-bezier(.16,.86,.28,1.28);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-shadow:0 0 7px rgba(255,255,255,.55);
+  box-shadow:0 0 10px rgba(255,0,255,.48),0 0 14px rgba(0,255,255,.25),inset 0 0 8px rgba(0,255,255,.09);
+  animation:card-stake-badge-pop .26s cubic-bezier(.16,.86,.28,1.18);
 }
 .betception-selection-line{
   width:min(620px,100%);
@@ -928,6 +1055,12 @@
   justify-content:space-between;
   gap:16px;
   color:rgba(255,255,255,.7);
+}
+.betception-view--cards .betception-selection-line{
+  font-size:.82rem;
+}
+.betception-selection-line--suit{
+  margin-top:-4px;
 }
 .betception-selection-line b,
 .betception-selection-line strong{
@@ -941,25 +1074,54 @@
   flex-wrap:wrap;
 }
 .betception-chip-row button{
-  width:58px;
-  height:58px;
+  width:52px;
+  height:52px;
   border-radius:50%;
-  border:2px solid var(--secondary-glow);
-  background:radial-gradient(circle,#00ffff,#008f9d);
+  border:2px solid #00ffff;
+  background:radial-gradient(circle,#00ffff,#00b8b8);
   color:#fff;
   font-weight:900;
   cursor:pointer;
-  box-shadow:0 0 14px rgba(0,255,255,.45);
+  box-shadow:0 0 8px #00ffff;
   transition:transform .14s ease,filter .14s ease,box-shadow .14s ease;
 }
 .betception-chip-row button:hover:not(:disabled){
-  transform:translateY(-3px) scale(1.08);
+  transform:scale(1.1);
   filter:brightness(1.18);
-  box-shadow:0 0 24px rgba(0,255,255,.6),0 0 32px rgba(255,0,255,.2);
+  box-shadow:0 0 15px #00ffff,0 0 25px #00ffff;
 }
-.betception-chip-row button:nth-child(3){background:linear-gradient(45deg,#00ffff,#6a0dad)}
-.betception-chip-row button:nth-child(4){background:radial-gradient(circle,#a46de5,#6a0dad)}
-.betception-chip-row button:nth-child(5){background:radial-gradient(circle,#ff00ff,#9c009c);border-color:#ff00ff}
+.betception-chip-row button:nth-child(2){
+  background:radial-gradient(circle,#33e6ff,#1a8c99);
+  border-color:#33e6ff;
+  box-shadow:0 0 8px #33e6ff;
+}
+.betception-chip-row button:nth-child(2):hover:not(:disabled){
+  box-shadow:0 0 15px #33e6ff,0 0 25px #33e6ff;
+}
+.betception-chip-row button:nth-child(3){
+  background:linear-gradient(45deg,#00ffff,#6a0dad);
+  border-color:#8f79ff;
+  box-shadow:0 0 8px #8f79ff;
+}
+.betception-chip-row button:nth-child(3):hover:not(:disabled){
+  box-shadow:0 0 15px #8f79ff,0 0 25px #8f79ff;
+}
+.betception-chip-row button:nth-child(4){
+  background:radial-gradient(circle,#a46de5,#6a0dad);
+  border-color:#a46de5;
+  box-shadow:0 0 8px #a46de5;
+}
+.betception-chip-row button:nth-child(4):hover:not(:disabled){
+  box-shadow:0 0 15px #a46de5,0 0 25px #a46de5;
+}
+.betception-chip-row button:nth-child(5){
+  background:radial-gradient(circle,#ff00ff,#9c009c);
+  border-color:#ff00ff;
+  box-shadow:0 0 8px #ff00ff;
+}
+.betception-chip-row button:nth-child(5):hover:not(:disabled){
+  box-shadow:0 0 15px #ff00ff,0 0 25px #ff00ff;
+}
 .betception-chip-row button:disabled{
   opacity:.34;
   cursor:not-allowed;
@@ -979,6 +1141,23 @@
 .betception-choice-grid--single{
   grid-template-columns:minmax(240px,520px);
   justify-content:center;
+}
+.betception-view--cards .betception-chip-row{
+  gap:7px;
+}
+.betception-view--cards .betception-chip-row button{
+  width:44px;
+  height:44px;
+  font-size:.78rem;
+}
+.betception-view--cards .betception-clear{
+  width:160px;
+  min-height:38px;
+  padding:8px 14px;
+  font-size:.76rem;
+}
+.betception-choice-grid--triple{
+  grid-template-columns:repeat(3,minmax(0,1fr));
 }
 .betception-choice-grid button{
   position:relative;
@@ -1003,8 +1182,11 @@
 }
 .betception-choice-grid .betception-stake-badge{
   position:absolute;
-  right:18px;
+  left:50%;
+  right:auto;
   bottom:14px;
+  transform:translateX(-50%);
+  max-width:calc(100% - 22px);
 }
 .betception-choice-grid .dealer-choice{
   border-color:rgba(255,59,69,.78);
@@ -1012,6 +1194,11 @@
 .betception-choice-grid .dealer-bust-choice{
   min-height:132px;
   background:linear-gradient(145deg,rgba(255,59,69,.13),rgba(255,255,255,.025));
+}
+.betception-choice-grid .split-count-choice{
+  min-height:132px;
+  border-color:rgba(255,0,255,.62);
+  background:linear-gradient(145deg,rgba(255,0,255,.12),rgba(0,255,255,.045));
 }
 .betception-pill-target{
   position:relative;
@@ -1047,8 +1234,11 @@
 }
 .betception-pill-target .betception-stake-badge{
   position:absolute;
-  right:16px;
+  left:50%;
+  right:auto;
   bottom:14px;
+  transform:translateX(-50%);
+  max-width:calc(100% - 24px);
 }
 .betception-blackjack-target{
   position:relative;
@@ -1067,8 +1257,11 @@
 }
 .betception-blackjack-target .betception-stake-badge{
   position:absolute;
-  right:-18px;
-  bottom:8px;
+  left:50%;
+  right:auto;
+  bottom:10px;
+  transform:translateX(-50%);
+  max-width:108px;
   font-family:var(--font-main);
 }
 .betception-modal__footer{
@@ -1126,9 +1319,9 @@
   38%{transform:scale(1.2) rotate(-5deg);}
   100%{transform:scale(1) rotate(0deg);}
 }
-@keyframes stake-badge-pop{
-  from{transform:scale(.55);opacity:0;filter:brightness(1.8);}
-  to{transform:scale(1);opacity:1;filter:brightness(1);}
+@keyframes card-stake-badge-pop{
+  from{transform:translateX(-50%) scale(.72);opacity:0;filter:brightness(1.65);}
+  to{transform:translateX(-50%) scale(1);opacity:1;filter:brightness(1);}
 }
 @keyframes target-lock{
   0%,100%{transform:scale(.85);opacity:.45;}
@@ -1142,29 +1335,80 @@
   50%{transform:scale(1.035);filter:brightness(1.18);}
 }
 
+@media (min-width:721px) and (max-width:1024px){
+  .betception-panel{
+    top:78px;
+    right:14px;
+    width:min(232px,calc(100% - 82px));
+    max-height:calc(100% - 176px);
+    padding:12px 12px 11px;
+  }
+  .betception-panel__head{
+    gap:7px;
+  }
+  .betception-panel__head strong{
+    font-size:1.48rem;
+  }
+  .betception-panel__head span{
+    font-size:.64rem;
+  }
+  .betception-panel__divider{
+    margin:10px 0;
+  }
+  .betception-panel__rows{
+    max-height:210px;
+    gap:6px;
+    padding-right:6px;
+  }
+  .betception-panel__row{
+    min-height:34px;
+    padding:6px 0;
+  }
+  .betception-panel__copy{
+    gap:4px;
+  }
+  .betception-panel__copy span,
+  .betception-panel__copy > b{
+    font-size:.68rem;
+  }
+  .betception-panel__items{
+    grid-template-columns:1fr;
+    gap:4px;
+  }
+  .betception-panel__items b{
+    font-size:.64rem;
+  }
+  .betception-panel__result{
+    min-width:68px;
+  }
+  .betception-panel__result strong{
+    font-size:.62rem;
+  }
+}
+
 @media (max-width:720px){
   :host{
     align-items:flex-start;
-    padding:10px;
+    padding:7px;
     min-height:100svh;
   }
   .page-wrapper{
-    min-height:calc(100svh - 20px);
+    min-height:calc(100svh - 14px);
   }
   .app-container{
-    min-height:calc(100svh - 20px);
-    height:auto;
+    min-height:0;
+    height:calc(100svh - 14px);
     max-height:none;
-    padding:14px 10px 12px;
+    padding:10px 8px 8px;
     border-radius:12px;
-    justify-content:flex-start;
-    gap:12px;
+    justify-content:space-between;
+    gap:8px;
   }
   .home-btn{
-    top:12px;
-    right:12px;
-    width:42px;
-    height:42px;
+    top:10px;
+    right:10px;
+    width:40px;
+    height:40px;
   }
   .home-btn svg{
     width:21px;
@@ -1172,32 +1416,64 @@
   }
   .betception-panel{
     top:58px;
-    right:10px;
-    width:min(260px,calc(100% - 58px));
-    padding:12px;
+    left:50%;
+    right:auto;
+    width:min(304px,calc(100% - 74px));
+    transform:translateX(-50%);
+    padding:9px 10px;
     border-radius:8px;
-    max-height:160px;
+    max-height:94px;
+    overflow:hidden;
+    background:linear-gradient(180deg,rgba(8,8,16,.96),rgba(4,4,10,.9));
+    box-shadow:0 0 14px rgba(0,255,255,.16),inset 0 0 12px rgba(0,255,255,.04);
   }
   .betception-panel__head strong{
-    font-size:1.45rem;
+    font-size:1.35rem;
   }
   .betception-panel__head span,
   .betception-panel__row b,
   .betception-panel__row span{
-    font-size:.66rem;
+    font-size:.6rem;
   }
   .betception-panel__divider{
-    margin:8px 0;
+    margin:7px 0;
   }
   .betception-panel__rows{
+    gap:2px;
+    max-height:40px;
+    padding-right:5px;
+  }
+  .betception-panel__row{
+    grid-template-columns:minmax(0,1fr) 58px;
+    min-height:22px;
+    padding:3px 0;
+    gap:6px;
+  }
+  .betception-panel__copy span{
+    margin-bottom:2px;
+  }
+  .betception-panel__items{
+    grid-template-columns:1fr;
     gap:4px;
-    max-height:92px;
+    margin-top:2px;
+  }
+  .betception-panel__result{
+    min-width:58px;
+    min-height:22px;
+  }
+  .betception-panel__result em{
+    width:22px;
+    height:22px;
+    font-size:1rem;
+  }
+  .betception-panel__result strong{
+    font-size:.55rem;
   }
   .game-level-progress{
     left:10px;
-    top:68px;
-    bottom:150px;
-    width:36px;
+    top:72px;
+    bottom:154px;
+    width:30px;
   }
   .message{
     width:100%;
@@ -1240,6 +1516,11 @@
     grid-template-columns:1fr;
     gap:12px;
   }
+  .betception-overview-grid .betception-tile,
+  .betception-overview-grid .betception-tile:nth-last-child(2),
+  .betception-overview-grid .betception-tile:last-child{
+    grid-column:auto;
+  }
   .betception-tile{
     min-height:132px;
     padding:16px 14px;
@@ -1250,15 +1531,23 @@
     width:100%;
   }
   .betception-suits button{
-    height:58px;
+    height:64px;
     font-size:1.7rem;
   }
+  .betception-suits button b{
+    font-size:.48rem;
+    padding:2px 5px;
+  }
   .betception-card-grid{
+    display:grid;
     grid-template-columns:repeat(4,minmax(0,1fr));
     gap:8px;
   }
   .betception-card-grid button{
-    min-height:84px;
+    width:100%;
+    flex:initial;
+    max-width:none;
+    aspect-ratio:5 / 7;
     font-size:1rem;
     padding:10px 6px;
   }
@@ -1279,6 +1568,9 @@
     width:46px;
     height:46px;
     font-size:.78rem;
+  }
+  .betception-choice-grid--triple{
+    grid-template-columns:1fr;
   }
   .betception-modal__footer{
     grid-template-columns:1fr;

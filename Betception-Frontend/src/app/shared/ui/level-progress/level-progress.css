@@ -133,8 +133,9 @@
     min-height:230px;
   }
   .level-progress--vertical .level-progress__meta{
-    left:14px;
-    height:58px;
+    left:-6px;
+    bottom:12px;
+    height:50px;
     width:24px;
   }
   .level-progress--vertical .level-progress__level{
