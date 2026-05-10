@@ -24,7 +24,7 @@ describe('Blackjack', () => {
   let fixture: ComponentFixture<Blackjack>;
   const rngMock = jasmine.createSpyObj<Rng>(
     'Rng',
-    ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle'],
+    ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle', 'double', 'split'],
   );
   const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
   const apiMock = jasmine.createSpyObj<BetceptionApi>(
@@ -70,6 +70,7 @@ describe('Blackjack', () => {
             settledAmount: null,
             settledAt: null,
           },
+          splitBets: [],
           playerHand: {
             id: 'hand-player-1',
             ownerType: HandOwnerType.PLAYER,
@@ -77,6 +78,7 @@ describe('Blackjack', () => {
             handValue: 0,
             cards: [],
           },
+          splitHands: [],
           dealerHand: {
             id: 'hand-dealer-1',
             ownerType: HandOwnerType.DEALER,
@@ -125,6 +127,8 @@ describe('Blackjack', () => {
     rngMock.stand.calls.reset();
     rngMock.dealerStep.calls.reset();
     rngMock.settle.calls.reset();
+    rngMock.double.calls.reset();
+    rngMock.split.calls.reset();
   });
 
   function makeRoundState(
@@ -146,6 +150,7 @@ describe('Blackjack', () => {
         settledAmount: mainBetStatus === MainBetStatus.LOST ? '0' : null,
         settledAt: settled ? new Date().toISOString() : null,
       },
+      splitBets: [],
       playerHand: {
         id: 'hand-p',
         ownerType: HandOwnerType.PLAYER,
@@ -153,6 +158,7 @@ describe('Blackjack', () => {
         handValue: 14,
         cards: [],
       },
+      splitHands: [],
       dealerHand: {
         id: 'hand-d',
         ownerType: HandOwnerType.DEALER,
@@ -720,7 +726,7 @@ describe('Blackjack', () => {
       'purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups',
     ]);
     const rngPowerupMock = jasmine.createSpyObj<Rng>(
-      'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle'],
+      'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle', 'double', 'split'],
     );
     const walletPowerupMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
 
@@ -743,7 +749,9 @@ describe('Blackjack', () => {
       startedAt: null,
       endedAt: null,
       mainBet: { id: 'bet-1', amount: '10', status: MainBetStatus.VOID, payoutMultiplier: null, settledAmount: null, settledAt: null },
+      splitBets: [],
       playerHand: { id: 'hand-p', ownerType: HandOwnerType.PLAYER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
+      splitHands: [],
       dealerHand: { id: 'hand-d', ownerType: HandOwnerType.DEALER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
       sideBets: [],
       playerProgress: null,

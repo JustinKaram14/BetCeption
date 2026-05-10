@@ -186,14 +186,14 @@ describe('Controls', () => {
       expect(dealBtn.disabled).toBeFalse();
     });
 
-    it('hit and stand buttons are disabled in the DOM when no round is active', () => {
+    it('hit and stand buttons are not rendered in the DOM when no round is active', () => {
       component.roundStatus = null;
       fixture.detectChanges();
 
-      const hitBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="hit-button"]');
-      const standBtn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="stand-button"]');
-      expect(hitBtn.disabled).toBeTrue();
-      expect(standBtn.disabled).toBeTrue();
+      const hitBtn = fixture.nativeElement.querySelector('[data-testid="hit-button"]');
+      const standBtn = fixture.nativeElement.querySelector('[data-testid="stand-button"]');
+      expect(hitBtn).toBeNull();
+      expect(standBtn).toBeNull();
     });
 
     it('hit and stand buttons are enabled when round is IN_PROGRESS and player hand is ACTIVE', () => {

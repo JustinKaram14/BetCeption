@@ -60,6 +60,7 @@
     <app-table
       [dealerHand]="round?.dealerHand ?? null"
       [playerHand]="round?.playerHand ?? null"
+      [splitHands]="round?.splitHands ?? []"
       [activeHand]="activeHand"
       [showBlackjackBanner]="showBlackjackBanner"
     ></app-table>
@@ -173,11 +174,15 @@
       [activePowerup]="activePowerup"
       [pillPulse]="pillPulse"
       [pillExpiredCode]="pillExpiredCode"
+      [playerCardCount]="activePlayerCardCount"
+      [canSplitHand]="canSplitHandNow"
       (placeBet)="onPlaceBet($event)"
       (resetBet)="onResetBet()"
       (deal)="onDeal()"
       (hit)="onHit()"
       (stand)="onStand()"
+      (double)="onDouble()"
+      (split)="onSplit()"
       (openPowerupMenu)="onOpenPowerupMenu()"
     ></app-controls>
   </div>
