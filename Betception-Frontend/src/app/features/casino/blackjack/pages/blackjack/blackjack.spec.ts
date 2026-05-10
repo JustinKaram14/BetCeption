@@ -540,7 +540,7 @@ describe('Blackjack', () => {
       usesRemaining: 3,
     };
 
-    it('sends card, dealer bust, pill, and blackjack side bets when confirming', () => {
+    it('sends expanded Betception side bets when confirming', () => {
       const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
       rngMock.startRound.and.returnValue(of({ round: inProgress }));
 
@@ -550,9 +550,12 @@ describe('Blackjack', () => {
       component.onSelectCardSuit(CardSuit.HEARTS);
       component.onSelectCardRank(CardRank.JACK);
       component.onAddCardBet(25);
+      component.onAddSuitBet(15);
       component.onAddDealerBustBet(50);
       component.onAddPillTriggerBet(5);
       component.onAddBlackjackBet(10);
+      component.onSelectSplitCount(2);
+      component.onAddSplitCountBet(30);
 
       component.onConfirmBetception();
 
@@ -564,22 +567,28 @@ describe('Blackjack', () => {
             amount: 25,
             predictedSuit: CardSuit.HEARTS,
             predictedRank: CardRank.JACK,
-            selection: { suit: CardSuit.HEARTS, rank: CardRank.JACK },
+          },
+          {
+            typeCode: 'CARD_SUIT',
+            amount: 15,
+            predictedSuit: CardSuit.HEARTS,
           },
           {
             typeCode: 'DEALER_BUST',
             amount: 50,
-            selection: { target: 'DEALER', outcome: 'BUST' },
           },
           {
             typeCode: 'PILL_TRIGGER',
             amount: 5,
-            selection: { powerupCode: 'RED_PILL' },
           },
           {
             typeCode: 'PLAYER_BLACKJACK',
             amount: 10,
-            selection: { target: 'PLAYER' },
+          },
+          {
+            typeCode: 'SPLIT_COUNT',
+            amount: 30,
+            selection: { splitCount: 2 },
           },
         ],
       });
