@@ -6,9 +6,9 @@
 
   <div class="hand" *ngIf="cards.length; else emptyHand">
     <div
-      *ngFor="let card of cards; let i = index; trackBy: trackByCard"
-      [ngClass]="cardClasses(card, i)"
-      [class.dealing]="dealingCardIds.has(trackByCard(i, card))"
+      *ngFor="let card of cards; let index = index; trackBy: trackByCard"
+      [ngClass]="cardClasses(card, index)"
+      [class.dealing]="dealingCardIds.has(card.id)"
       [style.animation-delay]="cardDelay(card)"
     >
       <div class="card-back-face"></div>
