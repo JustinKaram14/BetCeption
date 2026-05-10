@@ -55,7 +55,7 @@ describe('Hand', () => {
       component.revealDealerCards = true;
       component.hand = makeHand({ handValue: 18, cards: [{} as any, {} as any] });
       component.ngOnChanges({ hand: {} as any, revealDealerCards: {} as any });
-      tick(560);
+      tick(850);
 
       expect(component.displayScore).toBe('18');
     }));
@@ -156,14 +156,14 @@ describe('Hand', () => {
         ],
       });
       component.ngOnChanges({ hand: {} as any, revealDealerCards: {} as any });
-      tick(560);
+      tick(850);
 
       const classes = component.cardClasses(makeCard(CardSuit.SPADES, CardRank.ACE), 1);
       expect(classes['visible']).toBeTrue();
       expect(classes['back']).toBeFalse();
     }));
 
-    it('reveals dealer cards sequentially by array index', fakeAsync(() => {
+    it('reveals and renders dealer cards strictly one-by-one after stand', fakeAsync(() => {
       component.isDealer = true;
       component.revealDealerCards = false;
       component.hand = makeHand({
@@ -185,16 +185,38 @@ describe('Hand', () => {
       });
       component.ngOnChanges({ hand: {} as any, revealDealerCards: {} as any });
 
-      expect([...component.visibleDealerCardIndexes]).toEqual([0]);
+      expect(component.displayCards.length).toBe(2);
+      expect(component.visibleDealerCardIndexes.has(0)).toBeTrue();
+      expect(component.visibleDealerCardIndexes.has(1)).toBeFalse();
+      expect(component.visibleDealerCardIndexes.has(2)).toBeFalse();
+      expect(component.visibleDealerCardIndexes.has(3)).toBeFalse();
 
-      tick(560);
-      expect([...component.visibleDealerCardIndexes]).toEqual([0, 1]);
+      tick(850);
+      expect(component.visibleDealerCardIndexes.has(1)).toBeTrue();
+      expect(component.displayCards.length).toBe(2);
+      expect(component.visibleDealerCardIndexes.has(2)).toBeFalse();
 
-      tick(360);
-      expect([...component.visibleDealerCardIndexes]).toEqual([0, 1, 2]);
+      tick(899);
+      expect(component.displayCards.length).toBe(2);
 
-      tick(360);
-      expect([...component.visibleDealerCardIndexes]).toEqual([0, 1, 2, 3]);
+      tick(1);
+      expect(component.displayCards.length).toBe(3);
+      expect(component.visibleDealerCardIndexes.has(2)).toBeFalse();
+
+      tick(950); // total 2700ms
+      expect(component.visibleDealerCardIndexes.has(2)).toBeTrue();
+      expect(component.visibleDealerCardIndexes.has(3)).toBeFalse();
+
+      tick(899);
+      expect(component.displayCards.length).toBe(3);
+
+      tick(1);
+      expect(component.displayCards.length).toBe(4);
+      expect(component.visibleDealerCardIndexes.has(3)).toBeFalse();
+
+      tick(950); // total 4550ms
+      expect(component.visibleDealerCardIndexes.has(3)).toBeTrue();
+      expect(component.visibleDealerCardIndexes.size).toBe(4);
     }));
   });
 });

@@ -67,6 +67,7 @@ export enum RoundStatus {
 export enum HandOwnerType {
   DEALER = 'dealer',
   PLAYER = 'player',
+  PLAYER_SPLIT = 'player_split',
 }
 
 export enum HandStatus {
@@ -376,7 +377,9 @@ export interface RoundState {
   startedAt: string | null;
   endedAt: string | null;
   mainBet: MainBet;
+  splitBets: MainBet[];
   playerHand: RoundHand;
+  splitHands: RoundHand[];
   dealerHand: RoundHand;
   sideBets: RoundSideBet[];
   playerProgress: LevelProgress | null;

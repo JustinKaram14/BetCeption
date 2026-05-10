@@ -4,6 +4,7 @@ import {
   hitRound,
   peekCard,
   settleRound,
+  splitRound,
   standRound,
   startRound,
   swapCard,
@@ -2048,6 +2049,151 @@ describe('round.controller', () => {
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ message: 'CARD_SWAP not in inventory', code: 'POWERUP_NOT_OWNED' });
+    });
+  });
+
+  describe('splitRound', () => {
+    it('returns 401 when the user is not authenticated', async () => {
+      const req = createMockRequest({ params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await splitRound(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Authentication required', code: 'UNAUTHENTICATED' });
+    });
+
+    it('returns 409 when the round is not in progress', async () => {
+      const round = createRoundFixture({ status: RoundStatus.SETTLED });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([[Round, roundRepo]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await splitRound(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'ROUND_NOT_ACTIVE' }));
+    });
+
+    it('returns 400 HAND_LOCKED when no active player hand exists', async () => {
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 16, cards: [createCard('p1', CardRank.EIGHT, CardSuit.SPADES, 1), createCard('p2', CardRank.EIGHT, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
+        ],
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([[Round, roundRepo]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await splitRound(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'HAND_LOCKED' }));
+    });
+
+    it('returns 400 SPLIT_NOT_ALLOWED when cards have different values', async () => {
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.ACTIVE, handValue: 17, cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.SEVEN, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
+        ],
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([[Round, roundRepo]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await splitRound(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'SPLIT_NOT_ALLOWED' }));
+    });
+
+    it('returns 400 SPLIT_NOT_ALLOWED when 4 player hands already exist', async () => {
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 16, cards: [createCard('p1', CardRank.EIGHT, CardSuit.SPADES, 1), createCard('p2', CardRank.EIGHT, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
+          { id: 'split-hand-1', ownerType: HandOwnerType.PLAYER_SPLIT, status: HandStatus.STOOD, handValue: 16, cards: [createCard('s1a', CardRank.EIGHT, CardSuit.HEARTS, 1), createCard('s1b', CardRank.EIGHT, CardSuit.CLUBS, 2)], user: { id: 'user-1' } },
+          { id: 'split-hand-2', ownerType: HandOwnerType.PLAYER_SPLIT, status: HandStatus.STOOD, handValue: 16, cards: [createCard('s2a', CardRank.EIGHT, CardSuit.HEARTS, 1), createCard('s2b', CardRank.EIGHT, CardSuit.CLUBS, 2)], user: { id: 'user-1' } },
+          { id: 'split-hand-3', ownerType: HandOwnerType.PLAYER_SPLIT, status: HandStatus.ACTIVE, handValue: 8, cards: [createCard('s3a', CardRank.EIGHT, CardSuit.HEARTS, 1), createCard('s3b', CardRank.EIGHT, CardSuit.CLUBS, 2)], user: { id: 'user-1' } },
+        ],
+      });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([[Round, roundRepo]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await splitRound(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'SPLIT_NOT_ALLOWED' }));
+    });
+
+    it('returns 400 INSUFFICIENT_FUNDS when balance is too low', async () => {
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.ACTIVE, handValue: 16, cards: [createCard('p1', CardRank.EIGHT, CardSuit.SPADES, 1), createCard('p2', CardRank.EIGHT, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
+        ],
+      });
+      const user = { id: 'user-1', balance: '0.00' } as User;
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userRepo = createMockRepository<User>({ findOne: jest.fn().mockResolvedValue(user), save: jest.fn().mockResolvedValue(undefined) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([[Round, roundRepo], [User, userRepo]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await splitRound(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INSUFFICIENT_FUNDS' }));
+    });
+
+    it('creates a split hand, deducts balance and creates a new bet on success', async () => {
+      const round = createRoundFixture({
+        hands: [
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
+          { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.ACTIVE, handValue: 16, cards: [createCard('p1', CardRank.EIGHT, CardSuit.SPADES, 1), createCard('p2', CardRank.EIGHT, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
+        ],
+      });
+      const user = { id: 'user-1', balance: '100.00' } as User;
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+      const userRepo = createMockRepository<User>({ findOne: jest.fn().mockResolvedValue(user), save: jest.fn().mockResolvedValue(undefined) });
+      const handRepo = createMockRepository<Hand>({ create: jest.fn().mockImplementation((d) => ({ id: 'split-hand-new', cards: [], ...d })), save: jest.fn().mockResolvedValue(undefined) });
+      const cardRepo = createMockRepository<Card>({ create: jest.fn().mockImplementation((d) => ({ id: 'card-new', ...d })), save: jest.fn().mockResolvedValue(undefined) });
+      const mainBetRepo = createMockRepository<MainBet>({ create: jest.fn().mockImplementation((d) => ({ id: 'bet-split', ...d })), save: jest.fn().mockResolvedValue(undefined) });
+      const walletRepo = createMockRepository<WalletTransaction>({ create: jest.fn().mockImplementation((d) => ({ id: 'tx-split', ...d })), save: jest.fn().mockResolvedValue(undefined) });
+
+      mockAppDataSourceTransaction(
+        new Map<any, any>([[Round, roundRepo], [User, userRepo], [Hand, handRepo], [Card, cardRepo], [MainBet, mainBetRepo], [WalletTransaction, walletRepo]]),
+        { update: jest.fn().mockResolvedValue(undefined) },
+      );
+      mockAppDataSourceRepositories(new Map([[Round, createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) })]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await splitRound(req as any, res);
+
+      expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({ balance: '90.00' }));
+      expect(handRepo.save).toHaveBeenCalled();
+      expect(mainBetRepo.save).toHaveBeenCalledWith(expect.objectContaining({ status: MainBetStatus.PLACED, amount: '10.00' }));
+      expect(walletRepo.save).toHaveBeenCalledWith(expect.objectContaining({ kind: WalletTransactionKind.BET_PLACE }));
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ round: expect.any(Object) }));
     });
   });
 });

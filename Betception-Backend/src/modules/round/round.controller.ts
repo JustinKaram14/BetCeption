@@ -269,24 +269,24 @@ export async function hitRound(
         throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not accepting hits');
       }
 
-      const playerHand = getPlayerHand(round, userId);
-      if (!playerHand) {
+      const activeHand = getActivePlayerHand(round, userId);
+      if (!activeHand) {
+        if (getAllPlayerHands(round, userId).length > 0) {
+          throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot draw cards for this hand');
+        }
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
-      }
-      if (playerHand.status !== HandStatus.ACTIVE) {
-        throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot draw cards for this hand');
       }
 
       const usedCards = collectUsedCards(round);
       const newCard = drawCardFromSeed(round.serverSeed, usedCards);
-      await addCardToHand(manager, playerHand, newCard);
-      const evaluation = recalcHand(playerHand);
+      await addCardToHand(manager, activeHand, newCard);
+      const evaluation = recalcHand(activeHand);
       if (evaluation.total > 21) {
-        playerHand.status = HandStatus.BUSTED;
-      } else if (evaluation.isBlackjack && playerHand.cards.length === 2) {
-        playerHand.status = HandStatus.BLACKJACK;
+        activeHand.status = HandStatus.BUSTED;
+      } else if (evaluation.isBlackjack && activeHand.cards.length === 2) {
+        activeHand.status = HandStatus.BLACKJACK;
       }
-      await manager.getRepository(Hand).save(playerHand);
+      await manager.getRepository(Hand).save(activeHand);
     });
 
     const updatedRound = await loadRoundForUser(roundId, userId);
@@ -313,19 +313,25 @@ export async function standRound(
         throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
       }
 
-      const playerHand = getPlayerHand(round, userId);
-      if (!playerHand) {
+      const activeHand = getActivePlayerHand(round, userId);
+      if (!activeHand) {
+        if (getAllPlayerHands(round, userId).length > 0) {
+          throw new RoundFlowError(400, 'HAND_LOCKED', 'Player hand cannot stand');
+        }
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
       }
-      if (playerHand.status !== HandStatus.ACTIVE) {
-        throw new RoundFlowError(400, 'HAND_LOCKED', 'Player hand cannot stand');
+
+      activeHand.status = HandStatus.STOOD;
+      await manager.getRepository(Hand).save(activeHand);
+
+      const handIdx = round.hands.findIndex((h) => h.id === activeHand.id);
+      if (handIdx !== -1) round.hands[handIdx] = activeHand;
+
+      const allStandHands = getAllPlayerHands(round, userId);
+      if (allStandHands.every((h) => h.status !== HandStatus.ACTIVE)) {
+        const usedCards = collectUsedCards(round);
+        await completeDealerHand(manager, round, usedCards, allStandHands);
       }
-
-      playerHand.status = HandStatus.STOOD;
-      await manager.getRepository(Hand).save(playerHand);
-
-      const usedCards = collectUsedCards(round);
-      await completeDealerHand(manager, round, usedCards, playerHand);
     });
 
     const updatedRound = await loadRoundForUser(roundId, userId);
@@ -395,16 +401,18 @@ export async function settleRound(
       }
 
       const playerHand = getPlayerHand(round, userId);
+      const splitHands = getSplitHands(round, userId);
       const dealerHand = getDealerHand(round);
       if (!playerHand || !dealerHand) {
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Hands not found');
       }
-      if (playerHand.status === HandStatus.ACTIVE) {
+      const allSettleHands = getAllPlayerHands(round, userId);
+      if (allSettleHands.some((h) => h.status === HandStatus.ACTIVE)) {
         throw new RoundFlowError(409, 'ROUND_ACTIVE', 'Complete your turn before settling');
       }
 
       const usedCards = collectUsedCards(round);
-      await completeDealerHand(manager, round, usedCards, playerHand);
+      await completeDealerHand(manager, round, usedCards, allSettleHands);
 
       const mainBet = getMainBetForUser(round, userId);
       if (!mainBet) {
@@ -477,6 +485,37 @@ export async function settleRound(
           }),
         );
         pendingCredit += settledAmountCents;
+      }
+
+      // Settle all split bets (no power-up modifiers apply to split hands)
+      for (const sh of splitHands) {
+        const splitBet = getMainBetForHand(round, sh.id);
+        if (!splitBet || splitBet.status !== MainBetStatus.PLACED) continue;
+        const splitResolution = resolveMainBet(sh, dealerHand);
+        const splitSettledDecimal = multiplyMoney(splitBet.amount, splitResolution.multiplier);
+        const splitSettledCents = decimalToCents(splitSettledDecimal);
+        splitBet.status = splitResolution.status;
+        splitBet.payoutMultiplier = splitResolution.multiplier.toFixed(3);
+        splitBet.settledAmount = splitSettledDecimal;
+        splitBet.settledAt = new Date();
+        await manager.getRepository(MainBet).save(splitBet);
+        if (splitSettledCents > 0n) {
+          const splitKind =
+            splitResolution.status === MainBetStatus.PUSH ||
+            splitResolution.status === MainBetStatus.REFUNDED
+              ? WalletTransactionKind.BET_REFUND
+              : WalletTransactionKind.BET_WIN;
+          walletTxs.push(
+            walletRepo.create({
+              user,
+              kind: splitKind,
+              amount: centsToDecimal(splitSettledCents),
+              refTable: 'main_bets',
+              refId: splitBet.id,
+            }),
+          );
+          pendingCredit += splitSettledCents;
+        }
       }
 
       const sideBetRepo = manager.getRepository(SideBet);
@@ -911,6 +950,11 @@ function serializeRound(
       settledAt: sideBet.settledAt ?? null,
     }));
 
+  const roundSplitHands = getSplitHands(round, userId);
+  const roundSplitBets = roundSplitHands
+    .map((sh) => getMainBetForHand(round, sh.id))
+    .filter((b): b is NonNullable<typeof b> => b !== undefined);
+
   return {
     id: round.id,
     status: round.status,
@@ -924,7 +968,16 @@ function serializeRound(
       settledAmount: mainBet.settledAmount,
       settledAt: mainBet.settledAt ?? null,
     },
+    splitBets: roundSplitBets.map((sb) => ({
+      id: sb.id,
+      amount: sb.amount,
+      status: sb.status,
+      payoutMultiplier: sb.payoutMultiplier,
+      settledAmount: sb.settledAmount,
+      settledAt: sb.settledAt ?? null,
+    })),
     playerHand: serializeHand(playerHand),
+    splitHands: roundSplitHands.map((sh) => serializeHand(sh)),
     dealerHand: serializeHand(dealerHand, ACTIVE_ROUND_STATUSES.includes(round.status as typeof ACTIVE_ROUND_STATUSES[number])),
     sideBets,
     playerProgress: playerHand.user
@@ -974,7 +1027,7 @@ async function addCardToHand(
 ) {
   const cardRepo = manager.getRepository(Card);
   const entity = cardRepo.create({
-    hand,
+    hand: { id: hand.id } as Hand,
     rank: card.rank,
     suit: card.suit,
     drawOrder: (hand.cards?.length ?? 0) + 1,
@@ -1017,7 +1070,7 @@ async function completeDealerHand(
   manager: EntityManager,
   round: RoundWithRelations,
   usedCards: Set<string>,
-  playerHand: Hand,
+  playerHands: (Hand & { cards: Card[] })[],
 ) {
   const dealerHand = getDealerHand(round);
   if (!dealerHand) return;
@@ -1027,7 +1080,7 @@ async function completeDealerHand(
     await manager.getRepository(Hand).save(dealerHand);
     return;
   }
-  if (playerHand.status === HandStatus.BUSTED) {
+  if (playerHands.every((h) => h.status === HandStatus.BUSTED)) {
     dealerHand.status = HandStatus.STOOD;
     await manager.getRepository(Hand).save(dealerHand);
     return;
@@ -1119,7 +1172,8 @@ function resolveMainBet(
   }
 
   if (playerHand.status === HandStatus.BLACKJACK && dealerHand.status !== HandStatus.BLACKJACK) {
-    return { status: MainBetStatus.WON, multiplier: PAYOUT_BLACKJACK };
+    const isSplitHand = playerHand.ownerType === HandOwnerType.PLAYER_SPLIT;
+    return { status: MainBetStatus.WON, multiplier: isSplitHand ? PAYOUT_WIN : PAYOUT_BLACKJACK };
   }
   if (dealerHand.status === HandStatus.BUSTED) {
     return { status: MainBetStatus.WON, multiplier: PAYOUT_WIN };
@@ -1214,8 +1268,38 @@ function getDealerHand(round: RoundWithRelations) {
 
 function getMainBetForUser(round: RoundWithRelations, userId: string) {
   return (round.mainBets ?? []).find(
-    (bet) => bet.user.id === userId,
+    (bet) => bet.user.id === userId && bet.hand?.ownerType !== HandOwnerType.PLAYER_SPLIT,
   );
+}
+
+function getActivePlayerHand(round: RoundWithRelations, userId: string) {
+  const hands = round.hands ?? [];
+  const activePlayer = hands.find(
+    (h) => h.ownerType === HandOwnerType.PLAYER && h.user?.id === userId && h.status === HandStatus.ACTIVE,
+  );
+  if (activePlayer) return activePlayer as Hand & { cards: Card[] };
+  const activeSplit = hands.find(
+    (h) => h.ownerType === HandOwnerType.PLAYER_SPLIT && h.user?.id === userId && h.status === HandStatus.ACTIVE,
+  );
+  return (activeSplit ?? null) as (Hand & { cards: Card[] }) | null;
+}
+
+function getSplitHands(round: RoundWithRelations, userId: string) {
+  return (round.hands ?? []).filter(
+    (h) => h.ownerType === HandOwnerType.PLAYER_SPLIT && h.user?.id === userId,
+  ) as (Hand & { cards: Card[] })[];
+}
+
+function getAllPlayerHands(round: RoundWithRelations, userId: string) {
+  return (round.hands ?? []).filter(
+    (h) =>
+      (h.ownerType === HandOwnerType.PLAYER || h.ownerType === HandOwnerType.PLAYER_SPLIT) &&
+      h.user?.id === userId,
+  ) as (Hand & { cards: Card[] })[];
+}
+
+function getMainBetForHand(round: RoundWithRelations, handId: string) {
+  return (round.mainBets ?? []).find((b) => b.hand?.id === handId);
 }
 
 function sortCards(cards: Card[]): Card[] {
@@ -1275,6 +1359,213 @@ function createSeededRandomIntGenerator(serverSeed: string) {
 
 function bufferToBigInt(buffer: Buffer): bigint {
   return BigInt(`0x${buffer.toString('hex')}`);
+}
+
+export async function doubleRound(
+  req: Request<RoundIdParams>,
+  res: Response,
+) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+
+      const activeHand = getActivePlayerHand(round, userId);
+      if (!activeHand) {
+        throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
+      }
+      if (activeHand.status !== HandStatus.ACTIVE) {
+        throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot double on this hand');
+      }
+      if ((activeHand.cards ?? []).length !== 2) {
+        throw new RoundFlowError(400, 'DOUBLE_NOT_ALLOWED', 'Can only double on exactly two cards');
+      }
+
+      const doubleBet = getMainBetForHand(round, activeHand.id);
+      if (!doubleBet) {
+        throw new RoundFlowError(404, 'BET_NOT_FOUND', 'Bet for this hand not found');
+      }
+
+      const userRepo = manager.getRepository(User);
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!user) {
+        throw new RoundFlowError(404, 'USER_NOT_FOUND', 'User not found');
+      }
+
+      const extraCents = decimalToCents(doubleBet.amount);
+      const currentBalance = decimalToCents(user.balance);
+      if (currentBalance < extraCents) {
+        throw new RoundFlowError(400, 'INSUFFICIENT_FUNDS', 'Not enough balance to double');
+      }
+      user.balance = centsToDecimal(currentBalance - extraCents);
+      await userRepo.save(user);
+
+      const walletRepo = manager.getRepository(WalletTransaction);
+      await walletRepo.save(
+        walletRepo.create({
+          user,
+          kind: WalletTransactionKind.BET_PLACE,
+          amount: centsToDecimal(-extraCents),
+          refTable: 'main_bets',
+          refId: doubleBet.id,
+        }),
+      );
+
+      doubleBet.amount = centsToDecimal(extraCents * 2n);
+      await manager.getRepository(MainBet).save(doubleBet);
+
+      const usedCards = collectUsedCards(round);
+      const newCard = drawCardFromSeed(round.serverSeed, usedCards);
+      await addCardToHand(manager, activeHand, newCard);
+      const evaluation = recalcHand(activeHand);
+      activeHand.status = evaluation.total > 21 ? HandStatus.BUSTED : HandStatus.STOOD;
+      await manager.getRepository(Hand).save(activeHand);
+
+      const dblIdx = round.hands.findIndex((h) => h.id === activeHand.id);
+      if (dblIdx !== -1) round.hands[dblIdx] = activeHand;
+
+      const allDoubleHands = getAllPlayerHands(round, userId);
+      if (allDoubleHands.every((h) => h.status !== HandStatus.ACTIVE)) {
+        await completeDealerHand(manager, round, usedCards, allDoubleHands);
+      }
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId) });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function splitRound(
+  req: Request<RoundIdParams>,
+  res: Response,
+) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+
+      if (getAllPlayerHands(round, userId).length >= 4) {
+        throw new RoundFlowError(400, 'SPLIT_NOT_ALLOWED', 'Maximum of 4 hands reached');
+      }
+
+      const activeHand = getActivePlayerHand(round, userId);
+      if (!activeHand) {
+        throw new RoundFlowError(400, 'HAND_LOCKED', 'No active player hand to split');
+      }
+
+      const cards = sortCards(activeHand.cards ?? []);
+      if (cards.length !== 2) {
+        throw new RoundFlowError(400, 'SPLIT_NOT_ALLOWED', 'Can only split a two-card hand');
+      }
+
+      const getCardValue = (rank: CardRank) =>
+        TEN_VALUE_RANKS.has(rank) ? 10 : rank === CardRank.ACE ? 11 : Number(rank);
+      if (getCardValue(cards[0].rank) !== getCardValue(cards[1].rank)) {
+        throw new RoundFlowError(400, 'SPLIT_NOT_ALLOWED', 'Cards must have equal value to split');
+      }
+
+      const mainBet = getMainBetForHand(round, activeHand.id) ?? getMainBetForUser(round, userId);
+      if (!mainBet) {
+        throw new RoundFlowError(404, 'BET_NOT_FOUND', 'Main bet missing');
+      }
+
+      const userRepo = manager.getRepository(User);
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!user) {
+        throw new RoundFlowError(404, 'USER_NOT_FOUND', 'User not found');
+      }
+
+      const splitBetCents = decimalToCents(mainBet.amount);
+      const currentBalance = decimalToCents(user.balance);
+      if (currentBalance < splitBetCents) {
+        throw new RoundFlowError(400, 'INSUFFICIENT_FUNDS', 'Not enough balance to split');
+      }
+      user.balance = centsToDecimal(currentBalance - splitBetCents);
+      await userRepo.save(user);
+
+      // Collect used cards BEFORE any card reassignment so both original cards are tracked
+      const usedCards = collectUsedCards(round);
+
+      const handRepo = manager.getRepository(Hand);
+      const newSplitHand = handRepo.create({
+        round,
+        ownerType: HandOwnerType.PLAYER_SPLIT,
+        status: HandStatus.ACTIVE,
+        user,
+      });
+      await handRepo.save(newSplitHand);
+      newSplitHand.cards = [];
+
+      const [card1, card2] = cards;
+      const cardRepo = manager.getRepository(Card);
+      card2.hand = { id: newSplitHand.id } as unknown as Hand;
+      card2.drawOrder = 1;
+      await cardRepo.save(card2);
+      newSplitHand.cards = [card2];
+
+      activeHand.cards = [card1];
+
+      const newCard1 = drawCardFromSeed(round.serverSeed, usedCards);
+      await addCardToHand(manager, activeHand, newCard1);
+      recalcHand(activeHand);
+      await manager.update(Hand, { id: activeHand.id }, { handValue: activeHand.handValue, status: activeHand.status });
+
+      const newCard2 = drawCardFromSeed(round.serverSeed, usedCards);
+      await addCardToHand(manager, newSplitHand, newCard2);
+      recalcHand(newSplitHand);
+      await manager.update(Hand, { id: newSplitHand.id }, { handValue: newSplitHand.handValue, status: newSplitHand.status });
+
+      const mainBetRepo = manager.getRepository(MainBet);
+      const newSplitBet = mainBetRepo.create({
+        round,
+        hand: newSplitHand as unknown as Hand,
+        user,
+        amount: centsToDecimal(splitBetCents),
+        status: MainBetStatus.PLACED,
+      });
+      await mainBetRepo.save(newSplitBet);
+
+      const walletRepo = manager.getRepository(WalletTransaction);
+      await walletRepo.save(
+        walletRepo.create({
+          user,
+          kind: WalletTransactionKind.BET_PLACE,
+          amount: centsToDecimal(-splitBetCents),
+          refTable: 'main_bets',
+          refId: newSplitBet.id,
+        }),
+      );
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId) });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
 }
 
 export const roundTestUtils = {

@@ -4,7 +4,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
@@ -12,7 +11,6 @@ import { HandOwnerType, HandStatus } from './enums.js';
 import { Round } from './Round.js';
 import { User } from './User.js';
 import { Card } from './Card.js';
-import { MainBet } from './MainBet.js';
 
 @Entity({ name: 'hands' })
 export class Hand {
@@ -37,16 +35,6 @@ export class Hand {
   @JoinColumn({ name: 'user_id' })
   user: Relation<User> | null = null;
 
-  @ManyToOne(() => Hand, (hand) => hand.children, {
-    nullable: true,
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({ name: 'parent_hand_id' })
-  parent: Relation<Hand> | null = null;
-
-  @OneToMany(() => Hand, (hand) => hand.parent)
-  children?: Relation<Hand[]>;
-
   @Column({
     type: 'enum',
     enum: HandStatus,
@@ -67,6 +55,4 @@ export class Hand {
   @OneToMany(() => Card, (card) => card.hand)
   cards?: Card[];
 
-  @OneToOne(() => MainBet, (bet) => bet.hand)
-  mainBet?: Relation<MainBet>;
 }

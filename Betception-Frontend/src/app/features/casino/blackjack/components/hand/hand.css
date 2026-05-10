@@ -62,7 +62,7 @@
   opacity:1;
   transform:rotateY(0deg);
   /* Transition only for interactive state changes (e.g. dealer reveal flip) */
-  transition:transform .5s ease, opacity .3s, box-shadow .3s, border-color .3s;
+  transition:transform .55s cubic-bezier(.4,0,.2,1), opacity .3s, box-shadow .3s, border-color .3s;
 }
 .card.visible{
   opacity:1;
@@ -101,14 +101,14 @@
 }
 
 @keyframes card-deal-in{
-  from{opacity:0;transform:translateY(-35px) rotateY(180deg) scale(.85);}
-  60%{transform:translateY(4px) rotateY(20deg) scale(1.04);}
-  to{opacity:1;transform:translateY(0) rotateY(0deg) scale(1);}
+  from{opacity:0;transform:translateY(-55px) translateX(-8px) rotateY(180deg) scale(.78);}
+  55%{opacity:1;transform:translateY(5px) translateX(0) rotateY(15deg) scale(1.05);}
+  to{opacity:1;transform:translateY(0) translateX(0) rotateY(0deg) scale(1);}
 }
 @keyframes card-deal-back{
-  from{opacity:0;transform:translateY(-35px) rotateY(180deg) scale(.85);}
-  60%{transform:translateY(4px) rotateY(200deg) scale(1.04);}
-  to{opacity:1;transform:translateY(0) rotateY(180deg) scale(1);}
+  from{opacity:0;transform:translateY(-55px) translateX(-8px) rotateY(180deg) scale(.78);}
+  55%{opacity:1;transform:translateY(5px) translateX(0) rotateY(195deg) scale(1.05);}
+  to{opacity:1;transform:translateY(0) translateX(0) rotateY(180deg) scale(1);}
 }
 .card-face{
   position:absolute;

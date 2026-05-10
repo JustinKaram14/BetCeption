@@ -21,7 +21,7 @@ export class MainBet {
   @JoinColumn({ name: 'round_id' })
   round!: Relation<Round>;
 
-  @OneToOne(() => Hand, (hand) => hand.mainBet, { onDelete: 'CASCADE' })
+  @OneToOne(() => Hand, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'hand_id' })
   hand!: Relation<Hand>;
 
