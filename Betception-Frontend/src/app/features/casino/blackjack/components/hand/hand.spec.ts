@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Hand } from './hand';
-import { CardRank, CardSuit, HandOwnerType, HandStatus, RoundHand } from '../../../../../core/api/api.types';
+import { CardRank, CardSuit, HandOwnerType, HandStatus, RoundCard, RoundHand } from '../../../../../core/api/api.types';
 
 function makeHand(overrides: Partial<RoundHand> = {}): RoundHand {
   return {
@@ -11,6 +11,21 @@ function makeHand(overrides: Partial<RoundHand> = {}): RoundHand {
     handValue: 17,
     cards: [],
     ...overrides,
+  };
+}
+
+function makeCard(
+  id: string,
+  suit: CardSuit | null,
+  rank: CardRank | null = null,
+  drawOrder = 1,
+): RoundCard {
+  return {
+    id,
+    rank,
+    suit,
+    drawOrder,
+    createdAt: '',
   };
 }
 
@@ -43,27 +58,43 @@ describe('Hand', () => {
       expect(component.displayScore).toBe('21');
     });
 
-    it('hides dealer score ("--") when there are exactly 2 cards and not yet revealed', () => {
+    it('hides dealer score while the backend masks the hole card', () => {
       component.isDealer = true;
-      component.revealDealerCards = false;
-      component.hand = makeHand({ handValue: 18, cards: [{} as any, {} as any] });
+      component.hand = makeHand({
+        handValue: 18,
+        cards: [
+          makeCard('c1', CardSuit.CLUBS, CardRank.TEN, 1),
+          makeCard('c2', null, null, 2),
+        ],
+      });
+
       expect(component.displayScore).toBe('--');
     });
 
-    it('shows dealer score when the reveal queue completed', fakeAsync(() => {
+    it('shows dealer score once the backend returns an unmasked hole card', () => {
       component.isDealer = true;
-      component.revealDealerCards = true;
-      component.hand = makeHand({ handValue: 18, cards: [{} as any, {} as any] });
-      component.ngOnChanges({ hand: {} as any, revealDealerCards: {} as any });
-      tick(560);
+      component.hand = makeHand({
+        handValue: 18,
+        cards: [
+          makeCard('c1', CardSuit.CLUBS, CardRank.TEN, 1),
+          makeCard('c2', CardSuit.SPADES, CardRank.EIGHT, 2),
+        ],
+      });
 
       expect(component.displayScore).toBe('18');
-    }));
+    });
 
-    it('hides dealer score while any dealer card after the upcard is not revealed', () => {
+    it('hides dealer score while any dealer card is still masked', () => {
       component.isDealer = true;
-      component.revealDealerCards = false;
-      component.hand = makeHand({ handValue: 22, cards: [{} as any, {} as any, {} as any] });
+      component.hand = makeHand({
+        handValue: 22,
+        cards: [
+          makeCard('c1', CardSuit.CLUBS, CardRank.TEN, 1),
+          makeCard('c2', CardSuit.SPADES, CardRank.EIGHT, 2),
+          makeCard('c3', null, null, 3),
+        ],
+      });
+
       expect(component.displayScore).toBe('--');
     });
   });
@@ -85,6 +116,19 @@ describe('Hand', () => {
         expect(component.statusLabel).toBe(expectedKey ? component.i18n.t(expectedKey) : null);
       });
     }
+
+    it('hides dealer status while the backend masks a card', () => {
+      component.isDealer = true;
+      component.hand = makeHand({
+        status: HandStatus.ACTIVE,
+        cards: [
+          makeCard('c1', CardSuit.CLUBS, CardRank.TEN, 1),
+          makeCard('c2', null, null, 2),
+        ],
+      });
+
+      expect(component.statusLabel).toBeNull();
+    });
   });
 
   describe('suitSymbol', () => {
@@ -102,9 +146,9 @@ describe('Hand', () => {
 
   describe('cards getter', () => {
     it('returns cards sorted by drawOrder', () => {
-      const c1 = { id: 'c1', drawOrder: 3, rank: null, suit: null, createdAt: '' };
-      const c2 = { id: 'c2', drawOrder: 1, rank: null, suit: null, createdAt: '' };
-      const c3 = { id: 'c3', drawOrder: 2, rank: null, suit: null, createdAt: '' };
+      const c1 = makeCard('c1', null, null, 3);
+      const c2 = makeCard('c2', null, null, 1);
+      const c3 = makeCard('c3', null, null, 2);
       component.hand = makeHand({ cards: [c1, c2, c3] });
 
       const sorted = component.cards;
@@ -118,83 +162,52 @@ describe('Hand', () => {
   });
 
   describe('cardClasses', () => {
-    const makeCard = (suit: CardSuit | null, rank: CardRank | null = null) => ({
-      id: 'c1',
-      rank,
-      suit,
-      drawOrder: 0,
-      createdAt: '',
-    });
-
     it('marks hearts and diamonds cards as red', () => {
-      expect(component.cardClasses(makeCard(CardSuit.HEARTS), 0).red).toBeTrue();
-      expect(component.cardClasses(makeCard(CardSuit.DIAMONDS), 0).red).toBeTrue();
+      expect(component.cardClasses(makeCard('c1', CardSuit.HEARTS), 0).red).toBeTrue();
+      expect(component.cardClasses(makeCard('c2', CardSuit.DIAMONDS), 0).red).toBeTrue();
     });
 
     it('marks clubs and spades cards as black', () => {
-      expect(component.cardClasses(makeCard(CardSuit.CLUBS), 0).black).toBeTrue();
-      expect(component.cardClasses(makeCard(CardSuit.SPADES), 0).black).toBeTrue();
+      expect(component.cardClasses(makeCard('c1', CardSuit.CLUBS), 0).black).toBeTrue();
+      expect(component.cardClasses(makeCard('c2', CardSuit.SPADES), 0).black).toBeTrue();
     });
 
-    it('hides the dealer hole card (index 1 of a 2-card hand) when not revealed', () => {
+    it('renders a backend-masked dealer card as the card back', () => {
+      const upcard = makeCard('c1', CardSuit.CLUBS, CardRank.TEN, 1);
+      const holeCard = makeCard('c2', null, null, 2);
       component.isDealer = true;
-      component.revealDealerCards = false;
-      component.hand = makeHand({ cards: [makeCard(null), makeCard(null)] });
+      component.hand = makeHand({ cards: [upcard, holeCard] });
 
-      const classes = component.cardClasses(makeCard(null), 1);
+      const classes = component.cardClasses(holeCard, 1);
       expect(classes['back']).toBeTrue();
       expect(classes['visible']).toBeFalse();
     });
 
-    it('shows the hole card when its reveal queue step completed', fakeAsync(() => {
+    it('shows the same dealer card when the backend unmasks it', () => {
+      const upcard = makeCard('c1', CardSuit.CLUBS, CardRank.TEN, 1);
+      const revealedHoleCard = makeCard('c2', CardSuit.SPADES, CardRank.ACE, 2);
       component.isDealer = true;
-      component.revealDealerCards = true;
-      component.hand = makeHand({
-        cards: [
-          makeCard(CardSuit.CLUBS, CardRank.TEN),
-          makeCard(CardSuit.SPADES, CardRank.ACE),
-        ],
-      });
-      component.ngOnChanges({ hand: {} as any, revealDealerCards: {} as any });
-      tick(560);
+      component.hand = makeHand({ cards: [upcard, revealedHoleCard] });
 
-      const classes = component.cardClasses(makeCard(CardSuit.SPADES, CardRank.ACE), 1);
+      const classes = component.cardClasses(revealedHoleCard, 1);
       expect(classes['visible']).toBeTrue();
       expect(classes['back']).toBeFalse();
-    }));
+    });
 
-    it('reveals dealer cards sequentially by array index', fakeAsync(() => {
+    it('does not hide later dealer cards when the backend sends real card values', () => {
+      const drawnCard = makeCard('c3', CardSuit.HEARTS, CardRank.FIVE, 3);
       component.isDealer = true;
-      component.revealDealerCards = false;
       component.hand = makeHand({
         cards: [
-          { ...makeCard(CardSuit.CLUBS, CardRank.TEN), id: 'c1', drawOrder: 1 },
-          { ...makeCard(null), id: 'c2', drawOrder: 2 },
+          makeCard('c1', CardSuit.CLUBS, CardRank.TEN, 1),
+          makeCard('c2', CardSuit.SPADES, CardRank.ACE, 2),
+          drawnCard,
         ],
       });
-      component.ngOnChanges({ hand: {} as any, revealDealerCards: {} as any });
 
-      component.revealDealerCards = true;
-      component.hand = makeHand({
-        cards: [
-          { ...makeCard(CardSuit.CLUBS, CardRank.TEN), id: 'c1', drawOrder: 1 },
-          { ...makeCard(CardSuit.SPADES, CardRank.ACE), id: 'c2', drawOrder: 2 },
-          { ...makeCard(CardSuit.HEARTS, CardRank.FIVE), id: 'c3', drawOrder: 3 },
-          { ...makeCard(CardSuit.DIAMONDS, CardRank.SIX), id: 'c4', drawOrder: 4 },
-        ],
-      });
-      component.ngOnChanges({ hand: {} as any, revealDealerCards: {} as any });
-
-      expect([...component.visibleDealerCardIndexes]).toEqual([0]);
-
-      tick(560);
-      expect([...component.visibleDealerCardIndexes]).toEqual([0, 1]);
-
-      tick(360);
-      expect([...component.visibleDealerCardIndexes]).toEqual([0, 1, 2]);
-
-      tick(360);
-      expect([...component.visibleDealerCardIndexes]).toEqual([0, 1, 2, 3]);
-    }));
+      const classes = component.cardClasses(drawnCard, 2);
+      expect(classes['visible']).toBeTrue();
+      expect(classes['back']).toBeFalse();
+    });
   });
 });

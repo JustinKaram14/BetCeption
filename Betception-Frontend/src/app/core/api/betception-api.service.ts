@@ -140,6 +140,10 @@ export class BetceptionApi {
     return this.http.post<RoundResponse>(`/round/stand/${roundId}`);
   }
 
+  dealerStepRound(roundId: string) {
+    return this.http.post<RoundResponse>(`/round/dealer-step/${roundId}`);
+  }
+
   getRound(roundId: string) {
     return this.http.get<RoundResponse>(`/round/${roundId}`);
   }

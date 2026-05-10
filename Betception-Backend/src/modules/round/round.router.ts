@@ -5,6 +5,7 @@ import {
   startRound,
   hitRound,
   standRound,
+  dealerStepRound,
   getActiveRound,
   getRound,
   settleRound,
@@ -32,6 +33,11 @@ roundRouter.post(
   '/stand/:roundId',
   validateRequest(RoundIdParamsSchema, 'params'),
   standRound,
+);
+roundRouter.post(
+  '/dealer-step/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  dealerStepRound,
 );
 roundRouter.get('/active', getActiveRound);
 roundRouter.get(

@@ -76,6 +76,20 @@ type SerializeRoundOptions = {
   xpGained?: number;
 };
 
+type DealerActionKind =
+  | 'REVEAL_HOLE'
+  | 'DRAW_CARD'
+  | 'STAND'
+  | 'BUST'
+  | 'BLACKJACK'
+  | 'NONE';
+
+type DealerAction = {
+  kind: DealerActionKind;
+  cardId: string | null;
+  dealerTurnComplete: boolean;
+};
+
 type TriggeredPowerupEffect = {
   code: PowerPillCode;
   color: PowerPillColor;
@@ -315,8 +329,12 @@ export async function hitRound(
       }
 
       const playerHand = getPlayerHand(round, userId);
+      const dealerHand = getDealerHand(round);
       if (!playerHand) {
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
+      }
+      if (dealerHand?.status === HandStatus.BLACKJACK) {
+        throw new RoundFlowError(409, 'ROUND_READY_TO_SETTLE', 'Dealer blackjack must be settled');
       }
       if (playerHand.status !== HandStatus.ACTIVE) {
         throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot draw cards for this hand');
@@ -359,8 +377,15 @@ export async function standRound(
       }
 
       const playerHand = getPlayerHand(round, userId);
+      const dealerHand = getDealerHand(round);
       if (!playerHand) {
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
+      }
+      if (!dealerHand) {
+        throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Dealer hand not found');
+      }
+      if (dealerHand.status === HandStatus.BLACKJACK) {
+        throw new RoundFlowError(409, 'ROUND_READY_TO_SETTLE', 'Dealer blackjack must be settled');
       }
       if (playerHand.status !== HandStatus.ACTIVE) {
         throw new RoundFlowError(400, 'HAND_LOCKED', 'Player hand cannot stand');
@@ -368,16 +393,61 @@ export async function standRound(
 
       playerHand.status = HandStatus.STOOD;
       await manager.getRepository(Hand).save(playerHand);
-
-      const usedCards = collectUsedCards(round);
-      await completeDealerHand(manager, round, usedCards, playerHand);
     });
 
     const updatedRound = await loadRoundForUser(roundId, userId);
     if (!updatedRound) {
       throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
     }
-    return res.json({ round: serializeRound(updatedRound, userId) });
+    return res.json({
+      round: serializeRound(updatedRound, userId),
+      dealerAction: {
+        kind: 'REVEAL_HOLE',
+        cardId: getDealerHoleCardId(updatedRound),
+        dealerTurnComplete: isDealerTurnComplete(getDealerHand(updatedRound)),
+      } satisfies DealerAction,
+    });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function dealerStepRound(
+  req: Request<RoundIdParams>,
+  res: Response,
+) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+    let dealerAction: DealerAction = { kind: 'NONE', cardId: null, dealerTurnComplete: true };
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+
+      const playerHand = getPlayerHand(round, userId);
+      const dealerHand = getDealerHand(round);
+      if (!playerHand || !dealerHand) {
+        throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Hands not found');
+      }
+      if (playerHand.status === HandStatus.ACTIVE) {
+        throw new RoundFlowError(409, 'PLAYER_TURN_ACTIVE', 'Complete the player turn before dealer steps');
+      }
+      if (playerHand.status === HandStatus.BUSTED) {
+        dealerAction = { kind: 'NONE', cardId: null, dealerTurnComplete: true };
+        return;
+      }
+
+      dealerAction = await advanceDealerOneStep(manager, round, dealerHand);
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId), dealerAction });
   } catch (error) {
     return handleRoundError(res, error);
   }
@@ -448,8 +518,9 @@ export async function settleRound(
         throw new RoundFlowError(409, 'ROUND_ACTIVE', 'Complete your turn before settling');
       }
 
-      const usedCards = collectUsedCards(round);
-      await completeDealerHand(manager, round, usedCards, playerHand);
+      if (!canSettleRound(playerHand, dealerHand)) {
+        throw new RoundFlowError(409, 'DEALER_TURN_ACTIVE', 'Complete the dealer turn before settling');
+      }
 
       const mainBet = getMainBetForUser(round, userId);
       if (!mainBet) {
@@ -1071,7 +1142,7 @@ function serializeRound(
       settledAt: mainBet.settledAt ?? null,
     },
     playerHand: serializeHand(playerHand),
-    dealerHand: serializeHand(dealerHand, ACTIVE_ROUND_STATUSES.includes(round.status as typeof ACTIVE_ROUND_STATUSES[number])),
+    dealerHand: serializeHand(dealerHand, shouldMaskDealerHole(round, playerHand)),
     sideBets,
     playerProgress: playerHand.user
       ? {
@@ -1117,7 +1188,7 @@ async function addCardToHand(
   manager: EntityManager,
   hand: Hand,
   card: DeckCard,
-) {
+): Promise<Card> {
   const cardRepo = manager.getRepository(Card);
   const entity = cardRepo.create({
     hand,
@@ -1128,6 +1199,7 @@ async function addCardToHand(
   await cardRepo.save(entity);
   if (!hand.cards) hand.cards = [];
   hand.cards.push(entity);
+  return entity;
 }
 
 function drawCardFromSeed(serverSeed: string | null, used: Set<string>): DeckCard {
@@ -1159,41 +1231,85 @@ function peekNextCard(serverSeed: string | null, used: Set<string>): DeckCard {
   throw new RoundFlowError(500, 'DECK_EMPTY', 'No cards left in the deck');
 }
 
-async function completeDealerHand(
+async function advanceDealerOneStep(
   manager: EntityManager,
   round: RoundWithRelations,
-  usedCards: Set<string>,
-  playerHand: Hand,
-) {
-  const dealerHand = getDealerHand(round);
-  if (!dealerHand) return;
+  dealerHand: Hand & { cards?: Card[] },
+): Promise<DealerAction> {
+  if (isDealerTurnComplete(dealerHand)) {
+    return { kind: dealerActionKindForCompleteHand(dealerHand), cardId: null, dealerTurnComplete: true };
+  }
 
   let evaluation = recalcHand(dealerHand, { preserveStanding: true });
-  if (isTerminalHandStatus(dealerHand.status)) {
+  if (evaluation.isBlackjack) {
+    dealerHand.status = HandStatus.BLACKJACK;
     await manager.getRepository(Hand).save(dealerHand);
-    return;
+    return { kind: 'BLACKJACK', cardId: null, dealerTurnComplete: true };
   }
-  if (playerHand.status === HandStatus.BUSTED) {
+  if (isDealerStandingTotal(evaluation)) {
     dealerHand.status = HandStatus.STOOD;
     await manager.getRepository(Hand).save(dealerHand);
-    return;
+    return { kind: 'STAND', cardId: null, dealerTurnComplete: true };
   }
 
-  while (
-    evaluation.total < 17 ||
-    (evaluation.total === 17 && evaluation.isSoft)
-  ) {
-    const card = drawCardFromSeed(round.serverSeed, usedCards);
-    await addCardToHand(manager, dealerHand, card);
-    evaluation = recalcHand(dealerHand, { preserveStanding: true });
-    if (isHandBusted(dealerHand)) break;
+  const usedCards = collectUsedCards(round);
+  const card = drawCardFromSeed(round.serverSeed, usedCards);
+  const entity = await addCardToHand(manager, dealerHand, card);
+  evaluation = recalcHand(dealerHand, { preserveStanding: true });
+
+  if (dealerHand.status === HandStatus.BUSTED) {
+    await manager.getRepository(Hand).save(dealerHand);
+    return { kind: 'BUST', cardId: entity.id, dealerTurnComplete: true };
   }
 
-  if (!isTerminalHandStatus(dealerHand.status)) {
+  if (isDealerStandingTotal(evaluation)) {
     dealerHand.status = HandStatus.STOOD;
+    await manager.getRepository(Hand).save(dealerHand);
+    return { kind: 'DRAW_CARD', cardId: entity.id, dealerTurnComplete: true };
   }
 
   await manager.getRepository(Hand).save(dealerHand);
+  return { kind: 'DRAW_CARD', cardId: entity.id, dealerTurnComplete: false };
+}
+
+function canSettleRound(playerHand: Hand, dealerHand: Hand) {
+  return (
+    playerHand.status === HandStatus.BUSTED ||
+    playerHand.status === HandStatus.BLACKJACK ||
+    dealerHand.status === HandStatus.BLACKJACK ||
+    isDealerTurnComplete(dealerHand)
+  );
+}
+
+function isDealerTurnComplete(dealerHand: Pick<Hand, 'status'> | undefined | null) {
+  return (
+    dealerHand?.status === HandStatus.STOOD ||
+    dealerHand?.status === HandStatus.BUSTED ||
+    dealerHand?.status === HandStatus.BLACKJACK
+  );
+}
+
+function dealerActionKindForCompleteHand(dealerHand: Pick<Hand, 'status'>): DealerActionKind {
+  if (dealerHand.status === HandStatus.BUSTED) return 'BUST';
+  if (dealerHand.status === HandStatus.BLACKJACK) return 'BLACKJACK';
+  if (dealerHand.status === HandStatus.STOOD) return 'STAND';
+  return 'NONE';
+}
+
+function isDealerStandingTotal(evaluation: HandEvaluation) {
+  return evaluation.total >= 17 && !(evaluation.total === 17 && evaluation.isSoft);
+}
+
+function shouldMaskDealerHole(round: RoundWithRelations, playerHand: Hand) {
+  return (
+    ACTIVE_ROUND_STATUSES.includes(round.status as typeof ACTIVE_ROUND_STATUSES[number]) &&
+    playerHand.status === HandStatus.ACTIVE
+  );
+}
+
+function getDealerHoleCardId(round: RoundWithRelations) {
+  const dealerHand = getDealerHand(round);
+  return sortCards(dealerHand?.cards ?? [])[1]?.id ?? null;
 }
 
 function recalcHand(
@@ -1524,11 +1640,3 @@ export const roundTestUtils = {
   resolveMainBet,
   evaluateSideBet,
 };
-
-function isTerminalHandStatus(status: HandStatus) {
-  return status === HandStatus.BLACKJACK || status === HandStatus.BUSTED;
-}
-
-function isHandBusted(hand: Hand) {
-  return hand.status === HandStatus.BUSTED;
-}

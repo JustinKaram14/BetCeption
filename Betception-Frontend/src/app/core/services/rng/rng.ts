@@ -24,6 +24,10 @@ export class Rng {
     return this.api.standRound(roundId);
   }
 
+  dealerStep(roundId: string) {
+    return this.api.dealerStepRound(roundId);
+  }
+
   settle(roundId: string) {
     return this.api.settleRound(roundId);
   }
