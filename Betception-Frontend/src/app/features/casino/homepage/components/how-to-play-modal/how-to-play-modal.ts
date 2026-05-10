@@ -13,6 +13,13 @@ type TutorialStep = {
   hint: string;
 };
 
+type TutorialCategory = 'blackjack' | 'betception';
+
+type TutorialCategoryCopy = {
+  label: string;
+  eyebrow: string;
+};
+
 const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
   de: [
     {
@@ -344,6 +351,323 @@ const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
   ],
 };
 
+const TUTORIAL_CATEGORIES: Record<LanguageCode, Record<TutorialCategory, TutorialCategoryCopy>> = {
+  de: {
+    blackjack: { label: 'Blackjack Basics', eyebrow: 'Grundregeln' },
+    betception: { label: 'Betception', eyebrow: 'Sidebets & Depth' },
+  },
+  en: {
+    blackjack: { label: 'Blackjack Basics', eyebrow: 'Core rules' },
+    betception: { label: 'Betception', eyebrow: 'Side bets & depth' },
+  },
+  es: {
+    blackjack: { label: 'Bases de blackjack', eyebrow: 'Reglas base' },
+    betception: { label: 'Betception', eyebrow: 'Sidebets y depth' },
+  },
+  fr: {
+    blackjack: { label: 'Bases du blackjack', eyebrow: 'Regles de base' },
+    betception: { label: 'Betception', eyebrow: 'Side bets et profondeur' },
+  },
+};
+
+const BETCEPTION_STEPS: Record<LanguageCode, TutorialStep[]> = {
+  de: [
+    {
+      eyebrow: 'Konzept',
+      title: 'Blackjack, aber du wettest auf die Wetten',
+      copy: 'Betception startet mit deinem normalen Einsatz. Danach kannst du zusätzliche Vorhersagen setzen: Karten, Farben, Dealer Bust, Pillen-Trigger, Blackjack oder Split-Anzahl.',
+      dealer: ['D', '?'],
+      player: ['B', 'C'],
+      action: 'blackjack',
+      actionLabel: '2D+',
+      hint: 'Jede aktive Sidebet erhöht das Depth Level. 1D ist nur die Main Bet, weitere Ebenen machen die Runde tiefer.',
+    },
+    {
+      eyebrow: 'Kartenwetten',
+      title: 'Wette auf exakte Karten oder Farben',
+      copy: 'Im Kartenmenü kannst du auf eine exakte Karte oder auf eine komplette Farbe setzen. Exakte Karten zahlen aktuell 12:1, Farben zahlen aktuell 2:1. Wird noch geändert.',
+      dealer: ['A', '?'],
+      player: ['J', '♦'],
+      action: 'hit',
+      actionLabel: '12:1',
+      hint: 'Die Karte oder Farbe muss in deiner Spielerhand auftauchen. Dealer-Karten zählen dafür nicht.',
+    },
+    {
+      eyebrow: 'Dealer Bust',
+      title: 'Wette darauf, dass der Dealer über 21 geht',
+      copy: 'Dealer Bust gewinnt, wenn der Dealer nach deinem Zug Karten ziehen muss und dabei über 21 kommt. Die Auszahlung ist aktuell 3:1. Wird noch geändert.',
+      dealer: ['10', '6', 'K'],
+      player: ['9', '9'],
+      action: 'dealer',
+      actionLabel: '3:1',
+      hint: 'Bustest du selbst vorher, zieht der Dealer nicht weiter. Dann kann diese Wette auch nicht treffen.',
+    },
+    {
+      eyebrow: 'Pillen',
+      title: 'Wette auf den Trigger deiner aktiven Pille',
+      copy: 'Wenn eine rote oder blaue Pille im Slot liegt, kannst du darauf setzen, dass ihr Effekt in dieser Runde auslöst. Diese Sidebet zahlt aktuell 5:1. Wird noch geändert.',
+      dealer: ['8', '?'],
+      player: ['10', '7'],
+      action: 'double',
+      actionLabel: '5:1',
+      hint: 'Die Pille nutzt trotzdem pro abgerechneter Runde einen Use, egal ob der Effekt triggert oder nicht.',
+    },
+    {
+      eyebrow: 'Blackjack',
+      title: 'Wette auf Blackjack mit den ersten zwei Karten',
+      copy: 'Die Blackjack-Wette trifft, wenn deine ersten zwei Karten direkt Blackjack ergeben. Die Auszahlung ist aktuell 12:1. Wird noch geändert.',
+      dealer: ['9', '?'],
+      player: ['A', 'K'],
+      action: 'blackjack',
+      actionLabel: '12:1',
+      hint: 'Diese Wette bezieht sich auf den natürlichen Start-Blackjack, nicht auf später gezogene 21.',
+    },
+    {
+      eyebrow: 'Split',
+      title: 'Wette darauf, wie oft du splitten wirst',
+      copy: 'Bei der Split-Wette sagst du vorher an, ob du genau 1x, 2x oder 3x splitten wirst. Aktuell zahlt 1x 4:1, 2x 18:1 und 3x 60:1. Wird noch geändert.',
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: '60:1',
+      hint: 'Es zählt die tatsächliche Anzahl deiner Splits in dieser Runde, nicht nur ob ein Paar möglich war.',
+    },
+    {
+      eyebrow: 'Auswertung',
+      title: 'Nach der Runde wird alles nacheinander aufgelöst',
+      copy: 'Erst läuft die Kartenrunde sauber zu Ende. Danach wertet das rechte Betception-Panel Main Bet und Sidebets Schritt für Schritt aus und zählt die Auszahlung hoch.',
+      dealer: ['Q', '7'],
+      player: ['10', '9'],
+      action: 'stand',
+      actionLabel: 'WIN',
+      hint: 'Je mehr Vorhersagen gleichzeitig treffen, desto stärker fühlt sich die Endauszahlung an.',
+    },
+  ],
+  en: [
+    {
+      eyebrow: 'Concept',
+      title: 'Blackjack, but you bet on the bets',
+      copy: 'Betception starts with your normal wager. After that you can add predictions: cards, suits, dealer bust, pill trigger, blackjack, or split count.',
+      dealer: ['D', '?'],
+      player: ['B', 'C'],
+      action: 'blackjack',
+      actionLabel: '2D+',
+      hint: 'Each active side bet raises the depth level. 1D is only the main bet; extra layers make the round deeper.',
+    },
+    {
+      eyebrow: 'Card bets',
+      title: 'Bet on exact cards or suits',
+      copy: 'In the card menu you can bet on one exact card or an entire suit. Exact cards currently pay 12:1, suits currently pay 2:1. Subject to change.',
+      dealer: ['A', '?'],
+      player: ['J', '♦'],
+      action: 'hit',
+      actionLabel: '12:1',
+      hint: 'The card or suit must appear in your player hand. Dealer cards do not count for this bet.',
+    },
+    {
+      eyebrow: 'Dealer bust',
+      title: 'Bet that the dealer goes over 21',
+      copy: 'Dealer Bust wins when the dealer has to draw after your turn and goes over 21. The current payout is 3:1. Subject to change.',
+      dealer: ['10', '6', 'K'],
+      player: ['9', '9'],
+      action: 'dealer',
+      actionLabel: '3:1',
+      hint: 'If you bust first, the dealer does not draw further. Then this bet cannot hit.',
+    },
+    {
+      eyebrow: 'Pills',
+      title: 'Bet on your active pill triggering',
+      copy: 'If a red or blue pill is equipped, you can bet that its effect triggers this round. This side bet currently pays 5:1. Subject to change.',
+      dealer: ['8', '?'],
+      player: ['10', '7'],
+      action: 'double',
+      actionLabel: '5:1',
+      hint: 'The pill still spends one use per settled round, whether the effect triggers or not.',
+    },
+    {
+      eyebrow: 'Blackjack',
+      title: 'Bet on blackjack from the first two cards',
+      copy: 'The blackjack bet hits when your first two cards form a natural blackjack. The current payout is 12:1. Subject to change.',
+      dealer: ['9', '?'],
+      player: ['A', 'K'],
+      action: 'blackjack',
+      actionLabel: '12:1',
+      hint: 'This bet is about the natural starting blackjack, not reaching 21 later with extra cards.',
+    },
+    {
+      eyebrow: 'Split',
+      title: 'Bet how many times you will split',
+      copy: 'With the split-count bet you predict exactly 1x, 2x, or 3x splits. Current payouts are 1x 4:1, 2x 18:1, and 3x 60:1. Subject to change.',
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: '60:1',
+      hint: 'It counts the actual number of splits in the round, not only whether a pair was possible.',
+    },
+    {
+      eyebrow: 'Resolution',
+      title: 'After the round, everything resolves in sequence',
+      copy: 'The card round finishes first. Then the Betception panel resolves the main bet and side bets step by step while the payout counts up.',
+      dealer: ['Q', '7'],
+      player: ['10', '9'],
+      action: 'stand',
+      actionLabel: 'WIN',
+      hint: 'The more predictions hit together, the stronger the final payout feels.',
+    },
+  ],
+  es: [
+    {
+      eyebrow: 'Concepto',
+      title: 'Blackjack, pero apuestas sobre las apuestas',
+      copy: 'Betception empieza con tu apuesta normal. Después puedes añadir predicciones: cartas, palos, bust del dealer, trigger de píldora, blackjack o número de splits.',
+      dealer: ['D', '?'],
+      player: ['B', 'C'],
+      action: 'blackjack',
+      actionLabel: '2D+',
+      hint: 'Cada sidebet activa sube el depth level. 1D es solo la apuesta principal; más capas hacen la ronda más profunda.',
+    },
+    {
+      eyebrow: 'Cartas',
+      title: 'Apuesta por cartas exactas o palos',
+      copy: 'En el menú de cartas puedes apostar por una carta exacta o por un palo completo. Las cartas exactas pagan 12:1 y los palos 2:1 actualmente. Se cambiará más adelante.',
+      dealer: ['A', '?'],
+      player: ['J', '♦'],
+      action: 'hit',
+      actionLabel: '12:1',
+      hint: 'La carta o el palo debe aparecer en tu mano de jugador. Las cartas del dealer no cuentan.',
+    },
+    {
+      eyebrow: 'Dealer bust',
+      title: 'Apuesta a que el dealer pasa de 21',
+      copy: 'Dealer Bust gana si el dealer tiene que robar después de tu turno y supera 21. El pago actual es 3:1. Se cambiará más adelante.',
+      dealer: ['10', '6', 'K'],
+      player: ['9', '9'],
+      action: 'dealer',
+      actionLabel: '3:1',
+      hint: 'Si tú te pasas primero, el dealer no roba más. Entonces esta apuesta no puede acertar.',
+    },
+    {
+      eyebrow: 'Píldoras',
+      title: 'Apuesta al trigger de tu píldora activa',
+      copy: 'Si tienes equipada una píldora roja o azul, puedes apostar a que su efecto se active en esta ronda. Esta sidebet paga actualmente 5:1. Se cambiará más adelante.',
+      dealer: ['8', '?'],
+      player: ['10', '7'],
+      action: 'double',
+      actionLabel: '5:1',
+      hint: 'La píldora consume un uso por cada ronda liquidada, aunque el efecto no se active.',
+    },
+    {
+      eyebrow: 'Blackjack',
+      title: 'Apuesta por blackjack con las dos primeras cartas',
+      copy: 'La apuesta de blackjack acierta si tus dos primeras cartas forman blackjack natural. El pago actual es 12:1. Se cambiará más adelante.',
+      dealer: ['9', '?'],
+      player: ['A', 'K'],
+      action: 'blackjack',
+      actionLabel: '12:1',
+      hint: 'Esta apuesta cuenta el blackjack natural inicial, no llegar a 21 más tarde con cartas extra.',
+    },
+    {
+      eyebrow: 'Split',
+      title: 'Apuesta cuántas veces vas a dividir',
+      copy: 'Con la apuesta de split predices exactamente 1x, 2x o 3x splits. Ahora paga 1x 4:1, 2x 18:1 y 3x 60:1. Se cambiará más adelante.',
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: '60:1',
+      hint: 'Cuenta el número real de splits en la ronda, no solo si era posible dividir.',
+    },
+    {
+      eyebrow: 'Resolución',
+      title: 'Al final todo se resuelve en secuencia',
+      copy: 'Primero termina la ronda de cartas. Después el panel Betception resuelve la apuesta principal y las sidebets paso a paso mientras sube el pago.',
+      dealer: ['Q', '7'],
+      player: ['10', '9'],
+      action: 'stand',
+      actionLabel: 'WIN',
+      hint: 'Cuantas más predicciones acierten juntas, más fuerte se siente el pago final.',
+    },
+  ],
+  fr: [
+    {
+      eyebrow: 'Concept',
+      title: 'Blackjack, mais tu paries sur les paris',
+      copy: 'Betception commence avec ta mise normale. Ensuite tu peux ajouter des prédictions: cartes, couleurs, dealer bust, trigger pilule, blackjack ou nombre de splits.',
+      dealer: ['D', '?'],
+      player: ['B', 'C'],
+      action: 'blackjack',
+      actionLabel: '2D+',
+      hint: 'Chaque side bet active augmente le niveau de profondeur. 1D est seulement la mise principale; les couches ajoutées rendent la manche plus profonde.',
+    },
+    {
+      eyebrow: 'Cartes',
+      title: 'Parie sur des cartes exactes ou des couleurs',
+      copy: 'Dans le menu cartes, tu peux parier sur une carte exacte ou une couleur complète. Les cartes exactes paient 12:1 et les couleurs 2:1 actuellement. Sera modifié.',
+      dealer: ['A', '?'],
+      player: ['J', '♦'],
+      action: 'hit',
+      actionLabel: '12:1',
+      hint: 'La carte ou la couleur doit apparaître dans ta main. Les cartes du dealer ne comptent pas.',
+    },
+    {
+      eyebrow: 'Dealer bust',
+      title: 'Parie que le dealer dépasse 21',
+      copy: 'Dealer Bust gagne si le dealer doit tirer après ton tour et dépasse 21. Le gain actuel est 3:1. Sera modifié.',
+      dealer: ['10', '6', 'K'],
+      player: ['9', '9'],
+      action: 'dealer',
+      actionLabel: '3:1',
+      hint: 'Si tu bust avant, le dealer ne tire plus. Cette mise ne peut donc pas toucher.',
+    },
+    {
+      eyebrow: 'Pilules',
+      title: 'Parie sur le trigger de ta pilule active',
+      copy: 'Si une pilule rouge ou bleue est équipée, tu peux parier que son effet se déclenche cette manche. Ce side bet paie actuellement 5:1. Sera modifié.',
+      dealer: ['8', '?'],
+      player: ['10', '7'],
+      action: 'double',
+      actionLabel: '5:1',
+      hint: 'La pilule utilise quand même une charge par manche réglée, que l’effet se déclenche ou non.',
+    },
+    {
+      eyebrow: 'Blackjack',
+      title: 'Parie sur blackjack avec les deux premières cartes',
+      copy: 'Le pari blackjack touche si tes deux premières cartes forment un blackjack naturel. Le gain actuel est 12:1. Sera modifié.',
+      dealer: ['9', '?'],
+      player: ['A', 'K'],
+      action: 'blackjack',
+      actionLabel: '12:1',
+      hint: 'Ce pari concerne le blackjack naturel de départ, pas un total de 21 atteint plus tard.',
+    },
+    {
+      eyebrow: 'Split',
+      title: 'Parie combien de fois tu vas split',
+      copy: 'Avec le pari split, tu prédis exactement 1x, 2x ou 3x splits. Actuellement: 1x paie 4:1, 2x 18:1 et 3x 60:1. Sera modifié.',
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: '60:1',
+      hint: 'C’est le nombre réel de splits dans la manche qui compte, pas seulement la possibilité de split.',
+    },
+    {
+      eyebrow: 'Résolution',
+      title: 'Après la manche, tout se résout étape par étape',
+      copy: 'La manche de cartes se termine d’abord. Ensuite le panneau Betception résout la mise principale et les side bets un par un pendant que le gain monte.',
+      dealer: ['Q', '7'],
+      player: ['10', '9'],
+      action: 'stand',
+      actionLabel: 'WIN',
+      hint: 'Plus il y a de prédictions correctes en même temps, plus le gain final paraît fort.',
+    },
+  ],
+};
+
+const TUTORIAL_CONTENT: Record<LanguageCode, Record<TutorialCategory, TutorialStep[]>> = {
+  de: { blackjack: TUTORIAL_STEPS.de, betception: BETCEPTION_STEPS.de },
+  en: { blackjack: TUTORIAL_STEPS.en, betception: BETCEPTION_STEPS.en },
+  es: { blackjack: TUTORIAL_STEPS.es, betception: BETCEPTION_STEPS.es },
+  fr: { blackjack: TUTORIAL_STEPS.fr, betception: BETCEPTION_STEPS.fr },
+};
+
 @Component({
   selector: 'app-how-to-play-modal',
   standalone: true,
@@ -353,10 +677,12 @@ const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
 })
 export class HowToPlayModalComponent implements AfterViewInit {
   readonly i18n = inject(I18n);
+  readonly categories: TutorialCategory[] = ['blackjack', 'betception'];
 
   @Output() closed = new EventEmitter<void>();
   @ViewChild('closeButton') private closeButton?: ElementRef<HTMLButtonElement>;
 
+  activeCategory: TutorialCategory = 'blackjack';
   activeIndex = 0;
 
   ngAfterViewInit() {
@@ -364,11 +690,15 @@ export class HowToPlayModalComponent implements AfterViewInit {
   }
 
   get steps() {
-    return TUTORIAL_STEPS[this.i18n.language()];
+    return TUTORIAL_CONTENT[this.i18n.language()][this.activeCategory];
   }
 
   get activeStep() {
     return this.steps[this.activeIndex];
+  }
+
+  get activeCategoryCopy() {
+    return this.categoryCopy(this.activeCategory);
   }
 
   get progress() {
@@ -387,6 +717,16 @@ export class HowToPlayModalComponent implements AfterViewInit {
     if (this.activeIndex > 0) {
       this.activeIndex -= 1;
     }
+  }
+
+  categoryCopy(category: TutorialCategory) {
+    return TUTORIAL_CATEGORIES[this.i18n.language()][category];
+  }
+
+  selectCategory(category: TutorialCategory) {
+    if (this.activeCategory === category) return;
+    this.activeCategory = category;
+    this.activeIndex = 0;
   }
 
   selectStep(index: number) {
