@@ -1,6 +1,7 @@
 import {
   getActiveRound,
   getRound,
+  dealerStepRound,
   hitRound,
   peekCard,
   settleRound,
@@ -523,6 +524,9 @@ describe('round.controller', () => {
       const handRepo = createMockRepository<Hand>({
         save: jest.fn().mockImplementation(async (entity) => entity),
       });
+      const cardRepo = createMockRepository<Card>({
+        create: jest.fn(),
+      });
       const roundRepo = createMockRepository<Round>({
         findOne: jest.fn().mockResolvedValue(round),
       });
@@ -531,7 +535,7 @@ describe('round.controller', () => {
         new Map<any, any>([
           [Round, roundRepo],
           [Hand, handRepo],
-          [Card, createMockRepository<Card>()],
+          [Card, cardRepo],
         ]),
       );
       mockAppDataSourceRepositories(
@@ -552,10 +556,16 @@ describe('round.controller', () => {
           status: HandStatus.STOOD,
         }),
       );
+      expect(cardRepo.create).not.toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           round: expect.objectContaining({
             id: 'round-1',
+          }),
+          dealerAction: expect.objectContaining({
+            kind: 'REVEAL_HOLE',
+            cardId: 'dealer-2',
+            dealerTurnComplete: false,
           }),
         }),
       );
@@ -673,13 +683,66 @@ describe('round.controller', () => {
       });
     });
 
-    it('settles a winning round and credits the player wallet', async () => {
+    it('returns 409 when the dealer turn is not finished yet', async () => {
       const round = createRoundFixture({
         hands: [
           {
             id: 'dealer-hand',
             ownerType: HandOwnerType.DEALER,
             status: HandStatus.ACTIVE,
+            handValue: 17,
+            cards: [
+              createCard('dealer-1', CardRank.TEN, CardSuit.HEARTS, 1),
+              createCard('dealer-2', CardRank.SEVEN, CardSuit.CLUBS, 2),
+            ],
+            user: null,
+          },
+          {
+            id: 'player-hand',
+            ownerType: HandOwnerType.PLAYER,
+            status: HandStatus.STOOD,
+            handValue: 20,
+            cards: [
+              createCard('player-1', CardRank.TEN, CardSuit.SPADES, 1),
+              createCard('player-2', CardRank.KING, CardSuit.DIAMONDS, 2),
+            ],
+            user: { id: 'user-1' },
+          },
+        ],
+      });
+      const roundRepo = createMockRepository<Round>({
+        findOne: jest.fn().mockResolvedValue(round),
+      });
+
+      mockAppDataSourceTransaction(
+        new Map<any, any>([
+          [Round, roundRepo],
+          [Hand, createMockRepository<Hand>()],
+        ]),
+      );
+
+      const req = createMockRequest({
+        user: { sub: 'user-1' } as any,
+        params: { roundId: 'round-1' },
+      });
+      const res = createMockResponse();
+
+      await settleRound(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Complete the dealer turn before settling',
+        code: 'DEALER_TURN_ACTIVE',
+      });
+    });
+
+    it('settles a winning round and credits the player wallet', async () => {
+      const round = createRoundFixture({
+        hands: [
+          {
+            id: 'dealer-hand',
+            ownerType: HandOwnerType.DEALER,
+            status: HandStatus.STOOD,
             handValue: 17,
             cards: [
               createCard('dealer-1', CardRank.TEN, CardSuit.HEARTS, 1),
@@ -800,7 +863,7 @@ describe('round.controller', () => {
     it('settles a losing round and does not credit the player', async () => {
       const round = createRoundFixture({
         hands: [
-          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 20, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.STOOD, handValue: 20, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
           { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 16, cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.SIX, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
         ],
       });
@@ -827,7 +890,7 @@ describe('round.controller', () => {
     it('settles a push and refunds the bet amount', async () => {
       const round = createRoundFixture({
         hands: [
-          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.STOOD, handValue: 17, cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
           { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 17, cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.SEVEN, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
         ],
       });
@@ -892,7 +955,7 @@ describe('round.controller', () => {
 
   describe('hitRound (additional)', () => {
     it('draws a card and returns the updated round (happy path)', async () => {
-      // Player: FIVE(S) + THREE(C) = 8 — safe, cannot bust on any single draw
+      // Player: FIVE(S) + THREE(C) = 8 - safe, cannot bust on any single draw
       const round = createRoundFixture({
         hands: [
           {
@@ -951,7 +1014,9 @@ describe('round.controller', () => {
       expect(cardRepo.create).toHaveBeenCalled();
       expect(handRepo.save).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ round: expect.objectContaining({ id: 'round-1' }) }),
+        expect.objectContaining({
+          round: expect.objectContaining({ id: 'round-1' }),
+        }),
       );
     });
 
@@ -996,7 +1061,7 @@ describe('round.controller', () => {
   });
 
   describe('settleRound (additional)', () => {
-    it('triggers dealer to draw when dealer has soft 17', async () => {
+    it('dealer-step draws one card when dealer has soft 17', async () => {
       // Dealer: ACE(C) + SIX(H) = soft 17 → must draw per soft-17 rule
       // Player: TEN(S) + QUEEN(D) = 20, STOOD
       const round = createRoundFixture({
@@ -1052,12 +1117,15 @@ describe('round.controller', () => {
       const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
       const res = createMockResponse();
 
-      await settleRound(req as any, res);
+      await dealerStepRound(req as any, res);
 
       // Dealer drew at least one card (soft 17 forces a draw)
       expect(cardRepo.create).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ round: expect.objectContaining({ id: 'round-1' }) }),
+        expect.objectContaining({
+          round: expect.objectContaining({ id: 'round-1' }),
+          dealerAction: expect.objectContaining({ kind: 'DRAW_CARD', dealerTurnComplete: expect.any(Boolean) }),
+        }),
       );
     });
 
@@ -1183,7 +1251,6 @@ describe('round.controller', () => {
       await settleRound(req as any, res);
 
       expect(cardRepo.create).not.toHaveBeenCalled();
-      expect(handRepo.save).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ round: expect.objectContaining({ id: 'round-1' }) }),
       );
@@ -1241,11 +1308,71 @@ describe('round.controller', () => {
       const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
       const res = createMockResponse();
 
-      await settleRound(req as any, res);
+      await dealerStepRound(req as any, res);
 
       expect(cardRepo.create).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ round: expect.objectContaining({ id: 'round-1' }) }),
+        expect.objectContaining({
+          round: expect.objectContaining({ id: 'round-1' }),
+          dealerAction: expect.objectContaining({ kind: 'DRAW_CARD', dealerTurnComplete: expect.any(Boolean) }),
+        }),
+      );
+    });
+
+    it('dealer-step stands on hard 17 without drawing', async () => {
+      const round = createRoundFixture({
+        hands: [
+          {
+            id: 'dealer-hand',
+            ownerType: HandOwnerType.DEALER,
+            status: HandStatus.ACTIVE,
+            handValue: 17,
+            cards: [
+              createCard('d1', CardRank.TEN, CardSuit.CLUBS, 1),
+              createCard('d2', CardRank.SEVEN, CardSuit.HEARTS, 2),
+            ],
+            user: null,
+          },
+          {
+            id: 'player-hand',
+            ownerType: HandOwnerType.PLAYER,
+            status: HandStatus.STOOD,
+            handValue: 20,
+            cards: [
+              createCard('p1', CardRank.TEN, CardSuit.SPADES, 1),
+              createCard('p2', CardRank.QUEEN, CardSuit.DIAMONDS, 2),
+            ],
+            user: { id: 'user-1' },
+          },
+        ],
+      });
+      const cardRepo = createMockRepository<Card>({
+        create: jest.fn(),
+      });
+      const handRepo = createMockRepository<Hand>({ save: jest.fn().mockResolvedValue(undefined) });
+      const roundRepo = createMockRepository<Round>({ findOne: jest.fn().mockResolvedValue(round) });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [Round, roundRepo],
+        [Hand, handRepo],
+        [Card, cardRepo],
+      ]));
+      mockAppDataSourceRepositories(new Map([[Round, createMockRepository<Round>({
+        findOne: jest.fn().mockResolvedValue(round),
+      })]]));
+
+      const req = createMockRequest({ user: { sub: 'user-1' } as any, params: { roundId: 'round-1' } });
+      const res = createMockResponse();
+
+      await dealerStepRound(req as any, res);
+
+      expect(cardRepo.create).not.toHaveBeenCalled();
+      expect(handRepo.save).toHaveBeenCalledWith(expect.objectContaining({ id: 'dealer-hand', status: HandStatus.STOOD }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          round: expect.objectContaining({ id: 'round-1' }),
+          dealerAction: { kind: 'STAND', cardId: null, dealerTurnComplete: true },
+        }),
       );
     });
   });
@@ -1257,7 +1384,7 @@ describe('round.controller', () => {
           {
             id: 'dealer-hand',
             ownerType: HandOwnerType.DEALER,
-            status: HandStatus.ACTIVE,
+            status: HandStatus.STOOD,
             handValue: 17,
             cards: [
               createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1),
@@ -1353,7 +1480,7 @@ describe('round.controller', () => {
     it('BET_BOOST is ignored on a losing round (no extra payout)', async () => {
       const round = createRoundFixture({
         hands: [
-          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 20, cards: [createCard('d1', CardRank.KING, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.STOOD, handValue: 20, cards: [createCard('d1', CardRank.KING, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
           { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 16, cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.SIX, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
         ],
       });
@@ -1411,7 +1538,7 @@ describe('round.controller', () => {
     it('BET_BOOST is ignored on a push (bet=10 → settled=10 refund)', async () => {
       const round = createRoundFixture({
         hands: [
-          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 20, cards: [createCard('d1', CardRank.KING, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.STOOD, handValue: 20, cards: [createCard('d1', CardRank.KING, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
           { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 20, cards: [createCard('p1', CardRank.KING, CardSuit.SPADES, 1), createCard('p2', CardRank.KING, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
         ],
       });
@@ -1464,7 +1591,7 @@ describe('round.controller', () => {
           {
             id: 'dealer-hand',
             ownerType: HandOwnerType.DEALER,
-            status: HandStatus.ACTIVE,
+            status: HandStatus.STOOD,
             handValue: 17,
             cards: [
               createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1),
@@ -1493,7 +1620,7 @@ describe('round.controller', () => {
           {
             id: 'dealer-hand',
             ownerType: HandOwnerType.DEALER,
-            status: HandStatus.ACTIVE,
+            status: HandStatus.STOOD,
             handValue: 20,
             cards: [
               createCard('d1', CardRank.KING, CardSuit.HEARTS, 1),
@@ -1671,7 +1798,7 @@ describe('round.controller', () => {
       // A win awards 85 XP base (25 base + 60 win), which pushes xp to 575 → level 2.
       const round = createRoundFixture({
         hands: [
-          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 17,
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.STOOD, handValue: 17,
             cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.SEVEN, CardSuit.CLUBS, 2)], user: null },
           { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 20,
             cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.KING, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
@@ -1724,7 +1851,7 @@ describe('round.controller', () => {
       // Player: TEN + SIX = 16 (STOOD), Dealer: TEN + KING = 20 → PLAYER LOSES → small XP
       const round = createRoundFixture({
         hands: [
-          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.ACTIVE, handValue: 20,
+          { id: 'dealer-hand', ownerType: HandOwnerType.DEALER, status: HandStatus.STOOD, handValue: 20,
             cards: [createCard('d1', CardRank.TEN, CardSuit.HEARTS, 1), createCard('d2', CardRank.KING, CardSuit.CLUBS, 2)], user: null },
           { id: 'player-hand', ownerType: HandOwnerType.PLAYER, status: HandStatus.STOOD, handValue: 16,
             cards: [createCard('p1', CardRank.TEN, CardSuit.SPADES, 1), createCard('p2', CardRank.SIX, CardSuit.DIAMONDS, 2)], user: { id: 'user-1' } },
