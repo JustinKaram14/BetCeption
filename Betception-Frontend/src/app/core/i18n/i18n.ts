@@ -45,6 +45,10 @@ type TranslationKey =
   | 'betception.cardExactSubtitle'
   | 'betception.cardExactTitle'
   | 'betception.cardBets'
+  | 'betception.cardSuitBet'
+  | 'betception.cardSuitShort'
+  | 'betception.cardSuitSubtitle'
+  | 'betception.cardSuitTitle'
   | 'betception.clearSelection'
   | 'betception.confirmAndDeal'
   | 'betception.continueWithout'
@@ -67,7 +71,13 @@ type TranslationKey =
   | 'betception.pillUnavailable'
   | 'betception.refund'
   | 'betception.selectedCard'
+  | 'betception.selectedSuit'
   | 'betception.sideBetTotal'
+  | 'betception.splitCountBet'
+  | 'betception.splitCountOption'
+  | 'betception.splitCountShort'
+  | 'betception.splitCountSubtitle'
+  | 'betception.splitCountTitle'
   | 'betception.subtitle'
   | 'betception.superWin'
   | 'betception.suitClubs'
@@ -260,9 +270,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.blackjackSubtitle': 'Wette darauf, dass du mit den ersten zwei Karten Blackjack triffst. Auszahlung 12:1.',
     'betception.blackjackTitle': 'Blackjack treffen',
     'betception.cardExactShort': 'Karte',
-    'betception.cardExactSubtitle': 'Wähle exakte Karten, die in deiner Hand auftauchen sollen. Auszahlung 12:1.',
+    'betception.cardExactSubtitle': 'Wette auf Farben oder exakte Karten, die in deiner Hand auftauchen sollen. Exakte Karten zahlen 12:1, Farben zahlen 2:1.',
     'betception.cardExactTitle': 'Kartenwette',
     'betception.cardBets': 'Kartenwetten',
+    'betception.cardSuitBet': 'Farbwette',
+    'betception.cardSuitShort': 'Farbe',
+    'betception.cardSuitSubtitle': 'Wette darauf, dass mindestens eine Karte dieser Farbe in deiner Hand auftaucht. Auszahlung 2:1.',
+    'betception.cardSuitTitle': 'Farbwette',
     'betception.clearSelection': 'Auswahl leeren',
     'betception.confirmAndDeal': 'Wetten bestätigen & austeilen',
     'betception.continueWithout': 'Ohne Sidebets austeilen',
@@ -285,8 +299,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillUnavailable': 'Keine aktive Pille im Slot.',
     'betception.refund': 'Zurück',
     'betception.selectedCard': 'Ausgewählte Karte',
+    'betception.selectedSuit': 'Ausgewählte Farbe',
     'betception.sideBetTotal': 'Sidebets',
-    'betception.subtitle': 'Setze auf Karten, Dealer Bust, Pillen-Trigger oder Blackjack. Alles wird nach der Runde nacheinander abgerechnet.',
+    'betception.splitCountBet': 'Split-Wette',
+    'betception.splitCountOption': '{{count}}x Split',
+    'betception.splitCountShort': 'Split',
+    'betception.splitCountSubtitle': 'Wette darauf, wie oft du diese Runde genau splitten wirst. 1x zahlt 4:1, 2x 18:1, 3x 60:1.',
+    'betception.splitCountTitle': 'Split-Anzahl',
+    'betception.subtitle': 'Setze auf Karten, Farben, Dealer Bust, Pillen-Trigger, Blackjack oder Split-Anzahl. Alles wird nach der Runde nacheinander abgerechnet.',
     'betception.superWin': 'SUPER WIN',
     'betception.suitClubs': 'Kreuz',
     'betception.suitDiamonds': 'Karo',
@@ -309,7 +329,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'controls.balance': 'Guthaben',
     'controls.bet': 'Einsatz',
     'controls.deal': 'Austeilen',
-    'controls.double': 'Verdoppeln',
+    'controls.double': 'Doppeln',
     'controls.hit': 'Ziehen',
     'controls.reset': 'Reset',
     'controls.round': 'Runde',
@@ -473,9 +493,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.blackjackSubtitle': 'Bet that your first two cards hit blackjack. Payout 12:1.',
     'betception.blackjackTitle': 'Hit Blackjack',
     'betception.cardExactShort': 'Card',
-    'betception.cardExactSubtitle': 'Pick exact cards that should appear in your hand. Payout 12:1.',
+    'betception.cardExactSubtitle': 'Bet on suits or exact cards that should appear in your hand. Exact cards pay 12:1, suits pay 2:1.',
     'betception.cardExactTitle': 'Card Bet',
     'betception.cardBets': 'Card Bets',
+    'betception.cardSuitBet': 'Suit Bet',
+    'betception.cardSuitShort': 'Suit',
+    'betception.cardSuitSubtitle': 'Bet that at least one card of this suit appears in your hand. Payout 2:1.',
+    'betception.cardSuitTitle': 'Suit Bet',
     'betception.clearSelection': 'Clear selection',
     'betception.confirmAndDeal': 'Confirm bets & deal',
     'betception.continueWithout': 'Deal without sidebets',
@@ -498,8 +522,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillUnavailable': 'No active pill in the slot.',
     'betception.refund': 'Refund',
     'betception.selectedCard': 'Selected card',
+    'betception.selectedSuit': 'Selected suit',
     'betception.sideBetTotal': 'Sidebets',
-    'betception.subtitle': 'Bet on cards, dealer bust, pill trigger, or blackjack. Everything resolves step by step after the round.',
+    'betception.splitCountBet': 'Split Bet',
+    'betception.splitCountOption': '{{count}}x Split',
+    'betception.splitCountShort': 'Split',
+    'betception.splitCountSubtitle': 'Bet exactly how many times you will split this round. 1x pays 4:1, 2x 18:1, 3x 60:1.',
+    'betception.splitCountTitle': 'Split Count',
+    'betception.subtitle': 'Bet on cards, suits, dealer bust, pill trigger, blackjack, or split count. Everything resolves step by step after the round.',
     'betception.superWin': 'SUPER WIN',
     'betception.suitClubs': 'Clubs',
     'betception.suitDiamonds': 'Diamonds',
@@ -686,9 +716,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.blackjackSubtitle': 'Apuesta a que tus dos primeras cartas hacen blackjack. Pago 12:1.',
     'betception.blackjackTitle': 'Sacar Blackjack',
     'betception.cardExactShort': 'Carta',
-    'betception.cardExactSubtitle': 'Elige cartas exactas que deben aparecer en tu mano. Pago 12:1.',
+    'betception.cardExactSubtitle': 'Apuesta por palos o cartas exactas que deben aparecer en tu mano. Cartas exactas pagan 12:1, palos pagan 2:1.',
     'betception.cardExactTitle': 'Apuesta de carta',
     'betception.cardBets': 'Apuestas de carta',
+    'betception.cardSuitBet': 'Apuesta de palo',
+    'betception.cardSuitShort': 'Palo',
+    'betception.cardSuitSubtitle': 'Apuesta a que aparece al menos una carta de este palo en tu mano. Pago 2:1.',
+    'betception.cardSuitTitle': 'Apuesta de palo',
     'betception.clearSelection': 'Limpiar seleccion',
     'betception.confirmAndDeal': 'Confirmar apuestas y dar',
     'betception.continueWithout': 'Dar sin apuestas extra',
@@ -711,8 +745,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillUnavailable': 'No hay pildora activa.',
     'betception.refund': 'Devuelta',
     'betception.selectedCard': 'Carta seleccionada',
+    'betception.selectedSuit': 'Palo seleccionado',
     'betception.sideBetTotal': 'Apuestas extra',
-    'betception.subtitle': 'Apuesta a cartas, dealer bust, trigger de pildora o blackjack. Todo se resuelve paso a paso tras la ronda.',
+    'betception.splitCountBet': 'Apuesta de splits',
+    'betception.splitCountOption': '{{count}}x Split',
+    'betception.splitCountShort': 'Split',
+    'betception.splitCountSubtitle': 'Apuesta cuántas veces exactas dividirás esta ronda. 1x paga 4:1, 2x 18:1, 3x 60:1.',
+    'betception.splitCountTitle': 'Número de splits',
+    'betception.subtitle': 'Apuesta a cartas, palos, dealer bust, trigger de pildora, blackjack o número de splits. Todo se resuelve paso a paso tras la ronda.',
     'betception.superWin': 'SUPER PREMIO',
     'betception.suitClubs': 'Treboles',
     'betception.suitDiamonds': 'Diamantes',
@@ -899,9 +939,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.blackjackSubtitle': 'Parie que tes deux premieres cartes font blackjack. Gain 12:1.',
     'betception.blackjackTitle': 'Toucher Blackjack',
     'betception.cardExactShort': 'Carte',
-    'betception.cardExactSubtitle': 'Choisis les cartes exactes qui doivent apparaitre dans ta main. Gain 12:1.',
+    'betception.cardExactSubtitle': 'Parie sur des couleurs ou des cartes exactes qui doivent apparaitre dans ta main. Cartes exactes: 12:1, couleurs: 2:1.',
     'betception.cardExactTitle': 'Pari carte',
     'betception.cardBets': 'Paris cartes',
+    'betception.cardSuitBet': 'Pari couleur',
+    'betception.cardSuitShort': 'Couleur',
+    'betception.cardSuitSubtitle': 'Parie qu au moins une carte de cette couleur apparait dans ta main. Gain 2:1.',
+    'betception.cardSuitTitle': 'Pari couleur',
     'betception.clearSelection': 'Vider selection',
     'betception.confirmAndDeal': 'Confirmer et donner',
     'betception.continueWithout': 'Donner sans paris extra',
@@ -924,8 +968,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'betception.pillUnavailable': 'Aucune pilule active.',
     'betception.refund': 'Rembourse',
     'betception.selectedCard': 'Carte choisie',
+    'betception.selectedSuit': 'Couleur choisie',
     'betception.sideBetTotal': 'Paris extra',
-    'betception.subtitle': 'Parie sur les cartes, dealer bust, le trigger de pilule ou blackjack. Tout se regle etape par etape apres la manche.',
+    'betception.splitCountBet': 'Pari split',
+    'betception.splitCountOption': '{{count}}x Split',
+    'betception.splitCountShort': 'Split',
+    'betception.splitCountSubtitle': 'Parie le nombre exact de splits cette manche. 1x paie 4:1, 2x 18:1, 3x 60:1.',
+    'betception.splitCountTitle': 'Nombre de splits',
+    'betception.subtitle': 'Parie sur cartes, couleurs, dealer bust, trigger pilule, blackjack ou nombre de splits. Tout se regle etape par etape apres la manche.',
     'betception.superWin': 'SUPER GAIN',
     'betception.suitClubs': 'Trefle',
     'betception.suitDiamonds': 'Carreau',

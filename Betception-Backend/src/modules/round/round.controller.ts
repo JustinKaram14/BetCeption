@@ -97,9 +97,11 @@ type TriggeredPowerupEffect = {
 
 type BetceptionSideBetCode =
   | 'CARD_EXACT'
+  | 'CARD_SUIT'
   | 'DEALER_BUST'
   | 'PILL_TRIGGER'
-  | 'PLAYER_BLACKJACK';
+  | 'PLAYER_BLACKJACK'
+  | 'SPLIT_COUNT';
 
 type SideBetEvaluationContext = {
   rawMainBetStatus: MainBetStatus;
@@ -136,16 +138,20 @@ const PAYOUT_LOSS = 0;
 
 const BETCEPTION_SIDE_BET_CODES = new Set<string>([
   'CARD_EXACT',
+  'CARD_SUIT',
   'DEALER_BUST',
   'PILL_TRIGGER',
   'PLAYER_BLACKJACK',
+  'SPLIT_COUNT',
 ]);
 
 const DEFAULT_BETCEPTION_ODDS: Record<BetceptionSideBetCode, number> = {
   CARD_EXACT: 12,
+  CARD_SUIT: 2,
   DEALER_BUST: 3,
   PILL_TRIGGER: 5,
   PLAYER_BLACKJACK: 12,
+  SPLIT_COUNT: 4,
 };
 
 const TEN_VALUE_RANKS = new Set([CardRank.KING, CardRank.QUEEN, CardRank.JACK, CardRank.TEN]);
@@ -405,13 +411,17 @@ export async function standRound(
     if (!updatedRound) {
       throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
     }
+    const playerHands = getAllPlayerHands(updatedRound, userId);
+    const dealerTurnReady = !playerHands.some((hand) => hand.status === HandStatus.ACTIVE);
     return res.json({
       round: serializeRound(updatedRound, userId),
-      dealerAction: {
-        kind: 'REVEAL_HOLE',
-        cardId: getDealerHoleCardId(updatedRound),
-        dealerTurnComplete: isDealerTurnComplete(getDealerHand(updatedRound)),
-      } satisfies DealerAction,
+      dealerAction: dealerTurnReady
+        ? {
+            kind: 'REVEAL_HOLE',
+            cardId: getDealerHoleCardId(updatedRound),
+            dealerTurnComplete: isDealerTurnComplete(getDealerHand(updatedRound)),
+          } satisfies DealerAction
+        : { kind: 'NONE', cardId: null, dealerTurnComplete: false } satisfies DealerAction,
     });
   } catch (error) {
     return handleRoundError(res, error);
@@ -1148,7 +1158,7 @@ async function prepareSideBets(
 
     validateSideBetPayload(type, input, index);
     const selectionJson = buildSideBetSelection(type, input, user);
-    const odds = resolvePreparedSideBetOdds(type, user);
+    const odds = resolvePreparedSideBetOdds(type, user, input);
 
     return {
       type,
@@ -1179,7 +1189,32 @@ function validateSideBetPayload(
     }
     return;
   }
-  if (code === 'DEALER_BUST' || code === 'PILL_TRIGGER' || code === 'PLAYER_BLACKJACK') {
+  if (code === 'CARD_SUIT') {
+    if (!input.predictedSuit) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        `predictedSuit missing for side bet ${index + 1}`,
+      );
+    }
+    return;
+  }
+  if (code === 'SPLIT_COUNT') {
+    const splitCount = readSplitCountSelection(input.selection);
+    if (!splitCount || splitCount < 1 || splitCount > 3) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        `splitCount must be between 1 and 3 for side bet ${index + 1}`,
+      );
+    }
+    return;
+  }
+  if (
+    code === 'DEALER_BUST' ||
+    code === 'PILL_TRIGGER' ||
+    code === 'PLAYER_BLACKJACK'
+  ) {
     return;
   }
   if (code === 'FIRST_CARD_COLOR' && !input.predictedColor) {
@@ -1216,6 +1251,11 @@ function buildSideBetSelection(
       rank: input.predictedRank,
     };
   }
+  if (type.code === 'CARD_SUIT') {
+    return {
+      suit: input.predictedSuit,
+    };
+  }
   if (type.code === 'DEALER_BUST') {
     return {
       target: 'DEALER',
@@ -1241,19 +1281,40 @@ function buildSideBetSelection(
       target: 'PLAYER',
     };
   }
+  if (type.code === 'SPLIT_COUNT') {
+    return {
+      splitCount: readSplitCountSelection(input.selection),
+    };
+  }
   return input.selection ?? null;
 }
 
-function resolvePreparedSideBetOdds(type: SidebetType, user: User): string | null {
+function resolvePreparedSideBetOdds(
+  type: SidebetType,
+  user: User,
+  input?: StartRoundInput['sideBets'][number],
+): string | null {
   if (type.code === 'PILL_TRIGGER') {
     const code = user.activePowerupType?.code;
     if (code === 'BLUE_PILL') return '8.000';
     if (code === 'RED_PILL') return '5.000';
   }
+  if (type.code === 'SPLIT_COUNT') {
+    const splitCount = readSplitCountSelection(input?.selection);
+    const splitOdds = splitCount === 3 ? 60 : splitCount === 2 ? 18 : 4;
+    return splitOdds.toFixed(3);
+  }
   if (isBetceptionSideBetCode(type.code)) {
     return (type.baseOdds ?? DEFAULT_BETCEPTION_ODDS[type.code].toFixed(3));
   }
   return type.baseOdds;
+}
+
+function readSplitCountSelection(selection: Record<string, unknown> | undefined | null): number | null {
+  const value = selection?.['splitCount'];
+  if (typeof value === 'number' && Number.isInteger(value)) return value;
+  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
+  return null;
 }
 
 function isBetceptionSideBetCode(code: string): code is BetceptionSideBetCode {
@@ -1725,7 +1786,11 @@ function countBetceptionCategories(sideBets: (SideBet & { type: SidebetType })[]
   return new Set(
     sideBets
       .filter((sideBet) => BETCEPTION_SIDE_BET_CODES.has(sideBet.type.code))
-      .map((sideBet) => sideBet.type.code === 'CARD_EXACT' ? 'CARD_EXACT' : sideBet.type.code),
+      .map((sideBet) =>
+        sideBet.type.code === 'CARD_EXACT' || sideBet.type.code === 'CARD_SUIT'
+          ? 'CARD'
+          : sideBet.type.code,
+      ),
   ).size;
 }
 
@@ -1757,10 +1822,16 @@ function evaluateSideBet(
 
   const code = sideBet.type.code;
   if (code === 'CARD_EXACT') {
-    const player = getPlayerHand(round, userId);
-    const won = !!player?.cards?.some(
+    const playerCards = getAllUserPlayerCards(round, userId);
+    const won = playerCards.some(
       (card) => card.rank === sideBet.predictedRank && card.suit === sideBet.predictedSuit,
     );
+    return resolveSideBetOutcome(won, oddsValue);
+  }
+
+  if (code === 'CARD_SUIT') {
+    const suit = (sideBet.selectionJson?.['suit'] as CardSuit | undefined) ?? sideBet.predictedSuit;
+    const won = !!suit && getAllUserPlayerCards(round, userId).some((card) => card.suit === suit);
     return resolveSideBetOutcome(won, oddsValue);
   }
 
@@ -1784,6 +1855,14 @@ function evaluateSideBet(
     const player = getPlayerHand(round, userId);
     const won = player?.status === HandStatus.BLACKJACK && (player.cards?.length ?? 0) === 2;
     return resolveSideBetOutcome(won, oddsValue);
+  }
+
+  if (code === 'SPLIT_COUNT') {
+    const expected = readSplitCountSelection(sideBet.selectionJson);
+    if (!expected) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    return resolveSideBetOutcome(getSplitHands(round, userId).length === expected, oddsValue);
   }
 
   const targetCard = getTargetCard(round, sideBet.targetContext, userId);
@@ -1854,19 +1933,18 @@ function getActivePlayerHand(round: RoundWithRelations, userId: string) {
   );
   if (primary) return primary as Hand & { cards: Card[] };
 
-  const split = hands.find(
-    (hand) =>
-      hand.ownerType === HandOwnerType.PLAYER_SPLIT &&
-      hand.user?.id === userId &&
-      hand.status === HandStatus.ACTIVE,
-  );
+  const split = getSplitHands(round, userId).find((hand) => hand.status === HandStatus.ACTIVE);
   return (split ?? null) as (Hand & { cards: Card[] }) | null;
+}
+
+function getAllUserPlayerCards(round: RoundWithRelations, userId: string) {
+  return getAllPlayerHands(round, userId).flatMap((hand) => sortCards(hand.cards ?? []));
 }
 
 function getSplitHands(round: RoundWithRelations, userId: string) {
   return (round.hands ?? []).filter(
     (hand) => hand.ownerType === HandOwnerType.PLAYER_SPLIT && hand.user?.id === userId,
-  ) as (Hand & { cards: Card[] })[];
+  ).sort(compareHandOrder) as (Hand & { cards: Card[] })[];
 }
 
 function getAllPlayerHands(round: RoundWithRelations, userId: string) {
@@ -1874,7 +1952,12 @@ function getAllPlayerHands(round: RoundWithRelations, userId: string) {
     (hand) =>
       (hand.ownerType === HandOwnerType.PLAYER || hand.ownerType === HandOwnerType.PLAYER_SPLIT) &&
       hand.user?.id === userId,
-  ) as (Hand & { cards: Card[] })[];
+  ).sort((a, b) => {
+    if (a.ownerType !== b.ownerType) {
+      return a.ownerType === HandOwnerType.PLAYER ? -1 : 1;
+    }
+    return compareHandOrder(a, b);
+  }) as (Hand & { cards: Card[] })[];
 }
 
 function getMainBetForHand(round: RoundWithRelations, handId: string) {
@@ -1883,6 +1966,12 @@ function getMainBetForHand(round: RoundWithRelations, handId: string) {
 
 function sortCards(cards: Card[]): Card[] {
   return [...cards].sort((a, b) => a.drawOrder - b.drawOrder);
+}
+
+function compareHandOrder(a: Hand, b: Hand): number {
+  const created = Number(new Date(a.createdAt).getTime()) - Number(new Date(b.createdAt).getTime());
+  if (Number.isFinite(created) && created !== 0) return created;
+  return Number(a.id) - Number(b.id);
 }
 
 function collectUsedCards(round: RoundWithRelations) {

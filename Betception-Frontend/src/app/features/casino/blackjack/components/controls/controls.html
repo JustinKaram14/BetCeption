@@ -59,8 +59,16 @@
             <span class="pill-slot__tooltip-text">{{ activePillDescription }}</span>
           </span>
         </button>
+
+        <button
+          *ngIf="!isRoundActive"
+          class="btn reset-btn"
+          data-testid="reset-bet-button"
+          type="button"
+          (click)="resetBet.emit()"
+          [disabled]="busy"
+        >{{ i18n.t('controls.reset') }}</button>
       </div>
-      <button class="btn reset-btn" data-testid="reset-bet-button" type="button" (click)="resetBet.emit()" [disabled]="isRoundActive || busy">{{ i18n.t('controls.reset') }}</button>
     </div>
 
     <div class="panel-section-right">

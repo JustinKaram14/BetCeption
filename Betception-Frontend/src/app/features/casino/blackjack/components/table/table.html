@@ -7,22 +7,25 @@
     [hand]="dealerHand"
     [isDealer]="true"
     [dealOffset]="280"
-    [isActive]="activeHand === HandOwnerType.DEALER"
+    [isActive]="activeHandId === dealerHand?.id"
+    [hideInactiveActiveStatus]="true"
   ></app-hand>
 
-  <div class="player-hands-row">
+  <div class="player-hands-row" [ngClass]="'hands-' + playerHandCount">
     <app-hand
       [label]="i18n.t('common.player')"
       [hand]="playerHand"
       [dealOffset]="0"
-      [isActive]="activeHand === HandOwnerType.PLAYER"
+      [isActive]="activeHandId === playerHand?.id"
+      [hideInactiveActiveStatus]="true"
     ></app-hand>
     <app-hand
-      *ngFor="let sh of splitHands; let i = index"
+      *ngFor="let sh of splitHands; let i = index; trackBy: trackSplitHand"
       [label]="splitHands.length > 1 ? i18n.t('common.playerSplit') + ' ' + (i + 1) : i18n.t('common.playerSplit')"
       [hand]="sh"
       [dealOffset]="(i + 1) * 300"
-      [isActive]="sh.status === HandStatus.ACTIVE"
+      [isActive]="activeHandId === sh.id"
+      [hideInactiveActiveStatus]="true"
     ></app-hand>
   </div>
 
