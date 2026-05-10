@@ -4,10 +4,23 @@
 
     <div class="tutorial-header">
       <div>
-        <p class="tutorial-eyebrow">{{ i18n.t('tutorial.basics') }}</p>
+        <p class="tutorial-eyebrow">{{ activeCategoryCopy.eyebrow }}</p>
         <h2 id="tutorial-title">{{ i18n.t('common.howToPlay') }}</h2>
       </div>
       <div class="tutorial-count">{{ i18n.t('tutorial.count', { current: activeIndex + 1, total: steps.length }) }}</div>
+    </div>
+
+    <div class="tutorial-categories">
+      <button
+        *ngFor="let category of categories"
+        type="button"
+        class="tutorial-category"
+        [class.active]="category === activeCategory"
+        (click)="selectCategory(category)"
+      >
+        <span>{{ categoryCopy(category).eyebrow }}</span>
+        <strong>{{ categoryCopy(category).label }}</strong>
+      </button>
     </div>
 
     <div class="tutorial-progress" aria-hidden="true">
@@ -15,35 +28,74 @@
     </div>
 
     <div class="tutorial-body">
-      <div class="tutorial-table">
-        <div class="hand-row dealer-row">
-          <span class="hand-label">{{ i18n.t('common.dealer') }}</span>
-          <div class="cards">
-            <div
-              class="mini-card"
-              *ngFor="let card of activeStep.dealer"
-              [class.mini-card--hidden]="card === '?'"
-            >
-              <span>{{ card === '?' ? '' : card }}</span>
+      <div class="tutorial-table" [class.tutorial-table--betception]="activeCategory === 'betception'">
+        <ng-container *ngIf="activeCategory === 'blackjack'; else betceptionPreview">
+          <div class="hand-row dealer-row">
+            <span class="hand-label">{{ i18n.t('common.dealer') }}</span>
+            <div class="cards">
+              <div
+                class="mini-card"
+                *ngFor="let card of activeStep.dealer"
+                [class.mini-card--hidden]="card === '?'"
+              >
+                <span>{{ card === '?' ? '' : card }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="table-core">
-          <div class="decision-chip" *ngIf="activeStep.action">
-            {{ activeStep.actionLabel }}
+          <div class="table-core">
+            <div class="decision-chip" *ngIf="activeStep.action">
+              {{ activeStep.actionLabel }}
+            </div>
+            <div class="table-ring"></div>
           </div>
-          <div class="table-ring"></div>
-        </div>
 
-        <div class="hand-row player-row">
-          <span class="hand-label">{{ i18n.t('common.player') }}</span>
-          <div class="cards">
-            <div class="mini-card mini-card--player" *ngFor="let card of activeStep.player">
-              <span>{{ card }}</span>
+          <div class="hand-row player-row">
+            <span class="hand-label">{{ i18n.t('common.player') }}</span>
+            <div class="cards">
+              <div class="mini-card mini-card--player" *ngFor="let card of activeStep.player">
+                <span>{{ card }}</span>
+              </div>
             </div>
           </div>
-        </div>
+        </ng-container>
+
+        <ng-template #betceptionPreview>
+          <div class="depth-preview">
+            <div class="depth-preview__header">
+              <span class="depth-preview__dimension">{{ activeIndex + 1 }}D</span>
+              <span class="depth-preview__level">{{ i18n.t('betception.depthLevel') }}: {{ activeIndex + 1 }}</span>
+            </div>
+
+            <div class="depth-preview__divider"></div>
+
+            <div class="depth-preview__rows">
+              <div class="depth-preview__row depth-preview__row--main">
+                <div>
+                  <strong>{{ i18n.t('betception.mainBet') }}</strong>
+                  <span>100 {{ i18n.t('common.coins') }}</span>
+                </div>
+                <span class="depth-preview__outcome">&#10003;</span>
+              </div>
+
+              <div class="depth-preview__row depth-preview__row--active">
+                <div>
+                  <strong>{{ activeStep.eyebrow }}</strong>
+                  <span>{{ activeStep.actionLabel || activeStep.title }}</span>
+                </div>
+                <span class="depth-preview__badge">{{ activeIndex + 1 }}D</span>
+              </div>
+
+              <div class="depth-preview__row">
+                <div>
+                  <strong>{{ i18n.t('betception.totalPayout') }}</strong>
+                  <span>+{{ (activeIndex + 2) * 100 }} {{ i18n.t('common.coins') }}</span>
+                </div>
+                <span class="depth-preview__outcome depth-preview__outcome--pending">&bull;</span>
+              </div>
+            </div>
+          </div>
+        </ng-template>
       </div>
 
       <article class="tutorial-copy">
