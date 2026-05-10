@@ -8,7 +8,7 @@ type TutorialStep = {
   copy: string;
   dealer: string[];
   player: string[];
-  action?: 'hit' | 'stand' | 'dealer' | 'blackjack';
+  action?: 'hit' | 'stand' | 'dealer' | 'blackjack' | 'double' | 'split';
   actionLabel?: string;
   hint: string;
 };
@@ -54,6 +54,26 @@ const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
       action: 'stand',
       actionLabel: 'STEHEN',
       hint: 'Du hast 18. Eine weitere Karte kann helfen, aber viele Karten würden dich über 21 bringen. Stehen bleiben ist hier meistens die saubere Grundentscheidung.',
+    },
+    {
+      eyebrow: 'Verdoppeln',
+      title: 'Einsatz verdoppeln für eine Extrakarte',
+      copy: 'Wenn deine ersten zwei Karten eine gute Ausgangslage ergeben, kannst du deinen Einsatz verdoppeln. Du bekommst genau eine weitere Karte und bleibst danach automatisch stehen.',
+      dealer: ['6', '?'],
+      player: ['5', '6'],
+      action: 'double',
+      actionLabel: 'VERDOPPELN',
+      hint: 'Du hast 11 – jede Zehn-Karte bringt dich auf 21. Gegen eine offene 6 beim Dealer ist das eine Lehrbuch-Situation zum Verdoppeln.',
+    },
+    {
+      eyebrow: 'Teilen',
+      title: 'Gleiche Karten in zwei Hände aufteilen',
+      copy: 'Wenn deine ersten zwei Karten denselben Wert haben, kannst du sie teilen. Du zahlst denselben Einsatz ein zweites Mal und spielst dann zwei unabhängige Hände.',
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: 'TEILEN',
+      hint: 'Zwei 8er ergeben 16 – eine der schlechtesten Hände. Geteilt hast du zweimal 8 als Startpunkt, was deutlich besser zu spielen ist.',
     },
     {
       eyebrow: 'Dealer',
@@ -118,6 +138,26 @@ const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
       hint: 'You have 18. A hit can help, but many cards would bust you. Stand is usually the clean basic decision here.',
     },
     {
+      eyebrow: 'Double',
+      title: 'Double your bet for one extra card',
+      copy: 'When your first two cards give you a strong starting point, you can double your bet. You receive exactly one more card and then automatically stand.',
+      dealer: ['6', '?'],
+      player: ['5', '6'],
+      action: 'double',
+      actionLabel: 'DOUBLE',
+      hint: 'You have 11 — any ten-value card (10, J, Q, K) makes 21. Against a dealer 6 this is a textbook doubling situation.',
+    },
+    {
+      eyebrow: 'Split',
+      title: 'Split equal cards into two hands',
+      copy: 'When your first two cards have the same value, you can split them. You pay the same bet a second time and then play two independent hands.',
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: 'SPLIT',
+      hint: "Two 8s add up to 16 — one of the worst hands. Split gives you two hands starting at 8 each, which is far easier to play.",
+    },
+    {
       eyebrow: 'Dealer',
       title: 'The dealer follows fixed rules',
       copy: 'When you stand, the dealer reveals the hidden card. Then the dealer draws until reaching at least 17.',
@@ -180,6 +220,26 @@ const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
       hint: 'Tienes 18. Pedir puede ayudar, pero muchas cartas te harían pasar. Plantarse suele ser la decisión básica limpia.',
     },
     {
+      eyebrow: 'Doblar',
+      title: 'Dobla tu apuesta para una carta extra',
+      copy: 'Si tus dos primeras cartas dan una buena base, puedes doblar la apuesta. Recibes exactamente una carta más y luego te plantarás automáticamente.',
+      dealer: ['6', '?'],
+      player: ['5', '6'],
+      action: 'double',
+      actionLabel: 'DOBLAR',
+      hint: 'Tienes 11 — cualquier carta de valor diez (10, J, Q, K) te da 21. Contra un 6 del dealer es una situación de libro para doblar.',
+    },
+    {
+      eyebrow: 'Dividir',
+      title: 'Divide cartas iguales en dos manos',
+      copy: 'Si tus dos primeras cartas tienen el mismo valor, puedes dividirlas. Pagas la misma apuesta una segunda vez y juegas dos manos independientes.',
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: 'DIVIDIR',
+      hint: 'Dos 8 suman 16, una de las peores manos. Divididas, tienes dos manos que empiezan en 8, lo cual es mucho más fácil de jugar.',
+    },
+    {
       eyebrow: 'Dealer',
       title: 'El dealer sigue reglas fijas',
       copy: 'Cuando te plantas, el dealer revela su carta oculta. Después roba hasta alcanzar al menos 17.',
@@ -240,6 +300,26 @@ const TUTORIAL_STEPS: Record<LanguageCode, TutorialStep[]> = {
       action: 'stand',
       actionLabel: 'RESTER',
       hint: 'Tu as 18. Une carte peut aider, mais beaucoup de cartes te feraient dépasser. Rester est souvent la bonne décision de base.',
+    },
+    {
+      eyebrow: 'Doubler',
+      title: 'Double ta mise pour une carte de plus',
+      copy: "Quand tes deux premières cartes te donnent une bonne base, tu peux doubler ta mise. Tu reçois exactement une carte de plus, puis tu restes automatiquement.",
+      dealer: ['6', '?'],
+      player: ['5', '6'],
+      action: 'double',
+      actionLabel: 'DOUBLER',
+      hint: "Tu as 11 — toute carte valant dix (10, V, D, R) te donne 21. Contre un 6 du dealer c'est une situation classique pour doubler.",
+    },
+    {
+      eyebrow: 'Diviser',
+      title: 'Sépare les cartes égales en deux mains',
+      copy: "Quand tes deux premières cartes ont la même valeur, tu peux les séparer. Tu paies la même mise une deuxième fois et tu joues deux mains indépendantes.",
+      dealer: ['7', '?'],
+      player: ['8', '8'],
+      action: 'split',
+      actionLabel: 'DIVISER',
+      hint: "Deux 8 font 16, l'une des pires mains. Séparées, tu as deux mains à 8 — bien plus jouable.",
     },
     {
       eyebrow: 'Dealer',

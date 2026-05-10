@@ -28,6 +28,14 @@ export class Rng {
     return this.api.settleRound(roundId);
   }
 
+  double(roundId: string) {
+    return this.api.doubleRound(roundId);
+  }
+
+  split(roundId: string) {
+    return this.api.splitRound(roundId);
+  }
+
   getRound(roundId: string) {
     return this.api.getRound(roundId);
   }

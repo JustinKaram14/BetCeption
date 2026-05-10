@@ -6,16 +6,16 @@
 
   <div class="hand" *ngIf="cards.length; else emptyHand">
     <div
-      *ngFor="let card of cards; let i = index; trackBy: trackByCard"
-      [ngClass]="cardClasses(card, i)"
-      [class.dealing]="dealingCardIds.has(trackByCard(i, card))"
-      [style.animation-delay]="cardDelay(card)"
+      *ngFor="let item of displayCards; trackBy: trackByCard"
+      [ngClass]="cardClasses(item.card, item.index)"
+      [class.dealing]="isCardDealing(item.card)"
+      [style.animation-delay]="cardDelay(item.card)"
     >
       <div class="card-back-face"></div>
       <div class="card-face">
-        <div class="card-rank top">{{ card.rank }}</div>
-        <div class="card-suit">{{ suitSymbol(card.suit) }}</div>
-        <div class="card-rank bottom">{{ card.rank }}</div>
+        <div class="card-rank top">{{ item.card.rank }}</div>
+        <div class="card-suit">{{ suitSymbol(item.card.suit) }}</div>
+        <div class="card-rank bottom">{{ item.card.rank }}</div>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { HandOwnerType, RoundHand, HandStatus } from '../../../../../core/api/api.types';
 import { Hand } from '../hand/hand';
 import { I18n } from '../../../../../core/i18n/i18n';
@@ -7,7 +7,7 @@ import { I18n } from '../../../../../core/i18n/i18n';
 @Component({
   selector: 'app-table',
   standalone: true,
-  imports: [NgIf, Hand],
+  imports: [NgIf, NgFor, Hand],
   templateUrl: './table.html',
   styleUrl: './table.css'
 })
@@ -16,6 +16,7 @@ export class Table {
 
   @Input() dealerHand: RoundHand | null = null;
   @Input() playerHand: RoundHand | null = null;
+  @Input() splitHands: RoundHand[] = [];
   @Input() activeHand: HandOwnerType | null = null;
   @Input() showBlackjackBanner = false;
 

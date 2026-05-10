@@ -60,15 +60,13 @@ CREATE TABLE IF NOT EXISTS rounds (
 CREATE TABLE IF NOT EXISTS hands (
   id              BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   round_id        BIGINT UNSIGNED NOT NULL,
-  owner_type      ENUM('dealer','player') NOT NULL,
+  owner_type      ENUM('dealer','player','player_split') NOT NULL,
   user_id         BIGINT UNSIGNED NULL,
-  parent_hand_id  BIGINT UNSIGNED NULL,
   status          ENUM('active','stood','busted','blackjack','surrendered','settled') NOT NULL DEFAULT 'active',
   hand_value      TINYINT UNSIGNED NULL,
   created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_hands_round   FOREIGN KEY (round_id)       REFERENCES rounds(id) ON DELETE CASCADE,
   CONSTRAINT fk_hands_user    FOREIGN KEY (user_id)        REFERENCES users(id)  ON DELETE SET NULL,
-  CONSTRAINT fk_hands_parent  FOREIGN KEY (parent_hand_id) REFERENCES hands(id)  ON DELETE SET NULL,
   INDEX ix_hands_round (round_id),
   INDEX ix_hands_user (user_id)
 ) ENGINE=InnoDB;

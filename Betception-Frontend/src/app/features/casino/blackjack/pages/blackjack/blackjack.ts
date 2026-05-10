@@ -25,7 +25,7 @@ import { PowerupMenu } from '../../components/powerup-menu/powerup-menu';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 
-type ActionKind = 'deal' | 'hit' | 'stand' | 'settle';
+type ActionKind = 'deal' | 'hit' | 'stand' | 'settle' | 'double' | 'split';
 
 @Component({
   selector: 'app-blackjack',
@@ -40,9 +40,10 @@ export class Blackjack implements OnInit {
   private readonly api = inject(BetceptionApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly i18n = inject(I18n);
-  private readonly dealerRevealMs = 620;
-  private readonly dealerFollowUpCardStepMs = 360;
-  private readonly cardAnimationMs = 650;
+  private readonly dealerRevealMs = 850;
+  private readonly dealerActionPauseMs = 900;
+  private readonly dealerDrawAnimationMs = 700;
+  private readonly dealerFlipPauseMs = 250;
   private readonly resultPauseMs = 250;
 
   round: RoundState | null = null;
@@ -88,14 +89,45 @@ export class Blackjack implements OnInit {
   }
 
   get playerHandStatus(): HandStatus | null {
+    if (this.round?.playerHand?.status === HandStatus.ACTIVE) return HandStatus.ACTIVE;
+    if (this.round?.splitHands?.some((h) => h.status === HandStatus.ACTIVE)) return HandStatus.ACTIVE;
     return this.round?.playerHand?.status ?? null;
   }
 
   get activeHand(): HandOwnerType | null {
-    if (this.round?.status === RoundStatus.IN_PROGRESS) {
-      return HandOwnerType.PLAYER;
-    }
+    if (this.round?.status !== RoundStatus.IN_PROGRESS) return null;
+    if (this.round?.playerHand?.status === HandStatus.ACTIVE) return HandOwnerType.PLAYER;
+    if (this.round?.splitHands?.some((h) => h.status === HandStatus.ACTIVE)) return HandOwnerType.PLAYER_SPLIT;
     return null;
+  }
+
+  get activePlayerCardCount(): number {
+    if (this.round?.playerHand?.status === HandStatus.ACTIVE) {
+      return this.round.playerHand.cards?.length ?? 0;
+    }
+    const activeSplit = this.round?.splitHands?.find((h) => h.status === HandStatus.ACTIVE);
+    if (activeSplit) return activeSplit.cards?.length ?? 0;
+    return 0;
+  }
+
+  get canSplitHandNow(): boolean {
+    if (!this.round) return false;
+    const totalHands = 1 + (this.round.splitHands?.length ?? 0);
+    if (totalHands >= 4) return false;
+    let activeHand = this.round.playerHand?.status === HandStatus.ACTIVE ? this.round.playerHand : null;
+    if (!activeHand) {
+      activeHand = this.round.splitHands?.find((h) => h.status === HandStatus.ACTIVE) ?? null;
+    }
+    if (!activeHand) return false;
+    const cards = activeHand.cards;
+    if (!cards || cards.length !== 2) return false;
+    const val = (rank: string | null) => {
+      if (!rank) return -1;
+      if (['J', 'Q', 'K', '10'].includes(rank)) return 10;
+      if (rank === 'A') return 11;
+      return Number(rank);
+    };
+    return val(cards[0].rank) === val(cards[1].rank);
   }
 
   onPlaceBet(amount: number) {
@@ -125,6 +157,16 @@ export class Blackjack implements OnInit {
   onStand() {
     if (!this.round || this.busyAction) return;
     this.runAction('stand', this.rng.stand(this.round.id));
+  }
+
+  onDouble() {
+    if (!this.round || this.busyAction) return;
+    this.runAction('double', this.rng.double(this.round.id));
+  }
+
+  onSplit() {
+    if (!this.round || this.busyAction) return;
+    this.runAction('split', this.rng.split(this.round.id));
   }
 
   onSettle() {
@@ -174,18 +216,19 @@ export class Blackjack implements OnInit {
           }
           this.busyAction = null;
 
-          // Auto-settle when the player's turn is over (bust, stand, blackjack)
+          // Auto-settle when ALL player hands are done (bust, stand, blackjack)
           if (
             kind !== 'settle' &&
             round.status !== RoundStatus.SETTLED &&
             round.status !== RoundStatus.ABORTED &&
-            round.playerHand?.status !== HandStatus.ACTIVE
+            round.playerHand?.status !== HandStatus.ACTIVE &&
+            !round.splitHands?.some((h) => h.status === HandStatus.ACTIVE)
           ) {
             window.setTimeout(() => {
               if (this.round?.id === round.id && !this.busyAction) {
                 this.runAction('settle', this.rng.settle(round.id));
               }
-            }, 850);
+            }, 1300);
           }
         },
         error: (err) => {
@@ -352,16 +395,6 @@ export class Blackjack implements OnInit {
   }
 
   private buildRoundOutcome(round: RoundState): typeof this.roundOutcome {
-    const status = round.mainBet?.status;
-    const displayAmount =
-      status === MainBetStatus.LOST
-        ? round.mainBet?.amount
-        : round.mainBet?.settledAmount;
-    const formatted =
-      displayAmount !== null && typeof displayAmount !== 'undefined'
-        ? `${Number(displayAmount).toFixed(0)} Coins`
-        : null;
-
     const dealer = round.dealerHand;
     let dealerInfo: string | null = null;
     if (dealer) {
@@ -375,14 +408,21 @@ export class Blackjack implements OnInit {
       }
     }
 
-    if (status === MainBetStatus.WON) {
-      return { headline: this.i18n.t('blackjack.wonHeadline'), detail: formatted ? `+${formatted}` : null, won: true, lost: false, push: false, dealerInfo };
+    const allBets = [round.mainBet, ...(round.splitBets ?? [])].filter(Boolean) as NonNullable<typeof round.mainBet>[];
+    const totalSettled = allBets.reduce((s, b) => s + Number(b.settledAmount ?? 0), 0);
+    const totalPlaced = allBets.reduce((s, b) => s + Number(b.amount ?? 0), 0);
+    const net = Math.round((totalSettled - totalPlaced) * 100) / 100;
+    const absNet = Math.abs(net);
+    const formattedNet = absNet > 0 ? `${Math.round(absNet)} Coins` : null;
+
+    if (net > 0) {
+      return { headline: this.i18n.t('blackjack.wonHeadline'), detail: formattedNet ? `+${formattedNet}` : null, won: true, lost: false, push: false, dealerInfo };
     }
-    if (status === MainBetStatus.PUSH || status === MainBetStatus.REFUNDED) {
+    if (net < 0) {
+      return { headline: this.i18n.t('blackjack.lostHeadline'), detail: formattedNet ? `-${formattedNet}` : null, won: false, lost: true, push: false, dealerInfo };
+    }
+    if (allBets.length > 0 && allBets.every(b => b.status === MainBetStatus.PUSH || b.status === MainBetStatus.REFUNDED)) {
       return { headline: this.i18n.t('blackjack.pushHeadline'), detail: this.i18n.t('blackjack.pushBetBack'), won: false, lost: false, push: true, dealerInfo };
-    }
-    if (status === MainBetStatus.LOST) {
-      return { headline: this.i18n.t('blackjack.lostHeadline'), detail: formatted ? `-${formatted}` : null, won: false, lost: true, push: false, dealerInfo };
     }
     return { headline: this.i18n.t('blackjack.finishedHeadline'), detail: null, won: false, lost: false, push: false, dealerInfo };
   }
@@ -415,17 +455,16 @@ export class Blackjack implements OnInit {
         (index === 1 && previousDealerCards.length === 2),
     );
 
-    const sequentialRevealCount = hadHiddenDealerCard ? Math.max(0, settledDealerCards.length - 1) : 0;
-    const revealDuration =
-      sequentialRevealCount > 0
-        ? this.dealerRevealMs + (sequentialRevealCount - 1) * this.dealerFollowUpCardStepMs
-        : 0;
-    const drawDuration =
+    const revealDuration = hadHiddenDealerCard && settledDealerCards.length > 1 ? this.dealerRevealMs : 0;
+    const settlementDuration =
       newDealerCardCount > 0
-        ? revealDuration + this.cardAnimationMs
-        : revealDuration;
+        ? (revealDuration > 0 ? this.dealerActionPauseMs : 0) +
+          newDealerCardCount * (this.dealerDrawAnimationMs + this.dealerFlipPauseMs) +
+          Math.max(0, newDealerCardCount - 1) * this.dealerActionPauseMs
+        : 0;
+    const animationDuration = revealDuration + settlementDuration;
 
-    return Math.max(this.cardAnimationMs, drawDuration + this.resultPauseMs);
+    return Math.max(this.dealerDrawAnimationMs, animationDuration + this.resultPauseMs);
   }
 
   private applyPowerupResponse(response: {

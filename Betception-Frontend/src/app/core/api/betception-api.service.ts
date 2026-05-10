@@ -167,6 +167,14 @@ export class BetceptionApi {
     return this.http.post<RoundResponse>(`/round/undo/${roundId}`);
   }
 
+  doubleRound(roundId: string) {
+    return this.http.post<RoundResponse>(`/round/double/${roundId}`);
+  }
+
+  splitRound(roundId: string) {
+    return this.http.post<RoundResponse>(`/round/split/${roundId}`);
+  }
+
   getFairnessRound(roundId: string) {
     return this.http.get<FairnessRoundResponse>(`/fairness/rounds/${roundId}`);
   }

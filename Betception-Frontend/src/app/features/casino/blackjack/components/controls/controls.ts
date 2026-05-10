@@ -28,11 +28,16 @@ export class Controls {
   @Input() pillPulse: PowerPillColor | null = null;
   @Input() pillExpiredCode: PowerPillCode | null = null;
 
+  @Input() playerCardCount = 0;
+  @Input() canSplitHand = false;
+
   @Output() placeBet = new EventEmitter<number>();
   @Output() resetBet = new EventEmitter<void>();
   @Output() deal = new EventEmitter<void>();
   @Output() hit = new EventEmitter<void>();
   @Output() stand = new EventEmitter<void>();
+  @Output() double = new EventEmitter<void>();
+  @Output() split = new EventEmitter<void>();
   @Output() openPowerupMenu = new EventEmitter<void>();
 
   readonly chips = [1, 5, 25, 100, 500];
@@ -68,6 +73,14 @@ export class Controls {
 
   get canSettle() {
     return this.roundStatus === RoundStatus.IN_PROGRESS && this.playerHandStatus !== HandStatus.ACTIVE && !this.busy;
+  }
+
+  get canDouble() {
+    return this.roundStatus === RoundStatus.IN_PROGRESS && this.playerHandStatus === HandStatus.ACTIVE && this.playerCardCount === 2 && !this.busy;
+  }
+
+  get canSplit() {
+    return this.roundStatus === RoundStatus.IN_PROGRESS && this.playerHandStatus === HandStatus.ACTIVE && this.canSplitHand && !this.busy;
   }
 
   get isRoundActive() {

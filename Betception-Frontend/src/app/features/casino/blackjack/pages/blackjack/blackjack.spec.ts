@@ -59,6 +59,7 @@ describe('Blackjack', () => {
             settledAmount: null,
             settledAt: null,
           },
+          splitBets: [],
           playerHand: {
             id: 'hand-player-1',
             ownerType: HandOwnerType.PLAYER,
@@ -66,6 +67,7 @@ describe('Blackjack', () => {
             handValue: 0,
             cards: [],
           },
+          splitHands: [],
           dealerHand: {
             id: 'hand-dealer-1',
             ownerType: HandOwnerType.DEALER,
@@ -131,9 +133,13 @@ describe('Blackjack', () => {
         amount: '25',
         status: mainBetStatus,
         payoutMultiplier: mainBetStatus === MainBetStatus.LOST ? '0' : null,
-        settledAmount: mainBetStatus === MainBetStatus.LOST ? '0' : null,
+        settledAmount: mainBetStatus === MainBetStatus.LOST ? '0'
+          : mainBetStatus === MainBetStatus.WON ? '50'
+          : (mainBetStatus === MainBetStatus.PUSH || mainBetStatus === MainBetStatus.REFUNDED) ? '25'
+          : null,
         settledAt: settled ? new Date().toISOString() : null,
       },
+      splitBets: [],
       playerHand: {
         id: 'hand-p',
         ownerType: HandOwnerType.PLAYER,
@@ -141,6 +147,7 @@ describe('Blackjack', () => {
         handValue: 14,
         cards: [],
       },
+      splitHands: [],
       dealerHand: {
         id: 'hand-d',
         ownerType: HandOwnerType.DEALER,
@@ -285,31 +292,33 @@ describe('Blackjack', () => {
       rngMock.settle.and.returnValue(of({ round: settled }));
       component.round = stood;
       component.onSettle();
-      tick(650);
+      tick(700);
       expect(component.roundOutcome?.push).toBeTrue();
     }));
 
-    it('shows a WON outcome with payout detail when settledAmount is available', fakeAsync(() => {
+    it('shows a WON outcome with net gain detail', fakeAsync(() => {
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
-      settled.mainBet = { ...settled.mainBet, settledAmount: '50.00' };
       rngMock.settle.and.returnValue(of({ round: settled }));
       component.round = stood;
       component.onSettle();
-      tick(650);
+      tick(700);
       expect(component.roundOutcome?.won).toBeTrue();
-      expect(component.roundOutcome?.detail).toContain('50');
+      // net = 50 settled − 25 placed = 25 → '+25 Coins'
+      expect(component.roundOutcome?.detail).toContain('25');
     }));
 
-    it('shows a WON outcome without detail when settledAmount is null', fakeAsync(() => {
+    it('shows a WON outcome with larger net gain when settledAmount is higher', fakeAsync(() => {
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      settled.mainBet = { ...settled.mainBet, settledAmount: '75.00' };
       rngMock.settle.and.returnValue(of({ round: settled }));
       component.round = stood;
       component.onSettle();
-      tick(650);
+      tick(700);
       expect(component.roundOutcome?.won).toBeTrue();
-      expect(component.roundOutcome?.detail).toBeNull();
+      // net = 75 − 25 = 50 → '+50 Coins'
+      expect(component.roundOutcome?.detail).toContain('50');
     }));
 
     it('shows dealer BUSTED info in round outcome', fakeAsync(() => {
@@ -319,7 +328,7 @@ describe('Blackjack', () => {
       rngMock.settle.and.returnValue(of({ round: settled }));
       component.round = stood;
       component.onSettle();
-      tick(650);
+      tick(700);
       expect(component.roundOutcome?.dealerInfo).toBeTruthy();
     }));
 
@@ -330,7 +339,7 @@ describe('Blackjack', () => {
       rngMock.settle.and.returnValue(of({ round: settled }));
       component.round = stood;
       component.onSettle();
-      tick(650);
+      tick(700);
       expect(component.roundOutcome?.dealerInfo).toBeTruthy();
     }));
 
@@ -340,7 +349,7 @@ describe('Blackjack', () => {
       rngMock.settle.and.returnValue(of({ round: settled }));
       component.round = stood;
       component.onSettle();
-      tick(650);
+      tick(700);
       expect(component.roundOutcome?.push).toBeTrue();
     }));
   });
@@ -492,8 +501,42 @@ describe('Blackjack', () => {
     }));
   });
 
+  describe('deal render flow', () => {
+    it('switches the UI from deal to hit/stand and renders the initial cards', fakeAsync(() => {
+      const dealt = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      dealt.playerHand.cards = [
+        { id: 'p1', rank: '10' as any, suit: 'H' as any, drawOrder: 1, createdAt: new Date().toISOString() },
+        { id: 'p2', rank: '7' as any, suit: 'S' as any, drawOrder: 2, createdAt: new Date().toISOString() },
+      ] as any;
+      dealt.dealerHand.cards = [
+        { id: 'd1', rank: '9' as any, suit: 'C' as any, drawOrder: 1, createdAt: new Date().toISOString() },
+        { id: 'd2', rank: null as any, suit: null as any, drawOrder: 2, createdAt: new Date().toISOString() },
+      ] as any;
+
+      rngMock.startRound.and.returnValue(of({ round: dealt }));
+
+      component.betAmount = 25;
+      fixture.detectChanges();
+
+      const dealButton = fixture.nativeElement.querySelector('[data-testid="deal-button"]') as HTMLButtonElement;
+      expect(dealButton).toBeTruthy();
+
+      dealButton.click();
+      tick();
+      fixture.detectChanges();
+
+      const hitButton = fixture.nativeElement.querySelector('[data-testid="hit-button"]') as HTMLButtonElement | null;
+      const standButton = fixture.nativeElement.querySelector('[data-testid="stand-button"]') as HTMLButtonElement | null;
+      const renderedCards = fixture.nativeElement.querySelectorAll('.hand .card');
+
+      expect(hitButton).toBeTruthy();
+      expect(standButton).toBeTruthy();
+      expect(renderedCards.length).toBe(4);
+    }));
+  });
+
   describe('onStand', () => {
-    it('calls rng.stand, then auto-settles after 850 ms and shows the round overlay', fakeAsync(() => {
+    it('calls rng.stand, then auto-settles after 1300 ms and shows the round overlay', fakeAsync(() => {
       const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
@@ -507,13 +550,13 @@ describe('Blackjack', () => {
       expect(rngMock.stand).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.playerHand?.status).toBe(HandStatus.STOOD);
 
-      // auto-settle fires at 850 ms
-      tick(850);
+      // auto-settle fires at 1300 ms
+      tick(1300);
       expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.status).toBe(RoundStatus.SETTLED);
 
-      // result overlay fires at settlementAnimationDelay (650 ms with empty cards)
-      tick(650);
+      // result overlay fires at settlementAnimationDelay (700 ms minimum with no dealer cards)
+      tick(700);
       expect(component.showRoundOverlay).toBeTrue();
       expect(component.roundOutcome?.lost).toBeTrue();
     }));
@@ -532,7 +575,7 @@ describe('Blackjack', () => {
       expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.status).toBe(RoundStatus.SETTLED);
 
-      tick(650);
+      tick(700);
       expect(component.showRoundOverlay).toBeTrue();
       expect(component.roundOutcome?.won).toBeTrue();
     }));
@@ -568,7 +611,9 @@ describe('Blackjack', () => {
       startedAt: null,
       endedAt: null,
       mainBet: { id: 'bet-1', amount: '10', status: MainBetStatus.VOID, payoutMultiplier: null, settledAmount: null, settledAt: null },
+      splitBets: [],
       playerHand: { id: 'hand-p', ownerType: HandOwnerType.PLAYER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
+      splitHands: [],
       dealerHand: { id: 'hand-d', ownerType: HandOwnerType.DEALER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
       sideBets: [],
       playerProgress: null,
