@@ -24,7 +24,7 @@ describe('Blackjack', () => {
   let fixture: ComponentFixture<Blackjack>;
   const rngMock = jasmine.createSpyObj<Rng>(
     'Rng',
-    ['startRound', 'getActiveRound', 'hit', 'stand', 'settle'],
+    ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle'],
   );
   const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
   const apiMock = jasmine.createSpyObj<BetceptionApi>(
@@ -123,6 +123,7 @@ describe('Blackjack', () => {
     rngMock.startRound.calls.reset();
     rngMock.hit.calls.reset();
     rngMock.stand.calls.reset();
+    rngMock.dealerStep.calls.reset();
     rngMock.settle.calls.reset();
   });
 
@@ -637,12 +638,20 @@ describe('Blackjack', () => {
   });
 
   describe('onStand', () => {
-    it('calls rng.stand, then auto-settles after 850 ms and shows the round overlay', fakeAsync(() => {
+    it('calls rng.stand, runs one dealer step, then settles and shows the round overlay', fakeAsync(() => {
       const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const dealerComplete = {
+        ...stood,
+        dealerHand: { ...stood.dealerHand, status: HandStatus.STOOD, handValue: 18 },
+      };
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
 
       rngMock.stand.and.returnValue(of({ round: stood }));
+      rngMock.dealerStep.and.returnValue(of({
+        round: dealerComplete,
+        dealerAction: { kind: 'STAND', cardId: null, dealerTurnComplete: true },
+      }));
       rngMock.settle.and.returnValue(of({ round: settled }));
 
       component.round = inProgress;
@@ -651,8 +660,11 @@ describe('Blackjack', () => {
       expect(rngMock.stand).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.playerHand?.status).toBe(HandStatus.STOOD);
 
-      // auto-settle fires at 850 ms
-      tick(850);
+      tick(620);
+      expect(rngMock.dealerStep).toHaveBeenCalledOnceWith('round-1');
+      expect(component.round?.dealerHand?.status).toBe(HandStatus.STOOD);
+
+      tick(650);
       expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.status).toBe(RoundStatus.SETTLED);
 
@@ -689,7 +701,7 @@ describe('Blackjack', () => {
       'purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups',
     ]);
     const rngPowerupMock = jasmine.createSpyObj<Rng>(
-      'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'settle'],
+      'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle'],
     );
     const walletPowerupMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
 
