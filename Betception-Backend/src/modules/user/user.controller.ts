@@ -19,6 +19,8 @@ function serializeProfile(user: User) {
     balance: Number(user.balance),
     xp: user.xp,
     level: user.level,
+    avatarIcon: user.avatarIcon,
+    avatarColor: user.avatarColor,
     levelProgress: buildLevelProgress(user),
     createdAt: user.createdAt,
   };
@@ -53,7 +55,7 @@ export async function getOwnProfile(req: Request, res: Response) {
   const repo = AppDataSource.getRepository(User);
   const user = await repo.findOne({
     where: { id: userId },
-    select: ['id', 'username', 'email', 'balance', 'xp', 'level', 'createdAt'],
+    select: ['id', 'username', 'email', 'balance', 'xp', 'level', 'avatarIcon', 'avatarColor', 'createdAt'],
   });
 
   if (!user) {
@@ -71,7 +73,7 @@ export async function updateOwnProfile(
   const repo = AppDataSource.getRepository(User);
   const user = await repo.findOne({
     where: { id: userId },
-    select: ['id', 'username', 'email', 'balance', 'xp', 'level', 'createdAt'],
+    select: ['id', 'username', 'email', 'balance', 'xp', 'level', 'avatarIcon', 'avatarColor', 'createdAt'],
   });
 
   if (!user) {
@@ -80,6 +82,8 @@ export async function updateOwnProfile(
 
   const nextUsername = req.body.username;
   const nextEmail = req.body.email;
+  const nextAvatarIcon = req.body.avatarIcon;
+  const nextAvatarColor = req.body.avatarColor;
 
   if (nextUsername !== undefined && nextUsername !== user.username) {
     const existing = await repo.findOne({
@@ -101,6 +105,14 @@ export async function updateOwnProfile(
       return res.status(409).json({ message: PROFILE_CONFLICT_MESSAGE });
     }
     user.email = nextEmail;
+  }
+
+  if (nextAvatarIcon !== undefined) {
+    user.avatarIcon = nextAvatarIcon;
+  }
+
+  if (nextAvatarColor !== undefined) {
+    user.avatarColor = nextAvatarColor;
   }
 
   const saved = await repo.save(user);

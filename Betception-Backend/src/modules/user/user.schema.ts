@@ -1,5 +1,29 @@
 import { z } from 'zod';
 
+export const ProfileAvatarIconSchema = z.enum([
+  'chip',
+  'spade',
+  'crown',
+  'bolt',
+  'diamond',
+  'orbit',
+  'cards',
+  'flame',
+  'star',
+]);
+
+export const ProfileAvatarColorSchema = z.enum([
+  'cyan',
+  'blue',
+  'violet',
+  'magenta',
+  'red',
+  'gold',
+  'green',
+  'ice',
+  'white',
+]);
+
 export const UserIdParamsSchema = z.object({
   id: z.string().regex(/^\d+$/),
 });
@@ -8,8 +32,10 @@ export const UpdateOwnProfileSchema = z
   .object({
     username: z.string().trim().min(3).max(32).optional(),
     email: z.string().trim().email().optional(),
+    avatarIcon: ProfileAvatarIconSchema.optional(),
+    avatarColor: ProfileAvatarColorSchema.optional(),
   })
-  .refine((value) => value.username !== undefined || value.email !== undefined, {
+  .refine((value) => Object.values(value).some((entry) => entry !== undefined), {
     message: 'At least one field must be provided',
   });
 
