@@ -75,74 +75,201 @@
           ></app-level-progress>
 
           <div class="profile-management">
-            <h3>{{ i18n.t('profile.manageAccount') }}</h3>
-            <div class="profile-forms">
-              <form class="profile-form" (ngSubmit)="saveProfile()" #profileEditForm="ngForm">
-                <h4>{{ i18n.t('profile.accountData') }}</h4>
-                <label>
-                  <span>{{ i18n.t('profile.username') }}</span>
-                  <input
-                    name="username"
-                    type="text"
-                    minlength="3"
-                    maxlength="32"
-                    required
-                    [(ngModel)]="profileForm.username"
-                  />
-                </label>
-                <label>
-                  <span>{{ i18n.t('profile.email') }}</span>
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    [(ngModel)]="profileForm.email"
-                  />
-                </label>
-                <button class="btn profile-submit" type="submit" [disabled]="profileSaving || profileEditForm.invalid">
-                  {{ profileSaving ? i18n.t('profile.saving') : i18n.t('profile.saveProfile') }}
-                </button>
-              </form>
+            <article class="profile-avatar-card" [style.--avatar-color]="avatarColorValue(profileForm.avatarColor)">
+              <div class="profile-section-heading">
+                <h3>{{ i18n.t('profile.avatar.title') }}</h3>
+                <span>{{ i18n.t('profile.avatar.subtitle') }}</span>
+              </div>
 
-              <form class="profile-form" (ngSubmit)="changePassword()" #passwordEditForm="ngForm">
-                <h4>{{ i18n.t('profile.changePassword') }}</h4>
-                <label>
-                  <span>{{ i18n.t('profile.currentPassword') }}</span>
-                  <input
-                    name="currentPassword"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    [(ngModel)]="passwordForm.currentPassword"
-                  />
-                </label>
-                <label>
-                  <span>{{ i18n.t('profile.newPassword') }}</span>
-                  <input
-                    name="newPassword"
-                    type="password"
-                    required
-                    minlength="8"
-                    autocomplete="new-password"
-                    [(ngModel)]="passwordForm.newPassword"
-                  />
-                </label>
-                <label>
-                  <span>{{ i18n.t('profile.confirmNewPassword') }}</span>
-                  <input
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    minlength="8"
-                    autocomplete="new-password"
-                    [(ngModel)]="passwordForm.confirmPassword"
-                  />
-                </label>
-                <button class="btn profile-submit" type="submit" [disabled]="passwordSaving || passwordEditForm.invalid">
-                  {{ passwordSaving ? i18n.t('profile.saving') : i18n.t('profile.savePassword') }}
+              <div class="profile-avatar-preview">
+                <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                  <path [attr.d]="avatarIconPath(profileForm.avatarIcon)" />
+                </svg>
+              </div>
+
+              <button class="btn profile-avatar-edit" type="button" (click)="beginAvatarEdit()" *ngIf="!avatarEditing">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M4 20h4l10.5-10.5-4-4L4 16v4Z" />
+                  <path d="m13.5 6.5 4 4" />
+                </svg>
+                {{ i18n.t('profile.avatar.edit') }}
+              </button>
+
+              <div class="profile-avatar-editor" *ngIf="avatarEditing">
+                <div class="profile-avatar-editor-label">{{ i18n.t('profile.avatar.chooseIcon') }}</div>
+                <div class="profile-avatar-icon-grid">
+                  <button
+                    class="profile-avatar-icon-option"
+                    type="button"
+                    *ngFor="let option of avatarIcons"
+                    [class.active]="option.id === profileForm.avatarIcon"
+                    [style.--avatar-color]="avatarColorValue(profileForm.avatarColor)"
+                    [attr.aria-label]="i18n.t(option.labelKey)"
+                    [attr.aria-pressed]="option.id === profileForm.avatarIcon"
+                    (click)="selectAvatarIcon(option.id)"
+                  >
+                    <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                      <path [attr.d]="option.path" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="profile-avatar-editor-label">{{ i18n.t('profile.avatar.chooseColor') }}</div>
+                <div class="profile-avatar-color-grid">
+                  <button
+                    class="profile-avatar-color-option"
+                    type="button"
+                    *ngFor="let option of avatarColors"
+                    [class.active]="option.id === profileForm.avatarColor"
+                    [style.--swatch-color]="option.value"
+                    [attr.aria-label]="i18n.t(option.labelKey)"
+                    [attr.aria-pressed]="option.id === profileForm.avatarColor"
+                    (click)="selectAvatarColor(option.id)"
+                  ></button>
+                </div>
+
+                <div class="profile-avatar-actions">
+                  <button class="btn profile-inline-btn" type="button" (click)="saveAvatar()" [disabled]="avatarSaving">
+                    {{ avatarSaving ? i18n.t('profile.saving') : i18n.t('profile.avatar.save') }}
+                  </button>
+                  <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAvatarEdit()" [disabled]="avatarSaving">
+                    {{ i18n.t('common.cancel') }}
+                  </button>
+                </div>
+              </div>
+            </article>
+
+            <section class="profile-account-editor">
+              <h3>{{ i18n.t('profile.manageAccount') }}</h3>
+              <div class="profile-account-actions">
+                <button
+                  class="profile-account-action"
+                  type="button"
+                  [class.active]="accountEditMode === 'username'"
+                  (click)="openAccountEdit('username')"
+                >
+                  {{ i18n.t('profile.editUsername') }}
                 </button>
-              </form>
-            </div>
+                <button
+                  class="profile-account-action"
+                  type="button"
+                  [class.active]="accountEditMode === 'email'"
+                  (click)="openAccountEdit('email')"
+                >
+                  {{ i18n.t('profile.editEmail') }}
+                </button>
+                <button
+                  class="profile-account-action"
+                  type="button"
+                  [class.active]="accountEditMode === 'password'"
+                  (click)="openAccountEdit('password')"
+                >
+                  {{ i18n.t('profile.editPassword') }}
+                </button>
+              </div>
+
+              <div class="profile-account-panel" *ngIf="accountEditMode">
+                <form
+                  class="profile-form"
+                  *ngIf="accountEditMode === 'username'"
+                  (ngSubmit)="saveUsername()"
+                  #usernameEditForm="ngForm"
+                >
+                  <label>
+                    <span>{{ i18n.t('profile.username') }}</span>
+                    <input
+                      name="username"
+                      type="text"
+                      minlength="3"
+                      maxlength="32"
+                      required
+                      [(ngModel)]="profileForm.username"
+                    />
+                  </label>
+                  <div class="profile-form-actions">
+                    <button class="btn profile-submit" type="submit" [disabled]="profileSaving || usernameEditForm.invalid">
+                      {{ profileSaving ? i18n.t('profile.saving') : i18n.t('profile.saveUsername') }}
+                    </button>
+                    <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                      {{ i18n.t('common.cancel') }}
+                    </button>
+                  </div>
+                </form>
+
+                <form
+                  class="profile-form"
+                  *ngIf="accountEditMode === 'email'"
+                  (ngSubmit)="saveEmail()"
+                  #emailEditForm="ngForm"
+                >
+                  <label>
+                    <span>{{ i18n.t('profile.email') }}</span>
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      [(ngModel)]="profileForm.email"
+                    />
+                  </label>
+                  <div class="profile-form-actions">
+                    <button class="btn profile-submit" type="submit" [disabled]="profileSaving || emailEditForm.invalid">
+                      {{ profileSaving ? i18n.t('profile.saving') : i18n.t('profile.saveEmail') }}
+                    </button>
+                    <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                      {{ i18n.t('common.cancel') }}
+                    </button>
+                  </div>
+                </form>
+
+                <form
+                  class="profile-form"
+                  *ngIf="accountEditMode === 'password'"
+                  (ngSubmit)="changePassword()"
+                  #passwordEditForm="ngForm"
+                >
+                  <label>
+                    <span>{{ i18n.t('profile.currentPassword') }}</span>
+                    <input
+                      name="currentPassword"
+                      type="password"
+                      required
+                      autocomplete="current-password"
+                      [(ngModel)]="passwordForm.currentPassword"
+                    />
+                  </label>
+                  <label>
+                    <span>{{ i18n.t('profile.newPassword') }}</span>
+                    <input
+                      name="newPassword"
+                      type="password"
+                      required
+                      minlength="8"
+                      autocomplete="new-password"
+                      [(ngModel)]="passwordForm.newPassword"
+                    />
+                  </label>
+                  <label>
+                    <span>{{ i18n.t('profile.confirmNewPassword') }}</span>
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      required
+                      minlength="8"
+                      autocomplete="new-password"
+                      [(ngModel)]="passwordForm.confirmPassword"
+                    />
+                  </label>
+                  <div class="profile-form-actions">
+                    <button class="btn profile-submit" type="submit" [disabled]="passwordSaving || passwordEditForm.invalid">
+                      {{ passwordSaving ? i18n.t('profile.saving') : i18n.t('profile.savePassword') }}
+                    </button>
+                    <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                      {{ i18n.t('common.cancel') }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
           </div>
         </ng-container>
       </section>

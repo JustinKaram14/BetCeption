@@ -113,6 +113,8 @@ describe('HomepageComponent', () => {
           balance: 1000,
           xp: 0,
           level: 1,
+          avatarIcon: 'chip',
+          avatarColor: 'cyan',
           levelProgress: {
             level: 1,
             xp: 0,

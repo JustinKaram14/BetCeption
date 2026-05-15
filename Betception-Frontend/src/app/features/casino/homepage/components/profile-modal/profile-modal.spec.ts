@@ -21,6 +21,8 @@ describe('ProfileModalComponent', () => {
       balance: 1200,
       xp: 25,
       level: 2,
+      avatarIcon: 'chip',
+      avatarColor: 'cyan',
       levelProgress: {
         level: 2,
         xp: 25,
@@ -173,9 +175,89 @@ describe('ProfileModalComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
+    component.openAccountEdit('username');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
     const usernameInput: HTMLInputElement = fixture.nativeElement.querySelector('input[name="username"]');
     expect(usernameInput.value).toBe('tester');
     expect(apiMock.getOwnProfile).toHaveBeenCalled();
+  });
+
+  it('opens account edit forms from the three account action buttons', async () => {
+    createComponent();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const editor: HTMLElement = fixture.nativeElement.querySelector('.profile-account-editor');
+    const actionButtons = editor.querySelectorAll<HTMLButtonElement>('.profile-account-action');
+
+    expect(actionButtons.length).toBe(3);
+    expect(editor.querySelectorAll('input').length).toBe(0);
+
+    actionButtons[1].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(editor.querySelector<HTMLInputElement>('input[name="email"]')).toBeTruthy();
+    expect(editor.querySelectorAll('input').length).toBe(1);
+
+    actionButtons[2].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(editor.querySelector<HTMLInputElement>('input[name="currentPassword"]')).toBeTruthy();
+    expect(editor.querySelector<HTMLInputElement>('input[name="newPassword"]')).toBeTruthy();
+    expect(editor.querySelector<HTMLInputElement>('input[name="confirmPassword"]')).toBeTruthy();
+    expect(editor.querySelectorAll('input').length).toBe(3);
+  });
+
+  it('saves a username edit through the profile API and closes the edit panel', () => {
+    createComponent();
+    apiMock.updateOwnProfile.and.returnValue(
+      of({
+        user: {
+          ...profileResponse.user,
+          username: 'newname',
+        },
+      } as any),
+    );
+
+    component.openAccountEdit('username');
+    component.profileForm.username = 'newname';
+    component.saveUsername();
+
+    expect(apiMock.updateOwnProfile).toHaveBeenCalledWith({ username: 'newname' });
+    expect(component.accountEditMode).toBeNull();
+    expect(component.profile?.username).toBe('newname');
+  });
+
+  it('saves selected profile avatar options', () => {
+    createComponent();
+    apiMock.updateOwnProfile.and.returnValue(
+      of({
+        user: {
+          ...profileResponse.user,
+          avatarIcon: 'star',
+          avatarColor: 'gold',
+        },
+      } as any),
+    );
+
+    component.beginAvatarEdit();
+    component.selectAvatarIcon('star');
+    component.selectAvatarColor('gold');
+    component.saveAvatar();
+
+    expect(apiMock.updateOwnProfile).toHaveBeenCalledWith({
+      avatarIcon: 'star',
+      avatarColor: 'gold',
+    });
+    expect(component.avatarEditing).toBeFalse();
+    expect(toastMock.success).toHaveBeenCalled();
   });
 
   it('validates password confirmation before calling the API', () => {

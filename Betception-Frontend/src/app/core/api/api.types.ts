@@ -44,9 +44,33 @@ export interface OwnProfile {
   balance: number;
   xp: number;
   level: number;
+  avatarIcon: ProfileAvatarIcon;
+  avatarColor: ProfileAvatarColor;
   levelProgress: LevelProgress;
   createdAt: string;
 }
+
+export type ProfileAvatarIcon =
+  | 'chip'
+  | 'spade'
+  | 'crown'
+  | 'bolt'
+  | 'diamond'
+  | 'orbit'
+  | 'cards'
+  | 'flame'
+  | 'star';
+
+export type ProfileAvatarColor =
+  | 'cyan'
+  | 'blue'
+  | 'violet'
+  | 'magenta'
+  | 'red'
+  | 'gold'
+  | 'green'
+  | 'ice'
+  | 'white';
 
 export interface LevelProgress {
   level: number;
@@ -70,6 +94,8 @@ export interface OwnProfileResponse {
 export interface UpdateOwnProfileRequest {
   username?: string;
   email?: string;
+  avatarIcon?: ProfileAvatarIcon;
+  avatarColor?: ProfileAvatarColor;
 }
 
 export interface ChangeOwnPasswordRequest {
