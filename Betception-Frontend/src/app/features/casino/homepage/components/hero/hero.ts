@@ -1,5 +1,6 @@
 // src/app/features/homepage/components/hero/hero.ts
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 @Component({
   selector: 'app-hero',
@@ -8,4 +9,5 @@ import { Component } from '@angular/core';
   styleUrls: ['./hero.css']
 })
 export class HeroComponent {
+  readonly i18n = inject(I18n);
 }

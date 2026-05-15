@@ -56,6 +56,8 @@ type PreparedSideBet = {
   predictedSuit: CardSuit | null;
   predictedRank: CardRank | null;
   targetContext: SideBetTargetContext;
+  selectionJson: Record<string, unknown> | null;
+  odds: string | null;
 };
 
 type HandEvaluation = {
@@ -74,9 +76,53 @@ type SerializeRoundOptions = {
   xpGained?: number;
 };
 
+type DealerActionKind =
+  | 'REVEAL_HOLE'
+  | 'DRAW_CARD'
+  | 'STAND'
+  | 'BUST'
+  | 'BLACKJACK'
+  | 'NONE';
+
+type DealerAction = {
+  kind: DealerActionKind;
+  cardId: string | null;
+  dealerTurnComplete: boolean;
+};
+
 type TriggeredPowerupEffect = {
   code: PowerPillCode;
   color: PowerPillColor;
+};
+
+type BetceptionSideBetCode =
+  | 'CARD_EXACT'
+  | 'CARD_SUIT'
+  | 'DEALER_BUST'
+  | 'PILL_TRIGGER'
+  | 'PLAYER_BLACKJACK'
+  | 'SPLIT_COUNT';
+
+type SideBetEvaluationContext = {
+  rawMainBetStatus: MainBetStatus;
+  triggeredPowerupEffect: TriggeredPowerupEffect | null;
+};
+
+type BetceptionResolutionStep = {
+  id: string;
+  kind: 'MAIN_BET' | BetceptionSideBetCode | string;
+  status: MainBetStatus | SideBetStatus;
+  amount: string;
+  payout: string | null;
+  multiplier: string | null;
+  selection: Record<string, unknown> | null;
+};
+
+type BetceptionResolution = {
+  depthLevel: number;
+  totalPayout: string;
+  totalStake: string;
+  steps: BetceptionResolutionStep[];
 };
 
 const ACTIVE_ROUND_STATUSES = [
@@ -89,6 +135,24 @@ const PAYOUT_BLACKJACK = 2.5;
 const PAYOUT_WIN = 2;
 const PAYOUT_PUSH = 1;
 const PAYOUT_LOSS = 0;
+
+const BETCEPTION_SIDE_BET_CODES = new Set<string>([
+  'CARD_EXACT',
+  'CARD_SUIT',
+  'DEALER_BUST',
+  'PILL_TRIGGER',
+  'PLAYER_BLACKJACK',
+  'SPLIT_COUNT',
+]);
+
+const DEFAULT_BETCEPTION_ODDS: Record<BetceptionSideBetCode, number> = {
+  CARD_EXACT: 12,
+  CARD_SUIT: 2,
+  DEALER_BUST: 3,
+  PILL_TRIGGER: 5,
+  PLAYER_BLACKJACK: 12,
+  SPLIT_COUNT: 4,
+};
 
 const TEN_VALUE_RANKS = new Set([CardRank.KING, CardRank.QUEEN, CardRank.JACK, CardRank.TEN]);
 
@@ -131,7 +195,7 @@ export async function startRound(
         throw new RoundFlowError(400, 'INVALID_BET', 'Bet amount must be positive');
       }
 
-      const preparedSideBets = await prepareSideBets(input.sideBets ?? [], manager);
+      const preparedSideBets = await prepareSideBets(input.sideBets ?? [], manager, user);
       const totalSideBetCents = preparedSideBets.reduce(
         (sum, sideBet) => sum + sideBet.amountCents,
         0n,
@@ -213,7 +277,8 @@ export async function startRound(
           predictedSuit: prepared.predictedSuit,
           predictedRank: prepared.predictedRank,
           targetContext: prepared.targetContext,
-          odds: prepared.type.baseOdds,
+          selectionJson: prepared.selectionJson,
+          odds: prepared.odds,
         });
         await sideBetRepo.save(sideBet);
         savedSideBets.push(sideBet);
@@ -269,9 +334,16 @@ export async function hitRound(
         throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not accepting hits');
       }
 
-      const playerHand = getPlayerHand(round, userId);
+      const playerHand = getActivePlayerHand(round, userId);
+      const dealerHand = getDealerHand(round);
       if (!playerHand) {
+        if (getAllPlayerHands(round, userId).length > 0) {
+          throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot draw cards for this hand');
+        }
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
+      }
+      if (dealerHand?.status === HandStatus.BLACKJACK) {
+        throw new RoundFlowError(409, 'ROUND_READY_TO_SETTLE', 'Dealer blackjack must be settled');
       }
       if (playerHand.status !== HandStatus.ACTIVE) {
         throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot draw cards for this hand');
@@ -313,9 +385,19 @@ export async function standRound(
         throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
       }
 
-      const playerHand = getPlayerHand(round, userId);
+      const playerHand = getActivePlayerHand(round, userId);
+      const dealerHand = getDealerHand(round);
       if (!playerHand) {
+        if (getAllPlayerHands(round, userId).length > 0) {
+          throw new RoundFlowError(400, 'HAND_LOCKED', 'Player hand cannot stand');
+        }
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
+      }
+      if (!dealerHand) {
+        throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Dealer hand not found');
+      }
+      if (dealerHand.status === HandStatus.BLACKJACK) {
+        throw new RoundFlowError(409, 'ROUND_READY_TO_SETTLE', 'Dealer blackjack must be settled');
       }
       if (playerHand.status !== HandStatus.ACTIVE) {
         throw new RoundFlowError(400, 'HAND_LOCKED', 'Player hand cannot stand');
@@ -323,16 +405,65 @@ export async function standRound(
 
       playerHand.status = HandStatus.STOOD;
       await manager.getRepository(Hand).save(playerHand);
-
-      const usedCards = collectUsedCards(round);
-      await completeDealerHand(manager, round, usedCards, playerHand);
     });
 
     const updatedRound = await loadRoundForUser(roundId, userId);
     if (!updatedRound) {
       throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
     }
-    return res.json({ round: serializeRound(updatedRound, userId) });
+    const playerHands = getAllPlayerHands(updatedRound, userId);
+    const dealerTurnReady = !playerHands.some((hand) => hand.status === HandStatus.ACTIVE);
+    return res.json({
+      round: serializeRound(updatedRound, userId),
+      dealerAction: dealerTurnReady
+        ? {
+            kind: 'REVEAL_HOLE',
+            cardId: getDealerHoleCardId(updatedRound),
+            dealerTurnComplete: isDealerTurnComplete(getDealerHand(updatedRound)),
+          } satisfies DealerAction
+        : { kind: 'NONE', cardId: null, dealerTurnComplete: false } satisfies DealerAction,
+    });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function dealerStepRound(
+  req: Request<RoundIdParams>,
+  res: Response,
+) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+    let dealerAction: DealerAction = { kind: 'NONE', cardId: null, dealerTurnComplete: true };
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+
+      const playerHands = getAllPlayerHands(round, userId);
+      const dealerHand = getDealerHand(round);
+      if (!playerHands.length || !dealerHand) {
+        throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Hands not found');
+      }
+      if (playerHands.some((hand) => hand.status === HandStatus.ACTIVE)) {
+        throw new RoundFlowError(409, 'PLAYER_TURN_ACTIVE', 'Complete the player turn before dealer steps');
+      }
+      if (playerHands.every((hand) => hand.status === HandStatus.BUSTED)) {
+        dealerAction = { kind: 'NONE', cardId: null, dealerTurnComplete: true };
+        return;
+      }
+
+      dealerAction = await advanceDealerOneStep(manager, round, dealerHand);
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId), dealerAction });
   } catch (error) {
     return handleRoundError(res, error);
   }
@@ -395,23 +526,26 @@ export async function settleRound(
       }
 
       const playerHand = getPlayerHand(round, userId);
+      const splitHands = getSplitHands(round, userId);
+      const allSettleHands = getAllPlayerHands(round, userId);
       const dealerHand = getDealerHand(round);
       if (!playerHand || !dealerHand) {
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Hands not found');
       }
-      if (playerHand.status === HandStatus.ACTIVE) {
+      if (allSettleHands.some((hand) => hand.status === HandStatus.ACTIVE)) {
         throw new RoundFlowError(409, 'ROUND_ACTIVE', 'Complete your turn before settling');
       }
 
-      const usedCards = collectUsedCards(round);
-      await completeDealerHand(manager, round, usedCards, playerHand);
+      if (!canSettleRound(allSettleHands, dealerHand, splitHands.length === 0)) {
+        throw new RoundFlowError(409, 'DEALER_TURN_ACTIVE', 'Complete the dealer turn before settling');
+      }
 
       const mainBet = getMainBetForUser(round, userId);
       if (!mainBet) {
         throw new RoundFlowError(404, 'BET_NOT_FOUND', 'Main bet missing');
       }
 
-      const resolution = resolveMainBet(playerHand, dealerHand);
+      const resolution = resolveMainBet(playerHand, dealerHand, { naturalBlackjackAllowed: splitHands.length === 0 });
       const userRepo = manager.getRepository(User);
       const user = await userRepo.findOne({
         where: { id: userId },
@@ -461,6 +595,8 @@ export async function settleRound(
 
       let pendingCredit = 0n;
       const walletTxs: WalletTransaction[] = [];
+      let splitBetStakeTotal = 0n;
+      let splitBetPayoutTotal = 0n;
       if (settledAmountCents > 0n) {
         const kind =
           finalResolution.status === MainBetStatus.PUSH ||
@@ -479,14 +615,54 @@ export async function settleRound(
         pendingCredit += settledAmountCents;
       }
 
+      for (const splitHand of splitHands) {
+        const splitBet = getMainBetForHand(round, splitHand.id);
+        if (!splitBet || splitBet.status !== MainBetStatus.PLACED) continue;
+
+        splitBetStakeTotal += decimalToCents(splitBet.amount);
+        const splitResolution = resolveMainBet(splitHand, dealerHand, { naturalBlackjackAllowed: false });
+        const splitSettledAmount = multiplyMoney(splitBet.amount, splitResolution.multiplier);
+        const splitSettledCents = decimalToCents(splitSettledAmount);
+
+        splitBet.status = splitResolution.status;
+        splitBet.payoutMultiplier = splitResolution.multiplier.toFixed(3);
+        splitBet.settledAmount = splitSettledAmount;
+        splitBet.settledAt = new Date();
+        await manager.getRepository(MainBet).save(splitBet);
+
+        if (splitSettledCents > 0n) {
+          const kind =
+            splitResolution.status === MainBetStatus.PUSH ||
+            splitResolution.status === MainBetStatus.REFUNDED
+              ? WalletTransactionKind.BET_REFUND
+              : WalletTransactionKind.BET_WIN;
+          walletTxs.push(
+            walletRepo.create({
+              user,
+              kind,
+              amount: centsToDecimal(splitSettledCents),
+              refTable: 'main_bets',
+              refId: splitBet.id,
+            }),
+          );
+          pendingCredit += splitSettledCents;
+          splitBetPayoutTotal += splitSettledCents;
+        }
+      }
+
       const sideBetRepo = manager.getRepository(SideBet);
       const playerSideBets = (round.sideBets ?? []).filter(
         (sideBet) => sideBet.user.id === userId,
       );
       const settledSideBetStatuses: SideBetStatus[] = [];
+      const sideBetResolutionSteps: BetceptionResolutionStep[] = [];
+      let sideBetPayoutTotal = 0n;
       for (const sideBet of playerSideBets) {
         if (sideBet.status !== SideBetStatus.PLACED) continue;
-        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id);
+        const outcome = evaluateSideBet(sideBet, round, sideBet.user.id, 0, {
+          rawMainBetStatus: resolution.status,
+          triggeredPowerupEffect,
+        });
         settledSideBetStatuses.push(outcome.status);
         const payoutDecimal = multiplyMoney(sideBet.amount, outcome.multiplier);
         const payoutCents = decimalToCents(payoutDecimal);
@@ -496,6 +672,7 @@ export async function settleRound(
         sideBet.settledAmount = payoutDecimal;
         sideBet.odds = sideBet.odds ?? sideBet.type.baseOdds;
         await sideBetRepo.save(sideBet);
+        sideBetResolutionSteps.push(buildSideBetResolutionStep(sideBet));
 
         if (payoutCents > 0n) {
           const kind = outcome.isRefund
@@ -511,6 +688,7 @@ export async function settleRound(
             }),
           );
           pendingCredit += payoutCents;
+          sideBetPayoutTotal += payoutCents;
         }
       }
 
@@ -547,6 +725,16 @@ export async function settleRound(
         }
       }
 
+      const betceptionResolution = buildBetceptionResolution({
+        mainBet,
+        sideBets: playerSideBets,
+        sideBetResolutionSteps,
+        mainBetPayoutCents: settledAmountCents,
+        splitBetStakeTotal,
+        splitBetPayoutTotal,
+        sideBetPayoutTotal,
+      });
+
       const progress = {
         xpGained: boostedXp,
         progress: buildLevelProgress(user),
@@ -554,6 +742,7 @@ export async function settleRound(
         activePowerup: serializeActivePowerup(user),
         triggeredPowerupEffect,
         expiredPowerup,
+        betceptionResolution,
       };
       await userRepo.save(user);
 
@@ -580,7 +769,204 @@ export async function settleRound(
       activePowerup: settlementProgress.activePowerup,
       triggeredPowerupEffect: settlementProgress.triggeredPowerupEffect,
       expiredPowerup: settlementProgress.expiredPowerup,
+      betceptionResolution: settlementProgress.betceptionResolution,
     });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function doubleRound(
+  req: Request<RoundIdParams>,
+  res: Response,
+) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+
+      const activeHand = getActivePlayerHand(round, userId);
+      if (!activeHand) {
+        throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Player hand not found');
+      }
+      if (activeHand.status !== HandStatus.ACTIVE) {
+        throw new RoundFlowError(400, 'HAND_LOCKED', 'Cannot double on this hand');
+      }
+      if ((activeHand.cards ?? []).length !== 2) {
+        throw new RoundFlowError(400, 'DOUBLE_NOT_ALLOWED', 'Can only double on exactly two cards');
+      }
+
+      const doubleBet = getMainBetForHand(round, activeHand.id);
+      if (!doubleBet) {
+        throw new RoundFlowError(404, 'BET_NOT_FOUND', 'Bet for this hand not found');
+      }
+
+      const userRepo = manager.getRepository(User);
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!user) {
+        throw new RoundFlowError(404, 'USER_NOT_FOUND', 'User not found');
+      }
+
+      const extraCents = decimalToCents(doubleBet.amount);
+      const currentBalance = decimalToCents(user.balance);
+      if (currentBalance < extraCents) {
+        throw new RoundFlowError(400, 'INSUFFICIENT_FUNDS', 'Not enough balance to double');
+      }
+
+      user.balance = centsToDecimal(currentBalance - extraCents);
+      await userRepo.save(user);
+
+      const walletRepo = manager.getRepository(WalletTransaction);
+      await walletRepo.save(
+        walletRepo.create({
+          user,
+          kind: WalletTransactionKind.BET_PLACE,
+          amount: centsToDecimal(-extraCents),
+          refTable: 'main_bets',
+          refId: doubleBet.id,
+        }),
+      );
+
+      doubleBet.amount = centsToDecimal(extraCents * 2n);
+      await manager.getRepository(MainBet).save(doubleBet);
+
+      const usedCards = collectUsedCards(round);
+      const newCard = drawCardFromSeed(round.serverSeed, usedCards);
+      await addCardToHand(manager, activeHand, newCard);
+      const evaluation = recalcHand(activeHand);
+      activeHand.status = evaluation.total > 21 ? HandStatus.BUSTED : HandStatus.STOOD;
+      await manager.getRepository(Hand).save(activeHand);
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId) });
+  } catch (error) {
+    return handleRoundError(res, error);
+  }
+}
+
+export async function splitRound(
+  req: Request<RoundIdParams>,
+  res: Response,
+) {
+  try {
+    const userId = getUserIdOrThrow(req);
+    const { roundId } = req.params;
+
+    await AppDataSource.transaction(async (manager) => {
+      const round = await loadRoundOrFail(roundId, userId, manager);
+      if (round.status !== RoundStatus.IN_PROGRESS) {
+        throw new RoundFlowError(409, 'ROUND_NOT_ACTIVE', 'Round is not in progress');
+      }
+
+      if (getAllPlayerHands(round, userId).length >= 4) {
+        throw new RoundFlowError(400, 'SPLIT_NOT_ALLOWED', 'Maximum of 4 hands reached');
+      }
+
+      const activeHand = getActivePlayerHand(round, userId);
+      if (!activeHand) {
+        throw new RoundFlowError(400, 'HAND_LOCKED', 'No active player hand to split');
+      }
+
+      const cards = sortCards(activeHand.cards ?? []);
+      if (cards.length !== 2) {
+        throw new RoundFlowError(400, 'SPLIT_NOT_ALLOWED', 'Can only split a two-card hand');
+      }
+      if (cardBlackjackValue(cards[0].rank) !== cardBlackjackValue(cards[1].rank)) {
+        throw new RoundFlowError(400, 'SPLIT_NOT_ALLOWED', 'Cards must have equal value to split');
+      }
+
+      const mainBet = getMainBetForHand(round, activeHand.id);
+      if (!mainBet) {
+        throw new RoundFlowError(404, 'BET_NOT_FOUND', 'Bet for this hand not found');
+      }
+
+      const userRepo = manager.getRepository(User);
+      const user = await userRepo.findOne({
+        where: { id: userId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!user) {
+        throw new RoundFlowError(404, 'USER_NOT_FOUND', 'User not found');
+      }
+
+      const splitBetCents = decimalToCents(mainBet.amount);
+      const currentBalance = decimalToCents(user.balance);
+      if (currentBalance < splitBetCents) {
+        throw new RoundFlowError(400, 'INSUFFICIENT_FUNDS', 'Not enough balance to split');
+      }
+
+      user.balance = centsToDecimal(currentBalance - splitBetCents);
+      await userRepo.save(user);
+
+      const usedCards = collectUsedCards(round);
+      const handRepo = manager.getRepository(Hand);
+      const splitHand = handRepo.create({
+        round,
+        ownerType: HandOwnerType.PLAYER_SPLIT,
+        status: HandStatus.ACTIVE,
+        user,
+      });
+      await handRepo.save(splitHand);
+      splitHand.cards = [];
+
+      const [keptCard, movedCard] = cards;
+      const cardRepo = manager.getRepository(Card);
+      movedCard.hand = { id: splitHand.id } as unknown as Hand;
+      movedCard.drawOrder = 1;
+      await cardRepo.save(movedCard);
+
+      activeHand.cards = [keptCard];
+      splitHand.cards = [movedCard];
+
+      const activeDraw = drawCardFromSeed(round.serverSeed, usedCards);
+      await addCardToHand(manager, activeHand, activeDraw);
+      recalcHand(activeHand);
+      await manager.getRepository(Hand).save(activeHand);
+
+      const splitDraw = drawCardFromSeed(round.serverSeed, usedCards);
+      await addCardToHand(manager, splitHand, splitDraw);
+      recalcHand(splitHand);
+      await manager.getRepository(Hand).save(splitHand);
+
+      const mainBetRepo = manager.getRepository(MainBet);
+      const splitBet = mainBetRepo.create({
+        round,
+        hand: splitHand,
+        user,
+        amount: centsToDecimal(splitBetCents),
+        status: MainBetStatus.PLACED,
+      });
+      await mainBetRepo.save(splitBet);
+
+      const walletRepo = manager.getRepository(WalletTransaction);
+      await walletRepo.save(
+        walletRepo.create({
+          user,
+          kind: WalletTransactionKind.BET_PLACE,
+          amount: centsToDecimal(-splitBetCents),
+          refTable: 'main_bets',
+          refId: splitBet.id,
+        }),
+      );
+    });
+
+    const updatedRound = await loadRoundForUser(roundId, userId);
+    if (!updatedRound) {
+      throw new RoundFlowError(404, 'ROUND_NOT_FOUND', 'Round not found');
+    }
+    return res.json({ round: serializeRound(updatedRound, userId) });
   } catch (error) {
     return handleRoundError(res, error);
   }
@@ -732,16 +1118,27 @@ async function ensureNoActiveRound(userId: string, manager: EntityManager) {
 async function prepareSideBets(
   inputs: StartRoundInput['sideBets'],
   manager: EntityManager,
+  user: User,
 ): Promise<PreparedSideBet[]> {
   if (!inputs.length) return [];
 
   const typeRepo = manager.getRepository(SidebetType);
-  const uniqueIds = [...new Set(inputs.map((item) => item.typeId))];
-  const types = await typeRepo.findBy({ id: In(uniqueIds) });
+  const uniqueIds = [...new Set(inputs.map((item) => item.typeId).filter((id): id is number => typeof id === 'number'))];
+  const uniqueCodes = [...new Set(inputs.flatMap((item) => item.typeCode ? [item.typeCode] : []))];
+  const where = [
+    ...(uniqueIds.length ? [{ id: In(uniqueIds) }] : []),
+    ...(uniqueCodes.length ? [{ code: In(uniqueCodes) }] : []),
+  ];
+  const types = where.length ? await typeRepo.find({ where }) : [];
   const typeMap = new Map(types.map((type) => [type.id, type]));
+  const typeCodeMap = new Map(types.map((type) => [type.code, type]));
 
   return inputs.map((input, index) => {
-    const type = typeMap.get(input.typeId);
+    const type = typeof input.typeId === 'number'
+      ? typeMap.get(input.typeId)
+      : input.typeCode
+        ? typeCodeMap.get(input.typeCode)
+        : undefined;
     if (!type) {
       throw new RoundFlowError(
         400,
@@ -760,6 +1157,8 @@ async function prepareSideBets(
     }
 
     validateSideBetPayload(type, input, index);
+    const selectionJson = buildSideBetSelection(type, input, user);
+    const odds = resolvePreparedSideBetOdds(type, user, input);
 
     return {
       type,
@@ -768,6 +1167,8 @@ async function prepareSideBets(
       predictedSuit: input.predictedSuit ?? null,
       predictedRank: input.predictedRank ?? null,
       targetContext: input.targetContext ?? SideBetTargetContext.FIRST_PLAYER_CARD,
+      selectionJson,
+      odds,
     };
   });
 }
@@ -778,6 +1179,44 @@ function validateSideBetPayload(
   index: number,
 ) {
   const code = type.code;
+  if (code === 'CARD_EXACT') {
+    if (!input.predictedSuit || !input.predictedRank) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        `predictedSuit and predictedRank missing for side bet ${index + 1}`,
+      );
+    }
+    return;
+  }
+  if (code === 'CARD_SUIT') {
+    if (!input.predictedSuit) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        `predictedSuit missing for side bet ${index + 1}`,
+      );
+    }
+    return;
+  }
+  if (code === 'SPLIT_COUNT') {
+    const splitCount = readSplitCountSelection(input.selection);
+    if (!splitCount || splitCount < 1 || splitCount > 3) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        `splitCount must be between 1 and 3 for side bet ${index + 1}`,
+      );
+    }
+    return;
+  }
+  if (
+    code === 'DEALER_BUST' ||
+    code === 'PILL_TRIGGER' ||
+    code === 'PLAYER_BLACKJACK'
+  ) {
+    return;
+  }
   if (code === 'FIRST_CARD_COLOR' && !input.predictedColor) {
     throw new RoundFlowError(
       400,
@@ -799,6 +1238,87 @@ function validateSideBetPayload(
       `predictedRank missing for side bet ${index + 1}`,
     );
   }
+}
+
+function buildSideBetSelection(
+  type: SidebetType,
+  input: StartRoundInput['sideBets'][number],
+  user: User,
+): Record<string, unknown> | null {
+  if (type.code === 'CARD_EXACT') {
+    return {
+      suit: input.predictedSuit,
+      rank: input.predictedRank,
+    };
+  }
+  if (type.code === 'CARD_SUIT') {
+    return {
+      suit: input.predictedSuit,
+    };
+  }
+  if (type.code === 'DEALER_BUST') {
+    return {
+      target: 'DEALER',
+      outcome: 'BUST',
+    };
+  }
+  if (type.code === 'PILL_TRIGGER') {
+    const code = user.activePowerupType?.code;
+    if (!isPowerPillCode(code)) {
+      throw new RoundFlowError(
+        400,
+        'INVALID_SIDE_BET',
+        'Pill trigger bet requires an active power pill',
+      );
+    }
+    return {
+      powerupCode: code,
+      color: getPowerPillColor(code),
+    };
+  }
+  if (type.code === 'PLAYER_BLACKJACK') {
+    return {
+      target: 'PLAYER',
+    };
+  }
+  if (type.code === 'SPLIT_COUNT') {
+    return {
+      splitCount: readSplitCountSelection(input.selection),
+    };
+  }
+  return input.selection ?? null;
+}
+
+function resolvePreparedSideBetOdds(
+  type: SidebetType,
+  user: User,
+  input?: StartRoundInput['sideBets'][number],
+): string | null {
+  if (type.code === 'PILL_TRIGGER') {
+    const code = user.activePowerupType?.code;
+    if (code === 'BLUE_PILL') return '8.000';
+    if (code === 'RED_PILL') return '5.000';
+  }
+  if (type.code === 'SPLIT_COUNT') {
+    const splitCount = readSplitCountSelection(input?.selection);
+    const splitOdds = splitCount === 3 ? 60 : splitCount === 2 ? 18 : 4;
+    return splitOdds.toFixed(3);
+  }
+  if (isBetceptionSideBetCode(type.code)) {
+    return (type.baseOdds ?? DEFAULT_BETCEPTION_ODDS[type.code].toFixed(3));
+  }
+  return type.baseOdds;
+}
+
+function readSplitCountSelection(selection: Record<string, unknown> | undefined | null): number | null {
+  const value = selection?.['splitCount'];
+  if (typeof value === 'number' && Number.isInteger(value)) return value;
+  if (typeof value === 'string' && /^\d+$/.test(value)) return Number(value);
+  return null;
+}
+
+function isBetceptionSideBetCode(code: string): code is BetceptionSideBetCode {
+  return BETCEPTION_SIDE_BET_CODES.has(code);
 }
 
 async function loadRoundForUser(
@@ -889,6 +1409,7 @@ function serializeRound(
   options: SerializeRoundOptions = {},
 ) {
   const playerHand = getPlayerHand(round, userId);
+  const splitHands = getSplitHands(round, userId);
   const dealerHand = getDealerHand(round);
   const mainBet = getMainBetForUser(round, userId);
   if (!playerHand || !dealerHand || !mainBet) {
@@ -907,6 +1428,7 @@ function serializeRound(
       predictedSuit: sideBet.predictedSuit,
       predictedRank: sideBet.predictedRank,
       targetContext: sideBet.targetContext,
+      selection: sideBet.selectionJson ?? null,
       settledAmount: sideBet.settledAmount,
       settledAt: sideBet.settledAt ?? null,
     }));
@@ -924,8 +1446,20 @@ function serializeRound(
       settledAmount: mainBet.settledAmount,
       settledAt: mainBet.settledAt ?? null,
     },
+    splitBets: splitHands
+      .map((splitHand) => getMainBetForHand(round, splitHand.id))
+      .filter((bet): bet is MainBet & { user: User; hand: Hand } => !!bet)
+      .map((bet) => ({
+        id: bet.id,
+        amount: bet.amount,
+        status: bet.status,
+        payoutMultiplier: bet.payoutMultiplier,
+        settledAmount: bet.settledAmount,
+        settledAt: bet.settledAt ?? null,
+      })),
     playerHand: serializeHand(playerHand),
-    dealerHand: serializeHand(dealerHand, ACTIVE_ROUND_STATUSES.includes(round.status as typeof ACTIVE_ROUND_STATUSES[number])),
+    splitHands: splitHands.map((splitHand) => serializeHand(splitHand)),
+    dealerHand: serializeHand(dealerHand, shouldMaskDealerHole(round, getAllPlayerHands(round, userId))),
     sideBets,
     playerProgress: playerHand.user
       ? {
@@ -971,7 +1505,7 @@ async function addCardToHand(
   manager: EntityManager,
   hand: Hand,
   card: DeckCard,
-) {
+): Promise<Card> {
   const cardRepo = manager.getRepository(Card);
   const entity = cardRepo.create({
     hand,
@@ -982,6 +1516,7 @@ async function addCardToHand(
   await cardRepo.save(entity);
   if (!hand.cards) hand.cards = [];
   hand.cards.push(entity);
+  return entity;
 }
 
 function drawCardFromSeed(serverSeed: string | null, used: Set<string>): DeckCard {
@@ -1013,41 +1548,89 @@ function peekNextCard(serverSeed: string | null, used: Set<string>): DeckCard {
   throw new RoundFlowError(500, 'DECK_EMPTY', 'No cards left in the deck');
 }
 
-async function completeDealerHand(
+async function advanceDealerOneStep(
   manager: EntityManager,
   round: RoundWithRelations,
-  usedCards: Set<string>,
-  playerHand: Hand,
-) {
-  const dealerHand = getDealerHand(round);
-  if (!dealerHand) return;
+  dealerHand: Hand & { cards?: Card[] },
+): Promise<DealerAction> {
+  if (isDealerTurnComplete(dealerHand)) {
+    return { kind: dealerActionKindForCompleteHand(dealerHand), cardId: null, dealerTurnComplete: true };
+  }
 
   let evaluation = recalcHand(dealerHand, { preserveStanding: true });
-  if (isTerminalHandStatus(dealerHand.status)) {
+  if (evaluation.isBlackjack) {
+    dealerHand.status = HandStatus.BLACKJACK;
     await manager.getRepository(Hand).save(dealerHand);
-    return;
+    return { kind: 'BLACKJACK', cardId: null, dealerTurnComplete: true };
   }
-  if (playerHand.status === HandStatus.BUSTED) {
+  if (isDealerStandingTotal(evaluation)) {
     dealerHand.status = HandStatus.STOOD;
     await manager.getRepository(Hand).save(dealerHand);
-    return;
+    return { kind: 'STAND', cardId: null, dealerTurnComplete: true };
   }
 
-  while (
-    evaluation.total < 17 ||
-    (evaluation.total === 17 && evaluation.isSoft)
-  ) {
-    const card = drawCardFromSeed(round.serverSeed, usedCards);
-    await addCardToHand(manager, dealerHand, card);
-    evaluation = recalcHand(dealerHand, { preserveStanding: true });
-    if (isHandBusted(dealerHand)) break;
+  const usedCards = collectUsedCards(round);
+  const card = drawCardFromSeed(round.serverSeed, usedCards);
+  const entity = await addCardToHand(manager, dealerHand, card);
+  evaluation = recalcHand(dealerHand, { preserveStanding: true });
+
+  if (dealerHand.status === HandStatus.BUSTED) {
+    await manager.getRepository(Hand).save(dealerHand);
+    return { kind: 'BUST', cardId: entity.id, dealerTurnComplete: true };
   }
 
-  if (!isTerminalHandStatus(dealerHand.status)) {
+  if (isDealerStandingTotal(evaluation)) {
     dealerHand.status = HandStatus.STOOD;
+    await manager.getRepository(Hand).save(dealerHand);
+    return { kind: 'DRAW_CARD', cardId: entity.id, dealerTurnComplete: true };
   }
 
   await manager.getRepository(Hand).save(dealerHand);
+  return { kind: 'DRAW_CARD', cardId: entity.id, dealerTurnComplete: false };
+}
+
+function canSettleRound(
+  playerHands: Hand[],
+  dealerHand: Hand,
+  naturalBlackjackAllowed: boolean,
+) {
+  return (
+    playerHands.every((hand) => hand.status === HandStatus.BUSTED) ||
+    (naturalBlackjackAllowed && playerHands.some((hand) => hand.status === HandStatus.BLACKJACK)) ||
+    dealerHand.status === HandStatus.BLACKJACK ||
+    isDealerTurnComplete(dealerHand)
+  );
+}
+
+function isDealerTurnComplete(dealerHand: Pick<Hand, 'status'> | undefined | null) {
+  return (
+    dealerHand?.status === HandStatus.STOOD ||
+    dealerHand?.status === HandStatus.BUSTED ||
+    dealerHand?.status === HandStatus.BLACKJACK
+  );
+}
+
+function dealerActionKindForCompleteHand(dealerHand: Pick<Hand, 'status'>): DealerActionKind {
+  if (dealerHand.status === HandStatus.BUSTED) return 'BUST';
+  if (dealerHand.status === HandStatus.BLACKJACK) return 'BLACKJACK';
+  if (dealerHand.status === HandStatus.STOOD) return 'STAND';
+  return 'NONE';
+}
+
+function isDealerStandingTotal(evaluation: HandEvaluation) {
+  return evaluation.total >= 17 && !(evaluation.total === 17 && evaluation.isSoft);
+}
+
+function shouldMaskDealerHole(round: RoundWithRelations, playerHands: Hand[]) {
+  return (
+    ACTIVE_ROUND_STATUSES.includes(round.status as typeof ACTIVE_ROUND_STATUSES[number]) &&
+    playerHands.some((hand) => hand.status === HandStatus.ACTIVE)
+  );
+}
+
+function getDealerHoleCardId(round: RoundWithRelations) {
+  const dealerHand = getDealerHand(round);
+  return sortCards(dealerHand?.cards ?? [])[1]?.id ?? null;
 }
 
 function recalcHand(
@@ -1087,10 +1670,8 @@ function evaluateHand(cards: Card[]): HandEvaluation {
     if (card.rank === CardRank.ACE) {
       total += 11;
       softAces += 1;
-    } else if (TEN_VALUE_RANKS.has(card.rank)) {
-      total += 10;
     } else {
-      total += Number(card.rank);
+      total += cardBlackjackValue(card.rank);
     }
   }
 
@@ -1107,9 +1688,16 @@ function evaluateHand(cards: Card[]): HandEvaluation {
   };
 }
 
+function cardBlackjackValue(rank: CardRank) {
+  if (TEN_VALUE_RANKS.has(rank)) return 10;
+  if (rank === CardRank.ACE) return 11;
+  return Number(rank);
+}
+
 function resolveMainBet(
   playerHand: Hand,
   dealerHand: Hand,
+  options: { naturalBlackjackAllowed?: boolean } = {},
 ): { status: MainBetStatus; multiplier: number } {
   const playerEval = recalcHand(playerHand, { preserveStanding: true });
   const dealerEval = recalcHand(dealerHand, { preserveStanding: true });
@@ -1119,7 +1707,10 @@ function resolveMainBet(
   }
 
   if (playerHand.status === HandStatus.BLACKJACK && dealerHand.status !== HandStatus.BLACKJACK) {
-    return { status: MainBetStatus.WON, multiplier: PAYOUT_BLACKJACK };
+    return {
+      status: MainBetStatus.WON,
+      multiplier: options.naturalBlackjackAllowed === false ? PAYOUT_WIN : PAYOUT_BLACKJACK,
+    };
   }
   if (dealerHand.status === HandStatus.BUSTED) {
     return { status: MainBetStatus.WON, multiplier: PAYOUT_WIN };
@@ -1144,11 +1735,81 @@ function resolveSideBetOutcome(won: boolean, oddsValue: number): SideBetResoluti
     : { status: SideBetStatus.LOST, multiplier: 0, isRefund: false };
 }
 
+function buildBetceptionResolution(input: {
+  mainBet: MainBet;
+  sideBets: (SideBet & { type: SidebetType })[];
+  sideBetResolutionSteps: BetceptionResolutionStep[];
+  mainBetPayoutCents: bigint;
+  splitBetStakeTotal: bigint;
+  splitBetPayoutTotal: bigint;
+  sideBetPayoutTotal: bigint;
+}): BetceptionResolution {
+  const totalStakeCents = input.sideBets.reduce(
+    (sum, sideBet) => sum + decimalToCents(sideBet.amount),
+    decimalToCents(input.mainBet.amount) + input.splitBetStakeTotal,
+  );
+  const totalPayoutCents = input.mainBetPayoutCents + input.splitBetPayoutTotal + input.sideBetPayoutTotal;
+  return {
+    depthLevel: 1 + countBetceptionCategories(input.sideBets),
+    totalPayout: centsToDecimal(totalPayoutCents),
+    totalStake: centsToDecimal(totalStakeCents),
+    steps: [
+      {
+        id: `main-${input.mainBet.id}`,
+        kind: 'MAIN_BET',
+        status: input.mainBet.status,
+        amount: input.mainBet.amount,
+        payout: input.mainBet.settledAmount,
+        multiplier: input.mainBet.payoutMultiplier,
+        selection: null,
+      },
+      ...input.sideBetResolutionSteps,
+    ],
+  };
+}
+
+function buildSideBetResolutionStep(
+  sideBet: SideBet & { type: SidebetType },
+): BetceptionResolutionStep {
+  return {
+    id: `side-${sideBet.id}`,
+    kind: sideBet.type.code,
+    status: sideBet.status,
+    amount: sideBet.amount,
+    payout: sideBet.settledAmount,
+    multiplier: sideBet.odds,
+    selection: sideBetSelectionPayload(sideBet),
+  };
+}
+
+function countBetceptionCategories(sideBets: (SideBet & { type: SidebetType })[]) {
+  return new Set(
+    sideBets
+      .filter((sideBet) => BETCEPTION_SIDE_BET_CODES.has(sideBet.type.code))
+      .map((sideBet) =>
+        sideBet.type.code === 'CARD_EXACT' || sideBet.type.code === 'CARD_SUIT'
+          ? 'CARD'
+          : sideBet.type.code,
+      ),
+  ).size;
+}
+
+function sideBetSelectionPayload(sideBet: SideBet): Record<string, unknown> | null {
+  if (sideBet.selectionJson) return sideBet.selectionJson;
+  const selection: Record<string, unknown> = {};
+  if (sideBet.predictedColor) selection['color'] = sideBet.predictedColor;
+  if (sideBet.predictedSuit) selection['suit'] = sideBet.predictedSuit;
+  if (sideBet.predictedRank) selection['rank'] = sideBet.predictedRank;
+  if (sideBet.targetContext) selection['targetContext'] = sideBet.targetContext;
+  return Object.keys(selection).length ? selection : null;
+}
+
 function evaluateSideBet(
   sideBet: SideBet & { type: SidebetType },
   round: RoundWithRelations,
   userId: string,
   oddsBonus = 0,
+  context?: SideBetEvaluationContext,
 ): SideBetResolution {
   const baseOddsValue = Number(sideBet.odds ?? sideBet.type.baseOdds ?? 0);
   const oddsValue =
@@ -1159,12 +1820,56 @@ function evaluateSideBet(
     return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
   }
 
+  const code = sideBet.type.code;
+  if (code === 'CARD_EXACT') {
+    const playerCards = getAllUserPlayerCards(round, userId);
+    const won = playerCards.some(
+      (card) => card.rank === sideBet.predictedRank && card.suit === sideBet.predictedSuit,
+    );
+    return resolveSideBetOutcome(won, oddsValue);
+  }
+
+  if (code === 'CARD_SUIT') {
+    const suit = (sideBet.selectionJson?.['suit'] as CardSuit | undefined) ?? sideBet.predictedSuit;
+    const won = !!suit && getAllUserPlayerCards(round, userId).some((card) => card.suit === suit);
+    return resolveSideBetOutcome(won, oddsValue);
+  }
+
+  if (code === 'DEALER_BUST') {
+    const dealer = getDealerHand(round);
+    if (!dealer) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    return resolveSideBetOutcome(dealer.status === HandStatus.BUSTED, oddsValue);
+  }
+
+  if (code === 'PILL_TRIGGER') {
+    const expectedCode = sideBet.selectionJson?.['powerupCode'];
+    if (typeof expectedCode !== 'string' || !isPowerPillCode(expectedCode) || !context) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    return resolveSideBetOutcome(context.triggeredPowerupEffect?.code === expectedCode, oddsValue);
+  }
+
+  if (code === 'PLAYER_BLACKJACK') {
+    const player = getPlayerHand(round, userId);
+    const won = player?.status === HandStatus.BLACKJACK && (player.cards?.length ?? 0) === 2;
+    return resolveSideBetOutcome(won, oddsValue);
+  }
+
+  if (code === 'SPLIT_COUNT') {
+    const expected = readSplitCountSelection(sideBet.selectionJson);
+    if (!expected) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    return resolveSideBetOutcome(getSplitHands(round, userId).length === expected, oddsValue);
+  }
+
   const targetCard = getTargetCard(round, sideBet.targetContext, userId);
   if (!targetCard) {
     return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
   }
 
-  const code = sideBet.type.code;
   if (code === 'FIRST_CARD_COLOR') {
     const actualColor =
       targetCard.suit === CardSuit.HEARTS || targetCard.suit === CardSuit.DIAMONDS
@@ -1214,12 +1919,59 @@ function getDealerHand(round: RoundWithRelations) {
 
 function getMainBetForUser(round: RoundWithRelations, userId: string) {
   return (round.mainBets ?? []).find(
-    (bet) => bet.user.id === userId,
+    (bet) => bet.user.id === userId && bet.hand?.ownerType !== HandOwnerType.PLAYER_SPLIT,
   );
+}
+
+function getActivePlayerHand(round: RoundWithRelations, userId: string) {
+  const hands = round.hands ?? [];
+  const primary = hands.find(
+    (hand) =>
+      hand.ownerType === HandOwnerType.PLAYER &&
+      hand.user?.id === userId &&
+      hand.status === HandStatus.ACTIVE,
+  );
+  if (primary) return primary as Hand & { cards: Card[] };
+
+  const split = getSplitHands(round, userId).find((hand) => hand.status === HandStatus.ACTIVE);
+  return (split ?? null) as (Hand & { cards: Card[] }) | null;
+}
+
+function getAllUserPlayerCards(round: RoundWithRelations, userId: string) {
+  return getAllPlayerHands(round, userId).flatMap((hand) => sortCards(hand.cards ?? []));
+}
+
+function getSplitHands(round: RoundWithRelations, userId: string) {
+  return (round.hands ?? []).filter(
+    (hand) => hand.ownerType === HandOwnerType.PLAYER_SPLIT && hand.user?.id === userId,
+  ).sort(compareHandOrder) as (Hand & { cards: Card[] })[];
+}
+
+function getAllPlayerHands(round: RoundWithRelations, userId: string) {
+  return (round.hands ?? []).filter(
+    (hand) =>
+      (hand.ownerType === HandOwnerType.PLAYER || hand.ownerType === HandOwnerType.PLAYER_SPLIT) &&
+      hand.user?.id === userId,
+  ).sort((a, b) => {
+    if (a.ownerType !== b.ownerType) {
+      return a.ownerType === HandOwnerType.PLAYER ? -1 : 1;
+    }
+    return compareHandOrder(a, b);
+  }) as (Hand & { cards: Card[] })[];
+}
+
+function getMainBetForHand(round: RoundWithRelations, handId: string) {
+  return (round.mainBets ?? []).find((bet) => bet.hand?.id === handId);
 }
 
 function sortCards(cards: Card[]): Card[] {
   return [...cards].sort((a, b) => a.drawOrder - b.drawOrder);
+}
+
+function compareHandOrder(a: Hand, b: Hand): number {
+  const created = Number(new Date(a.createdAt).getTime()) - Number(new Date(b.createdAt).getTime());
+  if (Number.isFinite(created) && created !== 0) return created;
+  return Number(a.id) - Number(b.id);
 }
 
 function collectUsedCards(round: RoundWithRelations) {
@@ -1284,11 +2036,3 @@ export const roundTestUtils = {
   resolveMainBet,
   evaluateSideBet,
 };
-
-function isTerminalHandStatus(status: HandStatus) {
-  return status === HandStatus.BLACKJACK || status === HandStatus.BUSTED;
-}
-
-function isHandBusted(hand: Hand) {
-  return hand.status === HandStatus.BUSTED;
-}

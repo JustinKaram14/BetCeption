@@ -6,19 +6,28 @@
     [label]="i18n.t('common.dealer')"
     [hand]="dealerHand"
     [isDealer]="true"
-    [dealOffset]="200"
-    [isActive]="activeHand === HandOwnerType.DEALER"
-    [revealDealerCards]="
-      activeHand === HandOwnerType.DEALER || (!!dealerHand && dealerHand.status !== HandStatus.ACTIVE)
-    "
+    [dealOffset]="280"
+    [isActive]="activeHandId === dealerHand?.id"
+    [hideInactiveActiveStatus]="true"
   ></app-hand>
 
-  <app-hand
-    [label]="i18n.t('common.player')"
-    [hand]="playerHand"
-    [dealOffset]="0"
-    [isActive]="activeHand === HandOwnerType.PLAYER"
-  ></app-hand>
+  <div class="player-hands-row" [ngClass]="'hands-' + playerHandCount">
+    <app-hand
+      [label]="i18n.t('common.player')"
+      [hand]="playerHand"
+      [dealOffset]="0"
+      [isActive]="activeHandId === playerHand?.id"
+      [hideInactiveActiveStatus]="true"
+    ></app-hand>
+    <app-hand
+      *ngFor="let sh of splitHands; let i = index; trackBy: trackSplitHand"
+      [label]="splitHands.length > 1 ? i18n.t('common.playerSplit') + ' ' + (i + 1) : i18n.t('common.playerSplit')"
+      [hand]="sh"
+      [dealOffset]="(i + 1) * 300"
+      [isActive]="activeHandId === sh.id"
+      [hideInactiveActiveStatus]="true"
+    ></app-hand>
+  </div>
 
   <div class="blackjack-banner" *ngIf="showBlackjackBanner">BLACKJACK!</div>
 </div>

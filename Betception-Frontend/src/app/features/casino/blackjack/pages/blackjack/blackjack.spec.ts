@@ -3,7 +3,18 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { Blackjack } from './blackjack';
-import { HandOwnerType, HandStatus, MainBetStatus, RoundStatus, type ActivePowerup, type LevelProgress } from '../../../../../core/api/api.types';
+import {
+  CardRank,
+  CardSuit,
+  HandOwnerType,
+  HandStatus,
+  MainBetStatus,
+  RoundStatus,
+  SideBetStatus,
+  type ActivePowerup,
+  type BetceptionResolution,
+  type LevelProgress,
+} from '../../../../../core/api/api.types';
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
@@ -13,7 +24,7 @@ describe('Blackjack', () => {
   let fixture: ComponentFixture<Blackjack>;
   const rngMock = jasmine.createSpyObj<Rng>(
     'Rng',
-    ['startRound', 'getActiveRound', 'hit', 'stand', 'settle'],
+    ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle', 'double', 'split'],
   );
   const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
   const apiMock = jasmine.createSpyObj<BetceptionApi>(
@@ -59,6 +70,7 @@ describe('Blackjack', () => {
             settledAmount: null,
             settledAt: null,
           },
+          splitBets: [],
           playerHand: {
             id: 'hand-player-1',
             ownerType: HandOwnerType.PLAYER,
@@ -66,6 +78,7 @@ describe('Blackjack', () => {
             handValue: 0,
             cards: [],
           },
+          splitHands: [],
           dealerHand: {
             id: 'hand-dealer-1',
             ownerType: HandOwnerType.DEALER,
@@ -112,7 +125,10 @@ describe('Blackjack', () => {
     rngMock.startRound.calls.reset();
     rngMock.hit.calls.reset();
     rngMock.stand.calls.reset();
+    rngMock.dealerStep.calls.reset();
     rngMock.settle.calls.reset();
+    rngMock.double.calls.reset();
+    rngMock.split.calls.reset();
   });
 
   function makeRoundState(
@@ -134,6 +150,7 @@ describe('Blackjack', () => {
         settledAmount: mainBetStatus === MainBetStatus.LOST ? '0' : null,
         settledAt: settled ? new Date().toISOString() : null,
       },
+      splitBets: [],
       playerHand: {
         id: 'hand-p',
         ownerType: HandOwnerType.PLAYER,
@@ -141,6 +158,7 @@ describe('Blackjack', () => {
         handValue: 14,
         cards: [],
       },
+      splitHands: [],
       dealerHand: {
         id: 'hand-d',
         ownerType: HandOwnerType.DEALER,
@@ -202,6 +220,22 @@ describe('Blackjack', () => {
       expect(rngMock.startRound).not.toHaveBeenCalled();
     });
 
+    it('onDeal is a no-op while round resolution is active', () => {
+      component.roundResolutionActive = true;
+      component.betAmount = 25;
+      component.onDeal();
+      expect(component.showBetceptionMenu).toBeFalse();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
+    it('onDeal is a no-op while the round overlay is visible', () => {
+      component.showRoundOverlay = true;
+      component.betAmount = 25;
+      component.onDeal();
+      expect(component.showBetceptionMenu).toBeFalse();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
     it('onDeal sets error when betAmount is 0', () => {
       component.betAmount = 0;
       component.onDeal();
@@ -255,10 +289,12 @@ describe('Blackjack', () => {
   describe('onNextRound', () => {
     it('resets round-related state', () => {
       component.showRoundOverlay = true;
+      component.roundResolutionActive = true;
       component.roundOutcome = { headline: 'Win!', detail: null, won: true, lost: false, push: false, dealerInfo: null };
       component.round = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED);
       component.onNextRound();
       expect(component.showRoundOverlay).toBeFalse();
+      expect(component.roundResolutionActive).toBeFalse();
       expect(component.round).toBeNull();
       expect(component.roundOutcome).toBeNull();
     });
@@ -357,6 +393,8 @@ describe('Blackjack', () => {
       expect(component.showBlackjackBanner).toBeTrue();
       tick(1500);
       expect(component.showBlackjackBanner).toBeFalse();
+      expect(rngMock.dealerStep).not.toHaveBeenCalled();
+      expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
     }));
 
     it('does not show banner for non-blackjack hand after a hit', fakeAsync(() => {
@@ -439,15 +477,26 @@ describe('Blackjack', () => {
   });
 
   describe('onDeal', () => {
-    it('calls rng.startRound and stores the returned round', fakeAsync(() => {
+    it('opens the betception menu before starting the round', () => {
+      component.betAmount = 25;
+      component.round = null;
+
+      component.onDeal();
+
+      expect(component.showBetceptionMenu).toBeTrue();
+      expect(rngMock.startRound).not.toHaveBeenCalled();
+    });
+
+    it('starts the round after confirming betception bets', fakeAsync(() => {
       const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
       rngMock.startRound.and.returnValue(of({ round: inProgress }));
 
       component.betAmount = 25;
       component.round = null;
       component.onDeal();
+      component.onConfirmBetception();
 
-      expect(rngMock.startRound).toHaveBeenCalledOnceWith({ betAmount: 25 });
+      expect(rngMock.startRound).toHaveBeenCalledOnceWith({ betAmount: 25, sideBets: [] });
       expect(component.round!.status).toBe(RoundStatus.IN_PROGRESS);
       expect(component.busyAction).toBeNull();
 
@@ -470,10 +519,141 @@ describe('Blackjack', () => {
 
       component.betAmount = 25;
       component.onDeal();
+      component.onConfirmBetception();
 
       expect(component.error).toBe('Insufficient balance');
       expect(component.busyAction).toBeNull();
     }));
+  });
+
+  describe('Betception side bets', () => {
+    const activeRedPill: ActivePowerup = {
+      type: {
+        id: 1,
+        code: 'RED_PILL',
+        title: 'Red Pill',
+        description: null,
+        minLevel: 1,
+        price: 300,
+        effect: null,
+      },
+      usesRemaining: 3,
+    };
+
+    it('sends expanded Betception side bets when confirming', () => {
+      const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      rngMock.startRound.and.returnValue(of({ round: inProgress }));
+
+      component.balance = 1000;
+      component.betAmount = 100;
+      component.activePowerup = activeRedPill;
+      component.onSelectCardSuit(CardSuit.HEARTS);
+      component.onSelectCardRank(CardRank.JACK);
+      component.onAddCardBet(25);
+      component.onAddSuitBet(15);
+      component.onAddDealerBustBet(50);
+      component.onAddPillTriggerBet(5);
+      component.onAddBlackjackBet(10);
+      component.onSelectSplitCount(2);
+      component.onAddSplitCountBet(30);
+
+      component.onConfirmBetception();
+
+      expect(rngMock.startRound).toHaveBeenCalledOnceWith({
+        betAmount: 100,
+        sideBets: [
+          {
+            typeCode: 'CARD_EXACT',
+            amount: 25,
+            predictedSuit: CardSuit.HEARTS,
+            predictedRank: CardRank.JACK,
+          },
+          {
+            typeCode: 'CARD_SUIT',
+            amount: 15,
+            predictedSuit: CardSuit.HEARTS,
+          },
+          {
+            typeCode: 'DEALER_BUST',
+            amount: 50,
+          },
+          {
+            typeCode: 'PILL_TRIGGER',
+            amount: 5,
+          },
+          {
+            typeCode: 'PLAYER_BLACKJACK',
+            amount: 10,
+          },
+          {
+            typeCode: 'SPLIT_COUNT',
+            amount: 30,
+            selection: { splitCount: 2 },
+          },
+        ],
+      });
+    });
+
+    it('keeps the pill trigger unavailable without an active pill', () => {
+      component.balance = 1000;
+      component.betAmount = 100;
+      component.activePowerup = null;
+
+      component.onAddPillTriggerBet(25);
+      component.onDeal();
+      fixture.detectChanges();
+
+      const pillTile: HTMLButtonElement = fixture.nativeElement.querySelectorAll('.betception-tile')[2];
+      expect(component.pillTriggerBetAmount).toBe(0);
+      expect(pillTile.disabled).toBeTrue();
+      expect(pillTile.classList.contains('is-unavailable')).toBeTrue();
+    });
+
+    it('reveals Betception settlement rows one step at a time', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      const resolution: BetceptionResolution = {
+        depthLevel: 4,
+        totalStake: '100',
+        totalPayout: '1200',
+        steps: [
+          { id: 'main', kind: 'MAIN_BET', status: MainBetStatus.WON, amount: '50', payout: '100', multiplier: '2.000', selection: null },
+          { id: 'card', kind: 'CARD_EXACT', status: SideBetStatus.WON, amount: '25', payout: '300', multiplier: '12.000', selection: { suit: CardSuit.HEARTS, rank: CardRank.JACK } },
+          { id: 'dealer-bust', kind: 'DEALER_BUST', status: SideBetStatus.LOST, amount: '25', payout: '0', multiplier: '3.000', selection: { target: 'DEALER', outcome: 'BUST' } },
+        ],
+      };
+      rngMock.settle.and.returnValue(of({ round: settled, betceptionResolution: resolution }));
+
+      component.round = stood;
+      component.onSettle();
+
+      expect(component.betceptionResolution).toBe(resolution);
+      expect(component.revealedResolutionStepCount).toBe(0);
+      tick(649);
+      expect(component.revealedResolutionStepCount).toBe(0);
+      tick(1);
+      expect(component.revealedResolutionStepCount).toBe(1);
+      tick(620);
+      expect(component.revealedResolutionStepCount).toBe(2);
+      tick(620);
+      expect(component.revealedResolutionStepCount).toBe(3);
+    }));
+
+    it('classifies win animations relative to total stake', () => {
+      component.finalStakeAmount = 100;
+
+      component.finalPayoutAmount = 150;
+      expect(component.finalPayoutTier).toBe('win');
+
+      component.finalPayoutAmount = 300;
+      expect(component.finalPayoutTier).toBe('big');
+
+      component.finalPayoutAmount = 600;
+      expect(component.finalPayoutTier).toBe('super');
+
+      component.finalPayoutAmount = 1000;
+      expect(component.finalPayoutTier).toBe('mega');
+    });
   });
 
   describe('onHit', () => {
@@ -493,12 +673,20 @@ describe('Blackjack', () => {
   });
 
   describe('onStand', () => {
-    it('calls rng.stand, then auto-settles after 850 ms and shows the round overlay', fakeAsync(() => {
+    it('calls rng.stand, runs one dealer step, then settles and shows the round overlay', fakeAsync(() => {
       const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const dealerComplete = {
+        ...stood,
+        dealerHand: { ...stood.dealerHand, status: HandStatus.STOOD, handValue: 18 },
+      };
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
 
       rngMock.stand.and.returnValue(of({ round: stood }));
+      rngMock.dealerStep.and.returnValue(of({
+        round: dealerComplete,
+        dealerAction: { kind: 'STAND', cardId: null, dealerTurnComplete: true },
+      }));
       rngMock.settle.and.returnValue(of({ round: settled }));
 
       component.round = inProgress;
@@ -507,8 +695,11 @@ describe('Blackjack', () => {
       expect(rngMock.stand).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.playerHand?.status).toBe(HandStatus.STOOD);
 
-      // auto-settle fires at 850 ms
-      tick(850);
+      tick(620);
+      expect(rngMock.dealerStep).toHaveBeenCalledOnceWith('round-1');
+      expect(component.round?.dealerHand?.status).toBe(HandStatus.STOOD);
+
+      tick(650);
       expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.status).toBe(RoundStatus.SETTLED);
 
@@ -531,6 +722,7 @@ describe('Blackjack', () => {
 
       expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
       expect(component.round?.status).toBe(RoundStatus.SETTLED);
+      expect(component.isBusy).toBeTrue();
 
       tick(650);
       expect(component.showRoundOverlay).toBeTrue();
@@ -545,7 +737,7 @@ describe('Blackjack', () => {
       'purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups',
     ]);
     const rngPowerupMock = jasmine.createSpyObj<Rng>(
-      'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'settle'],
+      'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle', 'double', 'split'],
     );
     const walletPowerupMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
 
@@ -568,7 +760,9 @@ describe('Blackjack', () => {
       startedAt: null,
       endedAt: null,
       mainBet: { id: 'bet-1', amount: '10', status: MainBetStatus.VOID, payoutMultiplier: null, settledAmount: null, settledAt: null },
+      splitBets: [],
       playerHand: { id: 'hand-p', ownerType: HandOwnerType.PLAYER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
+      splitHands: [],
       dealerHand: { id: 'hand-d', ownerType: HandOwnerType.DEALER, status: HandStatus.SETTLED, handValue: 0, cards: [] },
       sideBets: [],
       playerProgress: null,

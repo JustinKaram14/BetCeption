@@ -37,6 +37,21 @@
   animation:pulse 8s infinite alternate ease-in-out;
   z-index:-1;
 }
+.player-hands-row{
+  display:grid;
+  gap:18px;
+  justify-content:center;
+  align-items:start;
+  width:100%;
+  min-width:0;
+}
+.player-hands-row.hands-1{grid-template-columns:minmax(0,300px)}
+.player-hands-row.hands-2{grid-template-columns:repeat(2,minmax(0,300px))}
+.player-hands-row.hands-3{grid-template-columns:repeat(3,minmax(0,300px))}
+.player-hands-row.hands-4{
+  grid-template-columns:repeat(4,minmax(0,286px));
+  gap:12px;
+}
 @keyframes pulse{
   0%{transform:translate(-50%,-50%) scale(.9);opacity:.1}
   100%{transform:translate(-50%,-50%) scale(1.1);opacity:.15}
@@ -62,25 +77,55 @@
 
 @media (max-width:720px){
   :host{
-    flex:0 0 auto;
+    flex:1 1 auto;
+    min-height:0;
   }
   .game-table{
+    height:100%;
     gap:18px;
-    justify-content:flex-start;
-    padding-top:50px;
+    justify-content:center;
+    padding-top:132px;
+    overflow:hidden;
   }
   .title{
-    top:10px;
-    max-width:calc(100% - 58px);
-    font-size:1.55rem;
+    top:8px;
+    left:50%;
+    transform:translateX(-50%);
+    width:calc(100% - 82px);
+    max-width:310px;
+    font-size:clamp(1.16rem,5.3vw,1.42rem);
     line-height:1.05;
-    text-align:left;
-    align-self:flex-start;
-    left:0;
+    text-align:center;
+    align-self:center;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .betception-orb{
-    width:260px;
-    height:260px;
+    width:230px;
+    height:230px;
+  }
+  .player-hands-row{
+    justify-content:center;
+    overflow:visible;
+    padding:0;
+  }
+  .player-hands-row.hands-1{
+    grid-template-columns:minmax(0,178px);
+  }
+  .player-hands-row.hands-2{
+    grid-template-columns:repeat(2,minmax(0,158px));
+    gap:12px;
+  }
+  .player-hands-row.hands-3,
+  .player-hands-row.hands-4{
+    grid-template-columns:repeat(2,minmax(0,148px));
+    gap:8px 10px;
+  }
+  .player-hands-row.hands-3 app-hand:last-child{
+    grid-column:1 / -1;
+    justify-self:center;
+    width:148px;
   }
   .blackjack-banner{
     width:100%;
@@ -93,8 +138,22 @@
 @media (max-width:380px){
   .game-table{
     gap:14px;
+    padding-top:128px;
   }
   .title{
-    font-size:1.35rem;
+    width:calc(100% - 72px);
+    font-size:1.04rem;
+  }
+  .player-hands-row.hands-2{
+    grid-template-columns:repeat(2,minmax(0,144px));
+    gap:8px;
+  }
+  .player-hands-row.hands-3,
+  .player-hands-row.hands-4{
+    grid-template-columns:repeat(2,minmax(0,134px));
+    gap:7px;
+  }
+  .player-hands-row.hands-3 app-hand:last-child{
+    width:134px;
   }
 }

@@ -14,6 +14,7 @@ import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
+import { I18n } from '../../../../../core/i18n/i18n';
 
 describe('HomepageComponent', () => {
   let fixture: ComponentFixture<HomepageComponent>;
@@ -55,6 +56,7 @@ describe('HomepageComponent', () => {
       ],
     );
 
+    window.localStorage.setItem('betception-language', 'de');
     authFacadeMock.login.and.returnValue(of(null));
     authFacadeMock.register.and.returnValue(of({ message: 'ok' } as any));
     authFacadeMock.logout.and.returnValue(of(undefined));
@@ -139,6 +141,7 @@ describe('HomepageComponent', () => {
       ],
     }).compileComponents();
 
+    TestBed.inject(I18n).setLanguage('de');
     routerNavigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
 
     authFacadeMock.login.calls.reset();
@@ -346,6 +349,21 @@ describe('HomepageComponent', () => {
     authFacadeMock.login.and.returnValue(of({ sub: 'u1', email: 't@t.com', username: 'new' } as any));
     component.onRegister({ email: 't@t.com', username: 'new', password: 'pw' });
     expect(toastSpy).toHaveBeenCalled();
+  });
+
+  it('translates backend email validation errors on register', () => {
+    const toastSpy = spyOn((component as any).toast, 'error');
+    authFacadeMock.register.and.returnValue(throwError(() => ({
+      error: {
+        code: 'EMAIL_DISPOSABLE',
+        message: 'Disposable email addresses are not allowed.',
+      },
+    })));
+
+    component.onRegister({ email: 't@mailinator.com', username: 'new', password: 'pw' });
+
+    expect(toastSpy.calls.mostRecent().args[0]).toContain('Wegwerf-Adressen');
+    expect(authFacadeMock.login).not.toHaveBeenCalled();
   });
 
   it('calls logout on authFacade and does not throw on success', () => {

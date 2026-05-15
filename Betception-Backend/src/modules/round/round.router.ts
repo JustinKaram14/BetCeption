@@ -5,12 +5,15 @@ import {
   startRound,
   hitRound,
   standRound,
+  dealerStepRound,
   getActiveRound,
   getRound,
   settleRound,
   peekCard,
   swapCard,
   undoHit,
+  doubleRound,
+  splitRound,
 } from './round.controller.js';
 import {
   RoundIdParamsSchema,
@@ -32,6 +35,11 @@ roundRouter.post(
   '/stand/:roundId',
   validateRequest(RoundIdParamsSchema, 'params'),
   standRound,
+);
+roundRouter.post(
+  '/dealer-step/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  dealerStepRound,
 );
 roundRouter.get('/active', getActiveRound);
 roundRouter.get(
@@ -59,4 +67,14 @@ roundRouter.post(
   '/undo/:roundId',
   validateRequest(RoundIdParamsSchema, 'params'),
   undoHit,
+);
+roundRouter.post(
+  '/double/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  doubleRound,
+);
+roundRouter.post(
+  '/split/:roundId',
+  validateRequest(RoundIdParamsSchema, 'params'),
+  splitRound,
 );

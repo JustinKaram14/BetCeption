@@ -13,6 +13,43 @@
       </svg>
     </a>
 
+    <aside class="betception-panel" *ngIf="showBetceptionPanel">
+      <div class="betception-panel__head">
+        <strong>{{ currentDepthLevel }}D</strong>
+        <span>{{ i18n.t('betception.depthLevel') }}: {{ currentDepthLevel }}</span>
+      </div>
+      <div class="betception-panel__divider"></div>
+      <div class="betception-panel__rows" #betceptionPanelRowsContainer>
+        <div
+          class="betception-panel__row"
+          *ngFor="let row of betceptionPanelRows; trackBy: trackBetceptionPanelRow"
+          [ngClass]="{
+            'is-hidden': row.revealed === false,
+            'is-won': row.won,
+            'is-lost': row.lost,
+            'is-push': row.push,
+            'has-result': !!row.status
+          }"
+        >
+          <div class="betception-panel__copy" [class.has-items]="row.items?.length">
+            <span>{{ row.label }}:</span>
+            <b *ngIf="!row.items?.length">{{ row.value }}</b>
+            <div class="betception-panel__items" *ngIf="row.items?.length">
+              <b *ngFor="let item of row.items ?? []">{{ item }}</b>
+            </div>
+          </div>
+          <div class="betception-panel__result" [class.is-visible]="row.status">
+            <em *ngIf="row.status" [attr.aria-label]="row.status" [title]="row.status">{{ row.mark }}</em>
+            <strong *ngIf="row.payout">{{ row.payout }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="betception-panel__total" *ngIf="betceptionResolution">
+        <span>{{ i18n.t('betception.totalPayout') }}</span>
+        <strong>{{ betceptionPanelPayoutDisplay }}</strong>
+      </div>
+    </aside>
+
     <app-level-progress
       class="game-level-progress"
       [progress]="levelProgress"
@@ -23,7 +60,8 @@
     <app-table
       [dealerHand]="round?.dealerHand ?? null"
       [playerHand]="round?.playerHand ?? null"
-      [activeHand]="activeHand"
+      [splitHands]="round?.splitHands ?? []"
+      [activeHandId]="activeHandId"
       [showBlackjackBanner]="showBlackjackBanner"
     ></app-table>
 
@@ -40,27 +78,85 @@
           </svg>
         </div>
         <div class="levelup-crate-text">
-          <strong>Level Up!</strong>
-          <span>Du hast eine <em>{{ levelUpCrate.tierLabel }}</em> Kiste erhalten!</span>
+          <strong>{{ i18n.t('crate.levelUpTitle') }}</strong>
+          <span>{{ i18n.t('crate.levelUpReceived', { tier: levelUpCrate.tierLabel }) }}</span>
         </div>
-        <button class="btn levelup-crate-dismiss" (click)="onDismissLevelUpCrate()">X</button>
+        <button class="btn levelup-crate-dismiss" (click)="onDismissLevelUpCrate()" [attr.aria-label]="i18n.t('common.close')">X</button>
       </div>
     </div>
 
     <!-- Round-over overlay -->
-    <div class="round-over-overlay" *ngIf="showRoundOverlay">
-      <div class="round-over-card">
-        <div class="round-over-result"
-             [class.won]="roundOutcome?.won"
-             [class.lost]="roundOutcome?.lost"
-             [class.push]="roundOutcome?.push">
-          {{ roundOutcome?.headline }}
-        </div>
+    <div
+      class="round-over-overlay"
+      *ngIf="showRoundOverlay"
+      [ngClass]="payoutTier"
+      [class.is-loss]="roundOutcome?.lost"
+      (click)="onNextRound()"
+    >
+      <div
+        class="round-over-card"
+        [ngClass]="payoutTier"
+        [class.is-loss]="roundOutcome?.lost"
+        [class.tier-bump]="payoutFramePulseTier"
+        (click)="$event.stopPropagation()"
+      >
+        <div
+          class="round-over-burst"
+          *ngIf="showPayoutBurst"
+          [class.tier-burst]="payoutFramePulseTier === 'super' || payoutFramePulseTier === 'mega'"
+        ></div>
+        <ng-container [ngSwitch]="payoutTier">
+          <div
+            *ngSwitchCase="'mega'"
+            class="round-over-result tier-pop"
+            [class.won]="roundOutcome?.won"
+          >
+            {{ payoutCelebrationLabel }}
+          </div>
+          <div
+            *ngSwitchCase="'super'"
+            class="round-over-result tier-pop"
+            [class.won]="roundOutcome?.won"
+          >
+            {{ payoutCelebrationLabel }}
+          </div>
+          <div
+            *ngSwitchCase="'big'"
+            class="round-over-result tier-pop"
+            [class.won]="roundOutcome?.won"
+          >
+            {{ payoutCelebrationLabel }}
+          </div>
+          <div
+            *ngSwitchCase="'win'"
+            class="round-over-result tier-pop"
+            [class.won]="roundOutcome?.won"
+          >
+            {{ payoutCelebrationLabel }}
+          </div>
+          <div
+            *ngSwitchDefault
+            class="round-over-result"
+            [class.won]="roundOutcome?.won"
+            [class.lost]="roundOutcome?.lost"
+            [class.push]="roundOutcome?.push"
+          >
+            {{ payoutCelebrationLabel }}
+          </div>
+        </ng-container>
         <div class="round-over-dealer" *ngIf="roundOutcome?.dealerInfo">
           {{ roundOutcome?.dealerInfo }}
         </div>
-        <div class="round-over-amount" *ngIf="roundOutcome?.detail">
+        <div class="round-over-slot-total" *ngIf="finalPayoutAmount > 0" [ngClass]="payoutTier">
+          <span>{{ i18n.t('betception.finalPayout') }}</span>
+          <strong>{{ animatedPayoutDisplay }}</strong>
+        </div>
+        <div class="round-over-amount" *ngIf="roundOutcome?.detail && finalPayoutAmount <= 0">
           {{ roundOutcome?.detail }}
+        </div>
+        <div class="round-over-betception" *ngIf="hasBetceptionPayout">
+          <span>{{ i18n.t('betception.betceptionPayout') }}</span>
+          <strong>{{ betceptionPayoutDisplay }}</strong>
         </div>
         <div class="round-over-actions">
           <button class="btn btn-neue-runde" (click)="onNextRound()">{{ i18n.t('blackjack.newRound') }}</button>
@@ -74,15 +170,19 @@
       [balance]="balance"
       [roundStatus]="round?.status ?? null"
       [playerHandStatus]="playerHandStatus"
-      [busy]="!!busyAction"
+      [busy]="isBusy"
       [activePowerup]="activePowerup"
       [pillPulse]="pillPulse"
       [pillExpiredCode]="pillExpiredCode"
+      [playerCardCount]="activePlayerCardCount"
+      [canSplitHand]="canSplitHandNow"
       (placeBet)="onPlaceBet($event)"
       (resetBet)="onResetBet()"
       (deal)="onDeal()"
       (hit)="onHit()"
       (stand)="onStand()"
+      (double)="onDouble()"
+      (split)="onSplit()"
       (openPowerupMenu)="onOpenPowerupMenu()"
     ></app-controls>
   </div>
@@ -98,4 +198,169 @@
     (equip)="onEquipPowerup($event)"
     (close)="onClosePowerupMenu()"
   ></app-powerup-menu>
+
+  <div class="betception-modal" *ngIf="showBetceptionMenu" (click)="onCloseBetceptionMenu()">
+    <div class="betception-modal__card" (click)="$event.stopPropagation()">
+      <button class="betception-modal__close" type="button" (click)="onCloseBetceptionMenu()" [attr.aria-label]="i18n.t('common.close')">X</button>
+
+      <ng-container [ngSwitch]="betceptionView">
+        <section class="betception-view" *ngSwitchCase="'overview'">
+          <h2>{{ i18n.t('betception.title') }}</h2>
+          <p>{{ i18n.t('betception.subtitle') }}</p>
+          <div class="betception-overview-grid">
+            <button class="betception-tile" type="button" [class.has-stake]="cardBetTotal + suitBetTotal > 0" (click)="onBetceptionView('cards')">
+              <span class="betception-tile__icon">♠</span>
+              <strong>{{ i18n.t('betception.cardExactTitle') }}</strong>
+              <small>{{ i18n.t('betception.cardExactSubtitle') }}</small>
+              <b>{{ formatCoins(cardBetTotal + suitBetTotal) }}</b>
+            </button>
+            <button class="betception-tile" type="button" [class.has-stake]="dealerBustBetAmount > 0" (click)="onBetceptionView('dealerBust')">
+              <span class="betception-tile__icon">BUST</span>
+              <strong>{{ i18n.t('betception.dealerBustTitle') }}</strong>
+              <small>{{ i18n.t('betception.dealerBustSubtitle') }}</small>
+              <b>{{ formatCoins(dealerBustBetAmount) }}</b>
+            </button>
+            <button
+              class="betception-tile"
+              type="button"
+              [class.has-stake]="pillTriggerBetAmount > 0"
+              [class.is-unavailable]="!activePowerup"
+              (click)="onBetceptionView('pill')"
+              [disabled]="!activePowerup"
+            >
+              <span
+                class="betception-tile__icon pill-icon"
+                [ngClass]="activePowerup ? (activePowerup.type.code === 'RED_PILL' ? 'pill-icon--red' : 'pill-icon--blue') : 'pill-icon--inactive'"
+              ></span>
+              <strong>{{ i18n.t('betception.pillTitle') }}</strong>
+              <small>{{ activePowerup ? i18n.t('betception.pillSubtitle', { odds: pillTriggerOddsLabel() }) : i18n.t('betception.pillUnavailable') }}</small>
+              <b>{{ formatCoins(pillTriggerBetAmount) }}</b>
+            </button>
+            <button class="betception-tile" type="button" [class.has-stake]="blackjackBetAmount > 0" (click)="onBetceptionView('blackjack')">
+              <span class="betception-tile__icon">21</span>
+              <strong>{{ i18n.t('betception.blackjackTitle') }}</strong>
+              <small>{{ i18n.t('betception.blackjackSubtitle') }}</small>
+              <b>{{ formatCoins(blackjackBetAmount) }}</b>
+            </button>
+            <button class="betception-tile" type="button" [class.has-stake]="splitCountBetTotal > 0" (click)="onBetceptionView('splitCount')">
+              <span class="betception-tile__icon">SPLIT</span>
+              <strong>{{ i18n.t('betception.splitCountTitle') }}</strong>
+              <small>{{ i18n.t('betception.splitCountSubtitle') }}</small>
+              <b>{{ formatCoins(splitCountBetTotal) }}</b>
+            </button>
+          </div>
+        </section>
+
+        <section class="betception-view betception-view--cards" *ngSwitchCase="'cards'">
+          <h2>{{ i18n.t('betception.cardExactTitle') }}</h2>
+          <p>{{ i18n.t('betception.cardExactSubtitle') }}</p>
+          <div class="betception-suits">
+            <button
+              *ngFor="let suit of cardSuits"
+              type="button"
+              [ngClass]="{ selected: isSuitSelected(suit), red: isRedSuit(suit), 'is-bet-target': isSuitBetTarget(suit), 'has-bet': suitBetAmount(suit) > 0 }"
+              (click)="onSelectCardSuit(suit)"
+              [attr.aria-label]="suitName(suit)"
+            >
+              <span>{{ suitSymbol(suit) }}</span>
+              <b *ngIf="suitBetAmount(suit) > 0">{{ formatCoins(suitBetAmount(suit)) }}</b>
+            </button>
+          </div>
+          <div class="betception-card-grid">
+            <button
+              *ngFor="let rank of cardRanks"
+              type="button"
+              [ngClass]="{ selected: isRankSelected(rank), red: isRedSuit(selectedCardSuit), 'has-bet': cardBetAmount(selectedCardSuit, rank) > 0, 'is-bet-target': cardBetTarget === 'card' && isRankSelected(rank) }"
+              (click)="onSelectCardRank(rank)"
+            >
+              <span class="betception-card-rank betception-card-rank--top">{{ rank }}</span>
+              <i class="betception-card-suit">{{ suitSymbol(selectedCardSuit) }}</i>
+              <span class="betception-card-rank betception-card-rank--bottom">{{ rank }}</span>
+              <b *ngIf="cardBetAmount(selectedCardSuit, rank) > 0">{{ formatCoins(cardBetAmount(selectedCardSuit, rank)) }}</b>
+            </button>
+          </div>
+          <div class="betception-selection-line">
+            <span>{{ selectedCardMenuLabelKey }}: <b>{{ selectedCardMenuLabel }}</b></span>
+            <strong>{{ formatCoins(currentCardMenuBetAmount) }}</strong>
+          </div>
+          <div class="betception-chip-row">
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddCardMenuBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+          </div>
+          <button class="btn betception-clear" type="button" (click)="onClearSelectedCardMenuBet()" [disabled]="currentCardMenuBetAmount <= 0">{{ i18n.t('betception.clearSelection') }}</button>
+        </section>
+
+        <section class="betception-view" *ngSwitchCase="'dealerBust'">
+          <h2>{{ i18n.t('betception.dealerBustTitle') }}</h2>
+          <p>{{ i18n.t('betception.dealerBustSubtitle') }}</p>
+          <div class="betception-choice-grid betception-choice-grid--single">
+            <button type="button" class="dealer-choice dealer-bust-choice selected">
+              <span>{{ i18n.t('betception.dealerBustTarget') }}</span>
+              <b class="betception-stake-badge" *ngIf="dealerBustBetAmount > 0">{{ formatCoins(dealerBustBetAmount) }}</b>
+            </button>
+          </div>
+          <div class="betception-chip-row">
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddDealerBustBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+          </div>
+          <button class="btn betception-clear" type="button" (click)="onClearDealerBustBet()" [disabled]="dealerBustBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
+        </section>
+
+        <section class="betception-view" *ngSwitchCase="'pill'">
+          <h2>{{ i18n.t('betception.pillTitle') }}</h2>
+          <p>{{ activePowerup ? i18n.t('betception.pillSubtitle', { odds: pillTriggerOddsLabel() }) : i18n.t('betception.pillUnavailable') }}</p>
+          <div class="betception-pill-target" [ngClass]="activePowerup?.type?.code === 'RED_PILL' ? 'is-red' : 'is-blue'">
+            <span class="pill-icon" [ngClass]="activePowerup?.type?.code === 'RED_PILL' ? 'pill-icon--red' : 'pill-icon--blue'"></span>
+            <strong>{{ activePowerup?.type?.title ?? i18n.t('betception.pillShort') }}</strong>
+            <b class="betception-stake-badge" *ngIf="pillTriggerBetAmount > 0">{{ formatCoins(pillTriggerBetAmount) }}</b>
+          </div>
+          <div class="betception-chip-row">
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddPillTriggerBet(chip)" [disabled]="!activePowerup || !canAddSideBetChip(chip)">{{ chip }}</button>
+          </div>
+          <button class="btn betception-clear" type="button" (click)="onClearPillTriggerBet()" [disabled]="pillTriggerBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
+        </section>
+
+        <section class="betception-view" *ngSwitchCase="'blackjack'">
+          <h2>{{ i18n.t('betception.blackjackTitle') }}</h2>
+          <p>{{ i18n.t('betception.blackjackSubtitle') }}</p>
+          <div class="betception-blackjack-target">
+            <span>21</span>
+            <b class="betception-stake-badge" *ngIf="blackjackBetAmount > 0">{{ formatCoins(blackjackBetAmount) }}</b>
+          </div>
+          <div class="betception-chip-row">
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddBlackjackBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+          </div>
+          <button class="btn betception-clear" type="button" (click)="onClearBlackjackBet()" [disabled]="blackjackBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
+        </section>
+
+        <section class="betception-view" *ngSwitchCase="'splitCount'">
+          <h2>{{ i18n.t('betception.splitCountTitle') }}</h2>
+          <p>{{ i18n.t('betception.splitCountSubtitle') }}</p>
+          <div class="betception-choice-grid betception-choice-grid--triple">
+            <button
+              *ngFor="let count of splitCountOptions"
+              type="button"
+              class="split-count-choice"
+              [class.selected]="isSplitCountSelected(count)"
+              (click)="onSelectSplitCount(count)"
+            >
+              <span>{{ i18n.t('betception.splitCountOption', { count }) }}</span>
+              <b class="betception-stake-badge" *ngIf="splitCountBetAmount(count) > 0">{{ formatCoins(splitCountBetAmount(count)) }}</b>
+            </button>
+          </div>
+          <div class="betception-chip-row">
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddSplitCountBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+          </div>
+          <button class="btn betception-clear" type="button" (click)="onClearSelectedSplitCountBet()" [disabled]="currentSplitCountBetAmount <= 0">{{ i18n.t('betception.clearSelection') }}</button>
+        </section>
+      </ng-container>
+
+      <div class="betception-modal__footer">
+        <button class="btn btn-aufhoeren" type="button" *ngIf="betceptionView !== 'overview'" (click)="onBetceptionView('overview')">{{ i18n.t('tutorial.previous') }}</button>
+        <div class="betception-modal__bank">
+          <span>{{ i18n.t('betception.sideBetTotal') }}: <b>{{ formatCoins(totalSideBetAmount) }}</b></span>
+          <span>{{ i18n.t('betception.available') }}: <b>{{ hasFiniteRemainingBetceptionBalance ? formatCoins(remainingBetceptionBalance) : '--' }}</b></span>
+        </div>
+        <button class="btn btn-neue-runde" type="button" (click)="onConfirmBetception()">{{ betceptionConfirmLabel }}</button>
+      </div>
+    </div>
+  </div>
 </div>

@@ -161,6 +161,10 @@ export class BetceptionApi {
     return this.http.post<RoundResponse>(`/round/stand/${roundId}`);
   }
 
+  dealerStepRound(roundId: string) {
+    return this.http.post<RoundResponse>(`/round/dealer-step/${roundId}`);
+  }
+
   getRound(roundId: string) {
     return this.http.get<RoundResponse>(`/round/${roundId}`);
   }
@@ -186,6 +190,14 @@ export class BetceptionApi {
 
   undoHit(roundId: string) {
     return this.http.post<RoundResponse>(`/round/undo/${roundId}`);
+  }
+
+  doubleRound(roundId: string) {
+    return this.http.post<RoundResponse>(`/round/double/${roundId}`);
+  }
+
+  splitRound(roundId: string) {
+    return this.http.post<RoundResponse>(`/round/split/${roundId}`);
   }
 
   getFairnessRound(roundId: string) {

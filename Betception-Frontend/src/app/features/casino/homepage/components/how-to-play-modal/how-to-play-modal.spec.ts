@@ -2,15 +2,20 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { HowToPlayModalComponent } from './how-to-play-modal';
+import { I18n, LanguageCode } from '../../../../../core/i18n/i18n';
 
 describe('HowToPlayModalComponent', () => {
   let component: HowToPlayModalComponent;
   let fixture: ComponentFixture<HowToPlayModalComponent>;
+  let i18n: I18n;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HowToPlayModalComponent],
     }).compileComponents();
+
+    i18n = TestBed.inject(I18n);
+    i18n.setLanguage('de');
 
     fixture = TestBed.createComponent(HowToPlayModalComponent);
     component = fixture.componentInstance;
@@ -59,5 +64,56 @@ describe('HowToPlayModalComponent', () => {
     });
 
     expect(component.closed.emit).not.toHaveBeenCalled();
+  });
+
+  it('starts with the blackjack basics category and card-table preview', () => {
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(component.activeCategory).toBe('blackjack');
+    expect(text).toContain('Blackjack Basics');
+    expect(text).toContain('Schlage den Dealer');
+    expect(fixture.nativeElement.querySelector('.mini-card')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.depth-preview')).toBeNull();
+  });
+
+  it('switches to Betception, resets progress, and renders the depth-panel preview', () => {
+    component.activeIndex = 3;
+    fixture.detectChanges();
+
+    const categoryButtons = fixture.nativeElement.querySelectorAll('.tutorial-category') as NodeListOf<HTMLButtonElement>;
+    const betceptionButton = Array.from(categoryButtons).find((button) => button.textContent?.includes('Betception'));
+
+    betceptionButton?.click();
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(component.activeCategory).toBe('betception');
+    expect(component.activeIndex).toBe(0);
+    expect(text).toContain('Blackjack, aber du wettest auf die Wetten');
+    expect(text).toContain('Depth Level: 1');
+    expect(text).toContain('Main Bet');
+    expect(text).toContain('Auszahlung');
+    expect(fixture.nativeElement.querySelector('.depth-preview')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.mini-card')).toBeNull();
+  });
+
+  it('keeps Betception tutorial content available in all supported languages', () => {
+    const expectedCopy: Record<LanguageCode, string> = {
+      de: 'Wird noch geändert',
+      en: 'Subject to change',
+      es: 'Se cambiará',
+      fr: 'Sera modifié',
+    };
+
+    (Object.keys(expectedCopy) as LanguageCode[]).forEach((language) => {
+      i18n.setLanguage(language);
+      component.selectCategory('betception');
+      component.selectStep(1);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(expectedCopy[language]);
+      expect(component.steps.length).toBe(7);
+    });
   });
 });

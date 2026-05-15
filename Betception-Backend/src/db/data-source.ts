@@ -11,6 +11,10 @@ import { AddStreakToUsersAndClaims1700000000005 } from './migrations/17000000000
 import { AddXpBoostExpiry1700000000006 } from './migrations/1700000000006-AddXpBoostExpiry.js';
 import { SeedPowerupTypes1700000000007 } from './migrations/1700000000007-SeedPowerupTypes.js';
 import { AddActivePowerPills1700000000008 } from './migrations/1700000000008-AddActivePowerPills.js';
+import { AddBetceptionSidebets1700000000009 } from './migrations/1700000000009-AddBetceptionSidebets.js';
+import { ReplaceWinnerWithDealerBustSidebet1700000000010 } from './migrations/1700000000010-ReplaceWinnerWithDealerBustSidebet.js';
+import { AddPlayerSplitHandType1700000000011 } from './migrations/1700000000011-AddPlayerSplitHandType.js';
+import { AddExpandedBetceptionSidebets1700000000012 } from './migrations/1700000000012-AddExpandedBetceptionSidebets.js';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -20,7 +24,7 @@ export const AppDataSource = new DataSource({
   password: env.db.password,
   database: env.db.database,
   entities: ENTITIES,
-  migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001, AddUsernameToWinningsView1700000000002, AddUserCrates1700000000003, AddCrateRewardToWalletKind1700000000004, AddStreakToUsersAndClaims1700000000005, AddXpBoostExpiry1700000000006, SeedPowerupTypes1700000000007, AddActivePowerPills1700000000008],
+  migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001, AddUsernameToWinningsView1700000000002, AddUserCrates1700000000003, AddCrateRewardToWalletKind1700000000004, AddStreakToUsersAndClaims1700000000005, AddXpBoostExpiry1700000000006, SeedPowerupTypes1700000000007, AddActivePowerPills1700000000008, AddBetceptionSidebets1700000000009, ReplaceWinnerWithDealerBustSidebet1700000000010, AddPlayerSplitHandType1700000000011, AddExpandedBetceptionSidebets1700000000012],
   synchronize: false,
   logging: env.nodeEnv === 'development',
 });

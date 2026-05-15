@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { NgClass, NgFor, NgIf } from '@angular/common';
 import { CardSuit, HandStatus, RoundCard, RoundHand } from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
@@ -10,30 +10,26 @@ import { I18n } from '../../../../../core/i18n/i18n';
   templateUrl: './hand.html',
   styleUrl: './hand.css'
 })
-export class Hand implements OnChanges, OnDestroy {
+export class Hand implements OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
   readonly i18n = inject(I18n);
   private readonly initialCardStepMs = 360;
-  private readonly dealerRevealMs = 560;
   private readonly followUpCardStepMs = 360;
 
   @Input() label = '';
   @Input() hand: RoundHand | null = null;
   @Input() isActive = false;
   @Input() isDealer = false;
-  @Input() revealDealerCards = false;
+  @Input() hideInactiveActiveStatus = false;
   /** Offset in ms before the first card of this hand animates in (for cross-hand stagger). */
   @Input() dealOffset = 0;
 
   scoreAnimated = false;
   dealingCardIds = new Set<string>();
-  visibleDealerCardIndexes = new Set<number>([0]);
 
   private lastScore: number | null = null;
   private seenCardIds = new Set<string>();
-  private hiddenCardIds = new Set<string>();
   private cardDelays = new Map<string, number>();
-  private dealerRevealTimers: number[] = [];
 
   get cards(): RoundCard[] {
     return [...(this.hand?.cards ?? [])].sort((a, b) => a.drawOrder - b.drawOrder);
@@ -51,9 +47,12 @@ export class Hand implements OnChanges, OnDestroy {
   }
 
   get statusLabel(): string | null {
+    if (this.isDealer && this.cards.some((card, index) => this.isDealerCardHidden(card, index, this.cards))) {
+      return null;
+    }
     switch (this.hand?.status) {
       case HandStatus.ACTIVE:
-        return this.i18n.t('hand.status.active');
+        return this.hideInactiveActiveStatus && !this.isActive ? null : this.i18n.t('hand.status.active');
       case HandStatus.STOOD:
         return this.i18n.t('hand.status.stood');
       case HandStatus.BUSTED:
@@ -68,7 +67,7 @@ export class Hand implements OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['hand'] || changes['revealDealerCards']) {
+    if (changes['hand']) {
       const currentScore = this.hand?.handValue ?? null;
       if (currentScore !== this.lastScore && this.lastScore !== null) {
         this.triggerScorePulse();
@@ -86,22 +85,14 @@ export class Hand implements OnChanges, OnDestroy {
       }
 
       const newCards = currentCards.filter(c => !this.seenCardIds.has(this.cardId(c)));
-      const currentHiddenCardIds = this.getHiddenCardIds(currentCards);
-      const isDealerRevealPhase = this.isDealer && this.revealDealerCards;
       const isInitialDeal = currentCards.length === 2 && this.seenCardIds.size === 0 && newCards.length === 2;
-
-      this.syncDealerRevealQueue(currentCards);
 
       newCards.forEach((card, newIdx) => {
         const id = this.cardId(card);
         const index = currentCards.findIndex((currentCard) => this.cardId(currentCard) === id);
-        const delay = this.cardDealDelay(index, newIdx, isInitialDeal, isDealerRevealPhase);
+        const delay = this.cardDealDelay(index, newIdx, isInitialDeal);
         this.seenCardIds.add(id);
         this.cardDelays.set(id, delay);
-
-        if (isDealerRevealPhase) {
-          return;
-        }
 
         this.dealingCardIds.add(id);
 
@@ -111,13 +102,7 @@ export class Hand implements OnChanges, OnDestroy {
           this.cdr.markForCheck();
         }, delay + 700);
       });
-
-      this.hiddenCardIds = currentHiddenCardIds;
     }
-  }
-
-  ngOnDestroy() {
-    this.clearDealerRevealTimers();
   }
 
   trackByCard(_index: number, card: RoundCard) {
@@ -166,73 +151,18 @@ export class Hand implements OnChanges, OnDestroy {
       return false;
     }
 
-    if (this.revealDealerCards) {
-      return !this.visibleDealerCardIndexes.has(index);
-    }
-
-    const isMaskedCard = card.rank === null || card.suit === null;
-    const isHoleOrLaterCard = index > 0;
-    return isMaskedCard || isHoleOrLaterCard;
-  }
-
-  private getHiddenCardIds(cards: RoundCard[]) {
-    return new Set(
-      cards
-        .filter((card, index) => this.isDealerCardHidden(card, index, cards))
-        .map((card) => this.cardId(card)),
-    );
+    return card.rank === null || card.suit === null;
   }
 
   private cardDealDelay(
     index: number,
     newCardIndex: number,
     isInitialDeal: boolean,
-    isDealerRevealPhase: boolean,
   ) {
     if (isInitialDeal) {
       return this.dealOffset + index * this.initialCardStepMs;
     }
-    if (isDealerRevealPhase) {
-      return this.dealerRevealMs + newCardIndex * this.followUpCardStepMs;
-    }
     return newCardIndex * this.followUpCardStepMs;
-  }
-
-  private syncDealerRevealQueue(cards: RoundCard[]) {
-    if (!this.isDealer) {
-      this.clearDealerRevealTimers();
-      this.visibleDealerCardIndexes.clear();
-      return;
-    }
-
-    if (cards.length === 0 || !this.revealDealerCards) {
-      this.clearDealerRevealTimers();
-      this.visibleDealerCardIndexes = cards.length > 0 ? new Set([0]) : new Set();
-      return;
-    }
-
-    const allIndexes = cards.map((_card, index) => index);
-    const missingIndexes = allIndexes.filter((index) => !this.visibleDealerCardIndexes.has(index));
-    if (missingIndexes.length === 0 || this.dealerRevealTimers.length > 0) {
-      return;
-    }
-
-    missingIndexes
-      .sort((a, b) => a - b)
-      .forEach((index, revealOrder) => {
-        const delay = this.dealerRevealMs + revealOrder * this.followUpCardStepMs;
-        const timer = window.setTimeout(() => {
-          this.visibleDealerCardIndexes = new Set([...this.visibleDealerCardIndexes, index]);
-          this.dealerRevealTimers = this.dealerRevealTimers.filter((activeTimer) => activeTimer !== timer);
-          this.cdr.markForCheck();
-        }, delay);
-        this.dealerRevealTimers.push(timer);
-      });
-  }
-
-  private clearDealerRevealTimers() {
-    this.dealerRevealTimers.forEach((timer) => window.clearTimeout(timer));
-    this.dealerRevealTimers = [];
   }
 
   private triggerScorePulse() {
