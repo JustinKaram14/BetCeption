@@ -251,6 +251,31 @@ describe('HomepageComponent', () => {
     expect(fixture.debugElement.query(By.directive(ProfileModalComponent))).toBeNull();
   });
 
+  it('shows the profile button crate notification for unseen unopened crates', () => {
+    apiMock.listCrates.and.returnValue(
+      of({
+        items: [
+          {
+            id: 'crate-1',
+            tier: 1,
+            tierLabel: 'Common',
+            acquiredLevel: 2,
+            acquiredAt: '2026-01-01T00:00:00Z',
+            opened: false,
+            openedAt: null,
+            reward: null,
+          },
+        ],
+      }),
+    );
+
+    authState$.next(true);
+    userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.profile-crate-alert')).toBeTruthy();
+  });
+
   it('opens the daily reward modal for authenticated users', () => {
     authFacadeMock.isAuthenticated.and.returnValue(true);
     fixture.detectChanges();

@@ -31,11 +31,14 @@
       <ng-container *ngIf="!loading">
         <div class="crate-section" *ngIf="unopenedCrates.length > 0">
           <h3 class="crate-section-title">{{ i18n.t('crate.unopened', { count: unopenedCrates.length }) }}</h3>
+          <p class="crate-section-hint">{{ i18n.t('crate.unopenedHint') }}</p>
           <div class="crate-grid">
             <div
               class="crate-card crate-card--closed"
               *ngFor="let crate of unopenedCrates"
               [attr.data-tier]="crate.tier"
+              (mouseenter)="onCrateHover(crate)"
+              (focusin)="onCrateHover(crate)"
             >
               <div class="crate-card__tier-icon" aria-hidden="true">
                 <span>{{ tierName(crate.tier) }}</span>

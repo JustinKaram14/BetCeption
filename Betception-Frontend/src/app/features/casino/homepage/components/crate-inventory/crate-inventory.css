@@ -14,6 +14,7 @@
 .crate-modal__body--embedded{padding:0}
 .crate-section-title{margin:0 0 10px;color:rgba(255,255,255,.62);font-size:.78rem;text-transform:uppercase;letter-spacing:.12em}
 .crate-section-title--opened{color:rgba(255,255,255,.38)}
+.crate-section-hint{margin:-4px 0 12px;color:rgba(255,255,255,.42);font-size:.72rem;line-height:1.35;text-align:left}
 .crate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .crate-grid--opened{opacity:.62}
 .crate-card{position:relative;min-height:150px;padding:14px 12px;border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.035);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;overflow:hidden}

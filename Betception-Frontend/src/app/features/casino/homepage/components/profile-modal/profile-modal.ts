@@ -1,4 +1,13 @@
-import { Component, DestroyRef, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
 import { DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -27,22 +36,26 @@ type ProfileTab = 'transactions' | 'crates' | 'profile';
   templateUrl: './profile-modal.html',
   styleUrl: './profile-modal.css',
 })
-export class ProfileModalComponent implements OnInit {
+export class ProfileModalComponent implements OnInit, OnDestroy {
+  @Input() userId: string | null | undefined = null;
+  @Input() unseenCrateCount = 0;
+
   @Output() closed = new EventEmitter<void>();
   @Output() balanceUpdated = new EventEmitter<number>();
+  @Output() unseenCrateCountChange = new EventEmitter<number>();
 
   private readonly api = inject(BetceptionApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   readonly i18n = inject(I18n);
 
-  readonly tabs: Array<{ id: ProfileTab; label: string }> = [
-    { id: 'transactions', label: 'Transaktionen' },
-    { id: 'crates', label: 'Kisten' },
-    { id: 'profile', label: 'Profil' },
+  readonly tabs: Array<{ id: ProfileTab; labelKey: Parameters<I18n['t']>[0] }> = [
+    { id: 'profile', labelKey: 'profile.tab.profile' },
+    { id: 'crates', labelKey: 'profile.tab.crates' },
+    { id: 'transactions', labelKey: 'profile.tab.transactions' },
   ];
 
-  activeTab: ProfileTab = 'transactions';
+  activeTab: ProfileTab = 'profile';
 
   transactionsLoading = false;
   transactionsError: string | null = null;
@@ -67,8 +80,15 @@ export class ProfileModalComponent implements OnInit {
   profileSaving = false;
   passwordSaving = false;
 
+  private previousBodyOverflow: string | null = null;
+
   ngOnInit(): void {
-    this.loadTransactions(true);
+    this.lockBackgroundScroll();
+    this.loadProfile();
+  }
+
+  ngOnDestroy(): void {
+    this.unlockBackgroundScroll();
   }
 
   selectTab(tab: ProfileTab): void {
@@ -85,12 +105,29 @@ export class ProfileModalComponent implements OnInit {
     this.closed.emit();
   }
 
+  stopModalClick(event: MouseEvent): void {
+    event.stopPropagation();
+  }
+
+  tabLabel(tab: { labelKey: Parameters<I18n['t']>[0] }): string {
+    return this.i18n.t(tab.labelKey);
+  }
+
+  showTabNotice(tab: ProfileTab): boolean {
+    return tab === 'crates' && this.unseenCrateCount > 0;
+  }
+
   onCrateBalanceUpdated(balance: number): void {
     this.balanceUpdated.emit(balance);
     if (this.profile) {
       this.profile = { ...this.profile, balance };
     }
     this.loadTransactions(true);
+  }
+
+  onUnseenCrateCountChanged(count: number): void {
+    this.unseenCrateCount = count;
+    this.unseenCrateCountChange.emit(count);
   }
 
   loadTransactions(reset = false): void {
@@ -172,11 +209,11 @@ export class ProfileModalComponent implements OnInit {
     const email = this.profileForm.email.trim();
 
     if (username.length < 3 || username.length > 32) {
-      this.toast.error('Benutzername muss 3-32 Zeichen lang sein.');
+      this.toast.error(this.i18n.t('auth.usernameInvalid'));
       return;
     }
     if (!this.isValidEmail(email)) {
-      this.toast.error('Bitte eine gueltige E-Mail-Adresse eingeben.');
+      this.toast.error(this.i18n.t('auth.emailInvalid'));
       return;
     }
 
@@ -197,7 +234,7 @@ export class ProfileModalComponent implements OnInit {
             username: user.username,
             email: user.email,
           };
-          this.toast.success('Profil aktualisiert.');
+          this.toast.success(this.i18n.t('profile.toast.profileUpdated'));
         },
         error: (error) => {
           this.toast.error(this.extractErrorMessage(error));
@@ -211,15 +248,15 @@ export class ProfileModalComponent implements OnInit {
     const confirmPassword = this.passwordForm.confirmPassword;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      this.toast.error('Bitte alle Passwortfelder ausfuellen.');
+      this.toast.error(this.i18n.t('profile.toast.passwordFieldsRequired'));
       return;
     }
     if (newPassword.length < 8) {
-      this.toast.error('Das neue Passwort muss mindestens 8 Zeichen lang sein.');
+      this.toast.error(this.i18n.t('auth.passwordTooShort'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      this.toast.error('Neues Passwort und Bestaetigung stimmen nicht ueberein.');
+      this.toast.error(this.i18n.t('profile.toast.passwordMismatch'));
       return;
     }
 
@@ -239,7 +276,7 @@ export class ProfileModalComponent implements OnInit {
             newPassword: '',
             confirmPassword: '',
           };
-          this.toast.success('Passwort aktualisiert.');
+          this.toast.success(this.i18n.t('profile.toast.passwordUpdated'));
         },
         error: (error) => {
           this.toast.error(this.extractErrorMessage(error));
@@ -250,21 +287,21 @@ export class ProfileModalComponent implements OnInit {
   kindLabel(kind: WalletTransactionKind): string {
     switch (kind) {
       case WalletTransactionKind.DEPOSIT:
-        return 'Einzahlung';
+        return this.i18n.t('profile.transaction.deposit');
       case WalletTransactionKind.WITHDRAW:
-        return 'Auszahlung';
+        return this.i18n.t('profile.transaction.withdraw');
       case WalletTransactionKind.BET_PLACE:
-        return 'Einsatz';
+        return this.i18n.t('profile.transaction.betPlace');
       case WalletTransactionKind.BET_WIN:
-        return 'Gewinn';
+        return this.i18n.t('profile.transaction.betWin');
       case WalletTransactionKind.BET_REFUND:
-        return 'Refund';
+        return this.i18n.t('profile.transaction.betRefund');
       case WalletTransactionKind.ADJUSTMENT:
-        return 'Anpassung';
+        return this.i18n.t('profile.transaction.adjustment');
       case WalletTransactionKind.REWARD:
-        return 'Reward';
+        return this.i18n.t('profile.transaction.reward');
       case WalletTransactionKind.CRATE_REWARD:
-        return 'Kistengewinn';
+        return this.i18n.t('profile.transaction.crateReward');
       default:
         return kind;
     }
@@ -336,7 +373,7 @@ export class ProfileModalComponent implements OnInit {
           return String(payload.message);
         }
         if ('errors' in payload) {
-          return 'Eingaben konnten nicht verarbeitet werden.';
+          return this.i18n.t('profile.toast.validationFailed');
         }
       }
       if ('message' in (error as any)) {
@@ -344,5 +381,14 @@ export class ProfileModalComponent implements OnInit {
       }
     }
     return this.i18n.t('home.toast.actionFailed');
+  }
+
+  private lockBackgroundScroll(): void {
+    this.previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+
+  private unlockBackgroundScroll(): void {
+    document.body.style.overflow = this.previousBodyOverflow ?? '';
   }
 }
