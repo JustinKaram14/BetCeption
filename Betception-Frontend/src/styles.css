@@ -57,6 +57,26 @@
 
 /* Reset / Base */
 *{box-sizing:border-box;margin:0;padding:0}
+*{
+  scrollbar-width:thin;
+  scrollbar-color:rgba(0,255,255,.68) rgba(0,255,255,.08);
+}
+*::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+*::-webkit-scrollbar-track{
+  background:rgba(0,255,255,.08);
+  border-radius:999px;
+}
+*::-webkit-scrollbar-thumb{
+  border-radius:999px;
+  background:linear-gradient(180deg,rgba(0,255,255,.78),rgba(255,0,255,.62));
+  box-shadow:0 0 10px rgba(0,255,255,.28);
+}
+*::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(180deg,rgba(0,255,255,.95),rgba(255,0,255,.78));
+}
 html,body{
   width:100%;
   max-width:100%;
@@ -64,6 +84,13 @@ html,body{
   overflow-x:hidden;
   -webkit-text-size-adjust:100%;
   text-size-adjust:100%;
+}
+
+@media (max-width:720px){
+  *::-webkit-scrollbar{
+    width:6px;
+    height:6px;
+  }
 }
 body{
   font-family:var(--font-main);

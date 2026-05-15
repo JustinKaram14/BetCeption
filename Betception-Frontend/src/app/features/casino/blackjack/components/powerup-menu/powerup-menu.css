@@ -9,7 +9,7 @@
   background:rgba(0,0,0,.72);
   -webkit-backdrop-filter:blur(4px);
   backdrop-filter:blur(4px);
-  animation:overlay-in .2s ease-out;
+  animation:overlay-in .3s ease-out;
 }
 @keyframes overlay-in{
   from{opacity:0;}
@@ -26,11 +26,14 @@
   box-shadow:0 0 48px rgba(0,255,255,.22),inset 0 0 36px rgba(160,40,220,.16);
   color:rgba(255,255,255,.8);
   text-align:center;
-  animation:modal-pop .24s ease-out;
+  transform-origin:center;
+  animation:powerup-win-card-impact .58s cubic-bezier(.16,.86,.28,1.28);
 }
-@keyframes modal-pop{
-  from{opacity:0;transform:scale(.94);}
-  to{opacity:1;transform:scale(1);}
+@keyframes powerup-win-card-impact{
+  0%{transform:scale(.78) rotateX(5deg);opacity:0;filter:brightness(1.55) blur(2px);}
+  42%{transform:scale(1.035) rotateX(0);opacity:1;filter:brightness(1.18) blur(0);}
+  66%{transform:scale(.985);}
+  100%{transform:scale(1);filter:brightness(1);}
 }
 .modal-title{
   margin:0;

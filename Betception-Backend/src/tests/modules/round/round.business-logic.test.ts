@@ -248,6 +248,7 @@ describe('evaluateSideBet', () => {
     predictedSuit?: CardSuit | null;
     predictedRank?: CardRank | null;
     targetContext?: SideBetTargetContext;
+    selectionJson?: Record<string, unknown> | null;
   }): any {
     return {
       odds: params.odds ?? null,
@@ -259,6 +260,7 @@ describe('evaluateSideBet', () => {
       predictedSuit: params.predictedSuit ?? null,
       predictedRank: params.predictedRank ?? null,
       targetContext: params.targetContext ?? SideBetTargetContext.FIRST_PLAYER_CARD,
+      selectionJson: params.selectionJson ?? null,
     };
   }
 
@@ -304,6 +306,185 @@ describe('evaluateSideBet', () => {
     const bet = makeSideBet({ odds: 2 });
     const result = evaluateSideBet(bet, round, USER_ID);
     expect(result).toEqual({ status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true });
+  });
+
+  it('CARD_EXACT: returns WON when the predicted card appears in the player hand', () => {
+    const round = makeRound([
+      card(CardRank.TEN, CardSuit.SPADES, 0),
+      card(CardRank.JACK, CardSuit.HEARTS, 1),
+    ], []);
+    const bet = makeSideBet({
+      odds: 12,
+      code: 'CARD_EXACT',
+      predictedSuit: CardSuit.HEARTS,
+      predictedRank: CardRank.JACK,
+      selectionJson: { suit: CardSuit.HEARTS, rank: CardRank.JACK },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 12, isRefund: false,
+    });
+  });
+
+  it('CARD_EXACT: returns LOST when the predicted card is absent', () => {
+    const round = makeRound([
+      card(CardRank.TEN, CardSuit.SPADES, 0),
+      card(CardRank.JACK, CardSuit.HEARTS, 1),
+    ], []);
+    const bet = makeSideBet({
+      odds: 12,
+      code: 'CARD_EXACT',
+      predictedSuit: CardSuit.CLUBS,
+      predictedRank: CardRank.ACE,
+      selectionJson: { suit: CardSuit.CLUBS, rank: CardRank.ACE },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
+    });
+  });
+
+  it('CARD_SUIT: returns WON when any player hand contains the selected suit', () => {
+    const round = makeRound([
+      card(CardRank.TEN, CardSuit.SPADES, 0),
+      card(CardRank.JACK, CardSuit.HEARTS, 1),
+    ], []);
+    const bet = makeSideBet({
+      odds: 2,
+      code: 'CARD_SUIT',
+      predictedSuit: CardSuit.HEARTS,
+      selectionJson: { suit: CardSuit.HEARTS },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 2, isRefund: false,
+    });
+  });
+
+  it('CARD_EXACT: also evaluates split-hand cards', () => {
+    const round = makeRound([
+      card(CardRank.TEN, CardSuit.SPADES, 0),
+      card(CardRank.TEN, CardSuit.HEARTS, 1),
+    ], []);
+    round.hands.push({
+      ownerType: HandOwnerType.PLAYER_SPLIT,
+      user: { id: USER_ID },
+      cards: [card(CardRank.ACE, CardSuit.CLUBS, 0)],
+      status: HandStatus.ACTIVE,
+      handValue: null,
+      id: 'split-1',
+      createdAt: new Date(),
+    });
+    const bet = makeSideBet({
+      odds: 12,
+      code: 'CARD_EXACT',
+      predictedSuit: CardSuit.CLUBS,
+      predictedRank: CardRank.ACE,
+      selectionJson: { suit: CardSuit.CLUBS, rank: CardRank.ACE },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 12, isRefund: false,
+    });
+  });
+
+  it('DEALER_BUST: returns WON when the dealer busts', () => {
+    const round = makeRound([card(CardRank.TEN)], [card(CardRank.KING, CardSuit.HEARTS)]);
+    round.hands[1].status = HandStatus.BUSTED;
+    const bet = makeSideBet({
+      odds: 3,
+      code: 'DEALER_BUST',
+      selectionJson: { target: 'DEALER', outcome: 'BUST' },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 3, isRefund: false,
+    });
+  });
+
+  it('DEALER_BUST: returns LOST when the dealer does not bust', () => {
+    const round = makeRound([card(CardRank.TEN)], [card(CardRank.KING, CardSuit.HEARTS)]);
+    round.hands[1].status = HandStatus.STOOD;
+    const bet = makeSideBet({
+      odds: 3,
+      code: 'DEALER_BUST',
+      selectionJson: { target: 'DEALER', outcome: 'BUST' },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
+    });
+  });
+
+  it('PILL_TRIGGER: returns WON only when the expected pill effect triggered', () => {
+    const round = makeRound([card(CardRank.TEN)], [card(CardRank.KING, CardSuit.HEARTS)]);
+    const bet = makeSideBet({
+      odds: 5,
+      code: 'PILL_TRIGGER',
+      selectionJson: { powerupCode: 'RED_PILL', color: 'red' },
+    });
+
+    expect(evaluateSideBet(bet, round, USER_ID, 0, {
+      rawMainBetStatus: MainBetStatus.WON,
+      triggeredPowerupEffect: { code: 'RED_PILL', color: 'red' },
+    })).toEqual({
+      status: SideBetStatus.WON, multiplier: 5, isRefund: false,
+    });
+    expect(evaluateSideBet(bet, round, USER_ID, 0, {
+      rawMainBetStatus: MainBetStatus.WON,
+      triggeredPowerupEffect: null,
+    })).toEqual({
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
+    });
+  });
+
+  it('PLAYER_BLACKJACK: wins only for a natural two-card blackjack', () => {
+    const blackjackRound = makeRound([
+      card(CardRank.ACE, CardSuit.SPADES, 0),
+      card(CardRank.KING, CardSuit.HEARTS, 1),
+    ], []);
+    blackjackRound.hands[0].status = HandStatus.BLACKJACK;
+
+    const threeCardTwentyOneRound = makeRound([
+      card(CardRank.SEVEN, CardSuit.SPADES, 0),
+      card(CardRank.SEVEN, CardSuit.HEARTS, 1),
+      card(CardRank.SEVEN, CardSuit.CLUBS, 2),
+    ], []);
+    threeCardTwentyOneRound.hands[0].status = HandStatus.BLACKJACK;
+
+    const bet = makeSideBet({ odds: 12, code: 'PLAYER_BLACKJACK' });
+
+    expect(evaluateSideBet(bet, blackjackRound, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 12, isRefund: false,
+    });
+    expect(evaluateSideBet(bet, threeCardTwentyOneRound, USER_ID)).toEqual({
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
+    });
+  });
+
+  it('SPLIT_COUNT: wins only for the exact number of split hands', () => {
+    const round = makeRound([
+      card(CardRank.EIGHT, CardSuit.SPADES, 0),
+      card(CardRank.EIGHT, CardSuit.HEARTS, 1),
+    ], []);
+    round.hands.push({
+      ownerType: HandOwnerType.PLAYER_SPLIT,
+      user: { id: USER_ID },
+      cards: [card(CardRank.EIGHT, CardSuit.HEARTS, 0)],
+      status: HandStatus.ACTIVE,
+      handValue: null,
+      id: 'split-1',
+      createdAt: new Date(),
+    });
+    const winningBet = makeSideBet({ odds: 4, code: 'SPLIT_COUNT', selectionJson: { splitCount: 1 } });
+    const losingBet = makeSideBet({ odds: 18, code: 'SPLIT_COUNT', selectionJson: { splitCount: 2 } });
+
+    expect(evaluateSideBet(winningBet, round, USER_ID)).toEqual({
+      status: SideBetStatus.WON, multiplier: 4, isRefund: false,
+    });
+    expect(evaluateSideBet(losingBet, round, USER_ID)).toEqual({
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
+    });
   });
 
   it('FIRST_CARD_COLOR: returns WON when predicted RED and first card is HEARTS', () => {

@@ -6,6 +6,7 @@
   min-height:180px;
   max-width:100%;
   min-width:0;
+  width:100%;
 }
 .hand-container{
   display:flex;
@@ -62,7 +63,7 @@
   opacity:1;
   transform:rotateY(0deg);
   /* Transition only for interactive state changes (e.g. dealer reveal flip) */
-  transition:transform .5s ease, opacity .3s, box-shadow .3s, border-color .3s;
+  transition:transform .55s cubic-bezier(.4,0,.2,1), opacity .3s, box-shadow .3s, border-color .3s;
 }
 .card.visible{
   opacity:1;
@@ -101,14 +102,14 @@
 }
 
 @keyframes card-deal-in{
-  from{opacity:0;transform:translateY(-35px) rotateY(180deg) scale(.85);}
-  60%{transform:translateY(4px) rotateY(20deg) scale(1.04);}
-  to{opacity:1;transform:translateY(0) rotateY(0deg) scale(1);}
+  from{opacity:0;transform:translateY(-55px) translateX(-8px) rotateY(180deg) scale(.78);}
+  55%{opacity:1;transform:translateY(5px) translateX(0) rotateY(15deg) scale(1.05);}
+  to{opacity:1;transform:translateY(0) translateX(0) rotateY(0deg) scale(1);}
 }
 @keyframes card-deal-back{
-  from{opacity:0;transform:translateY(-35px) rotateY(180deg) scale(.85);}
-  60%{transform:translateY(4px) rotateY(200deg) scale(1.04);}
-  to{opacity:1;transform:translateY(0) rotateY(180deg) scale(1);}
+  from{opacity:0;transform:translateY(-55px) translateX(-8px) rotateY(180deg) scale(.78);}
+  55%{opacity:1;transform:translateY(5px) translateX(0) rotateY(195deg) scale(1.05);}
+  to{opacity:1;transform:translateY(0) translateX(0) rotateY(180deg) scale(1);}
 }
 .card-face{
   position:absolute;
@@ -146,59 +147,127 @@
 @media (max-width:720px){
   :host,
   .hand-container{
-    gap:7px;
-    min-height:132px;
+    gap:5px;
+    min-height:118px;
+  }
+  :host{
+    width:100%;
   }
   .hand-label{
-    font-size:.9rem;
+    font-size:.86rem;
     letter-spacing:0;
   }
   .score{
-    min-height:18px;
+    min-height:17px;
     font-size:.82rem;
   }
   .hand{
-    min-width:230px;
-    min-height:104px;
+    min-width:154px;
+    min-height:102px;
   }
   .card{
-    width:74px;
-    height:104px;
-    margin:0 -15px;
+    width:72px;
+    height:102px;
+    margin:0 -14px;
     border-radius:8px;
   }
   .card-face{
     padding:7px;
-    font-size:1.35rem;
+    font-size:1.24rem;
   }
   .card-suit{
-    font-size:1.75rem;
+    font-size:1.58rem;
   }
   .empty-hand,
   .hand-status{
-    font-size:.74rem;
+    font-size:.72rem;
     letter-spacing:0;
+  }
+  :host-context(.hands-3),
+  :host-context(.hands-4),
+  :host-context(.hands-3) .hand-container,
+  :host-context(.hands-4) .hand-container{
+    min-height:98px;
+    gap:3px;
+  }
+  :host-context(.hands-3) .hand-label,
+  :host-context(.hands-4) .hand-label{
+    font-size:.72rem;
+  }
+  :host-context(.hands-3) .score,
+  :host-context(.hands-4) .score{
+    min-height:14px;
+    font-size:.68rem;
+  }
+  :host-context(.hands-3) .hand,
+  :host-context(.hands-4) .hand{
+    min-width:132px;
+    min-height:82px;
+  }
+  :host-context(.hands-3) .card,
+  :host-context(.hands-4) .card{
+    width:58px;
+    height:82px;
+    margin:0 -11px;
+  }
+  :host-context(.hands-3) .card-face,
+  :host-context(.hands-4) .card-face{
+    padding:5px;
+    font-size:1.02rem;
+  }
+  :host-context(.hands-3) .card-suit,
+  :host-context(.hands-4) .card-suit{
+    font-size:1.3rem;
+  }
+  :host-context(.hands-3) .hand-status,
+  :host-context(.hands-4) .hand-status{
+    font-size:.62rem;
   }
 }
 
 @media (max-width:380px){
   :host,
   .hand-container{
-    min-height:118px;
+    min-height:108px;
   }
   .hand{
-    min-width:206px;
-    min-height:94px;
+    min-width:142px;
+    min-height:96px;
   }
   .card{
-    width:66px;
-    height:94px;
+    width:68px;
+    height:96px;
     margin:0 -13px;
   }
   .card-face{
-    font-size:1.2rem;
+    font-size:1.16rem;
   }
   .card-suit{
-    font-size:1.55rem;
+    font-size:1.48rem;
+  }
+  :host-context(.hands-3),
+  :host-context(.hands-4),
+  :host-context(.hands-3) .hand-container,
+  :host-context(.hands-4) .hand-container{
+    min-height:90px;
+  }
+  :host-context(.hands-3) .hand,
+  :host-context(.hands-4) .hand{
+    min-width:122px;
+    min-height:76px;
+  }
+  :host-context(.hands-3) .card,
+  :host-context(.hands-4) .card{
+    width:54px;
+    height:76px;
+    margin:0 -10px;
+  }
+  :host-context(.hands-3) .card-face,
+  :host-context(.hands-4) .card-face{
+    font-size:.96rem;
+  }
+  :host-context(.hands-3) .card-suit,
+  :host-context(.hands-4) .card-suit{
+    font-size:1.2rem;
   }
 }

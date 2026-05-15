@@ -97,6 +97,7 @@ export enum RoundStatus {
 export enum HandOwnerType {
   DEALER = 'dealer',
   PLAYER = 'player',
+  PLAYER_SPLIT = 'player_split',
 }
 
 export enum HandStatus {
@@ -157,6 +158,14 @@ export enum SideBetStatus {
   REFUNDED = 'refunded',
   VOID = 'void',
 }
+
+export type BetceptionSideBetCode =
+  | 'CARD_EXACT'
+  | 'CARD_SUIT'
+  | 'DEALER_BUST'
+  | 'PILL_TRIGGER'
+  | 'PLAYER_BLACKJACK'
+  | 'SPLIT_COUNT';
 
 export enum WalletTransactionKind {
   DEPOSIT = 'deposit',
@@ -392,8 +401,40 @@ export interface RoundSideBet {
   predictedSuit: CardSuit | null;
   predictedRank: CardRank | null;
   targetContext: SideBetTargetContext;
+  selection: Record<string, unknown> | null;
   settledAmount: string | null;
   settledAt: string | null;
+}
+
+export interface BetceptionResolutionStep {
+  id: string;
+  kind: 'MAIN_BET' | BetceptionSideBetCode | string;
+  status: MainBetStatus | SideBetStatus;
+  amount: string;
+  payout: string | null;
+  multiplier: string | null;
+  selection: Record<string, unknown> | null;
+}
+
+export interface BetceptionResolution {
+  depthLevel: number;
+  totalPayout: string;
+  totalStake: string;
+  steps: BetceptionResolutionStep[];
+}
+
+export type DealerActionKind =
+  | 'REVEAL_HOLE'
+  | 'DRAW_CARD'
+  | 'STAND'
+  | 'BUST'
+  | 'BLACKJACK'
+  | 'NONE';
+
+export interface DealerAction {
+  kind: DealerActionKind;
+  cardId: string | null;
+  dealerTurnComplete: boolean;
 }
 
 export interface FairnessPayload {
@@ -413,7 +454,9 @@ export interface RoundState {
   startedAt: string | null;
   endedAt: string | null;
   mainBet: MainBet;
+  splitBets: MainBet[];
   playerHand: RoundHand;
+  splitHands: RoundHand[];
   dealerHand: RoundHand;
   sideBets: RoundSideBet[];
   playerProgress: LevelProgress | null;
@@ -422,19 +465,23 @@ export interface RoundState {
 
 export interface RoundResponse {
   round: RoundState;
+  dealerAction?: DealerAction | null;
   levelUpCrate?: LevelUpCrate | null;
   activePowerup?: ActivePowerup | null;
   triggeredPowerupEffect?: TriggeredPowerupEffect | null;
   expiredPowerup?: TriggeredPowerupEffect | null;
+  betceptionResolution?: BetceptionResolution | null;
 }
 
 export interface SideBetPlacement {
-  typeId: number;
+  typeId?: number;
+  typeCode?: BetceptionSideBetCode;
   amount: number;
   predictedColor?: SideBetColor;
   predictedSuit?: CardSuit;
   predictedRank?: CardRank;
   targetContext?: SideBetTargetContext;
+  selection?: Record<string, unknown>;
 }
 
 export interface StartRoundRequest {
