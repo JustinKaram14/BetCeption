@@ -12,6 +12,7 @@ describe('Wallet', () => {
     apiMock = jasmine.createSpyObj<BetceptionApi>('BetceptionApi', [
       'getWalletSummary',
       'getWalletTransactions',
+      'getWalletTransactionsSummary',
       'depositFunds',
       'withdrawFunds',
       'claimDailyReward',
@@ -59,6 +60,17 @@ describe('Wallet', () => {
 
     expect(apiMock.getWalletTransactions).toHaveBeenCalled();
     expect(result).toEqual(transactions);
+  });
+
+  it('getTransactionsSummary delegates to api.getWalletTransactionsSummary', () => {
+    const summary = { totalWins: 100, totalLossesOrBets: 20, netTotal: 80, transactionCount: 3 };
+    apiMock.getWalletTransactionsSummary.and.returnValue(of(summary));
+
+    let result: any;
+    service.getTransactionsSummary().subscribe((r) => (result = r));
+
+    expect(apiMock.getWalletTransactionsSummary).toHaveBeenCalled();
+    expect(result).toEqual(summary);
   });
 
   it('deposit delegates to api.depositFunds', () => {

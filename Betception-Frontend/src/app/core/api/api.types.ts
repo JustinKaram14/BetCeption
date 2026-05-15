@@ -37,6 +37,41 @@ export interface UserProfile {
   lastDailyRewardAt: string | null;
 }
 
+export interface OwnProfile {
+  id: string;
+  username: string;
+  email: string;
+  balance: number;
+  xp: number;
+  level: number;
+  avatarIcon: ProfileAvatarIcon;
+  avatarColor: ProfileAvatarColor;
+  levelProgress: LevelProgress;
+  createdAt: string;
+}
+
+export type ProfileAvatarIcon =
+  | 'chip'
+  | 'spade'
+  | 'crown'
+  | 'bolt'
+  | 'diamond'
+  | 'orbit'
+  | 'cards'
+  | 'flame'
+  | 'star';
+
+export type ProfileAvatarColor =
+  | 'cyan'
+  | 'blue'
+  | 'violet'
+  | 'magenta'
+  | 'red'
+  | 'gold'
+  | 'green'
+  | 'ice'
+  | 'white';
+
 export interface LevelProgress {
   level: number;
   xp: number;
@@ -50,6 +85,27 @@ export interface LevelProgress {
 
 export interface UserResponse {
   user: UserProfile;
+}
+
+export interface OwnProfileResponse {
+  user: OwnProfile;
+}
+
+export interface UpdateOwnProfileRequest {
+  username?: string;
+  email?: string;
+  avatarIcon?: ProfileAvatarIcon;
+  avatarColor?: ProfileAvatarColor;
+}
+
+export interface ChangeOwnPasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ChangeOwnPasswordResponse {
+  success: boolean;
 }
 
 export interface CurrentUserResponse {
@@ -188,6 +244,13 @@ export interface WalletTransactionsResponse {
   pageSize: number;
   total: number;
   items: WalletTransaction[];
+}
+
+export interface WalletTransactionsSummaryResponse {
+  totalWins: number;
+  totalLossesOrBets: number;
+  netTotal: number;
+  transactionCount: number;
 }
 
 export interface WalletAdjustmentRequest {

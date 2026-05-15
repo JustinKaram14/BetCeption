@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError, NEVER } from 'rxjs';
+import { BehaviorSubject, of, throwError, NEVER } from 'rxjs';
 import { HomepageComponent } from './homepage';
 import { LeaderboardComponent } from '../../components/leaderboard/leaderboard';
 import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
 import { DailyRewardModalComponent } from '../../components/daily-reward-modal/daily-reward-modal';
+import { ProfileModalComponent } from '../../components/profile-modal/profile-modal';
 import { HeroComponent } from '../../components/hero/hero';
 import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
@@ -18,27 +19,67 @@ import { I18n } from '../../../../../core/i18n/i18n';
 describe('HomepageComponent', () => {
   let fixture: ComponentFixture<HomepageComponent>;
   let component: HomepageComponent;
-  const authFacadeMock = jasmine.createSpyObj<AuthFacade>(
-    'AuthFacade',
-    ['login', 'register', 'logout', 'isAuthenticated'],
-    {
-      isAuthenticated$: of(false),
-      user$: of(null),
-    },
-  );
-  const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['claimDailyReward']);
+  let authState$: BehaviorSubject<boolean>;
+  let userState$: BehaviorSubject<any>;
+  let authFacadeMock: jasmine.SpyObj<AuthFacade>;
+  let walletMock: jasmine.SpyObj<Wallet>;
   let routerNavigateSpy: jasmine.Spy;
-  const apiMock = jasmine.createSpyObj<BetceptionApi>(
-    'BetceptionApi',
-    ['getBalanceLeaderboard', 'getLevelLeaderboard', 'getWinningsLeaderboard', 'getDailyRewardStatus', 'claimDailyReward'],
-  );
+  let apiMock: jasmine.SpyObj<BetceptionApi>;
 
   beforeEach(async () => {
+    authState$ = new BehaviorSubject<boolean>(false);
+    userState$ = new BehaviorSubject<any>(null);
+    authFacadeMock = jasmine.createSpyObj<AuthFacade>(
+      'AuthFacade',
+      ['login', 'register', 'logout', 'isAuthenticated'],
+      {
+        isAuthenticated$: authState$.asObservable(),
+        user$: userState$.asObservable(),
+      },
+    );
+    walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['claimDailyReward', 'getSummary']);
+    apiMock = jasmine.createSpyObj<BetceptionApi>(
+      'BetceptionApi',
+      [
+        'getBalanceLeaderboard',
+        'getLevelLeaderboard',
+        'getWinningsLeaderboard',
+        'getDailyRewardStatus',
+        'claimDailyReward',
+        'getWalletTransactionsSummary',
+        'getWalletTransactions',
+        'getOwnProfile',
+        'updateOwnProfile',
+        'changeOwnPassword',
+        'listCrates',
+        'openCrate',
+      ],
+    );
+
     window.localStorage.setItem('betception-language', 'de');
     authFacadeMock.login.and.returnValue(of(null));
     authFacadeMock.register.and.returnValue(of({ message: 'ok' } as any));
     authFacadeMock.logout.and.returnValue(of(undefined));
     authFacadeMock.isAuthenticated.and.returnValue(false);
+    walletMock.getSummary.and.returnValue(
+      of({
+        id: 'u1',
+        username: 'tester',
+        balance: 1000,
+        xp: 0,
+        level: 1,
+        levelProgress: {
+          level: 1,
+          xp: 0,
+          currentLevelXp: 0,
+          nextLevelXp: 500,
+          xpIntoLevel: 0,
+          xpToNextLevel: 500,
+          progressPercent: 0,
+        },
+        lastDailyRewardAt: null,
+      } as any),
+    );
     walletMock.claimDailyReward.and.returnValue(
       of({
         claimedAmount: 100,
@@ -57,6 +98,40 @@ describe('HomepageComponent', () => {
     );
     apiMock.getDailyRewardStatus.and.returnValue(NEVER as any);
     apiMock.claimDailyReward.and.returnValue(NEVER as any);
+    apiMock.getWalletTransactionsSummary.and.returnValue(
+      of({ totalWins: 0, totalLossesOrBets: 0, netTotal: 0, transactionCount: 0 }),
+    );
+    apiMock.getWalletTransactions.and.returnValue(
+      of({ page: 1, pageSize: 12, total: 0, items: [] }),
+    );
+    apiMock.getOwnProfile.and.returnValue(
+      of({
+        user: {
+          id: 'u1',
+          username: 'tester',
+          email: 'tester@example.com',
+          balance: 1000,
+          xp: 0,
+          level: 1,
+          avatarIcon: 'chip',
+          avatarColor: 'cyan',
+          levelProgress: {
+            level: 1,
+            xp: 0,
+            currentLevelXp: 0,
+            nextLevelXp: 500,
+            xpIntoLevel: 0,
+            xpToNextLevel: 500,
+            progressPercent: 0,
+          },
+          createdAt: '2025-01-01T00:00:00Z',
+        },
+      } as any),
+    );
+    apiMock.updateOwnProfile.and.returnValue(apiMock.getOwnProfile());
+    apiMock.changeOwnPassword.and.returnValue(of({ success: true }));
+    apiMock.listCrates.and.returnValue(of({ items: [] }));
+    apiMock.openCrate.and.returnValue(NEVER as any);
 
     await TestBed.configureTestingModule({
       imports: [HomepageComponent],
@@ -80,6 +155,14 @@ describe('HomepageComponent', () => {
     apiMock.getWinningsLeaderboard.calls.reset();
     apiMock.getDailyRewardStatus.calls.reset();
     apiMock.claimDailyReward.calls.reset();
+    apiMock.getWalletTransactionsSummary.calls.reset();
+    apiMock.getWalletTransactions.calls.reset();
+    apiMock.getOwnProfile.calls.reset();
+    apiMock.updateOwnProfile.calls.reset();
+    apiMock.changeOwnPassword.calls.reset();
+    apiMock.listCrates.calls.reset();
+    apiMock.openCrate.calls.reset();
+    walletMock.getSummary.calls.reset();
     walletMock.claimDailyReward.calls.reset();
     routerNavigateSpy.calls.reset();
 
@@ -153,6 +236,49 @@ describe('HomepageComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.directive(HowToPlayModalComponent))).toBeNull();
+  });
+
+  it('opens and closes the profile modal from the user card', () => {
+    authState$.next(true);
+    userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });
+    fixture.detectChanges();
+
+    const profileButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="profile-button"]');
+    profileButton.click();
+    fixture.detectChanges();
+
+    const modalDe = fixture.debugElement.query(By.directive(ProfileModalComponent));
+    expect(modalDe).toBeTruthy();
+
+    (modalDe.componentInstance as ProfileModalComponent).closed.emit();
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.directive(ProfileModalComponent))).toBeNull();
+  });
+
+  it('shows the profile button crate notification for unseen unopened crates', () => {
+    apiMock.listCrates.and.returnValue(
+      of({
+        items: [
+          {
+            id: 'crate-1',
+            tier: 1,
+            tierLabel: 'Common',
+            acquiredLevel: 2,
+            acquiredAt: '2026-01-01T00:00:00Z',
+            opened: false,
+            openedAt: null,
+            reward: null,
+          },
+        ],
+      }),
+    );
+
+    authState$.next(true);
+    userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.profile-crate-alert')).toBeTruthy();
   });
 
   it('opens the daily reward modal for authenticated users', () => {

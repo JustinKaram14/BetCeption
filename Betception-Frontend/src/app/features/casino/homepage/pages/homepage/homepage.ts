@@ -10,7 +10,7 @@ import { AuthPanelComponent } from '../../components/auth-panel/auth-panel';
 import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { DailyRewardModalComponent } from '../../components/daily-reward-modal/daily-reward-modal';
 import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
-import { CrateInventoryComponent } from '../../components/crate-inventory/crate-inventory';
+import { ProfileModalComponent } from '../../components/profile-modal/profile-modal';
 import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-footer/disclaimer-footer';
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
 import { SettingsMenuComponent } from '../../../../../shared/ui/settings-menu/settings-menu';
@@ -19,13 +19,15 @@ import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { I18n } from '../../../../../core/i18n/i18n';
+import { BetceptionApi } from '../../../../../core/api/betception-api.service';
+import { CrateNotifications } from '../../../../../core/services/crate-notifications/crate-notifications';
 import { LoginRequest, RegisterRequest, WalletSummary } from '../../../../../core/api/api.types';
 import type { AuthUser } from '../../../../../core/api/api.types';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, CrateInventoryComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, ProfileModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -34,6 +36,8 @@ export class HomepageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly wallet = inject(Wallet);
+  private readonly api = inject(BetceptionApi);
+  private readonly crateNotifications = inject(CrateNotifications);
   private readonly toast = inject(ToastService);
   readonly i18n = inject(I18n);
 
@@ -44,9 +48,8 @@ export class HomepageComponent {
     return window.outerWidth <= 900;
   }
 
-  get crateButtonLabel(): string {
-    this.i18n.language();
-    return this.i18n.t('home.crates');
+  get profileButtonLabel(): string {
+    return this.i18n.t('profile.title');
   }
 
   @HostListener('window:resize')
@@ -55,8 +58,10 @@ export class HomepageComponent {
   authLoading = false;
   showRewardModal = false;
   showHowToPlayModal = false;
-  showCrateInventory = false;
+  showProfileModal = false;
   walletSummary: WalletSummary | null = null;
+  unseenCrateCount = 0;
+  private currentUserIdValue: string | null = null;
 
   constructor() {
     this.isAuthenticated$
@@ -70,6 +75,25 @@ export class HomepageComponent {
       )
       .subscribe((summary) => {
         this.walletSummary = summary;
+      });
+
+    this.user$
+      .pipe(
+        switchMap((user) =>
+          {
+            this.currentUserIdValue = user?.sub ?? null;
+            return user?.sub
+              ? this.api.listCrates().pipe(catchError(() => of({ items: [] })))
+              : of({ items: [] });
+          }
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((response) => {
+        this.unseenCrateCount = this.crateNotifications.unseenUnopenedCount(
+          this.currentUserId,
+          response.items,
+        );
       });
   }
 
@@ -132,18 +156,26 @@ export class HomepageComponent {
     this.showHowToPlayModal = false;
   }
 
-  openCrateInventory() {
-    this.showCrateInventory = true;
+  openProfileModal() {
+    this.showProfileModal = true;
   }
 
-  closeCrateInventory() {
-    this.showCrateInventory = false;
+  closeProfileModal() {
+    this.showProfileModal = false;
   }
 
   onCrateBalanceUpdated(balance: number) {
     if (this.walletSummary) {
       this.walletSummary = { ...this.walletSummary, balance };
     }
+  }
+
+  onUnseenCrateCountChanged(count: number) {
+    this.unseenCrateCount = count;
+  }
+
+  get currentUserId(): string | null {
+    return this.currentUserIdValue ?? (this.walletSummary?.id as string | undefined) ?? null;
   }
 
   private runAuthRequest(

@@ -16,6 +16,10 @@ export class Wallet {
     return this.api.getWalletTransactions(query);
   }
 
+  getTransactionsSummary() {
+    return this.api.getWalletTransactionsSummary();
+  }
+
   deposit(payload: WalletAdjustmentRequest) {
     return this.api.depositFunds(payload);
   }

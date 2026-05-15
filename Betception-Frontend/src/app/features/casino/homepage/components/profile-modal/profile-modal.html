@@ -1,0 +1,358 @@
+<div class="profile-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" (click)="close()">
+  <section class="profile-modal" (click)="stopModalClick($event)">
+    <header class="profile-header">
+      <div>
+        <span class="profile-kicker">{{ i18n.t('profile.account') }}</span>
+        <div class="profile-title-row">
+          <svg class="profile-title-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+            <path d="M4 21a8 8 0 0 1 16 0" />
+          </svg>
+          <h2 id="profile-modal-title">{{ i18n.t('profile.title') }}</h2>
+        </div>
+      </div>
+      <button class="profile-close" type="button" (click)="close()" [attr.aria-label]="i18n.t('common.close')">X</button>
+    </header>
+
+    <nav class="profile-tabs" [attr.aria-label]="i18n.t('profile.tabsLabel')">
+      <button
+        type="button"
+        class="profile-tab"
+        *ngFor="let tab of tabs"
+        [class.active]="tab.id === activeTab"
+        (click)="selectTab(tab.id)"
+      >
+        {{ tabLabel(tab) }}
+        <span class="profile-tab-notice" *ngIf="showTabNotice(tab.id)" aria-hidden="true">!</span>
+      </button>
+    </nav>
+
+    <div class="profile-content">
+      <section class="profile-tab-panel" *ngIf="activeTab === 'profile'">
+        <div class="profile-state" *ngIf="profileLoading">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span>{{ i18n.t('profile.loading') }}</span>
+        </div>
+
+        <div class="profile-error" *ngIf="profileError">
+          {{ profileError }}
+          <button class="btn profile-inline-btn" type="button" (click)="loadProfile()">{{ i18n.t('profile.reload') }}</button>
+        </div>
+
+        <ng-container *ngIf="profile && !profileLoading">
+          <div class="profile-account-card">
+            <div class="profile-info-group">
+              <div class="profile-fact">
+                <span>{{ i18n.t('profile.username') }}</span>
+                <strong>{{ profile.username }}</strong>
+              </div>
+              <div class="profile-fact">
+                <span>{{ i18n.t('profile.email') }}</span>
+                <strong>{{ profile.email }}</strong>
+              </div>
+            </div>
+            <div class="profile-info-group profile-info-group--metrics">
+              <div class="profile-fact">
+                <span>{{ i18n.t('profile.level') }}</span>
+                <strong>{{ profile.level }}</strong>
+              </div>
+              <div class="profile-fact">
+                <span>{{ i18n.t('controls.balance') }}</span>
+                <strong>{{ formatCoins(profile.balance) }}</strong>
+              </div>
+            </div>
+            <div class="profile-created">
+              {{ i18n.t('profile.createdAt', { date: formatDate(profile.createdAt) }) }}
+            </div>
+          </div>
+
+          <app-level-progress
+            class="profile-level-progress"
+            [progress]="profile.levelProgress"
+            orientation="horizontal"
+          ></app-level-progress>
+
+          <div class="profile-management">
+            <article class="profile-avatar-card" [style.--avatar-color]="avatarColorValue(profileForm.avatarColor)">
+              <div class="profile-section-heading">
+                <h3>{{ i18n.t('profile.avatar.title') }}</h3>
+                <span>{{ i18n.t('profile.avatar.subtitle') }}</span>
+              </div>
+
+              <div class="profile-avatar-preview">
+                <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                  <path [attr.d]="avatarIconPath(profileForm.avatarIcon)" />
+                </svg>
+              </div>
+
+              <button class="btn profile-avatar-edit" type="button" (click)="beginAvatarEdit()" *ngIf="!avatarEditing">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M4 20h4l10.5-10.5-4-4L4 16v4Z" />
+                  <path d="m13.5 6.5 4 4" />
+                </svg>
+                {{ i18n.t('profile.avatar.edit') }}
+              </button>
+
+              <div class="profile-avatar-editor" *ngIf="avatarEditing">
+                <div class="profile-avatar-editor-label">{{ i18n.t('profile.avatar.chooseIcon') }}</div>
+                <div class="profile-avatar-icon-grid">
+                  <button
+                    class="profile-avatar-icon-option"
+                    type="button"
+                    *ngFor="let option of avatarIcons"
+                    [class.active]="option.id === profileForm.avatarIcon"
+                    [style.--avatar-color]="avatarColorValue(profileForm.avatarColor)"
+                    [attr.aria-label]="i18n.t(option.labelKey)"
+                    [attr.aria-pressed]="option.id === profileForm.avatarIcon"
+                    (click)="selectAvatarIcon(option.id)"
+                  >
+                    <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                      <path [attr.d]="option.path" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="profile-avatar-editor-label">{{ i18n.t('profile.avatar.chooseColor') }}</div>
+                <div class="profile-avatar-color-grid">
+                  <button
+                    class="profile-avatar-color-option"
+                    type="button"
+                    *ngFor="let option of avatarColors"
+                    [class.active]="option.id === profileForm.avatarColor"
+                    [style.--swatch-color]="option.value"
+                    [attr.aria-label]="i18n.t(option.labelKey)"
+                    [attr.aria-pressed]="option.id === profileForm.avatarColor"
+                    (click)="selectAvatarColor(option.id)"
+                  ></button>
+                </div>
+
+                <div class="profile-avatar-actions">
+                  <button class="btn profile-inline-btn" type="button" (click)="saveAvatar()" [disabled]="avatarSaving">
+                    {{ avatarSaving ? i18n.t('profile.saving') : i18n.t('profile.avatar.save') }}
+                  </button>
+                  <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAvatarEdit()" [disabled]="avatarSaving">
+                    {{ i18n.t('common.cancel') }}
+                  </button>
+                </div>
+              </div>
+            </article>
+
+            <section class="profile-account-editor">
+              <h3>{{ i18n.t('profile.manageAccount') }}</h3>
+              <div class="profile-account-actions">
+                <button
+                  class="profile-account-action"
+                  type="button"
+                  [class.active]="accountEditMode === 'username'"
+                  (click)="openAccountEdit('username')"
+                >
+                  {{ i18n.t('profile.editUsername') }}
+                </button>
+                <button
+                  class="profile-account-action"
+                  type="button"
+                  [class.active]="accountEditMode === 'email'"
+                  (click)="openAccountEdit('email')"
+                >
+                  {{ i18n.t('profile.editEmail') }}
+                </button>
+                <button
+                  class="profile-account-action"
+                  type="button"
+                  [class.active]="accountEditMode === 'password'"
+                  (click)="openAccountEdit('password')"
+                >
+                  {{ i18n.t('profile.editPassword') }}
+                </button>
+              </div>
+
+              <div class="profile-account-panel" *ngIf="accountEditMode">
+                <form
+                  class="profile-form"
+                  *ngIf="accountEditMode === 'username'"
+                  (ngSubmit)="saveUsername()"
+                  #usernameEditForm="ngForm"
+                >
+                  <label>
+                    <span>{{ i18n.t('profile.username') }}</span>
+                    <input
+                      name="username"
+                      type="text"
+                      minlength="3"
+                      maxlength="32"
+                      required
+                      [(ngModel)]="profileForm.username"
+                    />
+                  </label>
+                  <div class="profile-form-actions">
+                    <button class="btn profile-submit" type="submit" [disabled]="profileSaving || usernameEditForm.invalid">
+                      {{ profileSaving ? i18n.t('profile.saving') : i18n.t('profile.saveUsername') }}
+                    </button>
+                    <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                      {{ i18n.t('common.cancel') }}
+                    </button>
+                  </div>
+                </form>
+
+                <form
+                  class="profile-form"
+                  *ngIf="accountEditMode === 'email'"
+                  (ngSubmit)="saveEmail()"
+                  #emailEditForm="ngForm"
+                >
+                  <label>
+                    <span>{{ i18n.t('profile.email') }}</span>
+                    <input
+                      name="email"
+                      type="email"
+                      required
+                      [(ngModel)]="profileForm.email"
+                    />
+                  </label>
+                  <div class="profile-form-actions">
+                    <button class="btn profile-submit" type="submit" [disabled]="profileSaving || emailEditForm.invalid">
+                      {{ profileSaving ? i18n.t('profile.saving') : i18n.t('profile.saveEmail') }}
+                    </button>
+                    <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                      {{ i18n.t('common.cancel') }}
+                    </button>
+                  </div>
+                </form>
+
+                <form
+                  class="profile-form"
+                  *ngIf="accountEditMode === 'password'"
+                  (ngSubmit)="changePassword()"
+                  #passwordEditForm="ngForm"
+                >
+                  <label>
+                    <span>{{ i18n.t('profile.currentPassword') }}</span>
+                    <input
+                      name="currentPassword"
+                      type="password"
+                      required
+                      autocomplete="current-password"
+                      [(ngModel)]="passwordForm.currentPassword"
+                    />
+                  </label>
+                  <label>
+                    <span>{{ i18n.t('profile.newPassword') }}</span>
+                    <input
+                      name="newPassword"
+                      type="password"
+                      required
+                      minlength="8"
+                      autocomplete="new-password"
+                      [(ngModel)]="passwordForm.newPassword"
+                    />
+                  </label>
+                  <label>
+                    <span>{{ i18n.t('profile.confirmNewPassword') }}</span>
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      required
+                      minlength="8"
+                      autocomplete="new-password"
+                      [(ngModel)]="passwordForm.confirmPassword"
+                    />
+                  </label>
+                  <div class="profile-form-actions">
+                    <button class="btn profile-submit" type="submit" [disabled]="passwordSaving || passwordEditForm.invalid">
+                      {{ passwordSaving ? i18n.t('profile.saving') : i18n.t('profile.savePassword') }}
+                    </button>
+                    <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                      {{ i18n.t('common.cancel') }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
+          </div>
+        </ng-container>
+      </section>
+
+      <section class="crates-tab" *ngIf="activeTab === 'crates'">
+        <app-crate-inventory
+          [embedded]="true"
+          [userId]="userId"
+          (balanceUpdated)="onCrateBalanceUpdated($event)"
+          (unseenCrateCountChange)="onUnseenCrateCountChanged($event)"
+        ></app-crate-inventory>
+      </section>
+
+      <section class="transactions-tab" *ngIf="activeTab === 'transactions'">
+        <div class="profile-state" *ngIf="transactionsLoading && transactions.length === 0">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span>{{ i18n.t('profile.transactions.loading') }}</span>
+        </div>
+
+        <div class="profile-error" *ngIf="transactionsError">
+          {{ transactionsError }}
+          <button class="btn profile-inline-btn" type="button" (click)="loadTransactions(true)">{{ i18n.t('profile.reload') }}</button>
+        </div>
+
+        <ng-container *ngIf="!transactionsLoading || transactions.length > 0">
+          <div class="summary-grid" *ngIf="transactionSummary">
+            <div class="summary-card summary-card--positive">
+              <span>{{ i18n.t('profile.transactions.totalWins') }}</span>
+              <strong>{{ formatCoins(transactionSummary.totalWins) }}</strong>
+            </div>
+            <div class="summary-card summary-card--negative">
+              <span>{{ i18n.t('profile.transactions.totalLosses') }}</span>
+              <strong>{{ formatCoins(transactionSummary.totalLossesOrBets) }}</strong>
+            </div>
+            <div class="summary-card" [class.summary-card--positive]="transactionSummary.netTotal > 0" [class.summary-card--negative]="transactionSummary.netTotal < 0">
+              <span>{{ i18n.t('profile.transactions.netTotal') }}</span>
+              <strong>{{ formatSignedCoins(transactionSummary.netTotal) }}</strong>
+            </div>
+            <div class="summary-card">
+              <span>{{ i18n.t('profile.tab.transactions') }}</span>
+              <strong>{{ transactionSummary.transactionCount | number:'1.0-0' }}</strong>
+            </div>
+          </div>
+
+          <div class="transaction-empty" *ngIf="!transactionsError && !transactionsLoading && transactions.length === 0">
+            {{ i18n.t('profile.transactions.empty') }}
+          </div>
+
+          <div class="transaction-list" *ngIf="transactions.length > 0">
+            <div class="transaction-row transaction-row--head">
+              <span>{{ i18n.t('profile.transactions.time') }}</span>
+              <span>{{ i18n.t('profile.transactions.type') }}</span>
+              <span>{{ i18n.t('profile.transactions.reference') }}</span>
+              <span>{{ i18n.t('profile.transactions.amount') }}</span>
+            </div>
+            <div
+              class="transaction-row"
+              *ngFor="let transaction of transactions"
+              [class.transaction-row--positive]="transaction.amount > 0"
+              [class.transaction-row--negative]="transaction.amount < 0"
+            >
+              <span class="transaction-date">{{ formatDate(transaction.createdAt) }}</span>
+              <span>{{ kindLabel(transaction.kind) }}</span>
+              <span class="transaction-ref">{{ referenceLabel(transaction) }}</span>
+              <strong class="transaction-amount">{{ formatSignedCoins(transaction.amount) }}</strong>
+            </div>
+          </div>
+
+          <div class="transactions-footer" *ngIf="transactions.length > 0">
+            <span>{{ transactions.length | number:'1.0-0' }} / {{ transactionTotal | number:'1.0-0' }}</span>
+            <button
+              class="btn profile-inline-btn"
+              type="button"
+              (click)="loadMoreTransactions()"
+              [disabled]="!hasMoreTransactions || transactionsLoading"
+            >
+              {{ i18n.t('profile.transactions.loadMore') }}
+            </button>
+          </div>
+        </ng-container>
+      </section>
+    </div>
+  </section>
+</div>
