@@ -19,6 +19,8 @@ import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { I18n } from '../../../../../core/i18n/i18n';
+import { BetceptionApi } from '../../../../../core/api/betception-api.service';
+import { CrateNotifications } from '../../../../../core/services/crate-notifications/crate-notifications';
 import { LoginRequest, RegisterRequest, WalletSummary } from '../../../../../core/api/api.types';
 import type { AuthUser } from '../../../../../core/api/api.types';
 
@@ -34,6 +36,8 @@ export class HomepageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly wallet = inject(Wallet);
+  private readonly api = inject(BetceptionApi);
+  private readonly crateNotifications = inject(CrateNotifications);
   private readonly toast = inject(ToastService);
   readonly i18n = inject(I18n);
 
@@ -45,7 +49,7 @@ export class HomepageComponent {
   }
 
   get profileButtonLabel(): string {
-    return 'Profil';
+    return this.i18n.t('profile.title');
   }
 
   @HostListener('window:resize')
@@ -56,6 +60,8 @@ export class HomepageComponent {
   showHowToPlayModal = false;
   showProfileModal = false;
   walletSummary: WalletSummary | null = null;
+  unseenCrateCount = 0;
+  private currentUserIdValue: string | null = null;
 
   constructor() {
     this.isAuthenticated$
@@ -69,6 +75,25 @@ export class HomepageComponent {
       )
       .subscribe((summary) => {
         this.walletSummary = summary;
+      });
+
+    this.user$
+      .pipe(
+        switchMap((user) =>
+          {
+            this.currentUserIdValue = user?.sub ?? null;
+            return user?.sub
+              ? this.api.listCrates().pipe(catchError(() => of({ items: [] })))
+              : of({ items: [] });
+          }
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((response) => {
+        this.unseenCrateCount = this.crateNotifications.unseenUnopenedCount(
+          this.currentUserId,
+          response.items,
+        );
       });
   }
 
@@ -143,6 +168,14 @@ export class HomepageComponent {
     if (this.walletSummary) {
       this.walletSummary = { ...this.walletSummary, balance };
     }
+  }
+
+  onUnseenCrateCountChanged(count: number) {
+    this.unseenCrateCount = count;
+  }
+
+  get currentUserId(): string | null {
+    return this.currentUserIdValue ?? (this.walletSummary?.id as string | undefined) ?? null;
   }
 
   private runAuthRequest(

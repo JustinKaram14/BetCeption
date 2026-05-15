@@ -14,6 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { CrateReward, UserCrateItem } from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
+import { CrateNotifications } from '../../../../../core/services/crate-notifications/crate-notifications';
 
 const ITEM_SLOT_PX = 118;
 const SPIN_COUNT = 60;
@@ -46,13 +47,16 @@ type SpinPhase = 'idle' | 'loading' | 'spinning' | 'done';
 })
 export class CrateInventoryComponent implements OnInit {
   @Input() embedded = false;
+  @Input() userId: string | null | undefined = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() balanceUpdated = new EventEmitter<number>();
+  @Output() unseenCrateCountChange = new EventEmitter<number>();
 
   @ViewChild('spinViewport') spinViewportRef?: ElementRef<HTMLElement>;
 
   private readonly api = inject(BetceptionApi);
+  private readonly crateNotifications = inject(CrateNotifications);
   private readonly destroyRef = inject(DestroyRef);
   readonly i18n = inject(I18n);
 
@@ -121,6 +125,11 @@ export class CrateInventoryComponent implements OnInit {
     return this.crates.filter((crate) => crate.opened);
   }
 
+  onCrateHover(crate: UserCrateItem): void {
+    this.crateNotifications.markCrateAsSeen(this.userId, crate);
+    this.emitUnseenCrateCount();
+  }
+
   onOpen(crate: UserCrateItem): void {
     if (this.spinPhase !== 'idle') return;
     this.spinTier = crate.tier;
@@ -142,6 +151,7 @@ export class CrateInventoryComponent implements OnInit {
             ];
           }
           this.balanceUpdated.emit(res.balance);
+          this.emitUnseenCrateCount();
           this.spinReward = res.crate.reward ?? null;
           this.startSpin(res.crate.reward!);
         },
@@ -272,6 +282,8 @@ export class CrateInventoryComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.crates = res.items;
+          this.crateNotifications.markUnopenedAsSeen(this.userId, this.crates);
+          this.emitUnseenCrateCount();
           this.loading = false;
         },
         error: () => {
@@ -279,5 +291,11 @@ export class CrateInventoryComponent implements OnInit {
           this.loading = false;
         },
       });
+  }
+
+  private emitUnseenCrateCount(): void {
+    this.unseenCrateCountChange.emit(
+      this.crateNotifications.unseenUnopenedCount(this.userId, this.crates),
+    );
   }
 }

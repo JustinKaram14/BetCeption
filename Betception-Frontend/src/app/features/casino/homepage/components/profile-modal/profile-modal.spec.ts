@@ -92,11 +92,19 @@ describe('ProfileModalComponent', () => {
   function createComponent() {
     fixture = TestBed.createComponent(ProfileModalComponent);
     component = fixture.componentInstance;
+    component.userId = 'u1';
     fixture.detectChanges();
   }
 
+  afterEach(() => {
+    fixture?.destroy();
+    document.body.style.overflow = '';
+  });
+
   it('renders transaction summary and rows', () => {
     createComponent();
+    component.selectTab('transactions');
+    fixture.detectChanges();
 
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Gesamt gewonnen');
@@ -111,6 +119,8 @@ describe('ProfileModalComponent', () => {
     apiMock.getWalletTransactions.and.returnValue(NEVER as any);
 
     createComponent();
+    component.selectTab('transactions');
+    fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Transaktionen werden geladen');
   });
@@ -119,8 +129,23 @@ describe('ProfileModalComponent', () => {
     apiMock.getWalletTransactionsSummary.and.returnValue(throwError(() => new Error('Network error')));
 
     createComponent();
+    component.selectTab('transactions');
+    fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Network error');
+  });
+
+  it('opens on the profile tab with profile, crates, transactions order', () => {
+    createComponent();
+
+    expect(component.activeTab).toBe('profile');
+    const labels = fixture.debugElement
+      .queryAll(By.css('.profile-tab'))
+      .map((button) => button.nativeElement.textContent.trim().replace('!', ''));
+
+    expect(labels).toEqual(['Profil', 'Kisten', 'Transaktionen']);
+    expect(apiMock.getOwnProfile).toHaveBeenCalled();
+    expect(apiMock.getWalletTransactionsSummary).not.toHaveBeenCalled();
   });
 
   it('switches tabs and embeds the crate inventory', () => {
@@ -178,5 +203,41 @@ describe('ProfileModalComponent', () => {
     closeButton.click();
 
     expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it('closes when the overlay is clicked but not when the modal is clicked', () => {
+    createComponent();
+    const closeSpy = jasmine.createSpy('closed');
+    component.closed.subscribe(closeSpy);
+
+    const modal: HTMLElement = fixture.nativeElement.querySelector('.profile-modal');
+    modal.click();
+    expect(closeSpy).not.toHaveBeenCalled();
+
+    const overlay: HTMLElement = fixture.nativeElement.querySelector('.profile-overlay');
+    overlay.click();
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks background scroll while mounted and restores it on destroy', () => {
+    document.body.style.overflow = 'auto';
+    createComponent();
+
+    expect(document.body.style.overflow).toBe('hidden');
+
+    fixture.destroy();
+    expect(document.body.style.overflow).toBe('auto');
+  });
+
+  it('shows the crates tab notification when unseen crates exist', () => {
+    createComponent();
+    component.unseenCrateCount = 1;
+    fixture.detectChanges();
+
+    const crateButton = fixture.debugElement
+      .queryAll(By.css('.profile-tab'))
+      .find((button) => button.nativeElement.textContent.includes('Kisten'));
+
+    expect(crateButton!.nativeElement.querySelector('.profile-tab-notice')).toBeTruthy();
   });
 });
