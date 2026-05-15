@@ -48,6 +48,12 @@ export class User {
   @Column({ type: 'int', default: () => '1' })
   level!: number;
 
+  @Column({ name: 'avatar_icon', type: 'varchar', length: 32, default: () => "'chip'" })
+  avatarIcon: string = 'chip';
+
+  @Column({ name: 'avatar_color', type: 'varchar', length: 32, default: () => "'cyan'" })
+  avatarColor: string = 'cyan';
+
   @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
   lastLoginAt: Date | null = null;
 

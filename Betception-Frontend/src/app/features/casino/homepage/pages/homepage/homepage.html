@@ -16,21 +16,24 @@
     <div class="right-column">
       <app-neon-card class="auth-card">
         <ng-container *ngIf="isAuthenticated$ | async; else loginPanel">
+          <ng-container *ngIf="user$ | async as user">
             <div class="user-panel" data-testid="homepage-user-panel">
               <div class="user-panel__greeting" data-testid="homepage-user-greeting">
                 {{ i18n.t('home.loggedInAs') }}
-                <strong>{{ (user$ | async)?.username }}</strong>
+                <strong>{{ user.username }}</strong>
               </div>
               <div class="user-panel__actions">
                 <button class="btn logout-btn" data-testid="logout-button" type="button" (click)="onLogout()">{{ i18n.t('home.logout') }}</button>
-                <button class="btn crate-inventory-btn" type="button" (click)="openCrateInventory()">
+                <button class="btn profile-btn" data-testid="profile-button" type="button" (click)="openProfileModal()">
                   <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M4 8 12 4l8 4-8 4-8-4Z" />
-                    <path d="M4 8v8l8 4 8-4V8" />
-                    <path d="M12 12v8" />
-                    <path d="m8 10 8-4" />
+                    <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+                    <path d="M4 21a8 8 0 0 1 16 0" />
                   </svg>
-                  {{ crateButtonLabel }}
+                  {{ profileButtonLabel }}
+                  <span class="profile-crate-alert" *ngIf="unseenCrateCount > 0" aria-hidden="true">
+                    <span class="profile-crate-alert__box"></span>
+                    <span class="profile-crate-alert__mark">!</span>
+                  </span>
                 </button>
               </div>
               <app-level-progress
@@ -39,6 +42,7 @@
                 orientation="horizontal"
               ></app-level-progress>
             </div>
+          </ng-container>
         </ng-container>
 
         <ng-template #loginPanel>
@@ -72,10 +76,13 @@
   (closed)="closeHowToPlay()">
 </app-how-to-play-modal>
 
-<app-crate-inventory
-  *ngIf="showCrateInventory"
-  (closed)="closeCrateInventory()"
-  (balanceUpdated)="onCrateBalanceUpdated($event)">
-</app-crate-inventory>
+<app-profile-modal
+  *ngIf="showProfileModal"
+  [userId]="currentUserId"
+  [unseenCrateCount]="unseenCrateCount"
+  (closed)="closeProfileModal()"
+  (balanceUpdated)="onCrateBalanceUpdated($event)"
+  (unseenCrateCountChange)="onUnseenCrateCountChanged($event)">
+</app-profile-modal>
 
 <app-toast-container></app-toast-container>

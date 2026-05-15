@@ -4,6 +4,7 @@ import { validateRequest } from '../../middlewares/validateRequest.js';
 import {
   getWalletSummary,
   getWalletTransactions,
+  getWalletTransactionsSummary,
   depositFunds,
   withdrawFunds,
 } from './wallet.controller.js';
@@ -16,6 +17,7 @@ export const walletRouter = Router();
 
 walletRouter.use(authGuard);
 walletRouter.get('/', getWalletSummary);
+walletRouter.get('/transactions/summary', getWalletTransactionsSummary);
 walletRouter.get(
   '/transactions',
   validateRequest(WalletTransactionsQuerySchema, 'query'),
@@ -23,4 +25,3 @@ walletRouter.get(
 );
 walletRouter.post('/deposit', validateRequest(WalletAdjustmentSchema), depositFunds);
 walletRouter.post('/withdraw', validateRequest(WalletAdjustmentSchema), withdrawFunds);
-
