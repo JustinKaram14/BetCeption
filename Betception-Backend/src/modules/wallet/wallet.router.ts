@@ -10,6 +10,7 @@ import {
 } from './wallet.controller.js';
 import {
   WalletAdjustmentSchema,
+  WalletTransactionsDateRangeQuerySchema,
   WalletTransactionsQuerySchema,
 } from './wallet.schema.js';
 
@@ -17,7 +18,11 @@ export const walletRouter = Router();
 
 walletRouter.use(authGuard);
 walletRouter.get('/', getWalletSummary);
-walletRouter.get('/transactions/summary', getWalletTransactionsSummary);
+walletRouter.get(
+  '/transactions/summary',
+  validateRequest(WalletTransactionsDateRangeQuerySchema, 'query'),
+  getWalletTransactionsSummary,
+);
 walletRouter.get(
   '/transactions',
   validateRequest(WalletTransactionsQuerySchema, 'query'),

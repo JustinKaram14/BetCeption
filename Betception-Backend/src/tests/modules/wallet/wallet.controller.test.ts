@@ -14,6 +14,10 @@ import {
   mockAppDataSourceRepositories,
   mockAppDataSourceTransaction,
 } from '../../test-utils.js';
+import {
+  WalletTransactionsDateRangeQuerySchema,
+  WalletTransactionsQuerySchema,
+} from '../../../modules/wallet/wallet.schema.js';
 
 describe('wallet.controller', () => {
   describe('getWalletSummary', () => {
@@ -96,6 +100,12 @@ describe('wallet.controller', () => {
 
       await getWalletTransactions(req as any, res);
 
+      expect(walletRepo.findAndCount).toHaveBeenCalledWith({
+        where: { user: { id: '1' } },
+        order: { createdAt: 'DESC' },
+        take: 20,
+        skip: 0,
+      });
       expect(res.json).toHaveBeenCalledWith({
         page: 1,
         pageSize: 20,
@@ -111,6 +121,60 @@ describe('wallet.controller', () => {
           },
         ],
       });
+    });
+
+    it('applies from and to filters to the authenticated user query', async () => {
+      const walletRepo = createMockRepository<WalletTransaction>({
+        findAndCount: jest.fn().mockResolvedValue([[], 0]),
+      });
+      mockAppDataSourceRepositories(new Map([[WalletTransaction, walletRepo]]));
+
+      const from = new Date('2026-01-01T00:00:00.000Z');
+      const to = new Date('2026-01-31T23:59:59.999Z');
+      const req = createMockRequest({
+        user: { sub: '1' } as any,
+        query: { limit: 20, page: 1, from, to } as any,
+      });
+      const res = createMockResponse();
+
+      await getWalletTransactions(req as any, res);
+
+      expect(walletRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            user: { id: '1' },
+            createdAt: expect.any(Object),
+          }),
+          order: { createdAt: 'DESC' },
+          take: 20,
+          skip: 0,
+        }),
+      );
+    });
+
+    it('validates date filter query values', () => {
+      expect(
+        WalletTransactionsQuerySchema.safeParse({
+          page: '1',
+          limit: '20',
+          from: '2026-01-01T00:00:00.000Z',
+        }).success,
+      ).toBe(true);
+      expect(
+        WalletTransactionsQuerySchema.safeParse({
+          page: '1',
+          limit: '20',
+          from: 'not-a-date',
+        }).success,
+      ).toBe(false);
+      expect(
+        WalletTransactionsQuerySchema.safeParse({
+          page: '1',
+          limit: '20',
+          from: '2026-02-01T00:00:00.000Z',
+          to: '2026-01-01T00:00:00.000Z',
+        }).success,
+      ).toBe(false);
     });
   });
 
@@ -142,6 +206,48 @@ describe('wallet.controller', () => {
         netTotal: 70,
         transactionCount: 4,
       });
+    });
+
+    it('summarizes transactions within the requested date range', async () => {
+      const transactions = [{ amount: '10.00' }, { amount: '-3.00' }] as WalletTransaction[];
+      const walletRepo = createMockRepository<WalletTransaction>({
+        find: jest.fn().mockResolvedValue(transactions),
+      });
+      mockAppDataSourceRepositories(new Map([[WalletTransaction, walletRepo]]));
+
+      const from = new Date('2026-01-01T00:00:00.000Z');
+      const to = new Date('2026-01-31T23:59:59.999Z');
+      const req = createMockRequest({ user: { sub: '1' } as any, query: { from, to } as any });
+      const res = createMockResponse();
+
+      await getWalletTransactionsSummary(req, res);
+
+      expect(walletRepo.find).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          user: { id: '1' },
+          createdAt: expect.any(Object),
+        }),
+        select: ['amount'],
+      });
+      expect(res.json).toHaveBeenCalledWith({
+        totalWins: 10,
+        totalLossesOrBets: 3,
+        netTotal: 7,
+        transactionCount: 2,
+      });
+    });
+
+    it('validates summary date filter query values', () => {
+      expect(
+        WalletTransactionsDateRangeQuerySchema.safeParse({
+          to: '2026-01-31T23:59:59.999Z',
+        }).success,
+      ).toBe(true);
+      expect(
+        WalletTransactionsDateRangeQuerySchema.safeParse({
+          to: '2026-99-31T23:59:59.999Z',
+        }).success,
+      ).toBe(false);
     });
   });
 
