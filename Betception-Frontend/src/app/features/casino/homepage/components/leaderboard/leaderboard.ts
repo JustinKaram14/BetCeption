@@ -83,10 +83,19 @@ export class LeaderboardComponent {
   error: string | null = null;
   rows: LeaderboardRow[] = [];
   currentUserRank: number | null = null;
+  searchTerm = '';
 
   constructor() {
     this.destroyRef.onDestroy(() => this.requestSub?.unsubscribe());
     this.loadCategory(this.activeCategory.id);
+  }
+
+  get filteredRows() {
+    const normalizedSearch = this.searchTerm.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return this.rows;
+    }
+    return this.rows.filter((row) => row.username.toLowerCase().includes(normalizedSearch));
   }
 
   selectCategory(id: LeaderboardCategoryId) {
@@ -97,6 +106,14 @@ export class LeaderboardComponent {
     }
     this.activeCategoryId = next.id;
     this.loadCategory(id);
+  }
+
+  updateSearch(value: string) {
+    this.searchTerm = value;
+  }
+
+  clearSearch() {
+    this.searchTerm = '';
   }
 
   trackRow(_index: number, row: LeaderboardRow) {

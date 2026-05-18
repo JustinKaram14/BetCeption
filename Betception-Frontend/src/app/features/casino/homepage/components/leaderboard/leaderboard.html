@@ -14,6 +14,31 @@
     </div>
   </div>
 
+  <div class="leaderboard-search" role="search">
+    <label class="sr-only" for="leaderboard-player-search">
+      {{ i18n.t('leaderboard.searchLabel') }}
+    </label>
+    <input
+      id="leaderboard-player-search"
+      type="search"
+      class="leaderboard-search-input"
+      [value]="searchTerm"
+      (input)="updateSearch($any($event.target).value)"
+      [attr.placeholder]="i18n.t('leaderboard.searchPlaceholder')"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button
+      *ngIf="searchTerm"
+      type="button"
+      class="leaderboard-search-clear"
+      (click)="clearSearch()"
+      [attr.aria-label]="i18n.t('leaderboard.searchReset')"
+    >
+      x
+    </button>
+  </div>
+
   <p class="leaderboard-description">{{ activeCategory.description }}</p>
 
   <div *ngIf="loading" class="leaderboard-state">
@@ -24,7 +49,7 @@
   </div>
 
   <ng-container *ngIf="!loading">
-    <div class="leaderboard-scroll">
+    <div *ngIf="filteredRows.length > 0; else noSearchResults" class="leaderboard-scroll">
       <table class="leaderboard-table">
         <thead>
         <tr>
@@ -35,7 +60,7 @@
         </thead>
         <tbody>
         <tr
-          *ngFor="let row of rows; trackBy: trackRow"
+          *ngFor="let row of filteredRows; trackBy: trackRow"
           class="leaderboard-player-row"
           (dblclick)="openPublicProfile(row)"
         >
@@ -54,6 +79,11 @@
         </tbody>
       </table>
     </div>
+    <ng-template #noSearchResults>
+      <div class="leaderboard-empty-state">
+        {{ i18n.t('leaderboard.noSearchResults') }}
+      </div>
+    </ng-template>
 
     <p class="current-rank" *ngIf="currentUserRank !== null; else noRank">
       {{ i18n.t('leaderboard.currentRank') }}: <strong>#{{ currentUserRank }}</strong>
