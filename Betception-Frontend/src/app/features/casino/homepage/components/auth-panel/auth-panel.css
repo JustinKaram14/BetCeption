@@ -28,6 +28,40 @@
   box-shadow:none;
 }
 
+.password-field-wrap{display:flex;flex-direction:column;gap:6px}
+.forgot-link{
+  align-self:flex-end;
+  background:none;border:none;padding:0;
+  color:rgba(0,229,255,.55);font-size:.72rem;font-family:var(--font-main);
+  cursor:pointer;letter-spacing:.04em;
+  transition:color .18s ease;
+}
+.forgot-link:hover{color:var(--secondary-glow);text-shadow:0 0 8px var(--secondary-glow)}
+
+.forgot-panel{
+  display:flex;flex-direction:column;gap:14px;width:100%;
+  animation:fadeIn .18s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.forgot-title{margin:0;color:#fff;font-size:1rem;font-weight:700;text-align:center}
+.forgot-hint{margin:0;color:rgba(255,255,255,.5);font-size:.78rem;line-height:1.55;text-align:center}
+.forgot-form{display:flex;flex-direction:column;gap:12px}
+.forgot-form input{
+  width:100%;min-width:0;
+  padding:12px;background:rgba(0,0,0,.3);border:1px solid rgba(0,255,255,.3);
+  border-radius:5px;color:#fff;font-size:1rem;transition:all .3s ease
+}
+.forgot-form input:focus{outline:none;border-color:var(--secondary-glow);box-shadow:0 0 10px var(--secondary-glow)}
+.forgot-back{
+  background:none;border:none;padding:0;
+  color:rgba(255,255,255,.35);font-size:.75rem;font-family:var(--font-main);
+  cursor:pointer;text-align:center;transition:color .18s;
+}
+.forgot-back:hover{color:rgba(255,255,255,.65)}
+.forgot-success{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.forgot-success-icon{font-size:36px;filter:drop-shadow(0 0 10px rgba(0,229,255,.5))}
+.forgot-success p{margin:0;color:rgba(255,255,255,.55);font-size:.82rem;line-height:1.6}
+
 @media (max-width:900px){
   .auth-toggle{
     margin-bottom:16px;

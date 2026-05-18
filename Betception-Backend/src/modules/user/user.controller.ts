@@ -159,8 +159,10 @@ export async function changeOwnPassword(
     });
   }
 
-  user.passwordHash = await hashPassword(req.body.newPassword);
-  await repo.save(user);
+  await repo.update(user.id, {
+    passwordHash: await hashPassword(req.body.newPassword),
+    passwordChangedAt: new Date(),
+  });
 
   return res.json({ success: true });
 }

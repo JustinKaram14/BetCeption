@@ -34,5 +34,17 @@ export const routes: Routes = [
       import('./features/auth/pages/verify-email/verify-email')
         .then(m => m.VerifyEmail),
   },
+  {
+    path: 'change-password',
+    loadComponent: () =>
+      import('./features/auth/pages/change-password/change-password')
+        .then(m => m.ChangePassword),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/auth/pages/reset-password/reset-password')
+        .then(m => m.ResetPassword),
+  },
   { path: '**', redirectTo: 'homepage' }
 ];

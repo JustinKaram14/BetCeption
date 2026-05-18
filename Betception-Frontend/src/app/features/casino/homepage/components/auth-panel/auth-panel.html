@@ -1,4 +1,34 @@
 <div class="auth-container">
+
+  <!-- Forgot-password panel -->
+  <div class="forgot-panel" *ngIf="forgotMode">
+    <ng-container *ngIf="!forgotSubmitted; else forgotConfirm">
+      <p class="forgot-title">Passwort vergessen</p>
+      <p class="forgot-hint">Gib deine E-Mail-Adresse ein. Falls ein Account existiert, senden wir dir einen Link zum Zurücksetzen.</p>
+      <form class="forgot-form" (ngSubmit)="submitForgotPassword()" novalidate>
+        <input
+          type="email"
+          [(ngModel)]="forgotEmail"
+          name="forgotEmail"
+          [placeholder]="i18n.t('auth.emailPlaceholder')"
+          autocomplete="email"
+        />
+        <button class="btn auth-btn" type="submit" [disabled]="forgotLoading || !forgotEmail.trim()">
+          {{ forgotLoading ? 'Sende…' : 'Link anfordern' }}
+        </button>
+      </form>
+      <button class="forgot-back" type="button" (click)="closeForgotPassword()">← Zurück zum Login</button>
+    </ng-container>
+    <ng-template #forgotConfirm>
+      <div class="forgot-success">
+        <span class="forgot-success-icon">✉</span>
+        <p>Falls ein Account mit dieser E-Mail-Adresse existiert, wurde ein Link gesendet. Bitte prüfe dein Postfach.</p>
+        <button class="btn auth-btn" type="button" (click)="closeForgotPassword()">Zurück zum Login</button>
+      </div>
+    </ng-template>
+  </div>
+
+  <ng-container *ngIf="!forgotMode">
   <div class="auth-toggle" role="tablist" [attr.aria-label]="i18n.t('auth.login') + ' / ' + i18n.t('auth.register')">
     <button
       #loginTabButton
@@ -51,16 +81,25 @@
       name="username"
       autocomplete="nickname">
 
-    <input
-      data-testid="auth-password-input"
-      type="password"
-      [placeholder]="i18n.t('auth.passwordPlaceholder')"
-      [(ngModel)]="password"
-      name="password"
-      [autocomplete]="tab === 'login' ? 'current-password' : 'new-password'">
+    <div class="password-field-wrap">
+      <input
+        data-testid="auth-password-input"
+        type="password"
+        [placeholder]="i18n.t('auth.passwordPlaceholder')"
+        [(ngModel)]="password"
+        name="password"
+        [autocomplete]="tab === 'login' ? 'current-password' : 'new-password'">
+      <button
+        *ngIf="tab === 'login'"
+        type="button"
+        class="forgot-link"
+        (click)="openForgotPassword()"
+      >Passwort vergessen?</button>
+    </div>
 
     <button class="btn auth-btn" data-testid="auth-submit" type="submit" [disabled]="!canSubmit()">
       {{ tab==='login' ? i18n.t('auth.submitLogin') : i18n.t('auth.createAccount') }}
     </button>
   </form>
+  </ng-container>
 </div>

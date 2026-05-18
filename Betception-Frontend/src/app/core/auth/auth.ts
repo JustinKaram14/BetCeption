@@ -44,6 +44,28 @@ export class Auth {
     });
   }
 
+  requestPasswordChange() {
+    return this.http.post<MessageResponse>('/auth/request-password-change', {});
+  }
+
+  confirmPasswordChange(payload: { token: string; oldPassword: string; newPassword: string }) {
+    return this.http.post<MessageResponse>('/auth/confirm-password-change', payload, {
+      context: this.skipAuth(),
+    });
+  }
+
+  forgotPassword(email: string) {
+    return this.http.post<MessageResponse>('/auth/forgot-password', { email }, {
+      context: this.skipAuth(),
+    });
+  }
+
+  resetPassword(payload: { token: string; newPassword: string }) {
+    return this.http.post<MessageResponse>('/auth/reset-password', payload, {
+      context: this.skipAuth(),
+    });
+  }
+
   login(credentials: LoginRequest) {
     return this.http
       .post<AuthTokens>('/auth/login', credentials, {

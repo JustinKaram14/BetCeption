@@ -144,6 +144,13 @@ export const refreshRateLimiter = createLimiter({
   },
 });
 
+export const passwordChangeLimiter = createLimiter({
+  windowMs: 5 * 60 * 1000,
+  max: 3,
+  prefix: 'pw-change-request',
+  keyGenerator: (req) => String(req.user?.sub ?? req.ip ?? 'anonymous'),
+});
+
 export const powerupRateLimiter = createLimiter({
   windowMs: 60_000,
   max: 20,

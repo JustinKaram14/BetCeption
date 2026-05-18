@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, Output, inject } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe } from '@angular/common';
 import { map, Observable, Subscription } from 'rxjs';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
@@ -39,6 +39,7 @@ type LeaderboardState = {
   styleUrls: ['./leaderboard.css'],
 })
 export class LeaderboardComponent {
+  @Input() canViewProfiles = false;
   @Output() userProfileRequested = new EventEmitter<string>();
 
   private readonly api = inject(BetceptionApi);
@@ -121,6 +122,7 @@ export class LeaderboardComponent {
   }
 
   openPublicProfile(row: LeaderboardRow) {
+    if (!this.canViewProfiles) return;
     this.userProfileRequested.emit(row.userId);
   }
 
