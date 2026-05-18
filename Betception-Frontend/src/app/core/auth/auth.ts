@@ -31,6 +31,19 @@ export class Auth {
     });
   }
 
+  verifyEmail(token: string) {
+    return this.http.get<MessageResponse>('/auth/verify-email', {
+      params: { token },
+      context: this.skipAuth(),
+    });
+  }
+
+  resendVerification(email: string) {
+    return this.http.post<MessageResponse>('/auth/resend-verification', { email }, {
+      context: this.skipAuth(),
+    });
+  }
+
   login(credentials: LoginRequest) {
     return this.http
       .post<AuthTokens>('/auth/login', credentials, {

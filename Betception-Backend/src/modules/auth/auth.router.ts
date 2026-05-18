@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, refresh, logout } from './auth.controller.js';
+import { register, login, refresh, logout, verifyEmail, resendVerification } from './auth.controller.js';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import { RegisterSchema, LoginSchema } from './auth.schema.js';
 import { loginRateLimiter, refreshRateLimiter } from '../../middlewares/rateLimiters.js';
@@ -10,3 +10,5 @@ authRouter.post('/register', validateRequest(RegisterSchema), register);
 authRouter.post('/login', loginRateLimiter, validateRequest(LoginSchema), login);
 authRouter.post('/refresh', refreshRateLimiter, refresh);
 authRouter.post('/logout', logout);
+authRouter.get('/verify-email', verifyEmail);
+authRouter.post('/resend-verification', loginRateLimiter, resendVerification);
