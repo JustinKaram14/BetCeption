@@ -151,6 +151,7 @@ describe('LeaderboardComponent', () => {
 
     fixture = TestBed.createComponent(LeaderboardComponent);
     component = fixture.componentInstance;
+    component.canViewProfiles = true;
     const emitSpy = spyOn(component.userProfileRequested, 'emit');
 
     component.openPublicProfile({ rank: 1, userId: 'u2', username: 'trinity', metrics: { balance: 900 } });
@@ -222,6 +223,7 @@ describe('LeaderboardComponent', () => {
 
     fixture = TestBed.createComponent(LeaderboardComponent);
     component = fixture.componentInstance;
+    component.canViewProfiles = true;
     const emitSpy = spyOn(component.userProfileRequested, 'emit');
 
     component.updateSearch('trin');
@@ -231,6 +233,18 @@ describe('LeaderboardComponent', () => {
     filteredRow.dispatchEvent(new MouseEvent('dblclick'));
 
     expect(emitSpy).toHaveBeenCalledWith('u2');
+  });
+
+  it('does not emit a user profile when canViewProfiles is false', () => {
+    apiMock.getBalanceLeaderboard.and.returnValue(new Subject<any>().asObservable());
+
+    fixture = TestBed.createComponent(LeaderboardComponent);
+    component = fixture.componentInstance;
+    const emitSpy = spyOn(component.userProfileRequested, 'emit');
+
+    component.openPublicProfile({ rank: 1, userId: 'u1', username: 'neo', metrics: {} });
+
+    expect(emitSpy).not.toHaveBeenCalled();
   });
 
   it('does not refetch when the active category is selected again', () => {

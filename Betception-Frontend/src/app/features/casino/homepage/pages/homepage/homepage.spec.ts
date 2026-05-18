@@ -401,12 +401,11 @@ describe('HomepageComponent', () => {
     expect(toastSpy).toHaveBeenCalled();
   });
 
-  it('shows a success toast on successful register', () => {
-    const toastSpy = spyOn((component as any).toast, 'success');
+  it('shows the verify-email modal on successful register', () => {
     authFacadeMock.register.and.returnValue(of({ message: 'ok' } as any));
-    authFacadeMock.login.and.returnValue(of({ sub: 'u1', email: 't@t.com', username: 'new' } as any));
     component.onRegister({ email: 't@t.com', username: 'new', password: 'pw' });
-    expect(toastSpy).toHaveBeenCalled();
+    expect(component.showVerifyEmailModal).toBeTrue();
+    expect(component.verifyEmailAddress).toBe('t@t.com');
   });
 
   it('translates backend email validation errors on register', () => {
