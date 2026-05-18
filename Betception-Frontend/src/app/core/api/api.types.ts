@@ -109,6 +109,15 @@ export interface ChangeOwnPasswordResponse {
   success: boolean;
 }
 
+export interface DeleteOwnAccountRequest {
+  password: string;
+  confirm: boolean;
+}
+
+export interface DeleteOwnAccountResponse {
+  success: boolean;
+}
+
 export interface CurrentUserResponse {
   user: AuthUser;
 }

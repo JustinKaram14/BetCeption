@@ -1,4 +1,5 @@
 import type { Request, Response, CookieOptions } from 'express';
+import { IsNull } from 'typeorm';
 import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
 import { Session } from '../../entity/Session.js';
@@ -49,10 +50,10 @@ export async function register(
 
   const repo = AppDataSource.getRepository(User);
 
-  const emailExists = await repo.exist({ where: { email } });
+  const emailExists = await repo.exist({ where: { email, deletedAt: IsNull() } });
   if (emailExists) return res.status(409).json({ message: REGISTRATION_CONFLICT_MESSAGE });
 
-  const usernameExists = await repo.exist({ where: { username } });
+  const usernameExists = await repo.exist({ where: { username, deletedAt: IsNull() } });
   if (usernameExists) return res.status(409).json({ message: REGISTRATION_CONFLICT_MESSAGE });
 
   const pwHash = await hashPassword(password);
@@ -75,7 +76,10 @@ export async function login(
   const { email, password } = req.body;
   const repo = AppDataSource.getRepository(User);
   const sessionRepo = AppDataSource.getRepository(Session);
-  const user = await repo.findOne({ select: ['id', 'email', 'username', 'passwordHash'], where: { email } });
+  const user = await repo.findOne({
+    select: ['id', 'email', 'username', 'passwordHash'],
+    where: { email, deletedAt: IsNull() },
+  });
   if (!user) {
     await verifyPassword(password, DUMMY_PASSWORD_HASH);
     return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
@@ -126,7 +130,7 @@ export async function refresh(req: Request, res: Response) {
     }
 
     const user = await repo.findOne({
-      where: { id: userId },
+      where: { id: userId, deletedAt: IsNull() },
       select: ['id', 'email', 'username'],
     });
     if (!user) return res.status(401).json({ message: 'Invalid or expired refresh token' });

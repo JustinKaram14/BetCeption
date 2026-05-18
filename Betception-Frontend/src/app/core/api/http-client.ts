@@ -47,7 +47,7 @@ export class HttpClient {
     return this.request<T>('PATCH', path, { ...options, body });
   }
 
-  delete<T>(path: string, options: Omit<HttpClientOptions, 'body'> = {}) {
+  delete<T>(path: string, options: HttpClientOptions = {}) {
     return this.request<T>('DELETE', path, options);
   }
 
