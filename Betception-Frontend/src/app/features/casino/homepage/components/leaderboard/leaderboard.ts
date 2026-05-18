@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Output, inject } from '@angular/core';
 import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault, DecimalPipe } from '@angular/common';
 import { map, Observable, Subscription } from 'rxjs';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
@@ -21,6 +21,7 @@ type LeaderboardColumn = {
 
 type LeaderboardRow = {
   rank: number;
+  userId: string;
   username: string;
   metrics: Partial<Record<string, number>>;
 };
@@ -38,6 +39,8 @@ type LeaderboardState = {
   styleUrls: ['./leaderboard.css'],
 })
 export class LeaderboardComponent {
+  @Output() userProfileRequested = new EventEmitter<string>();
+
   private readonly api = inject(BetceptionApi);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
@@ -97,7 +100,11 @@ export class LeaderboardComponent {
   }
 
   trackRow(_index: number, row: LeaderboardRow) {
-    return `${row.rank}-${row.username}`;
+    return `${row.rank}-${row.userId}`;
+  }
+
+  openPublicProfile(row: LeaderboardRow) {
+    this.userProfileRequested.emit(row.userId);
   }
 
   private loadCategory(id: LeaderboardCategoryId) {
@@ -140,6 +147,7 @@ export class LeaderboardComponent {
     return {
       rows: response.items.map((item) => ({
         rank: item.rank,
+        userId: item.userId,
         username: item.username,
         metrics: { balance: item.balance },
       })),
@@ -151,6 +159,7 @@ export class LeaderboardComponent {
     return {
       rows: response.items.map((item) => ({
         rank: item.rank,
+        userId: item.userId,
         username: item.username,
         metrics: {
           level: item.level,
@@ -165,6 +174,7 @@ export class LeaderboardComponent {
     return {
       rows: response.items.map((item) => ({
         rank: item.rank,
+        userId: item.userId,
         username: item.username,
         metrics: {
           netWinnings7d: item.netWinnings7d,

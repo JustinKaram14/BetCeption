@@ -10,7 +10,7 @@
 
   <div class="main-content" [style.flex-direction]="isNarrow ? 'column' : null" data-testid="homepage-main-content">
     <app-neon-card class="leaderboard-card">
-      <app-leaderboard></app-leaderboard>
+      <app-leaderboard (userProfileRequested)="openPublicProfileModal($event)"></app-leaderboard>
     </app-neon-card>
 
     <div class="right-column">
@@ -84,5 +84,11 @@
   (balanceUpdated)="onCrateBalanceUpdated($event)"
   (unseenCrateCountChange)="onUnseenCrateCountChanged($event)">
 </app-profile-modal>
+
+<app-public-profile-modal
+  *ngIf="publicProfileUserId"
+  [userId]="publicProfileUserId"
+  (closed)="closePublicProfileModal()">
+</app-public-profile-modal>
 
 <app-toast-container></app-toast-container>

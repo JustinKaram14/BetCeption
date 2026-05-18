@@ -26,6 +26,20 @@ function serializeProfile(user: User) {
   };
 }
 
+function serializePublicProfile(user: User) {
+  return {
+    id: user.id,
+    username: user.username,
+    balance: Number(user.balance),
+    xp: user.xp,
+    level: user.level,
+    avatarIcon: user.avatarIcon,
+    avatarColor: user.avatarColor,
+    levelProgress: buildLevelProgress(user),
+    createdAt: user.createdAt,
+  };
+}
+
 export function getCurrentUser(req: Request, res: Response) {
   if (!req.user) {
     return res.status(401).json({ message: 'Unauthenticated' });
@@ -40,14 +54,14 @@ export async function getUserById(
   const repo = AppDataSource.getRepository(User);
   const user = await repo.findOne({
     where: { id: req.params.id },
-    select: ['id', 'username', 'email', 'balance', 'xp', 'level'],
+    select: ['id', 'username', 'balance', 'xp', 'level', 'avatarIcon', 'avatarColor', 'createdAt'],
   });
 
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  return res.json({ user: { ...user, levelProgress: buildLevelProgress(user) } });
+  return res.json({ user: serializePublicProfile(user) });
 }
 
 export async function getOwnProfile(req: Request, res: Response) {
