@@ -69,7 +69,7 @@ jobs:
 
       - name: Ergebnisse hochladen
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k6-performance-results-${{ github.run_number }}
           path: Betception-Backend/results/
