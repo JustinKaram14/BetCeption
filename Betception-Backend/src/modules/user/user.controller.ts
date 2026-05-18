@@ -1,10 +1,13 @@
 import { Request, Response } from 'express';
+import { IsNull } from 'typeorm';
 import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
+import { Session } from '../../entity/Session.js';
 import { hashPassword, verifyPassword } from '../../utils/passwords.js';
 import { buildLevelProgress } from '../progression/progression.js';
 import type {
   ChangeOwnPasswordInput,
+  DeleteOwnAccountInput,
   UpdateOwnProfileInput,
   UserIdParams,
 } from './user.schema.js';
@@ -53,7 +56,7 @@ export async function getUserById(
 ) {
   const repo = AppDataSource.getRepository(User);
   const user = await repo.findOne({
-    where: { id: req.params.id },
+    where: { id: req.params.id, deletedAt: IsNull() },
     select: ['id', 'username', 'balance', 'xp', 'level', 'avatarIcon', 'avatarColor', 'createdAt'],
   });
 
@@ -68,7 +71,7 @@ export async function getOwnProfile(req: Request, res: Response) {
   const userId = String(req.user?.sub);
   const repo = AppDataSource.getRepository(User);
   const user = await repo.findOne({
-    where: { id: userId },
+    where: { id: userId, deletedAt: IsNull() },
     select: ['id', 'username', 'email', 'balance', 'xp', 'level', 'avatarIcon', 'avatarColor', 'createdAt'],
   });
 
@@ -86,7 +89,7 @@ export async function updateOwnProfile(
   const userId = String(req.user?.sub);
   const repo = AppDataSource.getRepository(User);
   const user = await repo.findOne({
-    where: { id: userId },
+    where: { id: userId, deletedAt: IsNull() },
     select: ['id', 'username', 'email', 'balance', 'xp', 'level', 'avatarIcon', 'avatarColor', 'createdAt'],
   });
 
@@ -101,7 +104,7 @@ export async function updateOwnProfile(
 
   if (nextUsername !== undefined && nextUsername !== user.username) {
     const existing = await repo.findOne({
-      where: { username: nextUsername },
+      where: { username: nextUsername, deletedAt: IsNull() },
       select: ['id'],
     });
     if (existing && existing.id !== userId) {
@@ -112,7 +115,7 @@ export async function updateOwnProfile(
 
   if (nextEmail !== undefined && nextEmail !== user.email) {
     const existing = await repo.findOne({
-      where: { email: nextEmail },
+      where: { email: nextEmail, deletedAt: IsNull() },
       select: ['id'],
     });
     if (existing && existing.id !== userId) {
@@ -140,7 +143,7 @@ export async function changeOwnPassword(
   const userId = String(req.user?.sub);
   const repo = AppDataSource.getRepository(User);
   const user = await repo.findOne({
-    where: { id: userId },
+    where: { id: userId, deletedAt: IsNull() },
     select: ['id', 'passwordHash'],
   });
 
@@ -162,6 +165,46 @@ export async function changeOwnPassword(
   await repo.update(user.id, {
     passwordHash: await hashPassword(req.body.newPassword),
     passwordChangedAt: new Date(),
+  });
+
+  return res.json({ success: true });
+}
+
+export async function deleteOwnAccount(
+  req: Request<unknown, unknown, DeleteOwnAccountInput>,
+  res: Response,
+) {
+  const userId = String(req.user?.sub);
+  const repo = AppDataSource.getRepository(User);
+  const user = await repo.findOne({
+    where: { id: userId, deletedAt: IsNull() },
+    select: ['id', 'passwordHash'],
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const passwordMatches = await verifyPassword(req.body.password, user.passwordHash);
+  if (!passwordMatches) {
+    return res.status(400).json({
+      message: 'Password is incorrect',
+      code: 'INVALID_PASSWORD',
+    });
+  }
+
+  const deletedAt = new Date();
+  await AppDataSource.transaction(async (manager) => {
+    const transactionalUserRepo = manager.getRepository(User);
+    const sessionRepo = manager.getRepository(Session);
+    await sessionRepo.delete({ user: { id: userId } });
+    await transactionalUserRepo.update(userId, {
+      username: `deleted-user-${userId}`,
+      email: `deleted-user-${userId}@deleted.betception.local`,
+      deletedAt,
+      activePowerupType: null,
+      activePowerupUsesRemaining: 0,
+    });
   });
 
   return res.json({ success: true });
