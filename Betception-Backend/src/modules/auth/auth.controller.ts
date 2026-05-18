@@ -81,11 +81,9 @@ export async function register(
   await repo.save(user);
 
   if (smtpConfigured && verificationToken) {
-    try {
-      await sendVerificationEmail(email, username, verificationToken);
-    } catch (mailErr) {
+    sendVerificationEmail(email, username, verificationToken).catch((mailErr) => {
       console.error('[MAIL ERROR] sendVerificationEmail failed:', mailErr);
-    }
+    });
   }
 
   return res.status(201).json({ message: 'Registered' });
@@ -224,11 +222,9 @@ export async function requestPasswordChange(req: Request, res: Response) {
     passwordChangeTokenExpiresAt: new Date(Date.now() + PASSWORD_CHANGE_TOKEN_TTL_MS),
   });
 
-  try {
-    await sendPasswordChangeEmail(user.email, user.username, token);
-  } catch (mailErr) {
+  sendPasswordChangeEmail(user.email, user.username, token).catch((mailErr) => {
     console.error('[MAIL ERROR] sendPasswordChangeEmail failed:', mailErr);
-  }
+  });
 
   return res.json({ message: 'Password change email sent' });
 }
@@ -292,11 +288,9 @@ export async function forgotPassword(
     passwordResetTokenExpiresAt: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
   });
 
-  try {
-    await sendPasswordResetEmail(user.email, user.username, token);
-  } catch (mailErr) {
+  sendPasswordResetEmail(user.email, user.username, token).catch((mailErr) => {
     console.error('[MAIL ERROR] sendPasswordResetEmail failed:', mailErr);
-  }
+  });
 
   return res.json(GENERIC_RESPONSE);
 }
