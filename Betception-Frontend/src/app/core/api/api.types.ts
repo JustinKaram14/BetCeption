@@ -229,6 +229,14 @@ export interface WalletTransactionsQuery {
   [key: string]: QueryValue;
   page?: number;
   limit?: number;
+  from?: string;
+  to?: string;
+}
+
+export interface WalletTransactionsSummaryQuery {
+  [key: string]: QueryValue;
+  from?: string;
+  to?: string;
 }
 
 export interface WalletTransaction {

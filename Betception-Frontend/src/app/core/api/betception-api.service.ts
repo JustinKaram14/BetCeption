@@ -30,6 +30,7 @@ import {
   WalletSummaryResponse,
   WalletTransactionsQuery,
   WalletTransactionsResponse,
+  WalletTransactionsSummaryQuery,
   WalletTransactionsSummaryResponse,
   WinningsLeaderboardItem,
   ChangeOwnPasswordRequest,
@@ -76,8 +77,11 @@ export class BetceptionApi {
     );
   }
 
-  getWalletTransactionsSummary() {
-    return this.http.get<WalletTransactionsSummaryResponse>('/wallet/transactions/summary');
+  getWalletTransactionsSummary(query: WalletTransactionsSummaryQuery = {}) {
+    return this.http.get<WalletTransactionsSummaryResponse>(
+      '/wallet/transactions/summary',
+      { params: query },
+    );
   }
 
   depositFunds(payload: WalletAdjustmentRequest) {
