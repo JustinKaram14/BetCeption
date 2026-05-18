@@ -15,7 +15,6 @@ import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import {
-  ChangeOwnPasswordRequest,
   OwnProfile,
   ProfileAvatarColor,
   ProfileAvatarIcon,
@@ -27,6 +26,7 @@ import {
 } from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
+import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 import { CrateInventoryComponent } from '../crate-inventory/crate-inventory';
 
@@ -85,6 +85,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   private readonly api = inject(BetceptionApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly authFacade = inject(AuthFacade);
   readonly i18n = inject(I18n);
 
   readonly tabs: Array<{ id: ProfileTab; labelKey: Parameters<I18n['t']>[0] }> = [
@@ -116,13 +117,9 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     avatarIcon: 'chip' as ProfileAvatarIcon,
     avatarColor: 'cyan' as ProfileAvatarColor,
   };
-  passwordForm: ChangeOwnPasswordRequest = {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  };
   profileSaving = false;
-  passwordSaving = false;
+  passwordChangeSending = false;
+  passwordChangeEmailSent = false;
   avatarEditing = false;
   avatarSaving = false;
   accountEditMode: AccountEditMode | null = null;
@@ -327,13 +324,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       this.profileForm.username = this.profile.username;
       this.profileForm.email = this.profile.email;
     }
-    if (mode === 'password') {
-      this.passwordForm = {
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      };
-    }
+    this.passwordChangeEmailSent = false;
     this.accountEditMode = mode;
   }
 
@@ -342,11 +333,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       this.profileForm.username = this.profile.username;
       this.profileForm.email = this.profile.email;
     }
-    this.passwordForm = {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    };
+    this.passwordChangeEmailSent = false;
     this.accountEditMode = null;
   }
 
@@ -483,46 +470,16 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       });
   }
 
-  changePassword(): void {
-    const currentPassword = this.passwordForm.currentPassword;
-    const newPassword = this.passwordForm.newPassword;
-    const confirmPassword = this.passwordForm.confirmPassword;
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      this.toast.error(this.i18n.t('profile.toast.passwordFieldsRequired'));
-      return;
-    }
-    if (newPassword.length < 8) {
-      this.toast.error(this.i18n.t('auth.passwordTooShort'));
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      this.toast.error(this.i18n.t('profile.toast.passwordMismatch'));
-      return;
-    }
-
-    this.passwordSaving = true;
-    this.api
-      .changeOwnPassword({ currentPassword, newPassword, confirmPassword })
+  sendPasswordChangeMail(): void {
+    this.passwordChangeSending = true;
+    this.authFacade.requestPasswordChange()
       .pipe(
-        finalize(() => {
-          this.passwordSaving = false;
-        }),
+        finalize(() => { this.passwordChangeSending = false; }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => {
-          this.passwordForm = {
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: '',
-          };
-          this.accountEditMode = null;
-          this.toast.success(this.i18n.t('profile.toast.passwordUpdated'));
-        },
-        error: (error) => {
-          this.toast.error(this.extractErrorMessage(error));
-        },
+        next: () => { this.passwordChangeEmailSent = true; },
+        error: (error) => { this.toast.error(this.extractErrorMessage(error)); },
       });
   }
 

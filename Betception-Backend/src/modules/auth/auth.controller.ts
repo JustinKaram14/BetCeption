@@ -6,11 +6,13 @@ import { Session } from '../../entity/Session.js';
 import { hashPassword, verifyPassword } from '../../utils/passwords.js';
 import { signAccess, signRefresh, verifyRefresh } from '../../utils/jwt.js';
 import { env } from '../../config/env.js';
-import type { RegisterInput, LoginInput } from './auth.schema.js';
+import type { RegisterInput, LoginInput, ForgotPasswordInput, ResetPasswordInput, ConfirmPasswordChangeInput } from './auth.schema.js';
 import { hashToken } from '../../utils/tokenHash.js';
 import * as emailValidation from './email-validation.js';
-import { sendVerificationEmail } from '../../utils/mailer.js';
+import { sendVerificationEmail, sendPasswordChangeEmail, sendPasswordResetEmail } from '../../utils/mailer.js';
 
+const PASSWORD_CHANGE_TOKEN_TTL_MS = 15 * 60 * 1000;
+const PASSWORD_RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_PATH = '/auth/refresh';
 const REFRESH_TTL_MS = env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000;
@@ -203,6 +205,131 @@ export async function resendVerification(req: Request, res: Response) {
   }
 
   return res.json({ message: 'Verification email sent if account exists' });
+}
+
+export async function requestPasswordChange(req: Request, res: Response) {
+  const userId = String(req.user?.sub);
+  const repo = AppDataSource.getRepository(User);
+  const user = await repo.findOne({
+    where: { id: userId },
+    select: ['id', 'email', 'username'],
+  });
+  if (!user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const token = randomBytes(32).toString('hex');
+  await repo.update(user.id, {
+    passwordChangeToken: hashToken(token),
+    passwordChangeTokenExpiresAt: new Date(Date.now() + PASSWORD_CHANGE_TOKEN_TTL_MS),
+  });
+
+  try {
+    await sendPasswordChangeEmail(user.email, user.username, token);
+  } catch {
+    // don't surface mail errors
+  }
+
+  return res.json({ message: 'Password change email sent' });
+}
+
+export async function confirmPasswordChange(
+  req: Request<unknown, unknown, ConfirmPasswordChangeInput>,
+  res: Response,
+) {
+  const { token, oldPassword, newPassword } = req.body;
+  const repo = AppDataSource.getRepository(User);
+  const user = await repo.findOne({
+    where: { passwordChangeToken: hashToken(token) },
+    select: ['id', 'passwordHash', 'passwordChangeToken', 'passwordChangeTokenExpiresAt'],
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: 'Invalid or expired token', code: 'TOKEN_INVALID' });
+  }
+  if (!user.passwordChangeTokenExpiresAt || user.passwordChangeTokenExpiresAt < new Date()) {
+    return res.status(400).json({ message: 'Token has expired', code: 'TOKEN_EXPIRED' });
+  }
+
+  const oldOk = await verifyPassword(oldPassword, user.passwordHash);
+  if (!oldOk) {
+    return res.status(400).json({ message: 'Current password is incorrect', code: 'INVALID_OLD_PASSWORD' });
+  }
+
+  const newHash = await hashPassword(newPassword);
+  const sessionRepo = AppDataSource.getRepository(Session);
+  await repo.update(user.id, {
+    passwordHash: newHash,
+    passwordChangeToken: null,
+    passwordChangeTokenExpiresAt: null,
+    passwordChangedAt: new Date(),
+  });
+  await sessionRepo.createQueryBuilder().delete().where('user_id = :id', { id: user.id }).execute();
+
+  return res.json({ message: 'Password changed successfully' });
+}
+
+export async function forgotPassword(
+  req: Request<unknown, unknown, ForgotPasswordInput>,
+  res: Response,
+) {
+  const email = req.body?.email ?? null;
+  const GENERIC_RESPONSE = { message: 'Falls ein Account existiert, wurde eine Mail gesendet' };
+
+  if (!email) return res.json(GENERIC_RESPONSE);
+
+  const repo = AppDataSource.getRepository(User);
+  const user = await repo.findOne({
+    where: { email },
+    select: ['id', 'email', 'username'],
+  });
+
+  if (!user) return res.json(GENERIC_RESPONSE);
+
+  const token = randomBytes(32).toString('hex');
+  await repo.update(user.id, {
+    passwordResetToken: hashToken(token),
+    passwordResetTokenExpiresAt: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
+  });
+
+  try {
+    await sendPasswordResetEmail(user.email, user.username, token);
+  } catch {
+    // don't surface mail errors
+  }
+
+  return res.json(GENERIC_RESPONSE);
+}
+
+export async function resetPassword(
+  req: Request<unknown, unknown, ResetPasswordInput>,
+  res: Response,
+) {
+  const { token, newPassword } = req.body;
+  const repo = AppDataSource.getRepository(User);
+  const user = await repo.findOne({
+    where: { passwordResetToken: hashToken(token) },
+    select: ['id', 'passwordResetToken', 'passwordResetTokenExpiresAt'],
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: 'Invalid or expired token', code: 'TOKEN_INVALID' });
+  }
+  if (!user.passwordResetTokenExpiresAt || user.passwordResetTokenExpiresAt < new Date()) {
+    return res.status(400).json({ message: 'Token has expired', code: 'TOKEN_EXPIRED' });
+  }
+
+  const newHash = await hashPassword(newPassword);
+  const sessionRepo = AppDataSource.getRepository(Session);
+  await repo.update(user.id, {
+    passwordHash: newHash,
+    passwordResetToken: null,
+    passwordResetTokenExpiresAt: null,
+    passwordChangedAt: new Date(),
+  });
+  await sessionRepo.createQueryBuilder().delete().where('user_id = :id', { id: user.id }).execute();
+
+  return res.json({ message: 'Password reset successfully' });
 }
 
 export async function refresh(req: Request, res: Response) {

@@ -10,7 +10,10 @@
 
   <div class="main-content" [style.flex-direction]="isNarrow ? 'column' : null" data-testid="homepage-main-content">
     <app-neon-card class="leaderboard-card">
-      <app-leaderboard (userProfileRequested)="openPublicProfileModal($event)"></app-leaderboard>
+      <app-leaderboard
+        [canViewProfiles]="(isAuthenticated$ | async) ?? false"
+        (userProfileRequested)="openPublicProfileModal($event)">
+      </app-leaderboard>
     </app-neon-card>
 
     <div class="right-column">

@@ -85,6 +85,21 @@ export class User {
   @Column({ name: 'email_verification_token_expires_at', type: 'timestamp', nullable: true })
   emailVerificationTokenExpiresAt: Date | null = null;
 
+  @Column({ name: 'password_change_token', type: 'varchar', length: 64, nullable: true })
+  passwordChangeToken: string | null = null;
+
+  @Column({ name: 'password_change_token_expires_at', type: 'timestamp', nullable: true })
+  passwordChangeTokenExpiresAt: Date | null = null;
+
+  @Column({ name: 'password_reset_token', type: 'varchar', length: 64, nullable: true })
+  passwordResetToken: string | null = null;
+
+  @Column({ name: 'password_reset_token_expires_at', type: 'timestamp', nullable: true })
+  passwordResetTokenExpiresAt: Date | null = null;
+
+  @Column({ name: 'password_changed_at', type: 'timestamp', nullable: true })
+  passwordChangedAt: Date | null = null;
+
   @Column({
     name: 'created_at',
     type: 'timestamp',

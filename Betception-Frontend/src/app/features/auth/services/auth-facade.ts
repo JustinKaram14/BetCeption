@@ -27,6 +27,22 @@ export class AuthFacade {
     return this.auth.resendVerification(email);
   }
 
+  requestPasswordChange() {
+    return this.auth.requestPasswordChange();
+  }
+
+  confirmPasswordChange(payload: { token: string; oldPassword: string; newPassword: string }) {
+    return this.auth.confirmPasswordChange(payload);
+  }
+
+  forgotPassword(email: string) {
+    return this.auth.forgotPassword(email);
+  }
+
+  resetPassword(payload: { token: string; newPassword: string }) {
+    return this.auth.resetPassword(payload);
+  }
+
   refresh() {
     return this.auth.refresh();
   }

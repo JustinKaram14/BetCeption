@@ -17,6 +17,8 @@ import { AddPlayerSplitHandType1700000000011 } from './migrations/1700000000011-
 import { AddExpandedBetceptionSidebets1700000000012 } from './migrations/1700000000012-AddExpandedBetceptionSidebets.js';
 import { AddUserProfileAvatar1700000000013 } from './migrations/1700000000013-AddUserProfileAvatar.js';
 import { AddEmailVerification1700000000014 } from './migrations/1700000000014-AddEmailVerification.js';
+import { AddPasswordTokens1700000000015 } from './migrations/1700000000015-AddPasswordTokens.js';
+import { AddPasswordChangedAt1700000000016 } from './migrations/1700000000016-AddPasswordChangedAt.js';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -26,7 +28,7 @@ export const AppDataSource = new DataSource({
   password: env.db.password,
   database: env.db.database,
   entities: ENTITIES,
-  migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001, AddUsernameToWinningsView1700000000002, AddUserCrates1700000000003, AddCrateRewardToWalletKind1700000000004, AddStreakToUsersAndClaims1700000000005, AddXpBoostExpiry1700000000006, SeedPowerupTypes1700000000007, AddActivePowerPills1700000000008, AddBetceptionSidebets1700000000009, ReplaceWinnerWithDealerBustSidebet1700000000010, AddPlayerSplitHandType1700000000011, AddExpandedBetceptionSidebets1700000000012, AddUserProfileAvatar1700000000013, AddEmailVerification1700000000014],
+  migrations: [InitSchema1700000000000, AddRateLimitCounters1700000000001, AddUsernameToWinningsView1700000000002, AddUserCrates1700000000003, AddCrateRewardToWalletKind1700000000004, AddStreakToUsersAndClaims1700000000005, AddXpBoostExpiry1700000000006, SeedPowerupTypes1700000000007, AddActivePowerPills1700000000008, AddBetceptionSidebets1700000000009, ReplaceWinnerWithDealerBustSidebet1700000000010, AddPlayerSplitHandType1700000000011, AddExpandedBetceptionSidebets1700000000012, AddUserProfileAvatar1700000000013, AddEmailVerification1700000000014, AddPasswordTokens1700000000015, AddPasswordChangedAt1700000000016],
   synchronize: false,
   logging: env.nodeEnv === 'development',
 });
