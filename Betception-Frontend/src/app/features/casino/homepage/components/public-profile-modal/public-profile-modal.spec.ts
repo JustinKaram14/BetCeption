@@ -2,12 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
+import { I18n } from '../../../../../core/i18n/i18n';
 import { PublicProfileModalComponent } from './public-profile-modal';
 
 describe('PublicProfileModalComponent', () => {
   let fixture: ComponentFixture<PublicProfileModalComponent>;
   let component: PublicProfileModalComponent;
   let apiMock: jasmine.SpyObj<BetceptionApi>;
+  let i18n: I18n;
 
   const publicProfile = {
     user: {
@@ -39,6 +41,9 @@ describe('PublicProfileModalComponent', () => {
       imports: [PublicProfileModalComponent],
       providers: [{ provide: BetceptionApi, useValue: apiMock }],
     }).compileComponents();
+
+    i18n = TestBed.inject(I18n);
+    i18n.setLanguage('de');
 
     fixture = TestBed.createComponent(PublicProfileModalComponent);
     fixture.componentRef.setInput('userId', '2');
