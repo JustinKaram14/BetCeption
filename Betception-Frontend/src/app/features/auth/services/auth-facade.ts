@@ -19,6 +19,14 @@ export class AuthFacade {
     return this.auth.register(payload);
   }
 
+  verifyEmail(token: string) {
+    return this.auth.verifyEmail(token);
+  }
+
+  resendVerification(email: string) {
+    return this.auth.resendVerification(email);
+  }
+
   refresh() {
     return this.auth.refresh();
   }

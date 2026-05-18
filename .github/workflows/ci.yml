@@ -84,6 +84,14 @@ jobs:
       - name: Run tests (headless Chrome)
         run: npm run test:ci
 
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: Betception-Frontend/coverage/
+          retention-days: 7
+
   # ─────────────────────────────────────────────────────────────
   # Summary gate — all jobs above must pass before merge
   # Use this job's name as the required status check in

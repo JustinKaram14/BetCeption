@@ -1,1 +1,42 @@
-<p>verify-email works!</p>
+<div class="verify-container">
+  @switch (state()) {
+    @case ('loading') {
+      <div class="verify-card">
+        <div class="spinner"></div>
+        <p>E-Mail wird bestätigt…</p>
+      </div>
+    }
+    @case ('success') {
+      <div class="verify-card verify-success">
+        <div class="icon">✓</div>
+        <h2>E-Mail erfolgreich bestätigt!</h2>
+        <p>Dein Konto ist jetzt aktiv. Du kannst dich einloggen.</p>
+        <a routerLink="/homepage" class="btn-primary">Zur Startseite</a>
+      </div>
+    }
+    @case ('already_verified') {
+      <div class="verify-card verify-success">
+        <div class="icon">✓</div>
+        <h2>E-Mail bereits bestätigt</h2>
+        <p>Deine E-Mail-Adresse wurde bereits verifiziert.</p>
+        <a routerLink="/homepage" class="btn-primary">Zur Startseite</a>
+      </div>
+    }
+    @case ('expired') {
+      <div class="verify-card verify-error">
+        <div class="icon">⏰</div>
+        <h2>Link abgelaufen</h2>
+        <p>Dein Bestätigungslink ist abgelaufen. Bitte fordere einen neuen an.</p>
+        <a routerLink="/homepage" class="btn-secondary">Zurück zur Startseite</a>
+      </div>
+    }
+    @default {
+      <div class="verify-card verify-error">
+        <div class="icon">✕</div>
+        <h2>Ungültiger Link</h2>
+        <p>Der Bestätigungslink ist ungültig oder wurde bereits verwendet.</p>
+        <a routerLink="/homepage" class="btn-secondary">Zurück zur Startseite</a>
+      </div>
+    }
+  }
+</div>

@@ -28,5 +28,11 @@ export const routes: Routes = [
       import('./features/legal/datenschutz/datenschutz')
         .then(m => m.DatenschutzComponent),
   },
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./features/auth/pages/verify-email/verify-email')
+        .then(m => m.VerifyEmail),
+  },
   { path: '**', redirectTo: 'homepage' }
 ];

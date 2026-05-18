@@ -71,6 +71,7 @@ export class AuthPanelComponent {
 
     if (this.tab === 'login') {
       this.login.emit({ email, password });
+      this.resetForm();
       return;
     }
 
@@ -80,6 +81,13 @@ export class AuthPanelComponent {
       return;
     }
     this.register.emit({ email, username, password });
+    this.resetForm();
+  }
+
+  private resetForm() {
+    this.email = '';
+    this.username = '';
+    this.password = '';
   }
 
   canSubmit() {

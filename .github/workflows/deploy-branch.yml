@@ -63,3 +63,35 @@ jobs:
           publish_dir: ./deploy-branch
           publish_branch: deploy
           force_orphan: true
+
+      - name: Health-Check Frontend
+        if: ${{ vars.FRONTEND_URL != '' }}
+        run: |
+          echo "Warte 30s auf Plesk-Deployment..."
+          sleep 30
+          for i in $(seq 1 6); do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}" "${{ vars.FRONTEND_URL }}")
+            if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+              echo "Frontend erreichbar (HTTP $STATUS) ✅"
+              exit 0
+            fi
+            echo "  Versuch $i/6 – HTTP $STATUS, warte 10s..."
+            sleep 10
+          done
+          echo "Frontend nicht erreichbar nach allen Versuchen ❌"
+          exit 1
+
+      - name: Health-Check Backend
+        if: ${{ vars.BACKEND_URL != '' }}
+        run: |
+          for i in $(seq 1 6); do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}" "${{ vars.BACKEND_URL }}/health")
+            if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+              echo "Backend erreichbar (HTTP $STATUS) ✅"
+              exit 0
+            fi
+            echo "  Versuch $i/6 – HTTP $STATUS, warte 10s..."
+            sleep 10
+          done
+          echo "Backend nicht erreichbar nach allen Versuchen ❌"
+          exit 1
