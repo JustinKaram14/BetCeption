@@ -189,6 +189,10 @@ type KnownTranslationKey =
   | 'leaderboard.noRank'
   | 'leaderboard.player'
   | 'leaderboard.rank'
+  | 'leaderboard.noSearchResults'
+  | 'leaderboard.searchLabel'
+  | 'leaderboard.searchPlaceholder'
+  | 'leaderboard.searchReset'
   | 'leaderboard.title'
   | 'leaderboard.winnings'
   | 'leaderboard.winningsDescription'
@@ -505,8 +509,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'leaderboard.loading': 'Lade {{label}}...',
     'leaderboard.netWinnings': 'Netto-Gewinne (7 Tage)',
     'leaderboard.noRank': 'Spiele mehr Runden, um in der Bestenliste aufzutauchen.',
+    'leaderboard.noSearchResults': 'Keine Spieler gefunden',
     'leaderboard.player': 'Spieler',
     'leaderboard.rank': 'Rang',
+    'leaderboard.searchLabel': 'Spieler suchen',
+    'leaderboard.searchPlaceholder': 'Spieler suchen...',
+    'leaderboard.searchReset': 'Suche zuruecksetzen',
     'leaderboard.title': 'Bestenliste',
     'leaderboard.winnings': 'Gewinne',
     'leaderboard.winningsDescription': 'Netto-Gewinne der letzten 7 Tage.',
@@ -818,8 +826,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'leaderboard.loading': 'Loading {{label}}...',
     'leaderboard.netWinnings': 'Net Winnings (7d)',
     'leaderboard.noRank': 'Play more rounds to appear on the leaderboard.',
+    'leaderboard.noSearchResults': 'No players found',
     'leaderboard.player': 'Player',
     'leaderboard.rank': 'Rank',
+    'leaderboard.searchLabel': 'Search players',
+    'leaderboard.searchPlaceholder': 'Search players...',
+    'leaderboard.searchReset': 'Reset search',
     'leaderboard.title': 'Leaderboard',
     'leaderboard.winnings': 'Winnings',
     'leaderboard.winningsDescription': 'Net winnings from the last 7 days.',
@@ -1131,8 +1143,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'leaderboard.loading': 'Cargando {{label}}...',
     'leaderboard.netWinnings': 'Ganancias netas (7d)',
     'leaderboard.noRank': 'Juega más rondas para aparecer en la tabla.',
+    'leaderboard.noSearchResults': 'No se encontraron jugadores',
     'leaderboard.player': 'Jugador',
     'leaderboard.rank': 'Rango',
+    'leaderboard.searchLabel': 'Buscar jugadores',
+    'leaderboard.searchPlaceholder': 'Buscar jugadores...',
+    'leaderboard.searchReset': 'Restablecer busqueda',
     'leaderboard.title': 'Leaderboard',
     'leaderboard.winnings': 'Ganancias',
     'leaderboard.winningsDescription': 'Ganancias netas de los últimos 7 días.',
@@ -1444,8 +1460,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'leaderboard.loading': 'Chargement de {{label}}...',
     'leaderboard.netWinnings': 'Gains nets (7j)',
     'leaderboard.noRank': 'Joue plus de manches pour apparaître dans le classement.',
+    'leaderboard.noSearchResults': 'Aucun joueur trouve',
     'leaderboard.player': 'Joueur',
     'leaderboard.rank': 'Rang',
+    'leaderboard.searchLabel': 'Rechercher des joueurs',
+    'leaderboard.searchPlaceholder': 'Rechercher des joueurs...',
+    'leaderboard.searchReset': 'Reinitialiser la recherche',
     'leaderboard.title': 'Leaderboard',
     'leaderboard.winnings': 'Gains',
     'leaderboard.winningsDescription': 'Gains nets des 7 derniers jours.',

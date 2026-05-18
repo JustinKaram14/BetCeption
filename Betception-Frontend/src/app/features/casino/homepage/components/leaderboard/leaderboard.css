@@ -64,8 +64,72 @@
   border-color:transparent;
   box-shadow:0 0 12px var(--secondary-glow);
 }
+.leaderboard-search{
+  position:relative;
+  margin:14px 0 0;
+  display:flex;
+  align-items:center;
+  width:100%;
+  max-width:430px;
+}
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+.leaderboard-search-input{
+  width:100%;
+  min-width:0;
+  height:38px;
+  border-radius:999px;
+  border:1px solid rgba(0,255,255,.28);
+  background:rgba(255,255,255,.045);
+  color:#f8f8f8;
+  padding:0 42px 0 16px;
+  font:inherit;
+  font-size:.9rem;
+  outline:none;
+  transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease;
+  box-shadow:inset 0 0 16px rgba(0,255,255,.04);
+}
+.leaderboard-search-input::placeholder{
+  color:rgba(255,255,255,.45);
+}
+.leaderboard-search-input:focus{
+  border-color:var(--secondary-glow);
+  background:rgba(0,255,255,.07);
+  box-shadow:0 0 12px rgba(0,255,255,.18),inset 0 0 18px rgba(0,255,255,.06);
+}
+.leaderboard-search-input::-webkit-search-cancel-button{
+  appearance:none;
+}
+.leaderboard-search-clear{
+  position:absolute;
+  right:7px;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.8);
+  font-size:.85rem;
+  line-height:1;
+  cursor:pointer;
+  transition:border-color .2s ease,color .2s ease,box-shadow .2s ease;
+}
+.leaderboard-search-clear:hover{
+  border-color:var(--accent-glow);
+  color:var(--accent-glow);
+  box-shadow:0 0 10px rgba(255,0,255,.18);
+}
 .leaderboard-description{
-  margin:16px 0 20px;
+  margin:12px 0 20px;
   color:rgba(255,255,255,.8);
   font-size:.95rem;
 }
@@ -158,6 +222,19 @@
   color:#fff;
   flex:0 0 auto;
 }
+.leaderboard-empty-state{
+  flex:1 1 auto;
+  min-height:120px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:rgba(255,255,255,.62);
+  border:1px solid rgba(0,255,255,.08);
+  background:rgba(0,255,255,.025);
+  border-radius:12px;
+  text-align:center;
+  padding:24px 16px;
+}
 
 @media (max-width:900px){
   .leaderboard-container{
@@ -183,6 +260,15 @@
     padding:.42rem .35rem;
     font-size:.68rem;
     letter-spacing:0;
+  }
+  .leaderboard-search{
+    max-width:none;
+    margin-top:12px;
+  }
+  .leaderboard-search-input{
+    height:36px;
+    font-size:.78rem;
+    padding-left:12px;
   }
   .leaderboard-description{
     margin:12px 0 14px;
