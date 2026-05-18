@@ -22,6 +22,7 @@ import {
   UpdateOwnProfileRequest,
   WalletTransaction,
   WalletTransactionKind,
+  WalletTransactionsSummaryQuery,
   WalletTransactionsSummaryResponse,
 } from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
@@ -101,6 +102,10 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   transactionPage = 1;
   transactionPageSize = 12;
   transactionTotal = 0;
+  transactionFilterFrom = '';
+  transactionFilterTo = '';
+  transactionFilterError: string | null = null;
+  private activeTransactionFilter: WalletTransactionsSummaryQuery = {};
 
   profileLoading = false;
   profileError: string | null = null;
@@ -189,9 +194,14 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     this.transactionsError = null;
 
     const page = this.transactionPage;
+    const filterQuery = this.activeTransactionFilter;
     forkJoin({
-      summary: this.api.getWalletTransactionsSummary(),
-      history: this.api.getWalletTransactions({ page, limit: this.transactionPageSize }),
+      summary: this.api.getWalletTransactionsSummary(filterQuery),
+      history: this.api.getWalletTransactions({
+        page,
+        limit: this.transactionPageSize,
+        ...filterQuery,
+      }),
     })
       .pipe(
         finalize(() => {
@@ -222,6 +232,27 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
 
   get hasMoreTransactions(): boolean {
     return this.transactions.length < this.transactionTotal;
+  }
+
+  applyTransactionFilter(): void {
+    const filter = this.buildTransactionFilterQuery();
+    if (filter === null) {
+      return;
+    }
+    this.activeTransactionFilter = filter;
+    this.loadTransactions(true);
+  }
+
+  resetTransactionFilter(): void {
+    this.transactionFilterFrom = '';
+    this.transactionFilterTo = '';
+    this.transactionFilterError = null;
+    this.activeTransactionFilter = {};
+    this.loadTransactions(true);
+  }
+
+  get isTransactionFilterActive(): boolean {
+    return !!this.activeTransactionFilter.from || !!this.activeTransactionFilter.to;
   }
 
   loadProfile(): void {
@@ -543,6 +574,12 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     });
   }
 
+  transactionEmptyMessage(): string {
+    return this.isTransactionFilterActive
+      ? this.i18n.t('profile.transactions.emptyFiltered')
+      : this.i18n.t('profile.transactions.empty');
+  }
+
   avatarIconPath(icon: ProfileAvatarIcon | null | undefined): string {
     return this.avatarIcons.find((option) => option.id === icon)?.path ?? this.avatarIcons[0].path;
   }
@@ -576,6 +613,39 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
 
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  private buildTransactionFilterQuery(): WalletTransactionsSummaryQuery | null {
+    this.transactionFilterError = null;
+
+    const from = this.parseDateTimeLocal(this.transactionFilterFrom);
+    const to = this.parseDateTimeLocal(this.transactionFilterTo);
+
+    if (
+      (this.transactionFilterFrom && !from) ||
+      (this.transactionFilterTo && !to)
+    ) {
+      this.transactionFilterError = this.i18n.t('profile.transactions.invalidRange');
+      return null;
+    }
+
+    if (from && to && from.getTime() > to.getTime()) {
+      this.transactionFilterError = this.i18n.t('profile.transactions.startAfterEnd');
+      return null;
+    }
+
+    return {
+      ...(from ? { from: from.toISOString() } : {}),
+      ...(to ? { to: to.toISOString() } : {}),
+    };
+  }
+
+  private parseDateTimeLocal(value: string): Date | null {
+    if (!value) {
+      return null;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
   private extractErrorMessage(error: unknown): string {

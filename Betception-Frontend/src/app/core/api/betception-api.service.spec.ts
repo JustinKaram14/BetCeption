@@ -101,10 +101,38 @@ describe('BetceptionApi', () => {
     req.flush({ items: [] });
   });
 
+  it('passes date query params for getWalletTransactions()', () => {
+    service
+      .getWalletTransactions({
+        page: 1,
+        limit: 12,
+        from: '2026-01-01T00:00:00.000Z',
+        to: '2026-01-31T23:59:59.999Z',
+      })
+      .subscribe();
+    const req = httpMock.expectOne((r) => r.url.includes('/wallet/transactions'));
+    expect(req.request.params.get('from')).toBe('2026-01-01T00:00:00.000Z');
+    expect(req.request.params.get('to')).toBe('2026-01-31T23:59:59.999Z');
+    req.flush({ items: [] });
+  });
+
   it('calls GET /wallet/transactions/summary for getWalletTransactionsSummary()', () => {
     service.getWalletTransactionsSummary().subscribe();
     const req = httpMock.expectOne((r) => r.url.endsWith('/wallet/transactions/summary'));
     expect(req.request.method).toBe('GET');
+    req.flush({ totalWins: 0, totalLossesOrBets: 0, netTotal: 0, transactionCount: 0 });
+  });
+
+  it('passes date query params for getWalletTransactionsSummary()', () => {
+    service
+      .getWalletTransactionsSummary({
+        from: '2026-01-01T00:00:00.000Z',
+        to: '2026-01-31T23:59:59.999Z',
+      })
+      .subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/wallet/transactions/summary'));
+    expect(req.request.params.get('from')).toBe('2026-01-01T00:00:00.000Z');
+    expect(req.request.params.get('to')).toBe('2026-01-31T23:59:59.999Z');
     req.flush({ totalWins: 0, totalLossesOrBets: 0, netTotal: 0, transactionCount: 0 });
   });
 
