@@ -1134,6 +1134,7 @@ export class Blackjack implements OnInit {
 
   private shouldAutoSettle(round: RoundState) {
     if (round.status !== RoundStatus.IN_PROGRESS) return false;
+    if (round.dealerHand?.status === HandStatus.BLACKJACK) return true;
     const playerHands = this.playerHandsFor(round);
     if (!playerHands.length || playerHands.some((hand) => hand.status === HandStatus.ACTIVE)) {
       return false;
@@ -1142,7 +1143,6 @@ export class Blackjack implements OnInit {
     return (
       playerHands.every((hand) => hand.status === HandStatus.BUSTED) ||
       (naturalBlackjackAllowed && round.playerHand?.status === HandStatus.BLACKJACK) ||
-      round.dealerHand?.status === HandStatus.BLACKJACK ||
       this.isDealerTurnComplete(round)
     );
   }

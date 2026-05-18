@@ -8,6 +8,7 @@ import {
 import { User } from '../../../entity/User.js';
 import { createMockRequest, createMockResponse, createMockRepository, mockAppDataSourceRepositories } from '../../test-utils.js';
 import * as passwordUtils from '../../../utils/passwords.js';
+import { UpdateOwnProfileSchema } from '../../../modules/user/user.schema.js';
 
 describe('user.controller', () => {
   describe('getCurrentUser', () => {
@@ -277,5 +278,20 @@ describe('user.controller', () => {
       expect(userRepo.update).not.toHaveBeenCalledWith('1', expect.objectContaining({ passwordHash: 'new-password' }));
       expect(res.json).toHaveBeenCalledWith({ success: true });
     });
+  });
+});
+
+describe('user schemas', () => {
+  it('rejects glitch usernames in profile updates', () => {
+    const result = UpdateOwnProfileSchema.safeParse({ username: 'T̵e̷s̶' });
+    expect(result.success).toBe(false);
+  });
+
+  it('trims accepted usernames in profile updates', () => {
+    const result = UpdateOwnProfileSchema.safeParse({ username: '  trinity  ' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.username).toBe('trinity');
+    }
   });
 });

@@ -29,6 +29,7 @@ import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 import { CrateInventoryComponent } from '../crate-inventory/crate-inventory';
+import { isValidUsername, normalizeUsername } from '../../../../../shared/validation/username';
 
 type ProfileTab = 'transactions' | 'crates' | 'profile';
 type AccountEditMode = 'username' | 'email' | 'password';
@@ -280,10 +281,10 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   saveProfile(): void {
-    const username = this.profileForm.username.trim();
+    const username = normalizeUsername(this.profileForm.username);
     const email = this.profileForm.email.trim();
 
-    if (username.length < 3 || username.length > 32) {
+    if (!isValidUsername(username)) {
       this.toast.error(this.i18n.t('auth.usernameInvalid'));
       return;
     }
@@ -338,9 +339,9 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   saveUsername(): void {
-    const username = this.profileForm.username.trim();
+    const username = normalizeUsername(this.profileForm.username);
 
-    if (username.length < 3 || username.length > 32) {
+    if (!isValidUsername(username)) {
       this.toast.error(this.i18n.t('auth.usernameInvalid'));
       return;
     }

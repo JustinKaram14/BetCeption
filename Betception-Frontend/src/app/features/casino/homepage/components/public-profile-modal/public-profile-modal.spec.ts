@@ -59,6 +59,7 @@ describe('PublicProfileModalComponent', () => {
 
     expect(apiMock.getUserById).toHaveBeenCalledWith('2');
     expect(component.profile?.username).toBe('trinity');
+    expect(fixture.nativeElement.textContent).toContain('Öffentlich');
     expect(fixture.nativeElement.textContent).toContain('trinity');
     expect(fixture.nativeElement.textContent).toContain('2.500 Coins');
   });

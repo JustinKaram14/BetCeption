@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UsernameSchema } from '../../utils/username.js';
 
 export const ProfileAvatarIconSchema = z.enum([
   'chip',
@@ -30,7 +31,7 @@ export const UserIdParamsSchema = z.object({
 
 export const UpdateOwnProfileSchema = z
   .object({
-    username: z.string().trim().min(3).max(32).optional(),
+    username: UsernameSchema.optional(),
     email: z.string().trim().email().optional(),
     avatarIcon: ProfileAvatarIconSchema.optional(),
     avatarColor: ProfileAvatarColorSchema.optional(),
