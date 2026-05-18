@@ -87,6 +87,15 @@ describe('BetceptionApi', () => {
     req.flush({ success: true });
   });
 
+  it('calls DELETE /users/me for deleteOwnAccount()', () => {
+    const payload = { password: 'current-password', confirm: true };
+    service.deleteOwnAccount(payload).subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/users/me'));
+    expect(req.request.method).toBe('DELETE');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ success: true });
+  });
+
   it('calls GET /wallet/transactions for getWalletTransactions()', () => {
     service.getWalletTransactions().subscribe();
     const req = httpMock.expectOne((r) => r.url.includes('/wallet/transactions'));

@@ -1,12 +1,14 @@
 import {
   changeOwnPassword,
+  deleteOwnAccount,
   getCurrentUser,
   getOwnProfile,
   getUserById,
   updateOwnProfile,
 } from '../../../modules/user/user.controller.js';
 import { User } from '../../../entity/User.js';
-import { createMockRequest, createMockResponse, createMockRepository, mockAppDataSourceRepositories } from '../../test-utils.js';
+import { Session } from '../../../entity/Session.js';
+import { createMockRequest, createMockResponse, createMockRepository, mockAppDataSourceRepositories, mockAppDataSourceTransaction } from '../../test-utils.js';
 import * as passwordUtils from '../../../utils/passwords.js';
 
 describe('user.controller', () => {
@@ -277,6 +279,66 @@ describe('user.controller', () => {
       expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({ passwordHash: 'new-hash' }));
       expect(userRepo.save).not.toHaveBeenCalledWith(expect.objectContaining({ passwordHash: 'new-password' }));
       expect(res.json).toHaveBeenCalledWith({ success: true });
+    });
+  });
+
+  describe('deleteOwnAccount', () => {
+    it('rejects an incorrect password', async () => {
+      const user = { id: '1', passwordHash: 'existing-hash' } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+      jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(false);
+
+      const req = createMockRequest({
+        user: { sub: '1' } as any,
+        body: { password: 'wrong-password', confirm: true } as any,
+      });
+      const res = createMockResponse();
+
+      await deleteOwnAccount(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Password is incorrect',
+        code: 'INVALID_PASSWORD',
+      });
+    });
+
+    it('anonymizes the current user, marks it deleted, removes sessions, and returns no sensitive data', async () => {
+      const user = { id: '1', passwordHash: 'existing-hash' } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      const transactionalUserRepo = createMockRepository<User>();
+      const sessionRepo = createMockRepository<Session>();
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+      const transactionRepos = new Map<any, any>([
+        [User, transactionalUserRepo],
+        [Session, sessionRepo],
+      ]);
+      mockAppDataSourceTransaction(transactionRepos);
+      jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(true);
+
+      const req = createMockRequest({
+        user: { sub: '1' } as any,
+        body: { password: 'current-password', confirm: true } as any,
+      });
+      const res = createMockResponse();
+
+      await deleteOwnAccount(req as any, res);
+
+      expect(passwordUtils.verifyPassword).toHaveBeenCalledWith('current-password', 'existing-hash');
+      expect(sessionRepo.delete).toHaveBeenCalledWith({ user: { id: '1' } });
+      expect(transactionalUserRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({
+        username: 'deleted-user-1',
+        email: 'deleted-user-1@deleted.betception.local',
+        deletedAt: expect.any(Date),
+        activePowerupUsesRemaining: 0,
+      }));
+      expect(res.json).toHaveBeenCalledWith({ success: true });
+      expect(res.json.mock.calls[0][0]).not.toHaveProperty('passwordHash');
     });
   });
 });

@@ -3,6 +3,7 @@ import { authGuard } from '../../middlewares/authGuard.js';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import {
   changeOwnPassword,
+  deleteOwnAccount,
   getCurrentUser,
   getOwnProfile,
   getUserById,
@@ -10,6 +11,7 @@ import {
 } from './user.controller.js';
 import {
   ChangeOwnPasswordSchema,
+  DeleteOwnAccountSchema,
   UpdateOwnProfileSchema,
   UserIdParamsSchema,
 } from './user.schema.js';
@@ -21,4 +23,5 @@ userRouter.get('/me', getCurrentUser);
 userRouter.get('/me/profile', getOwnProfile);
 userRouter.patch('/me/profile', validateRequest(UpdateOwnProfileSchema), updateOwnProfile);
 userRouter.patch('/me/password', validateRequest(ChangeOwnPasswordSchema), changeOwnPassword);
+userRouter.delete('/me', validateRequest(DeleteOwnAccountSchema), deleteOwnAccount);
 userRouter.get('/:id', validateRequest(UserIdParamsSchema, 'params'), getUserById);

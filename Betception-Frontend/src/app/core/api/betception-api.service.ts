@@ -35,6 +35,8 @@ import {
   WinningsLeaderboardItem,
   ChangeOwnPasswordRequest,
   ChangeOwnPasswordResponse,
+  DeleteOwnAccountRequest,
+  DeleteOwnAccountResponse,
   UpdateOwnProfileRequest,
   UserResponse,
 } from './api.types';
@@ -64,6 +66,10 @@ export class BetceptionApi {
 
   changeOwnPassword(payload: ChangeOwnPasswordRequest) {
     return this.http.patch<ChangeOwnPasswordResponse>('/users/me/password', payload);
+  }
+
+  deleteOwnAccount(payload: DeleteOwnAccountRequest) {
+    return this.http.delete<DeleteOwnAccountResponse>('/users/me', { body: payload });
   }
 
   getWalletSummary() {

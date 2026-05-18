@@ -47,6 +47,14 @@ describe('app integration', () => {
     expect(response.status).toBe(401);
   });
 
+  it('rejects DELETE /users/me without login', async () => {
+    const response = await request(app)
+      .delete('/users/me')
+      .send({ password: 'current-password', confirm: true });
+
+    expect(response.status).toBe(401);
+  });
+
   it('rejects GET /wallet/transactions/summary without login', async () => {
     const response = await request(app).get('/wallet/transactions/summary');
 

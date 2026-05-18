@@ -90,6 +90,13 @@
 .profile-form input:disabled{color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.1)}
 .profile-form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
 .profile-submit{align-self:flex-start;min-width:180px}
+.profile-danger-zone{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,64,80,.34)}
+.profile-danger-zone .profile-section-heading h3{color:#ffd1d8}
+.profile-danger-trigger,.profile-submit--danger{border-color:rgba(255,64,80,.7);color:#ffd1d8;box-shadow:0 0 14px rgba(255,64,80,.18)}
+.profile-danger-trigger:hover:not(:disabled),.profile-submit--danger:hover:not(:disabled){background:rgba(255,64,80,.18);color:#fff;box-shadow:0 0 18px rgba(255,64,80,.34)}
+.profile-delete-form{margin-top:12px}
+.profile-delete-confirm{display:grid!important;grid-template-columns:18px minmax(0,1fr);align-items:start;gap:10px!important;text-transform:none!important;letter-spacing:0!important;line-height:1.45}
+.profile-delete-confirm input{width:18px!important;min-height:18px!important;margin-top:2px;padding:0;accent-color:var(--loss-color)}
 .crates-tab{--crate-embedded-max-height:100%}
 @media(max-width:820px){.profile-modal{height:94vh}.profile-header,.profile-content{padding:16px}.profile-tabs{padding:12px 16px}.summary-grid,.profile-account-card,.profile-info-group{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-management{grid-template-columns:1fr}.transaction-filter{grid-template-columns:1fr}.transaction-filter__actions{justify-content:flex-start}.transaction-row{grid-template-columns:1fr;gap:5px}.transaction-row--head{display:none}.transaction-amount{text-align:left}.transaction-date,.transaction-ref{white-space:normal}.profile-submit{width:100%}}
 @media(max-width:560px){.profile-account-card,.profile-info-group,.transaction-filter__fields{grid-template-columns:1fr}.profile-management{gap:12px}.profile-avatar-preview{width:132px}.profile-avatar-color-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.profile-avatar-actions .profile-inline-btn{flex:1 1 120px}.transaction-filter__actions .profile-inline-btn{flex:1 1 130px}}

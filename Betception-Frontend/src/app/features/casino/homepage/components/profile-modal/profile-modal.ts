@@ -10,8 +10,9 @@ import {
 } from '@angular/core';
 import { DecimalPipe, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import {
@@ -29,6 +30,7 @@ import { I18n } from '../../../../../core/i18n/i18n';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 import { CrateInventoryComponent } from '../crate-inventory/crate-inventory';
+import { AuthFacade } from '../../../../auth/services/auth-facade';
 
 type ProfileTab = 'transactions' | 'crates' | 'profile';
 type AccountEditMode = 'username' | 'email' | 'password';
@@ -83,7 +85,9 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   @Output() unseenCrateCountChange = new EventEmitter<number>();
 
   private readonly api = inject(BetceptionApi);
+  private readonly authFacade = inject(AuthFacade);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
   readonly i18n = inject(I18n);
 
@@ -126,6 +130,12 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   avatarEditing = false;
   avatarSaving = false;
   accountEditMode: AccountEditMode | null = null;
+  accountDeleteExpanded = false;
+  accountDeleting = false;
+  accountDeleteForm = {
+    password: '',
+    confirm: false,
+  };
 
   readonly avatarIcons = AVATAR_ICONS;
   readonly avatarColors = AVATAR_COLORS;
@@ -522,6 +532,67 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.toast.error(this.extractErrorMessage(error));
+        },
+      });
+  }
+
+  openAccountDelete(): void {
+    this.accountDeleteExpanded = true;
+    this.accountDeleteForm = {
+      password: '',
+      confirm: false,
+    };
+  }
+
+  cancelAccountDelete(): void {
+    if (this.accountDeleting) {
+      return;
+    }
+    this.accountDeleteExpanded = false;
+    this.accountDeleteForm = {
+      password: '',
+      confirm: false,
+    };
+  }
+
+  deleteOwnAccount(): void {
+    const password = this.accountDeleteForm.password;
+    if (!password) {
+      this.toast.error(this.i18n.t('profile.delete.passwordRequired'));
+      return;
+    }
+    if (!this.accountDeleteForm.confirm) {
+      this.toast.error(this.i18n.t('profile.delete.confirmRequired'));
+      return;
+    }
+
+    this.accountDeleting = true;
+    this.api
+      .deleteOwnAccount({ password, confirm: true })
+      .pipe(
+        switchMap(() =>
+          this.authFacade.logout().pipe(catchError(() => of(void 0))),
+        ),
+        finalize(() => {
+          this.accountDeleting = false;
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.accountDeleteForm = { password: '', confirm: false };
+          this.accountDeleteExpanded = false;
+          this.toast.success(this.i18n.t('profile.delete.deleted'));
+          this.close();
+          this.router.navigate(['/']);
+        },
+        error: (error) => {
+          const code = error?.error?.code;
+          this.toast.error(
+            code === 'INVALID_PASSWORD'
+              ? this.i18n.t('profile.delete.invalidPassword')
+              : this.extractErrorMessage(error),
+          );
         },
       });
   }
