@@ -150,7 +150,7 @@ const components = {
         id: { type: 'string' },
         kind: {
           type: 'string',
-          enum: ['deposit', 'withdraw', 'bet_place', 'bet_win', 'bet_refund', 'adjustment', 'reward'],
+          enum: ['deposit', 'withdraw', 'bet_place', 'bet_win', 'bet_refund', 'adjustment', 'reward', 'crate_reward'],
         },
         amount: {
           type: 'number',
@@ -173,6 +173,16 @@ const components = {
           type: 'array',
           items: { $ref: '#/components/schemas/WalletTransaction' },
         },
+      },
+    },
+    WalletTransactionsSummaryResponse: {
+      type: 'object',
+      required: ['totalWins', 'totalLossesOrBets', 'netTotal', 'transactionCount'],
+      properties: {
+        totalWins: { type: 'number', format: 'double' },
+        totalLossesOrBets: { type: 'number', format: 'double' },
+        netTotal: { type: 'number', format: 'double' },
+        transactionCount: { type: 'integer', minimum: 0 },
       },
     },
     WalletAdjustmentInput: {
@@ -790,12 +800,56 @@ const paths = {
           schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
           description: 'Page size.',
         },
+        {
+          in: 'query',
+          name: 'from',
+          required: false,
+          schema: { type: 'string', format: 'date-time' },
+          description: 'Only include transactions created at or after this timestamp.',
+        },
+        {
+          in: 'query',
+          name: 'to',
+          required: false,
+          schema: { type: 'string', format: 'date-time' },
+          description: 'Only include transactions created at or before this timestamp.',
+        },
       ],
       responses: {
         200: {
           description: 'Transactions returned.',
           content: {
             'application/json': { schema: { $ref: '#/components/schemas/WalletTransactionsResponse' } },
+          },
+        },
+      },
+    },
+  },
+  '/wallet/transactions/summary': {
+    get: {
+      tags: ['Wallet'],
+      summary: 'Summarize wallet transactions for the authenticated user',
+      parameters: [
+        {
+          in: 'query',
+          name: 'from',
+          required: false,
+          schema: { type: 'string', format: 'date-time' },
+          description: 'Only include transactions created at or after this timestamp.',
+        },
+        {
+          in: 'query',
+          name: 'to',
+          required: false,
+          schema: { type: 'string', format: 'date-time' },
+          description: 'Only include transactions created at or before this timestamp.',
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Transaction summary returned.',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/WalletTransactionsSummaryResponse' } },
           },
         },
       },

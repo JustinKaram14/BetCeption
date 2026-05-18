@@ -112,8 +112,92 @@ describe('ProfileModalComponent', () => {
     expect(text).toContain('Gesamt gewonnen');
     expect(text).toContain('Gewinn');
     expect(text).toContain('Einsatz');
-    expect(apiMock.getWalletTransactionsSummary).toHaveBeenCalled();
+    expect(text).toContain('Von');
+    expect(text).toContain('Bis');
+    expect(apiMock.getWalletTransactionsSummary).toHaveBeenCalledWith({});
     expect(apiMock.getWalletTransactions).toHaveBeenCalledWith({ page: 1, limit: 12 });
+  });
+
+  it('loads transactions with from and to filters', () => {
+    createComponent();
+    component.selectTab('transactions');
+    component.transactionFilterFrom = '2026-01-01T00:00';
+    component.transactionFilterTo = '2026-01-31T23:59';
+
+    component.applyTransactionFilter();
+
+    expect(apiMock.getWalletTransactionsSummary).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        from: jasmine.any(String),
+        to: jasmine.any(String),
+      }),
+    );
+    expect(apiMock.getWalletTransactions).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        page: 1,
+        limit: 12,
+        from: jasmine.any(String),
+        to: jasmine.any(String),
+      }),
+    );
+  });
+
+  it('resets transaction filters and reloads unfiltered transactions', () => {
+    createComponent();
+    component.selectTab('transactions');
+    component.transactionFilterFrom = '2026-01-01T00:00';
+    component.applyTransactionFilter();
+
+    component.resetTransactionFilter();
+
+    expect(component.transactionFilterFrom).toBe('');
+    expect(component.transactionFilterTo).toBe('');
+    expect(apiMock.getWalletTransactionsSummary).toHaveBeenCalledWith({});
+    expect(apiMock.getWalletTransactions).toHaveBeenCalledWith({ page: 1, limit: 12 });
+  });
+
+  it('shows a validation error when the start date is after the end date', () => {
+    createComponent();
+    component.selectTab('transactions');
+    component.transactionFilterFrom = '2026-02-01T00:00';
+    component.transactionFilterTo = '2026-01-01T00:00';
+
+    component.applyTransactionFilter();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Startdatum darf nicht nach Enddatum liegen');
+  });
+
+  it('keeps the active filter when loading more transactions', () => {
+    createComponent();
+    component.selectTab('transactions');
+    component.transactionFilterFrom = '2026-01-01T00:00';
+    component.applyTransactionFilter();
+    component.transactionTotal = 3;
+
+    component.loadMoreTransactions();
+
+    expect(apiMock.getWalletTransactions).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        page: 2,
+        limit: 12,
+        from: jasmine.any(String),
+      }),
+    );
+  });
+
+  it('shows a filtered empty state', () => {
+    apiMock.getWalletTransactionsSummary.and.returnValue(
+      of({ totalWins: 0, totalLossesOrBets: 0, netTotal: 0, transactionCount: 0 }),
+    );
+    apiMock.getWalletTransactions.and.returnValue(of({ page: 1, pageSize: 12, total: 0, items: [] }));
+    createComponent();
+    component.selectTab('transactions');
+    component.transactionFilterFrom = '2026-01-01T00:00';
+    component.applyTransactionFilter();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Keine Transaktionen im ausgewaehlten Zeitraum');
   });
 
   it('shows a loading state while transactions load', () => {
