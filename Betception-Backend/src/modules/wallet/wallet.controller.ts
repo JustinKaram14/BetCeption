@@ -1,4 +1,10 @@
 import { Request, Response } from 'express';
+import {
+  Between,
+  FindOptionsWhere,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+} from 'typeorm';
 import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
 import { WalletTransaction } from '../../entity/WalletTransaction.js';
@@ -7,6 +13,7 @@ import { centsToDecimal, centsToNumber, decimalToCents } from '../../utils/money
 import { buildLevelProgress } from '../progression/progression.js';
 import type {
   WalletAdjustmentInput,
+  WalletTransactionsDateRangeQuery,
   WalletTransactionsQuery,
 } from './wallet.schema.js';
 
@@ -33,11 +40,11 @@ export async function getWalletSummary(req: Request, res: Response) {
 
 export async function getWalletTransactions(req: Request, res: Response) {
   const userId = String(req.user?.sub);
-  const { limit, page } = req.query as unknown as WalletTransactionsQuery;
+  const { limit, page, from, to } = req.query as unknown as WalletTransactionsQuery;
 
   const repo = AppDataSource.getRepository(WalletTransaction);
   const [items, total] = await repo.findAndCount({
-    where: { user: { id: userId } },
+    where: buildWalletTransactionWhere(userId, { from, to }),
     order: { createdAt: 'DESC' },
     take: limit,
     skip: (page - 1) * limit,
@@ -60,9 +67,10 @@ export async function getWalletTransactions(req: Request, res: Response) {
 
 export async function getWalletTransactionsSummary(req: Request, res: Response) {
   const userId = String(req.user?.sub);
+  const { from, to } = req.query as unknown as WalletTransactionsDateRangeQuery;
   const repo = AppDataSource.getRepository(WalletTransaction);
   const items = await repo.find({
-    where: { user: { id: userId } },
+    where: buildWalletTransactionWhere(userId, { from, to }),
     select: ['amount'],
   });
 
@@ -86,6 +94,23 @@ export async function getWalletTransactionsSummary(req: Request, res: Response) 
     netTotal: centsToNumber(netTotalCents),
     transactionCount: items.length,
   });
+}
+
+function buildWalletTransactionWhere(
+  userId: string,
+  range: WalletTransactionsDateRangeQuery,
+): FindOptionsWhere<WalletTransaction> {
+  const where: FindOptionsWhere<WalletTransaction> = { user: { id: userId } };
+
+  if (range.from && range.to) {
+    where.createdAt = Between(range.from, range.to);
+  } else if (range.from) {
+    where.createdAt = MoreThanOrEqual(range.from);
+  } else if (range.to) {
+    where.createdAt = LessThanOrEqual(range.to);
+  }
+
+  return where;
 }
 
 class WalletAdjustmentError extends Error {

@@ -1,0 +1,71 @@
+<div class="public-profile-overlay" role="dialog" aria-modal="true" aria-labelledby="public-profile-modal-title" (click)="close()">
+  <section class="public-profile-modal" (click)="stopModalClick($event)">
+    <header class="public-profile-header">
+      <div>
+        <span class="public-profile-kicker">{{ i18n.t('publicProfile.kicker') }}</span>
+        <div class="public-profile-title-row">
+          <svg class="public-profile-title-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+            <path d="M4 21a8 8 0 0 1 16 0" />
+          </svg>
+          <h2 id="public-profile-modal-title">{{ i18n.t('publicProfile.title') }}</h2>
+        </div>
+      </div>
+      <button class="public-profile-close" type="button" (click)="close()" [attr.aria-label]="i18n.t('common.close')">X</button>
+    </header>
+
+    <div class="public-profile-content">
+      <div class="public-profile-state" *ngIf="loading">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span>{{ i18n.t('publicProfile.loading') }}</span>
+      </div>
+
+      <div class="public-profile-error" *ngIf="error">
+        {{ error }}
+        <button class="btn public-profile-inline-btn" type="button" (click)="loadProfile()">{{ i18n.t('profile.reload') }}</button>
+      </div>
+
+      <ng-container *ngIf="profile && !loading">
+        <section class="public-profile-hero" [style.--avatar-color]="avatarColorValue(profile.avatarColor)">
+          <div class="public-profile-avatar-preview">
+            <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+              <path [attr.d]="avatarIconPath(profile.avatarIcon)" />
+            </svg>
+          </div>
+          <div class="public-profile-identity">
+            <span>{{ i18n.t('leaderboard.player') }}</span>
+            <strong>{{ profile.username }}</strong>
+            <p>{{ i18n.t('profile.createdAt', { date: formatDate(profile.createdAt) }) }}</p>
+          </div>
+        </section>
+
+        <div class="public-profile-account-card">
+          <div class="public-profile-fact">
+            <span>{{ i18n.t('profile.username') }}</span>
+            <strong>{{ profile.username }}</strong>
+          </div>
+          <div class="public-profile-fact public-profile-fact--highlight">
+            <span>{{ i18n.t('profile.level') }}</span>
+            <strong>{{ profile.level }}</strong>
+          </div>
+          <div class="public-profile-fact public-profile-fact--highlight">
+            <span>{{ i18n.t('publicProfile.xp') }}</span>
+            <strong>{{ profile.xp }}</strong>
+          </div>
+          <div class="public-profile-fact public-profile-fact--highlight">
+            <span>{{ i18n.t('controls.balance') }}</span>
+            <strong>{{ formatCoins(profile.balance) }}</strong>
+          </div>
+        </div>
+
+        <app-level-progress
+          class="public-profile-level-progress"
+          [progress]="profile.levelProgress"
+          orientation="horizontal"
+        ></app-level-progress>
+      </ng-container>
+    </div>
+  </section>
+</div>

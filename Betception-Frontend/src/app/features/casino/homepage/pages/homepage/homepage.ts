@@ -11,6 +11,7 @@ import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { DailyRewardModalComponent } from '../../components/daily-reward-modal/daily-reward-modal';
 import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
 import { ProfileModalComponent } from '../../components/profile-modal/profile-modal';
+import { PublicProfileModalComponent } from '../../components/public-profile-modal/public-profile-modal';
 import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-footer/disclaimer-footer';
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
 import { SettingsMenuComponent } from '../../../../../shared/ui/settings-menu/settings-menu';
@@ -27,7 +28,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, ProfileModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, ProfileModalComponent, PublicProfileModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -61,6 +62,7 @@ export class HomepageComponent {
   showProfileModal = false;
   showVerifyEmailModal = false;
   verifyEmailAddress = '';
+  publicProfileUserId: string | null = null;
   walletSummary: WalletSummary | null = null;
   unseenCrateCount = 0;
   private currentUserIdValue: string | null = null;
@@ -194,6 +196,14 @@ export class HomepageComponent {
 
   closeProfileModal() {
     this.showProfileModal = false;
+  }
+
+  openPublicProfileModal(userId: string) {
+    this.publicProfileUserId = userId;
+  }
+
+  closePublicProfileModal() {
+    this.publicProfileUserId = null;
   }
 
   onCrateBalanceUpdated(balance: number) {

@@ -284,6 +284,43 @@
       </section>
 
       <section class="transactions-tab" *ngIf="activeTab === 'transactions'">
+        <form class="transaction-filter" (ngSubmit)="applyTransactionFilter()" novalidate>
+          <div class="transaction-filter__fields">
+            <label>
+              <span>{{ i18n.t('profile.transactions.from') }}</span>
+              <input
+                type="datetime-local"
+                name="transactionFilterFrom"
+                [(ngModel)]="transactionFilterFrom"
+                [attr.aria-label]="i18n.t('profile.transactions.startDate')"
+              />
+            </label>
+            <label>
+              <span>{{ i18n.t('profile.transactions.to') }}</span>
+              <input
+                type="datetime-local"
+                name="transactionFilterTo"
+                [(ngModel)]="transactionFilterTo"
+                [attr.aria-label]="i18n.t('profile.transactions.endDate')"
+              />
+            </label>
+          </div>
+          <div class="transaction-filter__actions">
+            <span class="transaction-filter__status" *ngIf="isTransactionFilterActive">
+              {{ i18n.t('profile.transactions.filterActive') }}
+            </span>
+            <button class="btn profile-inline-btn" type="submit" [disabled]="transactionsLoading">
+              {{ i18n.t('profile.transactions.applyFilter') }}
+            </button>
+            <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="resetTransactionFilter()" [disabled]="transactionsLoading && !isTransactionFilterActive">
+              {{ i18n.t('profile.transactions.resetFilter') }}
+            </button>
+          </div>
+          <div class="transaction-filter__error" *ngIf="transactionFilterError">
+            {{ transactionFilterError }}
+          </div>
+        </form>
+
         <div class="profile-state" *ngIf="transactionsLoading && transactions.length === 0">
           <span class="dot"></span>
           <span class="dot"></span>
@@ -317,7 +354,7 @@
           </div>
 
           <div class="transaction-empty" *ngIf="!transactionsError && !transactionsLoading && transactions.length === 0">
-            {{ i18n.t('profile.transactions.empty') }}
+            {{ transactionEmptyMessage() }}
           </div>
 
           <div class="transaction-list" *ngIf="transactions.length > 0">

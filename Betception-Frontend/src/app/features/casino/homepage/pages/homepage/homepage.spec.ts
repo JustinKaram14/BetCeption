@@ -9,6 +9,7 @@ import { CtaPanelComponent } from '../../components/cta-panel/cta-panel';
 import { HowToPlayModalComponent } from '../../components/how-to-play-modal/how-to-play-modal';
 import { DailyRewardModalComponent } from '../../components/daily-reward-modal/daily-reward-modal';
 import { ProfileModalComponent } from '../../components/profile-modal/profile-modal';
+import { PublicProfileModalComponent } from '../../components/public-profile-modal/public-profile-modal';
 import { HeroComponent } from '../../components/hero/hero';
 import { NeonCardComponent } from '../../components/neon-card/neon-card';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
@@ -49,6 +50,7 @@ describe('HomepageComponent', () => {
         'getWalletTransactionsSummary',
         'getWalletTransactions',
         'getOwnProfile',
+        'getUserById',
         'updateOwnProfile',
         'changeOwnPassword',
         'listCrates',
@@ -128,6 +130,29 @@ describe('HomepageComponent', () => {
         },
       } as any),
     );
+    apiMock.getUserById.and.returnValue(
+      of({
+        user: {
+          id: 'u2',
+          username: 'other',
+          balance: 500,
+          xp: 50,
+          level: 2,
+          avatarIcon: 'chip',
+          avatarColor: 'cyan',
+          levelProgress: {
+            level: 2,
+            xp: 50,
+            currentLevelXp: 0,
+            nextLevelXp: 500,
+            xpIntoLevel: 50,
+            xpToNextLevel: 450,
+            progressPercent: 10,
+          },
+          createdAt: '2025-01-01T00:00:00Z',
+        },
+      } as any),
+    );
     apiMock.updateOwnProfile.and.returnValue(apiMock.getOwnProfile());
     apiMock.changeOwnPassword.and.returnValue(of({ success: true }));
     apiMock.listCrates.and.returnValue(of({ items: [] }));
@@ -158,6 +183,7 @@ describe('HomepageComponent', () => {
     apiMock.getWalletTransactionsSummary.calls.reset();
     apiMock.getWalletTransactions.calls.reset();
     apiMock.getOwnProfile.calls.reset();
+    apiMock.getUserById.calls.reset();
     apiMock.updateOwnProfile.calls.reset();
     apiMock.changeOwnPassword.calls.reset();
     apiMock.listCrates.calls.reset();
@@ -254,6 +280,36 @@ describe('HomepageComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.debugElement.query(By.directive(ProfileModalComponent))).toBeNull();
+  });
+
+  it('keeps the profile button wired to the private profile modal only', () => {
+    authState$.next(true);
+    userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });
+    fixture.detectChanges();
+
+    const profileButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="profile-button"]');
+    profileButton.click();
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.directive(ProfileModalComponent))).toBeTruthy();
+    expect(fixture.debugElement.query(By.directive(PublicProfileModalComponent))).toBeNull();
+  });
+
+  it('opens and closes the public profile modal from a leaderboard double click request', () => {
+    const leaderboardDe = fixture.debugElement.query(By.directive(LeaderboardComponent));
+    const leaderboard = leaderboardDe.componentInstance as LeaderboardComponent;
+
+    leaderboard.userProfileRequested.emit('u2');
+    fixture.detectChanges();
+
+    const modalDe = fixture.debugElement.query(By.directive(PublicProfileModalComponent));
+    expect(modalDe).toBeTruthy();
+    expect((modalDe.componentInstance as PublicProfileModalComponent).userId).toBe('u2');
+
+    (modalDe.componentInstance as PublicProfileModalComponent).closed.emit();
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.directive(PublicProfileModalComponent))).toBeNull();
   });
 
   it('shows the profile button crate notification for unseen unopened crates', () => {
