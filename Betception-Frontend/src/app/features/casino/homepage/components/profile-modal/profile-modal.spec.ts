@@ -7,6 +7,7 @@ import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { CrateInventoryComponent } from '../crate-inventory/crate-inventory';
 import { WalletTransactionKind } from '../../../../../core/api/api.types';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
+import { Router } from '@angular/router';
 
 describe('ProfileModalComponent', () => {
   let fixture: ComponentFixture<ProfileModalComponent>;
@@ -14,6 +15,7 @@ describe('ProfileModalComponent', () => {
   let apiMock: jasmine.SpyObj<BetceptionApi>;
   let toastMock: jasmine.SpyObj<ToastService>;
   let authFacadeMock: jasmine.SpyObj<AuthFacade>;
+  let routerMock: jasmine.SpyObj<Router>;
 
   const profileResponse = {
     user: {
@@ -45,12 +47,14 @@ describe('ProfileModalComponent', () => {
       'getOwnProfile',
       'updateOwnProfile',
       'changeOwnPassword',
+      'deleteOwnAccount',
       'listCrates',
       'openCrate',
     ]);
     toastMock = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'info']);
-    authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['requestPasswordChange']);
+    authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['requestPasswordChange', 'logout']);
     authFacadeMock.requestPasswordChange.and.returnValue(of({ message: 'ok' }));
+    routerMock = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
     apiMock.getWalletTransactionsSummary.and.returnValue(
       of({ totalWins: 150, totalLossesOrBets: 40, netTotal: 110, transactionCount: 2 }),
@@ -83,8 +87,11 @@ describe('ProfileModalComponent', () => {
     apiMock.getOwnProfile.and.returnValue(of(profileResponse as any));
     apiMock.updateOwnProfile.and.returnValue(of(profileResponse as any));
     apiMock.changeOwnPassword.and.returnValue(of({ success: true }));
+    apiMock.deleteOwnAccount.and.returnValue(of({ success: true }));
     apiMock.listCrates.and.returnValue(of({ items: [] }));
     apiMock.openCrate.and.returnValue(NEVER as any);
+    authFacadeMock.logout.and.returnValue(of(void 0));
+    routerMock.navigate.and.returnValue(Promise.resolve(true));
 
     await TestBed.configureTestingModule({
       imports: [ProfileModalComponent],
@@ -92,6 +99,7 @@ describe('ProfileModalComponent', () => {
         { provide: BetceptionApi, useValue: apiMock },
         { provide: ToastService, useValue: toastMock },
         { provide: AuthFacade, useValue: authFacadeMock },
+        { provide: Router, useValue: routerMock },
       ],
     }).compileComponents();
   });
@@ -412,6 +420,76 @@ describe('ProfileModalComponent', () => {
 
     expect(component.passwordChangeEmailSent).toBeFalse();
     expect(toastMock.error).toHaveBeenCalled();
+  });
+
+  it('shows the account delete danger zone in the private profile', () => {
+    createComponent();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Gefahrenzone');
+    expect(text).toContain('Account löschen');
+  });
+
+  it('shows delete confirmation after clicking the delete button', async () => {
+    createComponent();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const dangerButton: HTMLButtonElement = fixture.nativeElement.querySelector('.profile-danger-trigger');
+    dangerButton.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('input[name="accountDeletePassword"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('input[name="accountDeleteConfirm"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Account endgültig löschen');
+  });
+
+  it('does not delete without a password', () => {
+    createComponent();
+    component.openAccountDelete();
+    component.accountDeleteForm = { password: '', confirm: true };
+
+    component.deleteOwnAccount();
+
+    expect(toastMock.error).toHaveBeenCalledWith('Bitte gib dein Passwort ein.');
+    expect(apiMock.deleteOwnAccount).not.toHaveBeenCalled();
+  });
+
+  it('cancels account delete confirmation without API call', () => {
+    createComponent();
+    component.openAccountDelete();
+
+    component.cancelAccountDelete();
+
+    expect(component.accountDeleteExpanded).toBeFalse();
+    expect(apiMock.deleteOwnAccount).not.toHaveBeenCalled();
+  });
+
+  it('logs out and navigates home after successful account deletion', () => {
+    createComponent();
+    component.openAccountDelete();
+    component.accountDeleteForm = { password: 'current-password', confirm: true };
+    const closeSpy = jasmine.createSpy('closed');
+    component.closed.subscribe(closeSpy);
+
+    component.deleteOwnAccount();
+
+    expect(apiMock.deleteOwnAccount).toHaveBeenCalledWith({ password: 'current-password', confirm: true });
+    expect(authFacadeMock.logout).toHaveBeenCalled();
+    expect(closeSpy).toHaveBeenCalled();
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('translates invalid password delete errors', () => {
+    apiMock.deleteOwnAccount.and.returnValue(throwError(() => ({ error: { code: 'INVALID_PASSWORD' } })));
+    createComponent();
+    component.openAccountDelete();
+    component.accountDeleteForm = { password: 'wrong-password', confirm: true };
+
+    component.deleteOwnAccount();
+
+    expect(toastMock.error).toHaveBeenCalledWith('Passwort ist falsch.');
+    expect(authFacadeMock.logout).not.toHaveBeenCalled();
   });
 
   it('emits closed when the close button is clicked', () => {
