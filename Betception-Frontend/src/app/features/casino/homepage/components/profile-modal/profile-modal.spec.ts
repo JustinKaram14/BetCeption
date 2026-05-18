@@ -6,12 +6,14 @@ import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { CrateInventoryComponent } from '../crate-inventory/crate-inventory';
 import { WalletTransactionKind } from '../../../../../core/api/api.types';
+import { AuthFacade } from '../../../../auth/services/auth-facade';
 
 describe('ProfileModalComponent', () => {
   let fixture: ComponentFixture<ProfileModalComponent>;
   let component: ProfileModalComponent;
   let apiMock: jasmine.SpyObj<BetceptionApi>;
   let toastMock: jasmine.SpyObj<ToastService>;
+  let authFacadeMock: jasmine.SpyObj<AuthFacade>;
 
   const profileResponse = {
     user: {
@@ -47,6 +49,8 @@ describe('ProfileModalComponent', () => {
       'openCrate',
     ]);
     toastMock = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'info']);
+    authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['requestPasswordChange']);
+    authFacadeMock.requestPasswordChange.and.returnValue(of({ message: 'ok' }));
 
     apiMock.getWalletTransactionsSummary.and.returnValue(
       of({ totalWins: 150, totalLossesOrBets: 40, netTotal: 110, transactionCount: 2 }),
@@ -87,6 +91,7 @@ describe('ProfileModalComponent', () => {
       providers: [
         { provide: BetceptionApi, useValue: apiMock },
         { provide: ToastService, useValue: toastMock },
+        { provide: AuthFacade, useValue: authFacadeMock },
       ],
     }).compileComponents();
   });
@@ -293,10 +298,9 @@ describe('ProfileModalComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(editor.querySelector<HTMLInputElement>('input[name="currentPassword"]')).toBeTruthy();
-    expect(editor.querySelector<HTMLInputElement>('input[name="newPassword"]')).toBeTruthy();
-    expect(editor.querySelector<HTMLInputElement>('input[name="confirmPassword"]')).toBeTruthy();
-    expect(editor.querySelectorAll('input').length).toBe(3);
+    // Password change is now done via email link – no form inputs
+    expect(editor.querySelectorAll('input').length).toBe(0);
+    expect(editor.querySelector('.profile-pw-mail-panel')).toBeTruthy();
   });
 
   it('saves a username edit through the profile API and closes the edit panel', () => {
@@ -344,20 +348,59 @@ describe('ProfileModalComponent', () => {
     expect(toastMock.success).toHaveBeenCalled();
   });
 
-  it('validates password confirmation before calling the API', () => {
+  it('sends a password-change link by email when the password panel button is clicked', async () => {
     createComponent();
-    component.selectTab('profile');
+    await fixture.whenStable();
     fixture.detectChanges();
 
-    component.passwordForm = {
-      currentPassword: 'current-password',
-      newPassword: 'new-password',
-      confirmPassword: 'other-password',
-    };
-    component.changePassword();
+    component.openAccountEdit('password');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
 
+    const sendButton: HTMLButtonElement = fixture.nativeElement.querySelector('.profile-submit');
+    sendButton.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(authFacadeMock.requestPasswordChange).toHaveBeenCalled();
+    expect(component.passwordChangeEmailSent).toBeTrue();
+  });
+
+  it('shows the email-sent confirmation after a successful password change request', async () => {
+    createComponent();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.openAccountEdit('password');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.sendPasswordChangeMail();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.passwordChangeEmailSent).toBeTrue();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.profile-pw-mail-panel');
+    expect(panel.textContent).toContain('Mail gesendet');
+  });
+
+  it('shows a toast and does not change state when the password change email request fails', async () => {
+    authFacadeMock.requestPasswordChange.and.returnValue(throwError(() => new Error('Service unavailable')));
+    createComponent();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.openAccountEdit('password');
+    component.sendPasswordChangeMail();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.passwordChangeEmailSent).toBeFalse();
     expect(toastMock.error).toHaveBeenCalled();
-    expect(apiMock.changeOwnPassword).not.toHaveBeenCalled();
   });
 
   it('emits closed when the close button is clicked', () => {

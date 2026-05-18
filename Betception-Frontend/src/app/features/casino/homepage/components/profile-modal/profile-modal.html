@@ -221,53 +221,33 @@
                   </div>
                 </form>
 
-                <form
-                  class="profile-form"
-                  *ngIf="accountEditMode === 'password'"
-                  (ngSubmit)="changePassword()"
-                  #passwordEditForm="ngForm"
-                >
-                  <label>
-                    <span>{{ i18n.t('profile.currentPassword') }}</span>
-                    <input
-                      name="currentPassword"
-                      type="password"
-                      required
-                      autocomplete="current-password"
-                      [(ngModel)]="passwordForm.currentPassword"
-                    />
-                  </label>
-                  <label>
-                    <span>{{ i18n.t('profile.newPassword') }}</span>
-                    <input
-                      name="newPassword"
-                      type="password"
-                      required
-                      minlength="8"
-                      autocomplete="new-password"
-                      [(ngModel)]="passwordForm.newPassword"
-                    />
-                  </label>
-                  <label>
-                    <span>{{ i18n.t('profile.confirmNewPassword') }}</span>
-                    <input
-                      name="confirmPassword"
-                      type="password"
-                      required
-                      minlength="8"
-                      autocomplete="new-password"
-                      [(ngModel)]="passwordForm.confirmPassword"
-                    />
-                  </label>
-                  <div class="profile-form-actions">
-                    <button class="btn profile-submit" type="submit" [disabled]="passwordSaving || passwordEditForm.invalid">
-                      {{ passwordSaving ? i18n.t('profile.saving') : i18n.t('profile.savePassword') }}
-                    </button>
-                    <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
-                      {{ i18n.t('common.cancel') }}
-                    </button>
-                  </div>
-                </form>
+                <div class="profile-form profile-pw-mail-panel" *ngIf="accountEditMode === 'password'">
+                  <ng-container *ngIf="!passwordChangeEmailSent; else pwMailSent">
+                    <div class="pw-mail-info">
+                      <span class="pw-mail-icon">🔑</span>
+                      <p>Wir senden dir einen sicheren Link an deine E-Mail-Adresse. Über diesen Link kannst du dein Passwort ändern. Der Link ist <strong>15 Minuten</strong> gültig.</p>
+                    </div>
+                    <div class="profile-form-actions">
+                      <button class="btn profile-submit" type="button" (click)="sendPasswordChangeMail()" [disabled]="passwordChangeSending">
+                        {{ passwordChangeSending ? 'Sende Mail…' : 'Link per E-Mail senden' }}
+                      </button>
+                      <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                        {{ i18n.t('common.cancel') }}
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-template #pwMailSent>
+                    <div class="pw-mail-success">
+                      <span class="pw-mail-icon">✉</span>
+                      <p>Mail gesendet! Bitte prüfe dein Postfach und klicke auf den Link in der Mail.</p>
+                    </div>
+                    <div class="profile-form-actions">
+                      <button class="btn profile-inline-btn profile-inline-btn--muted" type="button" (click)="cancelAccountEdit()">
+                        {{ i18n.t('common.close') }}
+                      </button>
+                    </div>
+                  </ng-template>
+                </div>
               </div>
             </section>
           </div>

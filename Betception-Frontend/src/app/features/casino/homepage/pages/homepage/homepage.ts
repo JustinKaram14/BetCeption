@@ -60,6 +60,8 @@ export class HomepageComponent {
   showRewardModal = false;
   showHowToPlayModal = false;
   showProfileModal = false;
+  showVerifyEmailModal = false;
+  verifyEmailAddress = '';
   publicProfileUserId: string | null = null;
   walletSummary: WalletSummary | null = null;
   unseenCrateCount = 0;
@@ -100,19 +102,49 @@ export class HomepageComponent {
   }
 
   onLogin(payload: LoginRequest) {
-    this.runAuthRequest(
-      this.authFacade.login(payload),
-      (user) => this.i18n.t('home.toast.welcomeBack', { name: user?.username ?? payload.email }),
-    );
+    this.authLoading = true;
+    this.authFacade.login(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (user) => {
+          this.toast.success(this.i18n.t('home.toast.welcomeBack', { name: user?.username ?? payload.email }));
+          this.authLoading = false;
+        },
+        error: (error) => {
+          const code = error?.error?.code;
+          if (code === 'EMAIL_NOT_VERIFIED') {
+            this.verifyEmailAddress = payload.email;
+            this.showVerifyEmailModal = true;
+          } else {
+            this.toast.error(this.extractErrorMessage(error));
+          }
+          this.authLoading = false;
+        },
+        complete: () => {
+          this.authLoading = false;
+        },
+      });
   }
 
   onRegister(payload: RegisterRequest) {
-    this.runAuthRequest(
-      this.authFacade
-        .register(payload)
-        .pipe(switchMap(() => this.authFacade.login({ email: payload.email, password: payload.password }))),
-      (user) => this.i18n.t('home.toast.accountCreated', { name: user?.username ?? payload.username }),
-    );
+    this.authLoading = true;
+    this.authFacade.register(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.verifyEmailAddress = payload.email;
+          this.showVerifyEmailModal = true;
+          this.authLoading = false;
+        },
+        error: (error) => {
+          this.toast.error(this.extractErrorMessage(error));
+          this.authLoading = false;
+        },
+      });
+  }
+
+  closeVerifyEmailModal() {
+    this.showVerifyEmailModal = false;
   }
 
   onLogout() {
