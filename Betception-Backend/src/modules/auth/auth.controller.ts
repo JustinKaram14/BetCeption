@@ -63,9 +63,9 @@ export async function register(
   const pwHash = await hashPassword(password);
   const startingBalance = Number.isFinite(env.users.initialBalance) ? env.users.initialBalance : 0;
 
-  const smtpConfigured = !!env.smtp;
-  const verificationToken = smtpConfigured ? randomBytes(32).toString('hex') : null;
-  const verificationTokenExpiresAt = smtpConfigured
+  const mailConfigured = !!env.resend;
+  const verificationToken = mailConfigured ? randomBytes(32).toString('hex') : null;
+  const verificationTokenExpiresAt = mailConfigured
     ? new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS)
     : null;
 
@@ -74,13 +74,13 @@ export async function register(
     username,
     passwordHash: pwHash,
     balance: startingBalance.toFixed(2),
-    emailVerified: !smtpConfigured,
+    emailVerified: !mailConfigured,
     emailVerificationToken: verificationToken,
     emailVerificationTokenExpiresAt: verificationTokenExpiresAt,
   });
   await repo.save(user);
 
-  if (smtpConfigured && verificationToken) {
+  if (mailConfigured && verificationToken) {
     sendVerificationEmail(email, username, verificationToken).catch((mailErr) => {
       console.error('[MAIL ERROR] sendVerificationEmail failed:', mailErr);
     });

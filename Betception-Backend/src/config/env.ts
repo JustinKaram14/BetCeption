@@ -25,11 +25,8 @@ const RawEnvSchema = z.object({
   COOKIE_SECURE: z.string().optional(),
   COOKIE_SAMESITE: z.string().optional(),
   NEW_USER_INITIAL_BALANCE: z.coerce.number().nonnegative().default(DEFAULT_INITIAL_BALANCE),
-  SMTP_HOST: z.string().min(1).optional(),
-  SMTP_PORT: z.coerce.number().int().positive().default(587),
-  SMTP_SECURE: z.string().optional(),
-  SMTP_USER: z.string().min(1).optional(),
-  SMTP_PASS: z.string().min(1).optional(),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  RESEND_FROM: z.string().email().default('noreply@betception.de'),
   APP_BASE_URL: z.string().url().default('http://localhost:4200'),
   TRUST_PROXY: z.string().optional(),
   METRICS_ENABLED: z.string().optional(),
@@ -125,14 +122,8 @@ export const env = {
   users: {
     initialBalance: rawEnv.NEW_USER_INITIAL_BALANCE,
   },
-  smtp: rawEnv.SMTP_HOST && rawEnv.SMTP_USER && rawEnv.SMTP_PASS
-    ? {
-        host: rawEnv.SMTP_HOST,
-        port: rawEnv.SMTP_PORT,
-        secure: rawEnv.SMTP_SECURE === 'true',
-        user: rawEnv.SMTP_USER,
-        pass: rawEnv.SMTP_PASS,
-      }
+  resend: rawEnv.RESEND_API_KEY
+    ? { apiKey: rawEnv.RESEND_API_KEY, from: rawEnv.RESEND_FROM }
     : null,
   appBaseUrl: rawEnv.APP_BASE_URL,
   monitoring: {
