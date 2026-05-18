@@ -422,12 +422,12 @@ describe('ProfileModalComponent', () => {
     expect(toastMock.error).toHaveBeenCalled();
   });
 
-  it('shows the account delete danger zone in the private profile', () => {
+  it('shows the centered account delete trigger in the private profile', () => {
     createComponent();
 
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Gefahrenzone');
-    expect(text).toContain('Account löschen');
+    expect(text).not.toContain('Gefahrenzone');
+    expect(fixture.nativeElement.querySelector('.profile-danger-trigger')).toBeTruthy();
   });
 
   it('shows delete confirmation after clicking the delete button', async () => {
