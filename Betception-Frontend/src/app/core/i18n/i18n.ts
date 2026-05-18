@@ -176,6 +176,11 @@ type KnownTranslationKey =
   | 'home.toast.loginRequiredReward'
   | 'home.toast.unknownError'
   | 'home.toast.welcomeBack'
+  | 'publicProfile.kicker'
+  | 'publicProfile.title'
+  | 'publicProfile.loading'
+  | 'publicProfile.loadError'
+  | 'publicProfile.xp'
   | 'leaderboard.balanceDescription'
   | 'leaderboard.currentRank'
   | 'leaderboard.levelDescription'
@@ -479,6 +484,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'profile.transaction.adjustment': 'Anpassung',
     'profile.transaction.reward': 'Reward',
     'profile.transaction.crateReward': 'Kistengewinn',
+    'publicProfile.kicker': 'Oeffentlich',
+    'publicProfile.title': 'Spielerprofil',
+    'publicProfile.loading': 'Oeffentliches Profil wird geladen...',
+    'publicProfile.loadError': 'Oeffentliches Profil konnte nicht geladen werden.',
+    'publicProfile.xp': 'XP',
     'leaderboard.balanceDescription': 'Top-Kontostände - wer hat die meisten Coins?',
     'leaderboard.currentRank': 'Dein aktueller Rang',
     'leaderboard.levelDescription': 'Höchstes Level und XP-Fortschritt.',
@@ -777,6 +787,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'profile.transaction.adjustment': 'Adjustment',
     'profile.transaction.reward': 'Reward',
     'profile.transaction.crateReward': 'Crate reward',
+    'publicProfile.kicker': 'Public',
+    'publicProfile.title': 'Player profile',
+    'publicProfile.loading': 'Loading public profile...',
+    'publicProfile.loadError': 'Public profile could not be loaded.',
+    'publicProfile.xp': 'XP',
     'leaderboard.balanceDescription': 'Top balances - who has the most coins in their wallet?',
     'leaderboard.currentRank': 'Your current rank',
     'leaderboard.levelDescription': 'Highest level and XP progress.',
@@ -1075,6 +1090,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'profile.transaction.adjustment': 'Ajuste',
     'profile.transaction.reward': 'Recompensa',
     'profile.transaction.crateReward': 'Recompensa de caja',
+    'publicProfile.kicker': 'Publico',
+    'publicProfile.title': 'Perfil del jugador',
+    'publicProfile.loading': 'Cargando perfil publico...',
+    'publicProfile.loadError': 'No se pudo cargar el perfil publico.',
+    'publicProfile.xp': 'XP',
     'leaderboard.balanceDescription': 'Top de saldos - ¿quién tiene más coins?',
     'leaderboard.currentRank': 'Tu rango actual',
     'leaderboard.levelDescription': 'Nivel más alto y progreso de XP.',
@@ -1373,6 +1393,11 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'profile.transaction.adjustment': 'Ajustement',
     'profile.transaction.reward': 'Récompense',
     'profile.transaction.crateReward': 'Récompense de caisse',
+    'publicProfile.kicker': 'Public',
+    'publicProfile.title': 'Profil joueur',
+    'publicProfile.loading': 'Chargement du profil public...',
+    'publicProfile.loadError': 'Impossible de charger le profil public.',
+    'publicProfile.xp': 'XP',
     'leaderboard.balanceDescription': 'Top des soldes - qui a le plus de coins ?',
     'leaderboard.currentRank': 'Ton rang actuel',
     'leaderboard.levelDescription': 'Niveau le plus élevé et progression XP.',

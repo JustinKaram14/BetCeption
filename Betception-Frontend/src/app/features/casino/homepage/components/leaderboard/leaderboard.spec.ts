@@ -46,7 +46,21 @@ describe('LeaderboardComponent', () => {
     expect(component.loading).toBeFalse();
     expect(component.error).toBeNull();
     expect(component.currentUserRank).toBe(4);
-    expect(component.rows).toEqual([{ rank: 1, username: 'neo', metrics: { balance: 1500 } }]);
+    expect(component.rows).toEqual([{ rank: 1, userId: 'u1', username: 'neo', metrics: { balance: 1500 } }]);
+  });
+
+  it('emits the selected user id on row double click', () => {
+    apiMock.getBalanceLeaderboard.and.returnValue(
+      new Subject<any>().asObservable(),
+    );
+
+    fixture = TestBed.createComponent(LeaderboardComponent);
+    component = fixture.componentInstance;
+    const emitSpy = spyOn(component.userProfileRequested, 'emit');
+
+    component.openPublicProfile({ rank: 1, userId: 'u2', username: 'trinity', metrics: { balance: 900 } });
+
+    expect(emitSpy).toHaveBeenCalledWith('u2');
   });
 
   it('switches to the level leaderboard and updates the active category', () => {

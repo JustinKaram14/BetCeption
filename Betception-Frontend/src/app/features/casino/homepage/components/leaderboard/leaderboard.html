@@ -34,7 +34,11 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let row of rows; trackBy: trackRow">
+        <tr
+          *ngFor="let row of rows; trackBy: trackRow"
+          class="leaderboard-player-row"
+          (dblclick)="openPublicProfile(row)"
+        >
           <td class="rank-cell">#{{ row.rank }}</td>
           <td class="name-cell">{{ row.username }}</td>
           <td

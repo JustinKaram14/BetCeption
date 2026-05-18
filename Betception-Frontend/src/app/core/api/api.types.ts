@@ -29,12 +29,13 @@ export interface AuthUser {
 export interface UserProfile {
   id: string;
   username: string;
-  email: string;
   balance: number;
   xp: number;
   level: number;
-  levelProgress?: LevelProgress;
-  lastDailyRewardAt: string | null;
+  avatarIcon: ProfileAvatarIcon;
+  avatarColor: ProfileAvatarColor;
+  levelProgress: LevelProgress;
+  createdAt: string;
 }
 
 export interface OwnProfile {
