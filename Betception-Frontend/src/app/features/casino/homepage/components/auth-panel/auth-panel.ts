@@ -6,6 +6,7 @@ import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
+import { isValidUsername, normalizeUsername } from '../../../../../shared/validation/username';
 
 @Component({
   selector: 'app-auth-panel',
@@ -82,8 +83,8 @@ export class AuthPanelComponent {
       return;
     }
 
-    const username = this.username.trim();
-    if (username.length < 3 || username.length > 32) {
+    const username = normalizeUsername(this.username);
+    if (!isValidUsername(username)) {
       this.toast.error(this.i18n.t('auth.usernameInvalid'));
       return;
     }

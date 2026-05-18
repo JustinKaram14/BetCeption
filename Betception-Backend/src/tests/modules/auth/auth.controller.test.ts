@@ -656,4 +656,25 @@ describe('auth schemas', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it('rejects glitch usernames with combining marks', () => {
+    const result = RegisterSchema.safeParse({
+      email: 'user@example.com',
+      password: 'secret123',
+      username: 'T̵e̷s̶',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('trims and normalizes accepted usernames', () => {
+    const result = RegisterSchema.safeParse({
+      email: 'user@example.com',
+      password: 'secret123',
+      username: '  player_1  ',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.username).toBe('player_1');
+    }
+  });
 });

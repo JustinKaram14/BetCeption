@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { UsernameSchema } from '../../utils/username.js';
 
 export const RegisterSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(8).max(128),
-  username: z.string().min(3).max(32),
+  username: UsernameSchema,
 });
 
 export const LoginSchema = z.object({

@@ -59,6 +59,7 @@ describe('PublicProfileModalComponent', () => {
 
     expect(apiMock.getUserById).toHaveBeenCalledWith('2');
     expect(component.profile?.username).toBe('trinity');
+    expect(fixture.nativeElement.textContent).toContain('Öffentlich');
     expect(fixture.nativeElement.textContent).toContain('trinity');
     expect(fixture.nativeElement.textContent).toContain('2.500 Coins');
   });
@@ -70,6 +71,8 @@ describe('PublicProfileModalComponent', () => {
     expect(text).not.toContain('Kisten');
     expect(text).not.toContain('Transaktionen');
     expect(text).not.toContain('Passwort');
+    expect(text).not.toContain('Account löschen');
+    expect(text).not.toContain('Gefahrenzone');
     expect(text).not.toContain('passwordHash');
     expect(fixture.nativeElement.querySelector('input')).toBeNull();
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
