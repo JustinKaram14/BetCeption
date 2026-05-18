@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddUserDeletedAt1700000000014 implements MigrationInterface {
-  name = 'AddUserDeletedAt1700000000014';
+export class AddUserDeletedAt implements MigrationInterface {
+  name = 'AddUserDeletedAt';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     const hasDeletedAt = await queryRunner.hasColumn('users', 'deleted_at');
