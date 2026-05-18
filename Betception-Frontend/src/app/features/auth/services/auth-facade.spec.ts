@@ -8,7 +8,11 @@ describe('AuthFacade', () => {
   let service: AuthFacade;
   const authMock = jasmine.createSpyObj<Auth>(
     'Auth',
-    ['login', 'register', 'refresh', 'logout', 'getCurrentUser', 'isAuthenticated'],
+    [
+      'login', 'register', 'refresh', 'logout', 'getCurrentUser', 'isAuthenticated',
+      'verifyEmail', 'resendVerification',
+      'requestPasswordChange', 'confirmPasswordChange', 'forgotPassword', 'resetPassword',
+    ],
     {
       user$: of(null),
       isAuthenticated$: of(false),
@@ -62,5 +66,31 @@ describe('AuthFacade', () => {
       expect(user).toBeNull();
       done();
     });
+  });
+
+  it('requestPasswordChange delegates to auth.requestPasswordChange', () => {
+    authMock.requestPasswordChange.and.returnValue(of({ message: 'ok' }));
+    service.requestPasswordChange().subscribe();
+    expect(authMock.requestPasswordChange).toHaveBeenCalled();
+  });
+
+  it('confirmPasswordChange delegates to auth.confirmPasswordChange', () => {
+    const payload = { token: 'tok', oldPassword: 'oldpass', newPassword: 'newpass1' };
+    authMock.confirmPasswordChange.and.returnValue(of({ message: 'ok' }));
+    service.confirmPasswordChange(payload).subscribe();
+    expect(authMock.confirmPasswordChange).toHaveBeenCalledWith(payload);
+  });
+
+  it('forgotPassword delegates to auth.forgotPassword', () => {
+    authMock.forgotPassword.and.returnValue(of({ message: 'ok' }));
+    service.forgotPassword('user@example.com').subscribe();
+    expect(authMock.forgotPassword).toHaveBeenCalledWith('user@example.com');
+  });
+
+  it('resetPassword delegates to auth.resetPassword', () => {
+    const payload = { token: 'tok', newPassword: 'newpass1' };
+    authMock.resetPassword.and.returnValue(of({ message: 'ok' }));
+    service.resetPassword(payload).subscribe();
+    expect(authMock.resetPassword).toHaveBeenCalledWith(payload);
   });
 });

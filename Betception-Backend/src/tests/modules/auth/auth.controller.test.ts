@@ -1,4 +1,4 @@
-import { register, login, refresh, logout } from '../../../modules/auth/auth.controller.js';
+import { register, login, refresh, logout, requestPasswordChange, confirmPasswordChange, forgotPassword, resetPassword } from '../../../modules/auth/auth.controller.js';
 import { RegisterSchema } from '../../../modules/auth/auth.schema.js';
 import { User } from '../../../entity/User.js';
 import { Session } from '../../../entity/Session.js';
@@ -8,6 +8,7 @@ import {
   createMockRequest,
   createMockResponse,
 } from '../../test-utils.js';
+import * as mailer from '../../../utils/mailer.js';
 import * as passwordUtils from '../../../utils/passwords.js';
 import * as jwtUtils from '../../../utils/jwt.js';
 import { hashToken } from '../../../utils/tokenHash.js';
@@ -18,6 +19,10 @@ const invalidCredentialsResponse = { message: 'Invalid email or password' };
 const registrationConflictResponse = { message: 'Registration could not be completed' };
 
 describe('auth.controller', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('register', () => {
     beforeEach(() => {
       jest.spyOn(emailValidation, 'validateRegistrableEmail').mockResolvedValue({ valid: true });
@@ -141,7 +146,7 @@ describe('auth.controller', () => {
 
   describe('login', () => {
     it('verifies credentials, updates login timestamp, and returns tokens', async () => {
-      const user = { id: '1', email: 'user@example.com', username: 'player', passwordHash: 'hash' } as User;
+      const user = { id: '1', email: 'user@example.com', username: 'player', passwordHash: 'hash', emailVerified: true } as User;
       const userRepo = createMockRepository<User>({
         findOne: jest.fn().mockResolvedValue(user),
       });
@@ -337,6 +342,289 @@ describe('auth.controller', () => {
       expect(sessionRepo.delete).toHaveBeenCalledWith({ refreshToken: hashToken('refresh-token') });
       expect(res.clearCookie).toHaveBeenCalledWith('refresh_token', { path: '/auth/refresh' });
       expect(res.status).toHaveBeenCalledWith(204);
+    });
+  });
+
+  describe('requestPasswordChange', () => {
+    beforeEach(() => {
+      jest.spyOn(mailer, 'sendPasswordChangeEmail').mockResolvedValue(undefined);
+    });
+
+    it('saves a hashed token and sends the password-change email', async () => {
+      const user = { id: '1', email: 'user@example.com', username: 'player' } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({ user: { sub: '1' } as any });
+      const res = createMockResponse();
+
+      await requestPasswordChange(req as any, res);
+
+      expect(userRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({
+        passwordChangeToken: expect.any(String),
+        passwordChangeTokenExpiresAt: expect.any(Date),
+      }));
+      expect(mailer.sendPasswordChangeEmail).toHaveBeenCalledWith('user@example.com', 'player', expect.any(String));
+      expect(res.json).toHaveBeenCalledWith({ message: 'Password change email sent' });
+    });
+
+    it('returns 401 when the user from the token cannot be found', async () => {
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({ user: { sub: 'unknown' } as any });
+      const res = createMockResponse();
+
+      await requestPasswordChange(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(mailer.sendPasswordChangeEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('confirmPasswordChange', () => {
+    beforeEach(() => {
+      jest.spyOn(mailer, 'sendPasswordChangeEmail').mockResolvedValue(undefined);
+    });
+
+    it('changes the password, clears all sessions, and returns success', async () => {
+      const user = {
+        id: '1',
+        passwordHash: 'oldhash',
+        passwordChangeToken: 'sometoken',
+        passwordChangeTokenExpiresAt: new Date(Date.now() + 60_000),
+      } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      const sessionRepo = {
+        ...createMockRepository<Session>(),
+        createQueryBuilder: jest.fn().mockReturnValue({
+          delete: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          execute: jest.fn().mockResolvedValue(undefined),
+        }),
+      };
+      const repoMap = new Map<any, any>();
+      repoMap.set(User, userRepo);
+      repoMap.set(Session, sessionRepo);
+      mockAppDataSourceRepositories(repoMap);
+
+      jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(true);
+      jest.spyOn(passwordUtils, 'hashPassword').mockResolvedValue('newhash');
+
+      const req = createMockRequest({
+        body: { token: 'validtoken', oldPassword: 'oldpass', newPassword: 'newpass1' },
+      });
+      const res = createMockResponse();
+
+      await confirmPasswordChange(req as any, res);
+
+      expect(userRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({
+        passwordHash: 'newhash',
+        passwordChangeToken: null,
+        passwordChangedAt: expect.any(Date),
+      }));
+      expect(res.json).toHaveBeenCalledWith({ message: 'Password changed successfully' });
+    });
+
+    it('returns TOKEN_INVALID when the token does not match any user', async () => {
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({
+        body: { token: 'badtoken', oldPassword: 'old', newPassword: 'newpass1' },
+      });
+      const res = createMockResponse();
+
+      await confirmPasswordChange(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TOKEN_INVALID' }));
+    });
+
+    it('returns TOKEN_EXPIRED when the token has passed its expiry', async () => {
+      const user = {
+        id: '1',
+        passwordHash: 'hash',
+        passwordChangeToken: 'token',
+        passwordChangeTokenExpiresAt: new Date(Date.now() - 1000),
+      } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({
+        body: { token: 'expiredtoken', oldPassword: 'old', newPassword: 'newpass1' },
+      });
+      const res = createMockResponse();
+
+      await confirmPasswordChange(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TOKEN_EXPIRED' }));
+    });
+
+    it('returns INVALID_OLD_PASSWORD when the old password does not match', async () => {
+      const user = {
+        id: '1',
+        passwordHash: 'hash',
+        passwordChangeToken: 'token',
+        passwordChangeTokenExpiresAt: new Date(Date.now() + 60_000),
+      } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(false);
+
+      const req = createMockRequest({
+        body: { token: 'validtoken', oldPassword: 'wrongpass', newPassword: 'newpass1' },
+      });
+      const res = createMockResponse();
+
+      await confirmPasswordChange(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'INVALID_OLD_PASSWORD' }));
+    });
+  });
+
+  describe('forgotPassword', () => {
+    beforeEach(() => {
+      jest.spyOn(mailer, 'sendPasswordResetEmail').mockResolvedValue(undefined);
+    });
+
+    it('always returns the generic response for an unknown email (anti-enumeration)', async () => {
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({ body: { email: 'ghost@example.com' } });
+      const res = createMockResponse();
+
+      await forgotPassword(req as any, res);
+
+      expect(res.json).toHaveBeenCalledWith({ message: 'Falls ein Account existiert, wurde eine Mail gesendet' });
+      expect(mailer.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('saves a reset token and sends the reset email for a known email', async () => {
+      const user = { id: '2', email: 'user@example.com', username: 'player' } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({ body: { email: 'user@example.com' } });
+      const res = createMockResponse();
+
+      await forgotPassword(req as any, res);
+
+      expect(userRepo.update).toHaveBeenCalledWith('2', expect.objectContaining({
+        passwordResetToken: expect.any(String),
+        passwordResetTokenExpiresAt: expect.any(Date),
+      }));
+      expect(mailer.sendPasswordResetEmail).toHaveBeenCalledWith('user@example.com', 'player', expect.any(String));
+      expect(res.json).toHaveBeenCalledWith({ message: 'Falls ein Account existiert, wurde eine Mail gesendet' });
+    });
+
+    it('returns the generic response when no email body is provided', async () => {
+      const req = createMockRequest({ body: {} });
+      const res = createMockResponse();
+
+      await forgotPassword(req as any, res);
+
+      expect(res.json).toHaveBeenCalledWith({ message: 'Falls ein Account existiert, wurde eine Mail gesendet' });
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('resets the password, invalidates all sessions, and returns success', async () => {
+      const user = {
+        id: '3',
+        passwordResetToken: 'resettoken',
+        passwordResetTokenExpiresAt: new Date(Date.now() + 60_000),
+      } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      const sessionRepo = {
+        ...createMockRepository<Session>(),
+        createQueryBuilder: jest.fn().mockReturnValue({
+          delete: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          execute: jest.fn().mockResolvedValue(undefined),
+        }),
+      };
+      const repoMap = new Map<any, any>();
+      repoMap.set(User, userRepo);
+      repoMap.set(Session, sessionRepo);
+      mockAppDataSourceRepositories(repoMap);
+
+      jest.spyOn(passwordUtils, 'hashPassword').mockResolvedValue('newhash');
+
+      const req = createMockRequest({
+        body: { token: 'validreset', newPassword: 'newpass1' },
+      });
+      const res = createMockResponse();
+
+      await resetPassword(req as any, res);
+
+      expect(userRepo.update).toHaveBeenCalledWith('3', expect.objectContaining({
+        passwordHash: 'newhash',
+        passwordResetToken: null,
+        passwordChangedAt: expect.any(Date),
+      }));
+      expect(res.json).toHaveBeenCalledWith({ message: 'Password reset successfully' });
+    });
+
+    it('returns TOKEN_INVALID when the token does not match any user', async () => {
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(null),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({
+        body: { token: 'badtoken', newPassword: 'newpass1' },
+      });
+      const res = createMockResponse();
+
+      await resetPassword(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TOKEN_INVALID' }));
+    });
+
+    it('returns TOKEN_EXPIRED when the reset token has passed its expiry', async () => {
+      const user = {
+        id: '3',
+        passwordResetToken: 'expiredtoken',
+        passwordResetTokenExpiresAt: new Date(Date.now() - 1000),
+      } as User;
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      mockAppDataSourceRepositories(new Map([[User, userRepo]]));
+
+      const req = createMockRequest({
+        body: { token: 'expiredtoken', newPassword: 'newpass1' },
+      });
+      const res = createMockResponse();
+
+      await resetPassword(req as any, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'TOKEN_EXPIRED' }));
     });
   });
 });
