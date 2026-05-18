@@ -10,7 +10,7 @@
 
   <div class="main-content" [style.flex-direction]="isNarrow ? 'column' : null" data-testid="homepage-main-content">
     <app-neon-card class="leaderboard-card">
-      <app-leaderboard></app-leaderboard>
+      <app-leaderboard (userProfileRequested)="openPublicProfileModal($event)"></app-leaderboard>
     </app-neon-card>
 
     <div class="right-column">
@@ -98,5 +98,11 @@
     <button class="btn verify-modal__btn" type="button" (click)="closeVerifyEmailModal()">Verstanden</button>
   </div>
 </div>
+
+<app-public-profile-modal
+  *ngIf="publicProfileUserId"
+  [userId]="publicProfileUserId"
+  (closed)="closePublicProfileModal()">
+</app-public-profile-modal>
 
 <app-toast-container></app-toast-container>

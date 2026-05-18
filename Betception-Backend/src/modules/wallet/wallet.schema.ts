@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const dateRangeParamSchema = z
+  .string()
+  .datetime({ offset: true, message: 'Invalid date' })
+  .transform((value) => new Date(value));
+
 const amountSchema = z.coerce
   .number()
   .positive()
@@ -9,10 +14,25 @@ const amountSchema = z.coerce
     message: 'Amount must have at most two decimal places',
   });
 
-export const WalletTransactionsQuerySchema = z.object({
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  page: z.coerce.number().int().min(1).default(1),
-});
+const dateRangeQueryShape = {
+  from: dateRangeParamSchema.optional(),
+  to: dateRangeParamSchema.optional(),
+};
+
+const validDateRange = (value: { from?: Date; to?: Date }) =>
+  !value.from || !value.to || value.from.getTime() <= value.to.getTime();
+
+export const WalletTransactionsDateRangeQuerySchema = z
+  .object(dateRangeQueryShape)
+  .refine(validDateRange, { message: 'from must be before or equal to to', path: ['from'] });
+
+export const WalletTransactionsQuerySchema = z
+  .object({
+    ...dateRangeQueryShape,
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    page: z.coerce.number().int().min(1).default(1),
+  })
+  .refine(validDateRange, { message: 'from must be before or equal to to', path: ['from'] });
 
 export const WalletAdjustmentSchema = z.object({
   amount: amountSchema,
@@ -25,5 +45,5 @@ export const WalletAdjustmentSchema = z.object({
 });
 
 export type WalletTransactionsQuery = z.infer<typeof WalletTransactionsQuerySchema>;
+export type WalletTransactionsDateRangeQuery = z.infer<typeof WalletTransactionsDateRangeQuerySchema>;
 export type WalletAdjustmentInput = z.infer<typeof WalletAdjustmentSchema>;
-

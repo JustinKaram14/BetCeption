@@ -34,8 +34,19 @@ describe('user.controller', () => {
   });
 
   describe('getUserById', () => {
-    it('returns a user when found', async () => {
-      const user = { id: '1', username: 'player' } as User;
+    it('returns a public user profile without sensitive fields', async () => {
+      const user = {
+        id: '1',
+        username: 'player',
+        email: 'player@example.com',
+        passwordHash: 'hash',
+        balance: '120.00',
+        xp: 40,
+        level: 2,
+        avatarIcon: 'crown',
+        avatarColor: 'gold',
+        createdAt: new Date('2025-01-01T00:00:00Z'),
+      } as User;
       const userRepo = createMockRepository<User>({
         findOne: jest.fn().mockResolvedValue(user),
       });
@@ -52,12 +63,17 @@ describe('user.controller', () => {
         user: expect.objectContaining({
           id: '1',
           username: 'player',
+          balance: 120,
+          avatarIcon: 'crown',
+          avatarColor: 'gold',
           levelProgress: expect.objectContaining({
-            level: 1,
-            xp: 0,
+            level: 2,
+            xp: 40,
           }),
         }),
       });
+      expect(res.json.mock.calls[0][0].user).not.toHaveProperty('email');
+      expect(res.json.mock.calls[0][0].user).not.toHaveProperty('passwordHash');
     });
 
     it('returns 404 when the user is missing', async () => {
