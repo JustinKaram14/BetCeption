@@ -13,8 +13,6 @@ describe('AuthPanelComponent', () => {
   const authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['forgotPassword']);
 
   beforeEach(async () => {
-    authFacadeMock.forgotPassword.and.returnValue(of({ message: 'ok' }));
-
     await TestBed.configureTestingModule({
       imports: [AuthPanelComponent],
       providers: [
@@ -26,6 +24,8 @@ describe('AuthPanelComponent', () => {
     fixture = TestBed.createComponent(AuthPanelComponent);
     component = fixture.componentInstance;
     toastMock.error.calls.reset();
+    authFacadeMock.forgotPassword.calls.reset();
+    authFacadeMock.forgotPassword.and.returnValue(of({ message: 'ok' }));
     fixture.detectChanges();
   });
 
