@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Performance-Umgebung starten
         run: docker compose -f docker-compose.perf.yml up -d --build
@@ -69,7 +69,7 @@ jobs:
 
       - name: Ergebnisse hochladen
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: k6-performance-results-${{ github.run_number }}
           path: Betception-Backend/results/
