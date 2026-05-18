@@ -16,6 +16,16 @@ function createTransporter() {
 
 const transporter = createTransporter();
 
+if (transporter) {
+  transporter.verify().then(() => {
+    console.log('[SMTP] Connection verified successfully');
+  }).catch((err: unknown) => {
+    console.error('[SMTP] Connection verification FAILED:', err);
+  });
+} else {
+  console.warn('[SMTP] No SMTP config found — emails will be logged to console only');
+}
+
 function buildVerificationEmail(username: string, verifyUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="de">

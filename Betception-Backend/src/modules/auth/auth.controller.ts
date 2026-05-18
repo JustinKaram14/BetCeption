@@ -83,8 +83,8 @@ export async function register(
   if (smtpConfigured && verificationToken) {
     try {
       await sendVerificationEmail(email, username, verificationToken);
-    } catch {
-      // Mail-Fehler nicht zum Nutzer durchreichen — Account wurde erstellt
+    } catch (mailErr) {
+      console.error('[MAIL ERROR] sendVerificationEmail failed:', mailErr);
     }
   }
 
@@ -226,8 +226,8 @@ export async function requestPasswordChange(req: Request, res: Response) {
 
   try {
     await sendPasswordChangeEmail(user.email, user.username, token);
-  } catch {
-    // don't surface mail errors
+  } catch (mailErr) {
+    console.error('[MAIL ERROR] sendPasswordChangeEmail failed:', mailErr);
   }
 
   return res.json({ message: 'Password change email sent' });
@@ -294,8 +294,8 @@ export async function forgotPassword(
 
   try {
     await sendPasswordResetEmail(user.email, user.username, token);
-  } catch {
-    // don't surface mail errors
+  } catch (mailErr) {
+    console.error('[MAIL ERROR] sendPasswordResetEmail failed:', mailErr);
   }
 
   return res.json(GENERIC_RESPONSE);
