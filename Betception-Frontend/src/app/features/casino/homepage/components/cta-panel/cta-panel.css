@@ -50,3 +50,17 @@
     font-size:.82rem;
   }
 }
+
+@media (min-width:901px) and (max-height:820px){
+  .play-panel{
+    gap:10px;
+  }
+  .play-panel .play-btn{
+    padding:12px 18px;
+    font-size:1rem;
+  }
+  .rewards-btn{
+    padding:8px 16px;
+    font-size:.82rem;
+  }
+}

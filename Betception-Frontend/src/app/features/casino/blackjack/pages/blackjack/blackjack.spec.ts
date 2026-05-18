@@ -14,6 +14,7 @@ import {
   type ActivePowerup,
   type BetceptionResolution,
   type LevelProgress,
+  type RoundState,
 } from '../../../../../core/api/api.types';
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
@@ -135,7 +136,7 @@ describe('Blackjack', () => {
     status: RoundStatus,
     playerStatus: HandStatus,
     mainBetStatus = MainBetStatus.PLACED,
-  ) {
+  ): RoundState {
     const settled = status === RoundStatus.SETTLED;
     return {
       id: 'round-1',
@@ -503,6 +504,34 @@ describe('Blackjack', () => {
       // ACTIVE player hand → no auto-settle pending
       tick(1000);
       expect(rngMock.settle).not.toHaveBeenCalled();
+    }));
+
+    it('auto-settles a dealer blackjack even while the player hand is active', fakeAsync(() => {
+      const inProgress = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.ACTIVE);
+      const now = new Date().toISOString();
+      inProgress.dealerHand = {
+        ...inProgress.dealerHand,
+        status: HandStatus.BLACKJACK,
+        handValue: 21,
+        cards: [
+          { id: 'dealer-1', rank: CardRank.KING, suit: CardSuit.HEARTS, drawOrder: 1, createdAt: now },
+          { id: 'dealer-2', rank: null, suit: null, drawOrder: 2, createdAt: now },
+        ],
+      };
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
+      settled.dealerHand = { ...inProgress.dealerHand, status: HandStatus.BLACKJACK };
+      rngMock.startRound.and.returnValue(of({ round: inProgress }));
+      rngMock.settle.and.returnValue(of({ round: settled }));
+
+      component.betAmount = 25;
+      component.round = null;
+      component.onDeal();
+      component.onConfirmBetception();
+
+      expect(component.dealerFlowActive).toBeTrue();
+      tick(1200);
+      expect(rngMock.settle).toHaveBeenCalledOnceWith('round-1');
+      expect(component.round!.status).toBe(RoundStatus.SETTLED);
     }));
 
     it('does nothing when betAmount is 0', () => {

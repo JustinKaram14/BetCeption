@@ -323,6 +323,17 @@ describe('ProfileModalComponent', () => {
     expect(component.profile?.username).toBe('newname');
   });
 
+  it('rejects a glitch username edit before calling the profile API', () => {
+    createComponent();
+
+    component.openAccountEdit('username');
+    component.profileForm.username = 'T̵e̷s̶';
+    component.saveUsername();
+
+    expect(apiMock.updateOwnProfile).not.toHaveBeenCalled();
+    expect(toastMock.error).toHaveBeenCalled();
+  });
+
   it('saves selected profile avatar options', () => {
     createComponent();
     apiMock.updateOwnProfile.and.returnValue(
