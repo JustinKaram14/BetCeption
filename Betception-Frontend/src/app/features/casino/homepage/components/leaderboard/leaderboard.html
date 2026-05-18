@@ -62,7 +62,7 @@
         <tr
           *ngFor="let row of filteredRows; trackBy: trackRow"
           class="leaderboard-player-row"
-          (dblclick)="openPublicProfile(row)"
+          (click)="openPublicProfile(row)"
         >
           <td class="rank-cell">#{{ row.rank }}</td>
           <td class="name-cell">{{ row.username }}</td>

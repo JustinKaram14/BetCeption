@@ -326,6 +326,40 @@
     width:78px;
   }
 }
+
+@media (min-width:901px) and (max-height:820px){
+  .leaderboard-container{
+    padding:18px;
+  }
+  .leaderboard-heading h2{
+    font-size:1.55rem;
+  }
+  .leaderboard-tab{
+    padding:.32rem .7rem;
+    font-size:.72rem;
+  }
+  .leaderboard-search{
+    margin-top:10px;
+  }
+  .leaderboard-search-input{
+    height:34px;
+  }
+  .leaderboard-description{
+    margin:9px 0 12px;
+    font-size:.8rem;
+  }
+  .leaderboard-table{
+    font-size:.82rem;
+  }
+  .leaderboard-table th,
+  .leaderboard-table td{
+    padding:9px 10px;
+  }
+  .current-rank{
+    margin-top:10px;
+    font-size:.82rem;
+  }
+}
 .current-rank strong{
   color:var(--accent-glow);
 }

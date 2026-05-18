@@ -98,6 +98,23 @@ describe('AuthPanelComponent', () => {
     expect(toastMock.error).toHaveBeenCalled();
   }));
 
+  it('shows a toast and does not emit register data for a glitch username', fakeAsync(() => {
+    const registerSpy = spyOn(component.register, 'emit');
+    const registerTab: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="auth-tab-register"]');
+    registerTab.click();
+    fixture.detectChanges();
+    tick();
+
+    component.email = 'trinity@matrix.io';
+    component.username = 'T̵e̷s̶';
+    component.password = 'supersecret';
+
+    component.submit();
+
+    expect(registerSpy).not.toHaveBeenCalled();
+    expect(toastMock.error).toHaveBeenCalled();
+  }));
+
   it('opens the forgot-password panel when the forgot-password link is clicked', () => {
     const forgotLink: HTMLButtonElement = fixture.nativeElement.querySelector('.forgot-link');
     forgotLink.click();

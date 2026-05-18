@@ -7,6 +7,12 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth-interceptor';
 import { Auth } from './core/auth/auth';
 
+export function startAuthRefresh(auth: Auth) {
+  return () => {
+    auth.refresh().pipe(catchError(() => of(null))).subscribe();
+  };
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
@@ -15,7 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     {
       provide: APP_INITIALIZER,
-      useFactory: (auth: Auth) => () => auth.refresh().pipe(catchError(() => of(null))),
+      useFactory: startAuthRefresh,
       deps: [Auth],
       multi: true,
     },

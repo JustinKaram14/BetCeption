@@ -295,7 +295,7 @@ describe('HomepageComponent', () => {
     expect(fixture.debugElement.query(By.directive(PublicProfileModalComponent))).toBeNull();
   });
 
-  it('opens and closes the public profile modal from a leaderboard double click request', () => {
+  it('opens and closes the public profile modal from a leaderboard profile request', () => {
     const leaderboardDe = fixture.debugElement.query(By.directive(LeaderboardComponent));
     const leaderboard = leaderboardDe.componentInstance as LeaderboardComponent;
 

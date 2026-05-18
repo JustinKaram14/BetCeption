@@ -144,7 +144,7 @@ describe('LeaderboardComponent', () => {
     expect(fixture.nativeElement.querySelector('.leaderboard-table')).toBeNull();
   });
 
-  it('emits the selected user id on row double click', () => {
+  it('emits the selected user id on row click', () => {
     apiMock.getBalanceLeaderboard.and.returnValue(
       new Subject<any>().asObservable(),
     );
@@ -207,7 +207,7 @@ describe('LeaderboardComponent', () => {
     expect(component.filteredRows[0].rank).toBe(4);
   });
 
-  it('emits the selected user id when a filtered row is double clicked', () => {
+  it('emits the selected user id when a filtered row is clicked', () => {
     apiMock.getBalanceLeaderboard.and.returnValue(
       of({
         total: 2,
@@ -230,7 +230,7 @@ describe('LeaderboardComponent', () => {
     fixture.detectChanges();
 
     const filteredRow: HTMLTableRowElement = fixture.nativeElement.querySelector('.leaderboard-player-row');
-    filteredRow.dispatchEvent(new MouseEvent('dblclick'));
+    filteredRow.dispatchEvent(new MouseEvent('click'));
 
     expect(emitSpy).toHaveBeenCalledWith('u2');
   });

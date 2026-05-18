@@ -107,6 +107,9 @@ export class User {
   })
   createdAt!: Date;
 
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  deletedAt: Date | null = null;
+
   @OneToMany(() => Session, (session) => session.user)
   sessions?: Relation<Session[]>;
 
