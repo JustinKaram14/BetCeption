@@ -28,7 +28,7 @@ const RawEnvSchema = z.object({
   SMTP_HOST: z.string().min(1).optional(),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_SECURE: z.string().optional(),
-  SMTP_USER: z.string().email().optional(),
+  SMTP_USER: z.string().min(1).optional(),
   SMTP_PASS: z.string().min(1).optional(),
   APP_BASE_URL: z.string().url().default('http://localhost:4200'),
   TRUST_PROXY: z.string().optional(),
