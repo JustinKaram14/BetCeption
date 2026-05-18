@@ -265,3 +265,46 @@ app-disclaimer-footer{
     height:430px;
   }
 }
+
+/* ── Verify-Email Modal ───────────────────────────────────────────── */
+.verify-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  backdrop-filter:blur(4px);
+}
+.verify-modal{
+  background:linear-gradient(160deg,#0d1b2a 0%,#0a1220 100%);
+  border:1px solid rgba(0,255,255,.25);
+  border-radius:16px;
+  padding:48px 40px 40px;
+  max-width:460px;width:100%;
+  text-align:center;
+  box-shadow:0 0 60px rgba(0,255,255,.08),0 24px 64px rgba(0,0,0,.6);
+  animation:modalIn .22s ease;
+}
+@keyframes modalIn{
+  from{opacity:0;transform:translateY(18px) scale(.97)}
+  to{opacity:1;transform:none}
+}
+.verify-modal__icon{
+  font-size:54px;margin-bottom:18px;
+  filter:drop-shadow(0 0 12px rgba(0,255,255,.5));
+}
+.verify-modal__title{
+  font-size:1.55rem;font-weight:700;color:#fff;margin:0 0 16px;
+  text-shadow:0 0 18px rgba(0,255,255,.35);
+}
+.verify-modal__text{
+  color:#bcd;font-size:1rem;line-height:1.65;margin:0 0 10px;
+}
+.verify-modal__text strong{
+  color:var(--secondary-glow);font-weight:600;
+}
+.verify-modal__hint{
+  color:#667;font-size:.82rem;margin:0 0 28px;
+}
+.verify-modal__btn{
+  min-width:160px;
+}

@@ -31,6 +31,41 @@ export class Auth {
     });
   }
 
+  verifyEmail(token: string) {
+    return this.http.get<MessageResponse>('/auth/verify-email', {
+      params: { token },
+      context: this.skipAuth(),
+    });
+  }
+
+  resendVerification(email: string) {
+    return this.http.post<MessageResponse>('/auth/resend-verification', { email }, {
+      context: this.skipAuth(),
+    });
+  }
+
+  requestPasswordChange() {
+    return this.http.post<MessageResponse>('/auth/request-password-change', {});
+  }
+
+  confirmPasswordChange(payload: { token: string; oldPassword: string; newPassword: string }) {
+    return this.http.post<MessageResponse>('/auth/confirm-password-change', payload, {
+      context: this.skipAuth(),
+    });
+  }
+
+  forgotPassword(email: string) {
+    return this.http.post<MessageResponse>('/auth/forgot-password', { email }, {
+      context: this.skipAuth(),
+    });
+  }
+
+  resetPassword(payload: { token: string; newPassword: string }) {
+    return this.http.post<MessageResponse>('/auth/reset-password', payload, {
+      context: this.skipAuth(),
+    });
+  }
+
   login(credentials: LoginRequest) {
     return this.http
       .post<AuthTokens>('/auth/login', credentials, {

@@ -20,7 +20,15 @@ module.exports = function (config) {
     coverageReporter: {
       dir: path.join(__dirname, './coverage/betception-frontend'),
       subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }],
+      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcov' }],
+      check: {
+        global: {
+          statements: 40,
+          branches: 30,
+          functions: 40,
+          lines: 40,
+        },
+      },
     },
     reporters: ['progress', 'kjhtml'],
     browsers: ['Chrome'],

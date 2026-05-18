@@ -76,6 +76,30 @@ export class User {
   @Column({ name: 'active_powerup_uses_remaining', type: 'int', unsigned: true, default: () => '0' })
   activePowerupUsesRemaining: number = 0;
 
+  @Column({ name: 'email_verified', type: 'boolean', default: false })
+  emailVerified: boolean = false;
+
+  @Column({ name: 'email_verification_token', type: 'varchar', length: 64, nullable: true })
+  emailVerificationToken: string | null = null;
+
+  @Column({ name: 'email_verification_token_expires_at', type: 'timestamp', nullable: true })
+  emailVerificationTokenExpiresAt: Date | null = null;
+
+  @Column({ name: 'password_change_token', type: 'varchar', length: 64, nullable: true })
+  passwordChangeToken: string | null = null;
+
+  @Column({ name: 'password_change_token_expires_at', type: 'timestamp', nullable: true })
+  passwordChangeTokenExpiresAt: Date | null = null;
+
+  @Column({ name: 'password_reset_token', type: 'varchar', length: 64, nullable: true })
+  passwordResetToken: string | null = null;
+
+  @Column({ name: 'password_reset_token_expires_at', type: 'timestamp', nullable: true })
+  passwordResetTokenExpiresAt: Date | null = null;
+
+  @Column({ name: 'password_changed_at', type: 'timestamp', nullable: true })
+  passwordChangedAt: Date | null = null;
+
   @Column({
     name: 'created_at',
     type: 'timestamp',

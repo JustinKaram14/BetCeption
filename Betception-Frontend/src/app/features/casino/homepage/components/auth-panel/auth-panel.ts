@@ -5,6 +5,7 @@ import { NgIf } from '@angular/common';
 import { LoginRequest, RegisterRequest } from '../../../../../core/api/api.types';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { I18n } from '../../../../../core/i18n/i18n';
+import { AuthFacade } from '../../../../auth/services/auth-facade';
 
 @Component({
   selector: 'app-auth-panel',
@@ -15,6 +16,7 @@ import { I18n } from '../../../../../core/i18n/i18n';
 })
 export class AuthPanelComponent {
   private readonly toast = inject(ToastService);
+  private readonly authFacade = inject(AuthFacade);
   readonly i18n = inject(I18n);
 
   @ViewChild('loginTabButton') private loginTabButton?: ElementRef<HTMLButtonElement>;
@@ -26,6 +28,11 @@ export class AuthPanelComponent {
   email = '';
   username = '';
   password = '';
+
+  forgotMode = false;
+  forgotEmail = '';
+  forgotLoading = false;
+  forgotSubmitted = false;
 
   @Output() login = new EventEmitter<LoginRequest>();
   @Output() register = new EventEmitter<RegisterRequest>();
@@ -71,6 +78,7 @@ export class AuthPanelComponent {
 
     if (this.tab === 'login') {
       this.login.emit({ email, password });
+      this.resetForm();
       return;
     }
 
@@ -80,6 +88,45 @@ export class AuthPanelComponent {
       return;
     }
     this.register.emit({ email, username, password });
+    this.resetForm();
+  }
+
+  private resetForm() {
+    this.email = '';
+    this.username = '';
+    this.password = '';
+  }
+
+  openForgotPassword() {
+    this.forgotMode = true;
+    this.forgotEmail = this.email;
+    this.forgotSubmitted = false;
+  }
+
+  closeForgotPassword() {
+    this.forgotMode = false;
+    this.forgotEmail = '';
+    this.forgotSubmitted = false;
+    this.forgotLoading = false;
+  }
+
+  submitForgotPassword() {
+    const email = this.forgotEmail.trim();
+    if (!email || !this.isValidEmail(email)) {
+      this.toast.error(this.i18n.t('auth.emailInvalid'));
+      return;
+    }
+    this.forgotLoading = true;
+    this.authFacade.forgotPassword(email).subscribe({
+      next: () => {
+        this.forgotLoading = false;
+        this.forgotSubmitted = true;
+      },
+      error: () => {
+        this.forgotLoading = false;
+        this.forgotSubmitted = true;
+      },
+    });
   }
 
   canSubmit() {

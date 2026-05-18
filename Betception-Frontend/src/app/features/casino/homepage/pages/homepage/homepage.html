@@ -10,7 +10,10 @@
 
   <div class="main-content" [style.flex-direction]="isNarrow ? 'column' : null" data-testid="homepage-main-content">
     <app-neon-card class="leaderboard-card">
-      <app-leaderboard (userProfileRequested)="openPublicProfileModal($event)"></app-leaderboard>
+      <app-leaderboard
+        [canViewProfiles]="(isAuthenticated$ | async) ?? false"
+        (userProfileRequested)="openPublicProfileModal($event)">
+      </app-leaderboard>
     </app-neon-card>
 
     <div class="right-column">
@@ -84,6 +87,20 @@
   (balanceUpdated)="onCrateBalanceUpdated($event)"
   (unseenCrateCountChange)="onUnseenCrateCountChanged($event)">
 </app-profile-modal>
+
+<div class="verify-overlay" *ngIf="showVerifyEmailModal" (click)="closeVerifyEmailModal()">
+  <div class="verify-modal" (click)="$event.stopPropagation()">
+    <div class="verify-modal__icon">✉</div>
+    <h2 class="verify-modal__title">E-Mail bestätigen</h2>
+    <p class="verify-modal__text">
+      Wir haben eine Bestätigungsmail an<br>
+      <strong>{{ verifyEmailAddress }}</strong><br>
+      gesendet. Bitte klicke auf den Link in der Mail, um dich einloggen zu können.
+    </p>
+    <p class="verify-modal__hint">Kein Mail erhalten? Prüfe deinen Spam-Ordner.</p>
+    <button class="btn verify-modal__btn" type="button" (click)="closeVerifyEmailModal()">Verstanden</button>
+  </div>
+</div>
 
 <app-public-profile-modal
   *ngIf="publicProfileUserId"

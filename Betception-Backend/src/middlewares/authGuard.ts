@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccess } from '../utils/jwt.js';
+import { AppDataSource } from '../db/data-source.js';
+import { User } from '../entity/User.js';
 
 const BEARER_PREFIX = 'Bearer ';
 
@@ -21,6 +23,20 @@ export async function authGuard(req: Request, res: Response, next: NextFunction)
     }
     const token = header.slice(BEARER_PREFIX.length);
     const payload = await verifyAccess(token);
+
+    if (AppDataSource.isInitialized) {
+      const user = await AppDataSource.getRepository(User).findOne({
+        where: { id: String(payload.sub) },
+        select: ['id', 'passwordChangedAt'],
+      });
+      if (user?.passwordChangedAt) {
+        const iatMs = (payload.iat ?? 0) * 1000;
+        if (iatMs < user.passwordChangedAt.getTime()) {
+          return res.status(401).json({ message: 'Session invalidated. Please log in again.', code: 'SESSION_INVALIDATED' });
+        }
+      }
+    }
+
     req.user = payload;
     next();
   } catch (error) {

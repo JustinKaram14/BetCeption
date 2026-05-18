@@ -254,7 +254,6 @@ describe('user.controller', () => {
       const user = { id: '1', passwordHash: 'existing-hash' } as User;
       const userRepo = createMockRepository<User>({
         findOne: jest.fn().mockResolvedValue(user),
-        save: jest.fn().mockImplementation((entity) => Promise.resolve(entity)),
       });
       mockAppDataSourceRepositories(new Map([[User, userRepo]]));
       jest.spyOn(passwordUtils, 'verifyPassword').mockResolvedValue(true);
@@ -274,8 +273,8 @@ describe('user.controller', () => {
 
       expect(passwordUtils.verifyPassword).toHaveBeenCalledWith('current-password', 'existing-hash');
       expect(passwordUtils.hashPassword).toHaveBeenCalledWith('new-password');
-      expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({ passwordHash: 'new-hash' }));
-      expect(userRepo.save).not.toHaveBeenCalledWith(expect.objectContaining({ passwordHash: 'new-password' }));
+      expect(userRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({ passwordHash: 'new-hash' }));
+      expect(userRepo.update).not.toHaveBeenCalledWith('1', expect.objectContaining({ passwordHash: 'new-password' }));
       expect(res.json).toHaveBeenCalledWith({ success: true });
     });
   });
