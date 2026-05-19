@@ -67,6 +67,60 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.perf.yml down -v
 
+
+      - name: Quality Gate – Metriken auswerten
+        run: |
+          GATE_FAILED=0
+          PAIRS=(
+            "Auth-Flow:results/auth-summary.json"
+            "Game-Flow:results/game-summary.json"
+            "Wallet-Flow:results/wallet-summary.json"
+            "Leaderboard:results/leaderboard-summary.json"
+          )
+
+          echo "================================================================"
+          echo " Quality Gate – SRS-Performanceziele"
+          echo "================================================================"
+
+          for PAIR in "${PAIRS[@]}"; do
+            LABEL="${PAIR%%:*}"
+            FILE="${PAIR##*:}"
+            echo ""
+            echo "--- $LABEL ---"
+
+            if [ ! -f "$FILE" ]; then
+              echo "  ⚠️  Keine Ergebnisdatei – Szenario wurde übersprungen"
+              GATE_FAILED=1
+              continue
+            fi
+
+            FAILED_COUNT=$(jq '[.metrics[].thresholds[]? | select(.ok == false)] | length' "$FILE")
+
+            if [ "$FAILED_COUNT" -eq 0 ]; then
+              echo "  ✅ Alle Thresholds eingehalten"
+            else
+              echo "  ❌ $FAILED_COUNT Threshold-Verletzung(en):"
+              jq -r '
+                .metrics | to_entries[] |
+                .key as $metric |
+                (.value.thresholds // {}) | to_entries[] |
+                select(.value.ok == false) |
+                "    FAIL  \($metric): \(.key)"
+              ' "$FILE"
+              GATE_FAILED=1
+            fi
+          done
+
+          echo ""
+          echo "================================================================"
+          if [ $GATE_FAILED -eq 0 ]; then
+            echo " ✅ Quality Gate BESTANDEN – alle SRS-Ziele eingehalten"
+          else
+            echo " ❌ Quality Gate NICHT BESTANDEN – SRS-Ziele verletzt"
+          fi
+          echo "================================================================"
+          exit $GATE_FAILED
+
       - name: Ergebnisse hochladen
         if: always()
         uses: actions/upload-artifact@v7
