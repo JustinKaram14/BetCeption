@@ -149,15 +149,15 @@ async function sendMail(to: string, subject: string, html: string): Promise<void
 
 export async function sendVerificationEmail(to: string, username: string, token: string): Promise<void> {
   const verifyUrl = `${env.appBaseUrl}/verify-email?token=${token}`;
-  await sendMail(to, '✉ Bestätige deine E-Mail – BetCeption', buildVerificationEmail(username, verifyUrl));
+  await sendMail(to, 'Bestätige deine E-Mail – BetCeption', buildVerificationEmail(username, verifyUrl));
 }
 
 export async function sendPasswordChangeEmail(to: string, username: string, token: string): Promise<void> {
   const changeUrl = `${env.appBaseUrl}/change-password#token=${token}`;
-  await sendMail(to, '🔑 Passwort ändern – BetCeption', buildPasswordChangeEmail(username, changeUrl));
+  await sendMail(to, 'Passwort ändern – BetCeption', buildPasswordChangeEmail(username, changeUrl));
 }
 
 export async function sendPasswordResetEmail(to: string, username: string, token: string): Promise<void> {
   const resetUrl = `${env.appBaseUrl}/reset-password#token=${token}`;
-  await sendMail(to, '🔐 Passwort zurücksetzen – BetCeption', buildPasswordResetEmail(username, resetUrl));
+  await sendMail(to, 'Passwort zurücksetzen – BetCeption', buildPasswordResetEmail(username, resetUrl));
 }
