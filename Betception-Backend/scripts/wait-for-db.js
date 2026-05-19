@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import mysql from 'mysql2/promise';
 
-const host = process.env.DB_HOST ?? '127.0.0.1';
+const host = (process.env.DB_HOST ?? '127.0.0.1').trim();
 const port = Number(process.env.DB_PORT ?? 3307);
 const user = process.env.DB_USER ?? 'betuser';
 const password = process.env.DB_PASSWORD ?? 'betpw';

@@ -266,32 +266,40 @@ export async function startRound(
       ];
 
       const sideBetRepo = manager.getRepository(SideBet);
-      const savedSideBets: SideBet[] = [];
-      for (const prepared of preparedSideBets) {
-        const sideBet = sideBetRepo.create({
-          round,
-          user,
-          type: prepared.type,
-          amount: centsToDecimal(prepared.amountCents),
-          predictedColor: prepared.predictedColor,
-          predictedSuit: prepared.predictedSuit,
-          predictedRank: prepared.predictedRank,
-          targetContext: prepared.targetContext,
-          selectionJson: prepared.selectionJson,
-          odds: prepared.odds,
-        });
-        await sideBetRepo.save(sideBet);
-        savedSideBets.push(sideBet);
-
-        betPlacementTxs.push(
-          walletRepo.create({
+      if (preparedSideBets.length > 0) {
+        // Build entities first so TypeORM applies column defaults,
+        // then batch-save once (single INSERT statement).
+        const sideBetEntities = preparedSideBets.map((prepared) =>
+          sideBetRepo.create({
+            round,
             user,
-            kind: WalletTransactionKind.BET_PLACE,
-            amount: centsToDecimal(-prepared.amountCents),
-            refTable: 'side_bets',
-            refId: sideBet.id,
+            type: prepared.type,
+            amount: centsToDecimal(prepared.amountCents),
+            predictedColor: prepared.predictedColor,
+            predictedSuit: prepared.predictedSuit,
+            predictedRank: prepared.predictedRank,
+            targetContext: prepared.targetContext,
+            selectionJson: prepared.selectionJson,
+            odds: prepared.odds,
           }),
         );
+        const savedSideBets = await sideBetRepo.save(sideBetEntities);
+
+        for (let i = 0; i < preparedSideBets.length; i++) {
+          const insertedId = savedSideBets[i]?.id;
+          if (!insertedId) {
+            throw new RoundFlowError(500, 'INTERNAL', 'Side bet insert failed');
+          }
+          betPlacementTxs.push(
+            walletRepo.create({
+              user,
+              kind: WalletTransactionKind.BET_PLACE,
+              amount: centsToDecimal(-preparedSideBets[i].amountCents),
+              refTable: 'side_bets',
+              refId: insertedId,
+            }),
+          );
+        }
       }
 
       if (betPlacementTxs.length) {

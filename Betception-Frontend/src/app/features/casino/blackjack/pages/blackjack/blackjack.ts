@@ -224,7 +224,7 @@ export class Blackjack implements OnInit {
   }
 
   get isBusy() {
-    return !!this.busyAction || this.dealerFlowActive || this.roundResolutionActive || this.showRoundOverlay;
+    return !!this.busyAction || this.dealerFlowActive || this.roundResolutionActive || this.showRoundOverlay || this.resultOverlayTimer !== null;
   }
 
   get totalSideBetAmount() {
@@ -1061,7 +1061,9 @@ export class Blackjack implements OnInit {
           this.error = this.extractError(err);
           this.busyAction = null;
           this.dealerFlowActive = false;
-          this.roundResolutionActive = false;
+          if (!this.resultOverlayTimer) {
+            this.roundResolutionActive = false;
+          }
         },
       });
   }
