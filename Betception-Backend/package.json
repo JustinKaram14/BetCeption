@@ -61,7 +61,7 @@
     "@types/supertest": "^2.0.16",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "jest": "^30.4.2",
     "supertest": "^6.3.4",
     "testcontainers": "^10.10.3",
