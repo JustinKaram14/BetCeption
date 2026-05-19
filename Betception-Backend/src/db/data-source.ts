@@ -19,7 +19,7 @@ import { AddUserProfileAvatar1700000000013 } from './migrations/1700000000013-Ad
 import { AddEmailVerification1700000000014 } from './migrations/1700000000014-AddEmailVerification.js';
 import { AddPasswordTokens1700000000015 } from './migrations/1700000000015-AddPasswordTokens.js';
 import { AddPasswordChangedAt1700000000016 } from './migrations/1700000000016-AddPasswordChangedAt.js';
-import { AddUserDeletedAt } from './migrations/AddUserDeletedAt.js';
+import { AddUserDeletedAt1700000000017 } from './migrations/1700000000017-AddUserDeletedAt.js';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -47,7 +47,7 @@ export const AppDataSource = new DataSource({
     AddEmailVerification1700000000014,
     AddPasswordTokens1700000000015,
     AddPasswordChangedAt1700000000016,
-    AddUserDeletedAt,
+    AddUserDeletedAt1700000000017,
   ],
   synchronize: false,
   logging: env.nodeEnv === 'development',
