@@ -14,7 +14,12 @@ export function validateRequest<T extends ZodTypeAny>(schema: T, target: Validat
       return res.status(400).json({ errors: result.error.flatten() });
     }
 
-    (req as Record<ValidationTarget, unknown>)[target] = result.data;
+    Object.defineProperty(req, target, {
+      value: result.data,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
     next();
   };
 }
