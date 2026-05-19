@@ -305,7 +305,14 @@ describe('round.controller', () => {
       expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({ balance: '345.00' }),
       );
-      expect(sideBetRepo.save).toHaveBeenCalledTimes(4);
+      // save() is called once with the full array (batch INSERT)
+      expect(sideBetRepo.save).toHaveBeenCalledTimes(1);
+      expect(sideBetRepo.save).toHaveBeenCalledWith(expect.arrayContaining([
+        expect.objectContaining({ amount: '25.00' }),
+        expect.objectContaining({ amount: '10.00' }),
+        expect.objectContaining({ amount: '5.00' }),
+        expect.objectContaining({ amount: '15.00' }),
+      ]));
       expect(sideBetRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: '25.00',
