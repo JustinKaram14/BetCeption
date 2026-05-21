@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import type { Request, Response, CookieOptions } from 'express';
+import type { Request, Response } from 'express';
 import { IsNull } from 'typeorm';
 import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
@@ -22,22 +22,32 @@ const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
 const REGISTRATION_CONFLICT_MESSAGE = 'Registration could not be completed';
 const DUMMY_PASSWORD_HASH = '$2b$12$K/V.sNBjQhL3tgXD7I0r4.nmt.V3a5QCdJpRCFfcAY62w27j/Skrq';
 
-const refreshCookieDefaults: CookieOptions = {
-  httpOnly: true,
-  secure: env.cookies.secure,
-  sameSite: env.cookies.sameSite,
-  path: REFRESH_COOKIE_PATH,
-};
+const REFRESH_TTL_SEC = Math.floor(REFRESH_TTL_MS / 1000);
 
-function setRefreshTokenCookie(res: Response, token: string) {
-  res.cookie(REFRESH_COOKIE_NAME, token, {
-    ...refreshCookieDefaults,
-    maxAge: REFRESH_TTL_MS,
-  });
+function buildRefreshCookieHeader(token: string, maxAge: number): string {
+  const parts: string[] = [
+    `${REFRESH_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    `Path=${REFRESH_COOKIE_PATH}`,
+    `Max-Age=${maxAge}`,
+    'HttpOnly',
+  ];
+  if (env.cookies.secure) parts.push('Secure');
+  const sameSite = env.cookies.sameSite[0].toUpperCase() + env.cookies.sameSite.slice(1);
+  parts.push(`SameSite=${sameSite}`);
+  // CHIPS (Partitioned) – required for cross-site cookies in Chrome/Edge 120+
+  // Partitioned is only valid with SameSite=None and Secure
+  if (env.cookies.secure && env.cookies.sameSite === 'none') {
+    parts.push('Partitioned');
+  }
+  return parts.join('; ');
 }
 
-function clearRefreshTokenCookie(res: Response) {
-  res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
+function setRefreshTokenCookie(res: Response, token: string): void {
+  res.setHeader('Set-Cookie', buildRefreshCookieHeader(token, REFRESH_TTL_SEC));
+}
+
+function clearRefreshTokenCookie(res: Response): void {
+  res.setHeader('Set-Cookie', buildRefreshCookieHeader('', 0));
 }
 
 export async function register(
