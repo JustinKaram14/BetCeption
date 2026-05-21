@@ -14,6 +14,8 @@ describe('LeaderboardComponent', () => {
   );
 
   beforeEach(async () => {
+    localStorage.removeItem('betception-language');
+
     apiMock.getBalanceLeaderboard.calls.reset();
     apiMock.getLevelLeaderboard.calls.reset();
     apiMock.getWinningsLeaderboard.calls.reset();

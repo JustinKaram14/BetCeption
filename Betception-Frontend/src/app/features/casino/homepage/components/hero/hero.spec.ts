@@ -2,6 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { HeroComponent } from './hero';
 
 describe('HeroComponent', () => {
+  afterEach(() => {
+    localStorage.removeItem('betception-language');
+  });
+
   it('should create', async () => {
     await TestBed.configureTestingModule({
       imports: [HeroComponent],
