@@ -88,6 +88,7 @@ export function createMockRequest<T extends MockRequestOptions = MockRequestOpti
 export type MockResponse = Response & {
   status: jest.MockedFunction<Response['status']>;
   json: jest.MockedFunction<Response['json']>;
+  setHeader: jest.MockedFunction<Response['setHeader']>;
   cookie: jest.MockedFunction<Response['cookie']>;
   clearCookie: jest.MockedFunction<Response['clearCookie']>;
   send: jest.MockedFunction<Response['send']>;
@@ -97,6 +98,7 @@ export function createMockResponse() {
   const res: Partial<Response> = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.setHeader = jest.fn().mockReturnValue(res);
   res.cookie = jest.fn().mockReturnValue(res);
   res.clearCookie = jest.fn().mockReturnValue(res);
   res.send = jest.fn().mockReturnValue(res);
