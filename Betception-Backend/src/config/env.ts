@@ -56,12 +56,16 @@ const parseCookieSecure = (value: string | undefined, nodeEnv: string) => {
   return value === 'true';
 };
 
-const parseCookieSameSite = (value: string | undefined): SameSiteValue => {
+const parseCookieSameSite = (value: string | undefined, secure: boolean): SameSiteValue => {
   const normalized = value?.trim().toLowerCase() as SameSiteValue | undefined;
   if (normalized && (SAME_SITE_VALUES as readonly string[]).includes(normalized)) {
     return normalized;
   }
-  return 'strict';
+  // In production (HTTPS), default to 'none' so the HttpOnly refresh cookie is
+  // sent with cross-origin requests (frontend and backend on separate domains).
+  // In development (HTTP), 'none' requires Secure which is unavailable, so
+  // fall back to 'lax' which allows same-site usage.
+  return secure ? 'none' : 'lax';
 };
 
 type TrustProxyValue = boolean | number | string;
@@ -81,7 +85,7 @@ const parseTrustProxy = (value: string | undefined): TrustProxyValue => {
 };
 
 const cookieSecure = parseCookieSecure(rawEnv.COOKIE_SECURE, rawEnv.NODE_ENV);
-const cookieSameSite = parseCookieSameSite(rawEnv.COOKIE_SAMESITE);
+const cookieSameSite = parseCookieSameSite(rawEnv.COOKIE_SAMESITE, cookieSecure);
 const trustProxy = parseTrustProxy(rawEnv.TRUST_PROXY);
 const parseBooleanFlag = (value: string | undefined, defaultValue: boolean) => {
   if (value === undefined) return defaultValue;
