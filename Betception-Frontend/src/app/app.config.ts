@@ -8,7 +8,9 @@ import { authInterceptor } from './core/auth/auth-interceptor';
 import { Auth } from './core/auth/auth';
 
 export function startAuthRefresh(auth: Auth) {
-  return () => auth.refresh().pipe(catchError(() => of(null)));
+  return () => {
+    auth.refresh().pipe(catchError(() => of(null))).subscribe();
+  };
 }
 
 export const appConfig: ApplicationConfig = {
