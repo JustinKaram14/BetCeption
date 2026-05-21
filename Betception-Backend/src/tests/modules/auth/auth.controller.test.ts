@@ -171,10 +171,13 @@ describe('auth.controller', () => {
       expect(passwordUtils.verifyPassword).toHaveBeenCalledWith('secret123', 'hash');
       expect(userRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({ lastLoginAt: expect.any(Date) }));
       expect(sessionRepo.save).toHaveBeenCalled();
-      expect(res.cookie).toHaveBeenCalledWith(
-        'refresh_token',
-        'refresh-token',
-        expect.objectContaining({ httpOnly: true }),
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Set-Cookie',
+        expect.stringContaining('refresh_token=refresh-token'),
+      );
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Set-Cookie',
+        expect.stringContaining('HttpOnly'),
       );
       expect(res.json).toHaveBeenCalledWith({ accessToken: 'access-token' });
     });
@@ -308,10 +311,13 @@ describe('auth.controller', () => {
       expect(sessionRepo.save).toHaveBeenCalledWith(expect.objectContaining({
         refreshToken: hashToken('new-refresh-token'),
       }));
-      expect(res.cookie).toHaveBeenCalledWith(
-        'refresh_token',
-        'new-refresh-token',
-        expect.objectContaining({ httpOnly: true }),
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Set-Cookie',
+        expect.stringContaining('refresh_token=new-refresh-token'),
+      );
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Set-Cookie',
+        expect.stringContaining('HttpOnly'),
       );
       expect(res.json).toHaveBeenCalledWith({ accessToken: 'access-token' });
     });
@@ -340,7 +346,10 @@ describe('auth.controller', () => {
       await logout(req as any, res);
 
       expect(sessionRepo.delete).toHaveBeenCalledWith({ refreshToken: hashToken('refresh-token') });
-      expect(res.clearCookie).toHaveBeenCalledWith('refresh_token', { path: '/auth/refresh' });
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Set-Cookie',
+        expect.stringContaining('Max-Age=0'),
+      );
       expect(res.status).toHaveBeenCalledWith(204);
     });
   });
