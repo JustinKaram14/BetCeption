@@ -17,23 +17,28 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const token = tokenStorage.token;
-  if (!token || req.headers.has('Authorization')) {
+
+  if (req.headers.has('Authorization')) {
     return next(req);
   }
 
-  const authorized = req.clone({
-    setHeaders: { Authorization: `Bearer ${token}` },
-  });
+ tokenStorage.token;
+  const outgoing = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
 
-  return next(authorized).pipe(
+  return next(outgoing).pipe(
     catchError((error) => {
       if (error?.status !== 401) {
         return throwError(() => error);
       }
+
       return auth.refresh().pipe(
         switchMap(() => {
           const newToken = tokenStorage.token;
+          if (!newToken) {
+            return throwError(() => error);
+          }
           const retried = req.clone({
             setHeaders: { Authorization: `Bearer ${newToken}` },
           });

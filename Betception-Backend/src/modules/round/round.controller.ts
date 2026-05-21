@@ -540,7 +540,7 @@ export async function settleRound(
       if (!playerHand || !dealerHand) {
         throw new RoundFlowError(404, 'HAND_NOT_FOUND', 'Hands not found');
       }
-      if (allSettleHands.some((hand) => hand.status === HandStatus.ACTIVE)) {
+      if (dealerHand.status !== HandStatus.BLACKJACK && allSettleHands.some((hand) => hand.status === HandStatus.ACTIVE)) {
         throw new RoundFlowError(409, 'ROUND_ACTIVE', 'Complete your turn before settling');
       }
 

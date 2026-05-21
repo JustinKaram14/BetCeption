@@ -131,16 +131,40 @@ describe('authInterceptor', () => {
     expect((caughtError as HttpErrorResponse).status).toBe(500);
   });
 
-  it('does not apply 401 retry logic when the request had no token to begin with', () => {
-    mockToken = null;
+  it('triggers a silent refresh and retries when a 401 is received with no token in memory', () => {
+    authMock.refresh.and.callFake(() => {
+      mockToken = 'refreshed-token';
+      return of(null as any);
+    });
 
+    mockToken = null;
+    let result: unknown;
+    http.get('/api/data').subscribe((r) => (result = r));
+
+    const firstReq = httpController.expectOne('/api/data');
+    expect(firstReq.request.headers.has('Authorization')).toBeFalse();
+    firstReq.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    const retryReq = httpController.expectOne('/api/data');
+    expect(retryReq.request.headers.get('Authorization')).toBe('Bearer refreshed-token');
+    retryReq.flush({ data: 'ok' });
+
+    expect(authMock.refresh).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ data: 'ok' });
+  });
+
+  it('propagates the refresh error when refresh fails on a no-token 401', () => {
+    const refreshErr = new Error('Refresh failed');
+    authMock.refresh.and.returnValue(throwError(() => refreshErr));
+
+    mockToken = null;
     let caughtError: unknown;
     http.get('/api/data').subscribe({ error: (e) => (caughtError = e) });
 
     const req = httpController.expectOne('/api/data');
     req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
-    expect(authMock.refresh).not.toHaveBeenCalled();
-    expect((caughtError as HttpErrorResponse).status).toBe(401);
+    expect(authMock.refresh).toHaveBeenCalledTimes(1);
+    expect(caughtError).toBe(refreshErr);
   });
 });
