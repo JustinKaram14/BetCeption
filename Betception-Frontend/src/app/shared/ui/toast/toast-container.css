@@ -116,6 +116,16 @@
   border-color:rgba(0,255,255,.26);
 }
 .toast--info .toast__glow{background:linear-gradient(90deg,rgba(0,255,255,.42),transparent 42%)}
+.toast--achievement{
+  --toast-accent:var(--push-color);
+  border-color:rgba(255,210,31,.34);
+}
+.toast--achievement .toast__glow{background:linear-gradient(90deg,rgba(255,210,31,.44),rgba(255,0,245,.12),transparent 46%)}
+.toast--crate{
+  --toast-accent:#b892ff;
+  border-color:rgba(184,146,255,.36);
+}
+.toast--crate .toast__glow{background:linear-gradient(90deg,rgba(184,146,255,.46),rgba(0,255,255,.12),transparent 46%)}
 @keyframes toast-in{
   from{opacity:0;transform:translateX(18px) scale(.98)}
   to{opacity:1;transform:translateX(0) scale(1)}

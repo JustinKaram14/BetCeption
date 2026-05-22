@@ -3,6 +3,9 @@ import { EntityTarget, FindOptionsOrder, ObjectLiteral } from 'typeorm';
 import { AppDataSource } from '../../db/data-source.js';
 import { LeaderboardBalanceView } from '../../entity/LeaderboardBalanceView.js';
 import { LeaderboardLevelView } from '../../entity/LeaderboardLevelView.js';
+import { LeaderboardAlltimeWinningsView } from '../../entity/LeaderboardAlltimeWinningsView.js';
+import { LeaderboardWeeklyBalanceView } from '../../entity/LeaderboardWeeklyBalanceView.js';
+import { LeaderboardWeeklyLevelView } from '../../entity/LeaderboardWeeklyLevelView.js';
 import { LeaderboardWeeklyWinningsView } from '../../entity/LeaderboardWeeklyWinningsView.js';
 import type { LeaderboardQuery } from './leaderboard.schema.js';
 
@@ -49,6 +52,24 @@ async function respondWithLeaderboard<T extends ObjectLiteral>(
 }
 
 export function getBalanceLeaderboard(req: Request, res: Response) {
+  const period = (req.query as unknown as LeaderboardQuery).period ?? 'alltime';
+  if (period === 'seven_days') {
+    return respondWithLeaderboard(
+      req,
+      res,
+      {
+        entity: LeaderboardWeeklyBalanceView,
+        order: { balance7d: 'DESC' },
+        mapRow: (row) => ({
+          userId: row.userId,
+          username: row.username,
+          balance7d: Number(row.balance7d),
+        }),
+        getUserId: (row) => row.userId,
+      },
+    );
+  }
+
   return respondWithLeaderboard(
     req,
     res,
@@ -66,6 +87,24 @@ export function getBalanceLeaderboard(req: Request, res: Response) {
 }
 
 export function getLevelLeaderboard(req: Request, res: Response) {
+  const period = (req.query as unknown as LeaderboardQuery).period ?? 'alltime';
+  if (period === 'seven_days') {
+    return respondWithLeaderboard(
+      req,
+      res,
+      {
+        entity: LeaderboardWeeklyLevelView,
+        order: { xp7d: 'DESC' },
+        mapRow: (row) => ({
+          userId: row.userId,
+          username: row.username,
+          xp7d: Number(row.xp7d),
+        }),
+        getUserId: (row) => row.userId,
+      },
+    );
+  }
+
   return respondWithLeaderboard(
     req,
     res,
@@ -84,6 +123,24 @@ export function getLevelLeaderboard(req: Request, res: Response) {
 }
 
 export function getWeeklyWinningsLeaderboard(req: Request, res: Response) {
+  const period = (req.query as unknown as LeaderboardQuery).period ?? 'alltime';
+  if (period === 'alltime') {
+    return respondWithLeaderboard(
+      req,
+      res,
+      {
+        entity: LeaderboardAlltimeWinningsView,
+        order: { netWinnings: 'DESC' },
+        mapRow: (row) => ({
+          userId: row.userId,
+          username: row.username,
+          netWinnings: Number(row.netWinnings),
+        }),
+        getUserId: (row) => row.userId,
+      },
+    );
+  }
+
   return respondWithLeaderboard(
     req,
     res,

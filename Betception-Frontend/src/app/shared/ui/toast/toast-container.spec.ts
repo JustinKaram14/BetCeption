@@ -38,6 +38,19 @@ describe('ToastContainerComponent', () => {
     expect(label).toBeTruthy();
   });
 
+  it('prefers custom toast labels', () => {
+    const fixture = TestBed.createComponent(ToastContainerComponent);
+    const component = fixture.componentInstance;
+    const label = component.labelFor({
+      id: '4',
+      type: 'achievement',
+      message: 'First win',
+      durationMs: 1000,
+      label: 'Achievement freigeschaltet',
+    });
+    expect(label).toBe('Achievement freigeschaltet');
+  });
+
   it('trackToast returns the toast id', () => {
     const fixture = TestBed.createComponent(ToastContainerComponent);
     const component = fixture.componentInstance;

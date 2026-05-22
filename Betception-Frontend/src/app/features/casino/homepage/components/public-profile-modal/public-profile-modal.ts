@@ -1,11 +1,16 @@
 import { Component, DestroyRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgClass, NgFor, NgIf } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { ProfileAvatarColor, ProfileAvatarIcon, UserProfile } from '../../../../../core/api/api.types';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
+import { AchievementIconComponent } from '../../../../../shared/ui/achievement-icon/achievement-icon';
+import {
+  AchievementDisplayItem,
+  buildAchievementDisplayItems,
+} from '../../../../../shared/achievements/achievement-display';
 
 type AvatarIconOption = {
   id: ProfileAvatarIcon;
@@ -44,7 +49,7 @@ const AVATAR_COLORS: AvatarColorOption[] = [
 @Component({
   selector: 'app-public-profile-modal',
   standalone: true,
-  imports: [NgIf, LevelProgressComponent],
+  imports: [NgIf, NgFor, NgClass, LevelProgressComponent, AchievementIconComponent],
   templateUrl: './public-profile-modal.html',
   styleUrl: './public-profile-modal.css',
 })
@@ -149,6 +154,38 @@ export class PublicProfileModalComponent implements OnInit, OnChanges, OnDestroy
 
   avatarColorValue(color: ProfileAvatarColor | null | undefined): string {
     return AVATAR_COLORS.find((option) => option.id === color)?.value ?? AVATAR_COLORS[0].value;
+  }
+
+  achievementDisplayItems(): AchievementDisplayItem[] {
+    return buildAchievementDisplayItems(this.profile?.achievements ?? []);
+  }
+
+  trackAchievement(_index: number, achievement: AchievementDisplayItem): string {
+    return achievement.code;
+  }
+
+  achievementTitle(achievement: AchievementDisplayItem): string {
+    return this.i18n.t(achievement.displayTitleKey);
+  }
+
+  achievementDescription(achievement: AchievementDisplayItem): string {
+    if (achievement.secret && !achievement.unlocked) {
+      return '';
+    }
+    return this.i18n.t(achievement.displayDescriptionKey);
+  }
+
+  achievementVisibleUnlocked(achievement: AchievementDisplayItem): boolean {
+    return achievement.unlocked || (achievement.tiers.length > 1 && achievement.completedTiers > 0);
+  }
+
+  achievementProgressPercent(achievement: AchievementDisplayItem): number {
+    if (achievement.displayTarget <= 0) return achievement.unlocked ? 100 : 0;
+    return Math.max(0, Math.min(100, (achievement.displayProgress / achievement.displayTarget) * 100));
+  }
+
+  achievementProgressLabel(achievement: AchievementDisplayItem): string {
+    return `${achievement.displayProgress} / ${achievement.displayTarget}`;
   }
 
   private currentLocale(): string {

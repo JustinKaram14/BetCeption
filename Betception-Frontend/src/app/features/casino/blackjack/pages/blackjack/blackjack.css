@@ -506,6 +506,50 @@
   color:rgba(255,255,255,.6);
   letter-spacing:1px;
 }
+.round-over-breakdown{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  width:min(100%,520px);
+}
+.round-over-breakdown__item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:.22rem;
+  padding:.7rem .9rem;
+  border:1px solid rgba(255,255,255,.16);
+  color:rgba(255,255,255,.84);
+}
+.round-over-breakdown__item span{
+  color:rgba(255,255,255,.58);
+}
+.round-over-breakdown__item strong,
+.round-over-breakdown__item em{
+  font-family:var(--font-display);
+}
+.round-over-breakdown__item strong{
+  font-size:.92rem;
+  line-height:1.15;
+  text-align:center;
+}
+.round-over-breakdown__item em{
+  font-style:normal;
+  font-size:.9rem;
+}
+.round-over-breakdown__item.won{
+  border-color:var(--win-color);
+  color:var(--win-color);
+}
+.round-over-breakdown__item.lost{
+  border-color:var(--loss-color);
+  color:var(--loss-color);
+}
+.round-over-breakdown__item.push{
+  border-color:var(--push-color);
+  color:var(--push-color);
+}
 .round-over-slot-total{
   position:relative;
   z-index:1;
@@ -545,35 +589,6 @@
   text-shadow:0 0 16px #fff,0 0 38px var(--secondary-glow),0 0 78px var(--accent-glow),0 0 120px rgba(255,255,255,.45);
   animation:slot-count-mega .32s ease-in-out infinite alternate;
 }
-.round-over-betception{
-  position:relative;
-  z-index:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:.25rem;
-  padding:.75rem 1.25rem;
-  border:1px solid rgba(0,255,255,.34);
-  border-radius:10px;
-  background:rgba(0,255,255,.06);
-  box-shadow:0 0 30px rgba(0,255,255,.18);
-  animation:jackpot-flash 1.2s ease-in-out infinite;
-}
-.round-over-betception span{
-  color:rgba(255,255,255,.62);
-  font-size:.74rem;
-  text-transform:uppercase;
-}
-.round-over-betception strong{
-  font-family:var(--font-display);
-  font-size:1.25rem;
-  color:var(--secondary-glow);
-  text-shadow:0 0 14px var(--secondary-glow),0 0 26px rgba(255,0,255,.35);
-}
-@keyframes jackpot-flash{
-  0%,100%{filter:brightness(1);}
-  50%{filter:brightness(1.35);}
-}
 .round-over-actions{
   position:relative;
   z-index:1;
@@ -609,49 +624,6 @@
   box-shadow:0 0 16px rgba(255,255,255,.16),inset 0 0 12px rgba(255,255,255,.07);
 }
 /* ── Level-up crate toast ─────────────────────────────── */
-.levelup-crate-toast{
-  position:absolute;
-  top:12px;left:50%;transform:translateX(-50%);
-  z-index:200;
-  animation:crate-slide-in .4s ease both;
-  pointer-events:auto;
-  min-width:260px;max-width:min(90vw, 420px);
-}
-@keyframes crate-slide-in{
-  from{transform:translateX(-50%) translateY(-20px);opacity:0;}
-  to{transform:translateX(-50%) translateY(0);opacity:1;}
-}
-.levelup-crate-inner{
-  display:flex;align-items:center;gap:.75rem;
-  padding:.65rem 1rem;
-  background:linear-gradient(135deg,rgba(80,20,180,.92),rgba(30,10,80,.94));
-  border:1px solid rgba(167,139,250,.55);
-  border-radius:.75rem;
-  backdrop-filter:blur(8px);
-  box-shadow:0 0 24px rgba(167,139,250,.3);
-}
-.levelup-crate-icon{
-  width:34px;height:34px;display:grid;place-items:center;flex-shrink:0;color:#c4b5fd;
-  animation:crate-pulse 1.2s ease-in-out infinite;
-}
-.levelup-crate-icon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px currentColor)}
-@keyframes crate-pulse{
-  0%,100%{transform:scale(1);}
-  50%{transform:scale(1.12);}
-}
-.levelup-crate-text{
-  display:flex;flex-direction:column;gap:.1rem;flex:1;
-  strong{display:block;font-size:.9rem;color:#e0d7ff;}
-  span{font-size:.78rem;color:rgba(255,255,255,.65);}
-  em{font-style:normal;color:#c4b5fd;font-weight:600;}
-}
-.levelup-crate-dismiss{
-  background:none;border:none;
-  color:rgba(255,255,255,.45);font-size:.9rem;
-  cursor:pointer;padding:.15rem .4rem;border-radius:.3rem;flex-shrink:0;
-  transition:color .15s,background .15s;
-  &:hover{color:#fff;background:rgba(255,255,255,.1);}
-}
 @keyframes headline-slam{
   0%{transform:translateY(-18px) scale(.72);opacity:0;filter:blur(6px);}
   35%{transform:translateY(6px) scale(1.18);opacity:1;filter:blur(0);}
@@ -1491,6 +1463,9 @@
     font-size:1.6rem;
     letter-spacing:0;
     line-height:1.1;
+  }
+  .round-over-breakdown__item{
+    padding:.58rem .75rem;
   }
   .round-over-actions{
     width:100%;

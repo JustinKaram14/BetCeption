@@ -19,6 +19,7 @@ import {
 import { Rng } from '../../../../../core/services/rng/rng';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
+import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 
 describe('Blackjack', () => {
   let component: Blackjack;
@@ -28,6 +29,7 @@ describe('Blackjack', () => {
     ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle', 'double', 'split'],
   );
   const walletMock = jasmine.createSpyObj<Wallet>('Wallet', ['getSummary']);
+  const toastMock = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success', 'info', 'achievement', 'crate']);
   const apiMock = jasmine.createSpyObj<BetceptionApi>(
     'BetceptionApi',
     ['purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups'],
@@ -43,8 +45,14 @@ describe('Blackjack', () => {
   };
 
   beforeEach(async () => {
+    window.localStorage.setItem('betception-language', 'de');
     apiMock.listInventory.and.returnValue(of({ items: [], activePowerup: null }));
     apiMock.listPowerups.and.returnValue(of({ items: [] }));
+    toastMock.error.calls.reset();
+    toastMock.success.calls.reset();
+    toastMock.info.calls.reset();
+    toastMock.achievement.calls.reset();
+    toastMock.crate.calls.reset();
     walletMock.getSummary.and.returnValue(
       of({
         id: 'user-1',
@@ -110,6 +118,7 @@ describe('Blackjack', () => {
         { provide: Rng, useValue: rngMock },
         { provide: Wallet, useValue: walletMock },
         { provide: BetceptionApi, useValue: apiMock },
+        { provide: ToastService, useValue: toastMock },
       ],
     })
     .compileComponents();
@@ -326,7 +335,7 @@ describe('Blackjack', () => {
       expect(component.roundOutcome?.push).toBeTrue();
     }));
 
-    it('shows a WON outcome with payout detail when settledAmount is available', fakeAsync(() => {
+    it('shows a WON outcome with net payout detail when settledAmount is available', fakeAsync(() => {
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
       settled.mainBet = { ...settled.mainBet, settledAmount: '50.00' };
@@ -335,7 +344,49 @@ describe('Blackjack', () => {
       component.onSettle();
       tick(650);
       expect(component.roundOutcome?.won).toBeTrue();
-      expect(component.roundOutcome?.detail).toContain('50');
+      expect(component.roundOutcome?.detail).toContain('25');
+      expect(component.roundOutcome?.mainHeadline).toBeTruthy();
+    }));
+
+    it('separates a lost blackjack game from a positive Betception net result', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
+      settled.mainBet = { ...settled.mainBet, amount: '25.00', settledAmount: '0.00' };
+      const resolution: BetceptionResolution = {
+        depthLevel: 2,
+        totalStake: '125.00',
+        totalPayout: '200.00',
+        steps: [
+          {
+            id: 'main',
+            kind: 'MAIN_BET',
+            status: MainBetStatus.LOST,
+            amount: '25.00',
+            payout: '0.00',
+            multiplier: '0.000',
+            selection: null,
+          },
+          {
+            id: 'side',
+            kind: 'CARD_SUIT',
+            status: SideBetStatus.WON,
+            amount: '100.00',
+            payout: '200.00',
+            multiplier: '2.000',
+            selection: { suit: CardSuit.HEARTS },
+          },
+        ],
+      };
+      rngMock.settle.and.returnValue(of({ round: settled, betceptionResolution: resolution }));
+      component.round = stood;
+      component.onSettle();
+      tick(650 + 2 * 620 + 500);
+
+      expect(component.roundOutcome?.won).toBeTrue();
+      expect(component.roundOutcome?.mainTone).toBe('lost');
+      expect(component.roundOutcome?.detail).toContain('75');
+      expect(component.finalPayoutAmount).toBe(75);
+      expect(component.betceptionPayoutAmount).toBe(200);
     }));
 
     it('shows a WON outcome without detail when settledAmount is null', fakeAsync(() => {
@@ -757,6 +808,71 @@ describe('Blackjack', () => {
       expect(component.showRoundOverlay).toBeTrue();
       expect(component.roundOutcome?.won).toBeTrue();
     }));
+
+    it('queues unlocked achievements until the round overlay is shown', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      const achievement = {
+        code: 'FIRST_WIN',
+        category: 'starter',
+        titleKey: 'achievement.FIRST_WIN.title',
+        descriptionKey: 'achievement.FIRST_WIN.description',
+        icon: 'trophy' as const,
+        target: 1,
+        progress: 1,
+        unlocked: true,
+        unlockedAt: '2025-01-01T12:00:00Z',
+        seen: false,
+        rewardCoins: 50,
+        secret: false,
+        sortOrder: 2,
+      };
+
+      rngMock.settle.and.returnValue(of({ round: settled, unlockedAchievements: [achievement] }));
+
+      component.round = stood;
+      component.onSettle();
+
+      expect(toastMock.achievement).not.toHaveBeenCalled();
+      tick(649);
+      expect(toastMock.achievement).not.toHaveBeenCalled();
+      tick(1);
+      expect(component.showRoundOverlay).toBeTrue();
+      expect(toastMock.achievement).toHaveBeenCalledOnceWith(
+        'Blut geleckt',
+        6200,
+        'Achievement freigeschaltet',
+      );
+    }));
+
+    it('queues level-up crates until the round overlay is shown', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+
+      rngMock.settle.and.returnValue(of({
+        round: settled,
+        levelUpCrate: {
+          id: 'crate-1',
+          tier: 2,
+          tierLabel: 'Rare',
+          acquiredLevel: 2,
+        },
+      }));
+
+      component.round = stood;
+      component.onSettle();
+
+      expect(toastMock.crate).not.toHaveBeenCalled();
+      tick(649);
+      expect(toastMock.crate).not.toHaveBeenCalled();
+      tick(1);
+      expect(component.showRoundOverlay).toBeTrue();
+      expect(toastMock.crate).toHaveBeenCalledOnceWith(
+        'Du hast eine Rare Kiste erhalten!',
+        5600,
+        'Level Up!',
+      );
+    }));
   });
 
   describe('power pill interactions', () => {
@@ -800,6 +916,12 @@ describe('Blackjack', () => {
 
     beforeEach(async () => {
       TestBed.resetTestingModule();
+      window.localStorage.setItem('betception-language', 'de');
+      toastMock.error.calls.reset();
+      toastMock.success.calls.reset();
+      toastMock.info.calls.reset();
+      toastMock.achievement.calls.reset();
+      toastMock.crate.calls.reset();
       walletPowerupMock.getSummary.and.returnValue(
         of({ id: 'u1', username: 'neo', balance: 500, xp: 0, level: 3, lastDailyRewardAt: null, levelProgress }),
       );
@@ -814,6 +936,7 @@ describe('Blackjack', () => {
           { provide: Rng, useValue: rngPowerupMock },
           { provide: Wallet, useValue: walletPowerupMock },
           { provide: BetceptionApi, useValue: pillApiMock },
+          { provide: ToastService, useValue: toastMock },
         ],
       }).compileComponents();
 

@@ -17,6 +17,22 @@ describe('ProfileModalComponent', () => {
   let authFacadeMock: jasmine.SpyObj<AuthFacade>;
   let routerMock: jasmine.SpyObj<Router>;
 
+  const achievement = {
+    code: 'FIRST_WIN',
+    category: 'starter',
+    titleKey: 'achievement.FIRST_WIN.title',
+    descriptionKey: 'achievement.FIRST_WIN.description',
+    icon: 'trophy',
+    target: 1,
+    progress: 1,
+    unlocked: true,
+    unlockedAt: '2025-01-01T12:00:00Z',
+    seen: false,
+    rewardCoins: 50,
+    secret: false,
+    sortOrder: 2,
+  };
+
   const profileResponse = {
     user: {
       id: 'u1',
@@ -37,6 +53,8 @@ describe('ProfileModalComponent', () => {
         progressPercent: 5,
       },
       createdAt: '2025-01-01T00:00:00Z',
+      achievements: [achievement],
+      unseenAchievementCount: 1,
     },
   };
 
@@ -50,6 +68,8 @@ describe('ProfileModalComponent', () => {
       'deleteOwnAccount',
       'listCrates',
       'openCrate',
+      'listAchievements',
+      'markAchievementsSeen',
     ]);
     toastMock = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'info']);
     authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['requestPasswordChange', 'logout']);
@@ -90,6 +110,8 @@ describe('ProfileModalComponent', () => {
     apiMock.deleteOwnAccount.and.returnValue(of({ success: true }));
     apiMock.listCrates.and.returnValue(of({ items: [] }));
     apiMock.openCrate.and.returnValue(NEVER as any);
+    apiMock.listAchievements.and.returnValue(of({ items: [achievement], unseenCount: 0 } as any));
+    apiMock.markAchievementsSeen.and.returnValue(of({ items: [{ ...achievement, seen: true }], unseenCount: 0 } as any));
     authFacadeMock.logout.and.returnValue(of(void 0));
     routerMock.navigate.and.returnValue(Promise.resolve(true));
 
@@ -234,15 +256,15 @@ describe('ProfileModalComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Network error');
   });
 
-  it('opens on the profile tab with profile, crates, transactions order', () => {
+  it('opens on the profile tab with profile, crates, achievements, transactions order', () => {
     createComponent();
 
     expect(component.activeTab).toBe('profile');
     const labels = fixture.debugElement
       .queryAll(By.css('.profile-tab'))
-      .map((button) => button.nativeElement.textContent.trim().replace('!', ''));
+      .map((button) => button.nativeElement.textContent.replace('!', '').replace(/\s+/g, ' ').trim());
 
-    expect(labels).toEqual(['Profil', 'Kisten', 'Transaktionen']);
+    expect(labels).toEqual(['Profil', 'Kisten', 'Achievements', 'Transaktionen']);
     expect(apiMock.getOwnProfile).toHaveBeenCalled();
     expect(apiMock.getWalletTransactionsSummary).not.toHaveBeenCalled();
   });
@@ -537,5 +559,101 @@ describe('ProfileModalComponent', () => {
       .find((button) => button.nativeElement.textContent.includes('Kisten'));
 
     expect(crateButton!.nativeElement.querySelector('.profile-tab-notice')).toBeTruthy();
+  });
+
+  it('shows achievements and marks them seen when the achievements tab is opened', () => {
+    createComponent();
+    component.unseenAchievementCount = 1;
+    fixture.detectChanges();
+
+    const achievementButton = fixture.debugElement
+      .queryAll(By.css('.profile-tab'))
+      .find((button) => button.nativeElement.textContent.includes('Achievements'));
+    expect(achievementButton!.nativeElement.querySelector('.profile-tab-notice')).toBeTruthy();
+
+    achievementButton!.nativeElement.click();
+    fixture.detectChanges();
+
+    expect(apiMock.markAchievementsSeen).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.textContent).toContain('Blut geleckt');
+    expect(component.unseenAchievementCount).toBe(0);
+  });
+
+  it('renders partially completed tier achievements as active with only earned stars highlighted', () => {
+    createComponent();
+    component.profile = {
+      ...profileResponse.user,
+      achievements: [
+        {
+          ...achievement,
+          code: 'ROUND_10',
+          titleKey: 'achievement.ROUND_10.title',
+          descriptionKey: 'achievement.ROUND_10.description',
+          icon: 'cards',
+          target: 10,
+          progress: 10,
+          unlocked: true,
+          rewardCoins: 200,
+          sortOrder: 30,
+        },
+        {
+          ...achievement,
+          code: 'ROUND_100',
+          titleKey: 'achievement.ROUND_100.title',
+          descriptionKey: 'achievement.ROUND_100.description',
+          icon: 'calendar',
+          target: 100,
+          progress: 24,
+          unlocked: false,
+          unlockedAt: null,
+          rewardCoins: 1500,
+          sortOrder: 40,
+        },
+        {
+          ...achievement,
+          code: 'ROUND_500',
+          titleKey: 'achievement.ROUND_500.title',
+          descriptionKey: 'achievement.ROUND_500.description',
+          icon: 'signal',
+          target: 500,
+          progress: 24,
+          unlocked: false,
+          unlockedAt: null,
+          rewardCoins: 7500,
+          sortOrder: 50,
+        },
+      ],
+      unseenAchievementCount: 0,
+    } as any;
+    component.activeTab = 'achievements';
+    fixture.detectChanges();
+
+    const tierCard: HTMLElement = fixture.nativeElement.querySelector('.achievement-card.has-tiers');
+    const stars = tierCard.querySelectorAll<HTMLElement>('.achievement-card__stars span');
+
+    expect(tierCard.classList).toContain('is-unlocked');
+    expect(tierCard.classList).not.toContain('is-locked');
+    expect(tierCard.querySelector('.achievement-icon.locked')).toBeNull();
+    expect(stars[0].classList).toContain('active');
+    expect(stars[1].classList).not.toContain('active');
+    expect(stars[2].classList).not.toContain('active');
+  });
+
+  it('loads the achievement catalog when no unseen achievements are pending', () => {
+    createComponent();
+    component.profile = { ...profileResponse.user, achievements: [], unseenAchievementCount: 0 } as any;
+    component.unseenAchievementCount = 0;
+    fixture.detectChanges();
+
+    const achievementButton = fixture.debugElement
+      .queryAll(By.css('.profile-tab'))
+      .find((button) => button.nativeElement.textContent.includes('Achievements'));
+
+    achievementButton!.nativeElement.click();
+    fixture.detectChanges();
+
+    expect(apiMock.listAchievements).toHaveBeenCalledTimes(1);
+    expect(apiMock.markAchievementsSeen).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Blut geleckt');
   });
 });

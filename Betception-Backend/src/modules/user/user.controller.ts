@@ -5,6 +5,7 @@ import { User } from '../../entity/User.js';
 import { Session } from '../../entity/Session.js';
 import { hashPassword, verifyPassword } from '../../utils/passwords.js';
 import { buildLevelProgress } from '../progression/progression.js';
+import { listAchievementsForUser } from '../achievements/achievements.service.js';
 import type {
   ChangeOwnPasswordInput,
   DeleteOwnAccountInput,
@@ -14,7 +15,8 @@ import type {
 
 const PROFILE_CONFLICT_MESSAGE = 'Profile update could not be completed';
 
-function serializeProfile(user: User) {
+async function serializeProfile(user: User) {
+  const achievements = await listAchievementsForUser(user.id, AppDataSource.manager);
   return {
     id: user.id,
     username: user.username,
@@ -26,10 +28,13 @@ function serializeProfile(user: User) {
     avatarColor: user.avatarColor,
     levelProgress: buildLevelProgress(user),
     createdAt: user.createdAt,
+    achievements: achievements.items,
+    unseenAchievementCount: achievements.unseenCount,
   };
 }
 
-function serializePublicProfile(user: User) {
+async function serializePublicProfile(user: User) {
+  const achievements = await listAchievementsForUser(user.id, AppDataSource.manager);
   return {
     id: user.id,
     username: user.username,
@@ -40,6 +45,8 @@ function serializePublicProfile(user: User) {
     avatarColor: user.avatarColor,
     levelProgress: buildLevelProgress(user),
     createdAt: user.createdAt,
+    achievements: achievements.items,
+    unseenAchievementCount: achievements.unseenCount,
   };
 }
 
@@ -64,7 +71,7 @@ export async function getUserById(
     return res.status(404).json({ message: 'User not found' });
   }
 
-  return res.json({ user: serializePublicProfile(user) });
+  return res.json({ user: await serializePublicProfile(user) });
 }
 
 export async function getOwnProfile(req: Request, res: Response) {
@@ -79,7 +86,7 @@ export async function getOwnProfile(req: Request, res: Response) {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  return res.json({ user: serializeProfile(user) });
+  return res.json({ user: await serializeProfile(user) });
 }
 
 export async function updateOwnProfile(
@@ -133,7 +140,7 @@ export async function updateOwnProfile(
   }
 
   const saved = await repo.save(user);
-  return res.json({ user: serializeProfile(saved) });
+  return res.json({ user: await serializeProfile(saved) });
 }
 
 export async function changeOwnPassword(

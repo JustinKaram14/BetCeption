@@ -4,8 +4,11 @@ import {
   getWeeklyWinningsLeaderboard,
 } from '../../../modules/leaderboard/leaderboard.controller.js';
 import {
+  LeaderboardAlltimeWinningsView,
   LeaderboardBalanceView,
   LeaderboardLevelView,
+  LeaderboardWeeklyBalanceView,
+  LeaderboardWeeklyLevelView,
   LeaderboardWeeklyWinningsView,
 } from '../../../entity/index.js';
 import {
@@ -81,7 +84,7 @@ describe('leaderboard.controller', () => {
     mockAppDataSourceRepositories(new Map([[LeaderboardWeeklyWinningsView, repo]]));
 
     const req = createMockRequest({
-      query: { limit: 1, offset: 0 } as any,
+      query: { limit: 1, offset: 0, period: 'seven_days' } as any,
     });
     const res = createMockResponse();
 
@@ -92,6 +95,96 @@ describe('leaderboard.controller', () => {
       limit: 1,
       offset: 0,
       items: [{ rank: 1, userId: '3', username: 'gamma', netWinnings7d: 250 }],
+      currentUserRank: null,
+    });
+  });
+
+  it('returns weekly balance leaderboard data when period is seven_days', async () => {
+    const rows = [
+      { userId: '4', username: 'delta', balance7d: '75.00' },
+    ] as LeaderboardWeeklyBalanceView[];
+    const repo = createMockRepository<LeaderboardWeeklyBalanceView>({
+      findAndCount: jest.fn().mockResolvedValue([rows, 1]),
+    });
+    mockAppDataSourceRepositories(new Map([[LeaderboardWeeklyBalanceView, repo]]));
+
+    const req = createMockRequest({
+      query: { limit: 5, offset: 0, period: 'seven_days' } as any,
+    });
+    const res = createMockResponse();
+
+    await getBalanceLeaderboard(req as any, res);
+
+    expect(repo.findAndCount).toHaveBeenCalledWith({
+      order: { balance7d: 'DESC' },
+      take: 5,
+      skip: 0,
+    });
+    expect(res.json).toHaveBeenCalledWith({
+      total: 1,
+      limit: 5,
+      offset: 0,
+      items: [{ rank: 1, userId: '4', username: 'delta', balance7d: 75 }],
+      currentUserRank: null,
+    });
+  });
+
+  it('returns weekly level leaderboard data when period is seven_days', async () => {
+    const rows = [
+      { userId: '5', username: 'echo', xp7d: 420 },
+    ] as LeaderboardWeeklyLevelView[];
+    const repo = createMockRepository<LeaderboardWeeklyLevelView>({
+      findAndCount: jest.fn().mockResolvedValue([rows, 1]),
+    });
+    mockAppDataSourceRepositories(new Map([[LeaderboardWeeklyLevelView, repo]]));
+
+    const req = createMockRequest({
+      query: { limit: 5, offset: 0, period: 'seven_days' } as any,
+    });
+    const res = createMockResponse();
+
+    await getLevelLeaderboard(req as any, res);
+
+    expect(repo.findAndCount).toHaveBeenCalledWith({
+      order: { xp7d: 'DESC' },
+      take: 5,
+      skip: 0,
+    });
+    expect(res.json).toHaveBeenCalledWith({
+      total: 1,
+      limit: 5,
+      offset: 0,
+      items: [{ rank: 1, userId: '5', username: 'echo', xp7d: 420 }],
+      currentUserRank: null,
+    });
+  });
+
+  it('returns all-time winnings leaderboard data by default', async () => {
+    const rows = [
+      { userId: '6', username: 'foxtrot', netWinnings: '500.00' },
+    ] as LeaderboardAlltimeWinningsView[];
+    const repo = createMockRepository<LeaderboardAlltimeWinningsView>({
+      findAndCount: jest.fn().mockResolvedValue([rows, 1]),
+    });
+    mockAppDataSourceRepositories(new Map([[LeaderboardAlltimeWinningsView, repo]]));
+
+    const req = createMockRequest({
+      query: { limit: 5, offset: 0 } as any,
+    });
+    const res = createMockResponse();
+
+    await getWeeklyWinningsLeaderboard(req as any, res);
+
+    expect(repo.findAndCount).toHaveBeenCalledWith({
+      order: { netWinnings: 'DESC' },
+      take: 5,
+      skip: 0,
+    });
+    expect(res.json).toHaveBeenCalledWith({
+      total: 1,
+      limit: 5,
+      offset: 0,
+      items: [{ rank: 1, userId: '6', username: 'foxtrot', netWinnings: 500 }],
       currentUserRank: null,
     });
   });

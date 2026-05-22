@@ -33,9 +33,8 @@
                     <path d="M4 21a8 8 0 0 1 16 0" />
                   </svg>
                   {{ profileButtonLabel }}
-                  <span class="profile-crate-alert" *ngIf="unseenCrateCount > 0" aria-hidden="true">
-                    <span class="profile-crate-alert__box"></span>
-                    <span class="profile-crate-alert__mark">!</span>
+                  <span class="profile-crate-alert" *ngIf="profileNoticeCount > 0" aria-hidden="true">
+                    !
                   </span>
                 </button>
               </div>
@@ -83,9 +82,11 @@
   *ngIf="showProfileModal"
   [userId]="currentUserId"
   [unseenCrateCount]="unseenCrateCount"
+  [unseenAchievementCount]="unseenAchievementCount"
   (closed)="closeProfileModal()"
   (balanceUpdated)="onCrateBalanceUpdated($event)"
-  (unseenCrateCountChange)="onUnseenCrateCountChanged($event)">
+  (unseenCrateCountChange)="onUnseenCrateCountChanged($event)"
+  (unseenAchievementCountChange)="onUnseenAchievementCountChanged($event)">
 </app-profile-modal>
 
 <div class="verify-overlay" *ngIf="showVerifyEmailModal" (click)="closeVerifyEmailModal()">

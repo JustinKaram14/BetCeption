@@ -36,6 +36,8 @@ export interface UserProfile {
   avatarColor: ProfileAvatarColor;
   levelProgress: LevelProgress;
   createdAt: string;
+  achievements: Achievement[];
+  unseenAchievementCount: number;
 }
 
 export interface OwnProfile {
@@ -49,6 +51,53 @@ export interface OwnProfile {
   avatarColor: ProfileAvatarColor;
   levelProgress: LevelProgress;
   createdAt: string;
+  achievements: Achievement[];
+  unseenAchievementCount: number;
+}
+
+export interface Achievement {
+  code: string;
+  category: string;
+  titleKey: string;
+  descriptionKey: string;
+  icon: AchievementIcon;
+  target: number;
+  progress: number;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  seen: boolean;
+  rewardCoins: number;
+  secret: boolean;
+  sortOrder: number;
+}
+
+export type AchievementIcon =
+  | 'chip'
+  | 'trophy'
+  | 'ace'
+  | 'cards'
+  | 'target'
+  | 'calendar'
+  | 'medal'
+  | 'spark'
+  | 'crosshair'
+  | 'signal'
+  | 'skull'
+  | 'vault'
+  | 'gem'
+  | 'shield'
+  | 'mask'
+  | 'flame'
+  | 'bolt'
+  | 'split'
+  | 'pill'
+  | 'star'
+  | 'crown'
+  | 'orbit';
+
+export interface AchievementsResponse {
+  items: Achievement[];
+  unseenCount: number;
 }
 
 export type ProfileAvatarIcon =
@@ -212,6 +261,7 @@ export enum WalletTransactionKind {
   ADJUSTMENT = 'adjustment',
   REWARD = 'reward',
   CRATE_REWARD = 'crate_reward',
+  ACHIEVEMENT_REWARD = 'achievement_reward',
 }
 
 export interface WalletSummary {
@@ -350,6 +400,7 @@ export interface PurchasePowerupResponse {
   balance: number;
   quantity: number;
   activePowerup: ActivePowerup | null;
+  unlockedAchievements?: Achievement[];
 }
 
 export interface EquipPowerupRequest {
@@ -378,7 +429,10 @@ export interface LeaderboardQuery {
   [key: string]: QueryValue;
   limit?: number;
   offset?: number;
+  period?: LeaderboardPeriod;
 }
+
+export type LeaderboardPeriod = 'alltime' | 'seven_days';
 
 export interface LeaderboardResponse<T> {
   total: number;
@@ -392,22 +446,25 @@ export interface BalanceLeaderboardItem {
   rank: number;
   userId: string;
   username: string;
-  balance: number;
+  balance?: number;
+  balance7d?: number;
 }
 
 export interface LevelLeaderboardItem {
   rank: number;
   userId: string;
   username: string;
-  level: number;
-  xp: number;
+  level?: number;
+  xp?: number;
+  xp7d?: number;
 }
 
 export interface WinningsLeaderboardItem {
   rank: number;
   userId: string;
   username: string;
-  netWinnings7d: number;
+  netWinnings?: number;
+  netWinnings7d?: number;
 }
 
 export interface RoundCard {
@@ -515,6 +572,7 @@ export interface RoundResponse {
   triggeredPowerupEffect?: TriggeredPowerupEffect | null;
   expiredPowerup?: TriggeredPowerupEffect | null;
   betceptionResolution?: BetceptionResolution | null;
+  unlockedAchievements?: Achievement[];
 }
 
 export interface SideBetPlacement {

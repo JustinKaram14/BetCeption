@@ -361,7 +361,7 @@ describe('evaluateSideBet', () => {
     });
   });
 
-  it('CARD_EXACT: also evaluates split-hand cards', () => {
+  it('CARD_EXACT: ignores split-hand cards because card bets resolve against the initial hand', () => {
     const round = makeRound([
       card(CardRank.TEN, CardSuit.SPADES, 0),
       card(CardRank.TEN, CardSuit.HEARTS, 1),
@@ -384,7 +384,7 @@ describe('evaluateSideBet', () => {
     });
 
     expect(evaluateSideBet(bet, round, USER_ID)).toEqual({
-      status: SideBetStatus.WON, multiplier: 12, isRefund: false,
+      status: SideBetStatus.LOST, multiplier: 0, isRefund: false,
     });
   });
 

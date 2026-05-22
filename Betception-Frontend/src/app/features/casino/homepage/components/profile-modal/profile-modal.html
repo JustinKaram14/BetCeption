@@ -320,6 +320,59 @@
         ></app-crate-inventory>
       </section>
 
+      <section class="achievements-tab" *ngIf="activeTab === 'achievements'">
+        <div class="profile-state" *ngIf="profileLoading && !profile">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span>{{ i18n.t('achievement.loading') }}</span>
+        </div>
+
+        <div class="achievement-empty" *ngIf="profile && profile.achievements.length === 0">
+          {{ i18n.t('achievement.empty') }}
+        </div>
+
+        <div class="achievement-grid" *ngIf="profile?.achievements?.length">
+          <article
+            class="achievement-card"
+            *ngFor="let achievement of achievementDisplayItems(); trackBy: trackAchievement"
+            [ngClass]="{
+              'is-unlocked': achievementVisibleUnlocked(achievement),
+              'is-locked': !achievementVisibleUnlocked(achievement),
+              'is-secret': achievement.secret,
+              'is-unseen': achievement.unlocked && !achievement.seen,
+              'has-tiers': achievement.tiers.length > 1
+            }"
+          >
+            <div class="achievement-card__icon">
+              <app-achievement-icon [icon]="achievement.icon" [locked]="!achievementVisibleUnlocked(achievement)"></app-achievement-icon>
+            </div>
+            <div class="achievement-card__body">
+              <div class="achievement-card__head">
+                <h4>{{ achievementTitle(achievement) }}</h4>
+                <span *ngIf="achievement.secret">{{ i18n.t('achievement.secret.badge') }}</span>
+              </div>
+              <div class="achievement-card__stars" *ngIf="achievement.tiers.length > 1" [attr.aria-label]="achievement.completedTiers + ' / ' + achievement.tiers.length">
+                <span
+                  *ngFor="let tier of achievement.tiers"
+                  [class.active]="tier.unlocked"
+                >&#9733;</span>
+              </div>
+              <p *ngIf="achievementDescription(achievement) as description">{{ description }}</p>
+              <div class="achievement-card__progress">
+                <div class="achievement-card__bar" [style.--progress]="achievementProgressPercent(achievement) + '%'">
+                  <span></span>
+                </div>
+                <strong>{{ achievementProgressLabel(achievement) }}</strong>
+              </div>
+              <div class="achievement-card__reward">
+                {{ achievementRewardLabel(achievement) }}
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="transactions-tab" *ngIf="activeTab === 'transactions'">
         <form class="transaction-filter" (ngSubmit)="applyTransactionFilter()" novalidate>
           <div class="transaction-filter__fields">

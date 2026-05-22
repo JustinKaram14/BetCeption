@@ -319,21 +319,21 @@ describe('round.controller', () => {
           predictedSuit: CardSuit.HEARTS,
           predictedRank: CardRank.JACK,
           selectionJson: { suit: CardSuit.HEARTS, rank: CardRank.JACK },
-          odds: '12.000',
+          odds: '24.000',
         }),
       );
       expect(sideBetRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: '10.00',
           selectionJson: { target: 'DEALER', outcome: 'BUST' },
-          odds: '3.000',
+          odds: '3.820',
         }),
       );
       expect(sideBetRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: '5.00',
           selectionJson: { powerupCode: 'RED_PILL', color: 'red' },
-          odds: '5.000',
+          odds: '10.500',
         }),
       );
       expect(walletRepo.save).toHaveBeenCalledWith(

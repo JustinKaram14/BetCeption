@@ -41,6 +41,19 @@ describe('ToastService', () => {
     tick(5000);
   }));
 
+  it('shows typed game toasts with custom labels', fakeAsync(() => {
+    service.achievement('First win', 1000, 'Achievement freigeschaltet');
+    service.crate('Du hast eine Kiste erhalten', 1000, 'Level Up!');
+
+    let toasts: any[] = [];
+    service.messages$.subscribe((msgs) => (toasts = msgs));
+
+    expect(toasts.map((toast) => toast.type)).toEqual(['achievement', 'crate']);
+    expect(toasts[0].label).toBe('Achievement freigeschaltet');
+    expect(toasts[1].label).toBe('Level Up!');
+    tick(1001);
+  }));
+
   it('dismisses a toast by id', () => {
     service.error('test error');
     let toasts: any[] = [];

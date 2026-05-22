@@ -53,8 +53,10 @@ describe('HomepageComponent', () => {
         'getUserById',
         'updateOwnProfile',
         'changeOwnPassword',
+        'deleteOwnAccount',
         'listCrates',
         'openCrate',
+        'markAchievementsSeen',
       ],
     );
 
@@ -127,6 +129,8 @@ describe('HomepageComponent', () => {
             progressPercent: 0,
           },
           createdAt: '2025-01-01T00:00:00Z',
+          achievements: [],
+          unseenAchievementCount: 0,
         },
       } as any),
     );
@@ -150,13 +154,17 @@ describe('HomepageComponent', () => {
             progressPercent: 10,
           },
           createdAt: '2025-01-01T00:00:00Z',
+          achievements: [],
+          unseenAchievementCount: 0,
         },
       } as any),
     );
     apiMock.updateOwnProfile.and.returnValue(apiMock.getOwnProfile());
     apiMock.changeOwnPassword.and.returnValue(of({ success: true }));
+    apiMock.deleteOwnAccount.and.returnValue(of({ success: true }));
     apiMock.listCrates.and.returnValue(of({ items: [] }));
     apiMock.openCrate.and.returnValue(NEVER as any);
+    apiMock.markAchievementsSeen.and.returnValue(of({ items: [], unseenCount: 0 } as any));
 
     await TestBed.configureTestingModule({
       imports: [HomepageComponent],
@@ -186,8 +194,10 @@ describe('HomepageComponent', () => {
     apiMock.getUserById.calls.reset();
     apiMock.updateOwnProfile.calls.reset();
     apiMock.changeOwnPassword.calls.reset();
+    apiMock.deleteOwnAccount.calls.reset();
     apiMock.listCrates.calls.reset();
     apiMock.openCrate.calls.reset();
+    apiMock.markAchievementsSeen.calls.reset();
     walletMock.getSummary.calls.reset();
     walletMock.claimDailyReward.calls.reset();
     routerNavigateSpy.calls.reset();
@@ -334,6 +344,42 @@ describe('HomepageComponent', () => {
     userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });
     fixture.detectChanges();
 
+    expect(fixture.nativeElement.querySelector('.profile-crate-alert')).toBeTruthy();
+  });
+
+  it('shows the profile button notification for unseen achievements', () => {
+    apiMock.getOwnProfile.and.returnValue(
+      of({
+        user: {
+          id: 'u1',
+          username: 'tester',
+          email: 'tester@example.com',
+          balance: 1000,
+          xp: 0,
+          level: 1,
+          avatarIcon: 'chip',
+          avatarColor: 'cyan',
+          levelProgress: {
+            level: 1,
+            xp: 0,
+            currentLevelXp: 0,
+            nextLevelXp: 500,
+            xpIntoLevel: 0,
+            xpToNextLevel: 500,
+            progressPercent: 0,
+          },
+          createdAt: '2025-01-01T00:00:00Z',
+          achievements: [],
+          unseenAchievementCount: 2,
+        },
+      } as any),
+    );
+
+    authState$.next(true);
+    userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });
+    fixture.detectChanges();
+
+    expect(component.unseenAchievementCount).toBe(2);
     expect(fixture.nativeElement.querySelector('.profile-crate-alert')).toBeTruthy();
   });
 

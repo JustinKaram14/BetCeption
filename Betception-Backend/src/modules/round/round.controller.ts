@@ -13,6 +13,7 @@ import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { PowerupConsumption } from '../../entity/PowerupConsumption.js';
 import { UserPowerup } from '../../entity/UserPowerup.js';
 import { UserCrate } from '../../entity/UserCrate.js';
+import { UserXpEvent } from '../../entity/UserXpEvent.js';
 import { getTierForLevel } from '../crates/crates.controller.js';
 import {
   CardRank,
@@ -40,6 +41,17 @@ import {
   type PowerPillColor,
 } from '../powerups/power-pills.js';
 import type { RoundIdParams, StartRoundInput, SwapCardBody } from './round.schema.js';
+import {
+  BETCEPTION_COMBO_STEP_KIND,
+  calculateBetceptionComboBonus,
+  calculateBetceptionOdds,
+  estimateBetceptionProbability,
+  isInitialCardBetRank,
+  isInitialCardBetSuit,
+  normalizedBetceptionSelection,
+  validateBetceptionStakeCaps,
+} from './betception-balance.js';
+import { evaluateRoundAchievements } from '../achievements/achievements.service.js';
 
 type RoundWithRelations = Round & {
   hands: (Hand & { cards: Card[]; user: User | null })[];
@@ -145,15 +157,6 @@ const BETCEPTION_SIDE_BET_CODES = new Set<string>([
   'SPLIT_COUNT',
 ]);
 
-const DEFAULT_BETCEPTION_ODDS: Record<BetceptionSideBetCode, number> = {
-  CARD_EXACT: 12,
-  CARD_SUIT: 2,
-  DEALER_BUST: 3,
-  PILL_TRIGGER: 5,
-  PLAYER_BLACKJACK: 12,
-  SPLIT_COUNT: 4,
-};
-
 const TEN_VALUE_RANKS = new Set([CardRank.KING, CardRank.QUEEN, CardRank.JACK, CardRank.TEN]);
 
 const FULL_DECK: DeckCard[] = buildDeck();
@@ -200,6 +203,10 @@ export async function startRound(
         (sum, sideBet) => sum + sideBet.amountCents,
         0n,
       );
+      const stakeCaps = validateBetceptionStakeCaps(betCents, preparedSideBets);
+      if (!stakeCaps.ok) {
+        throw new RoundFlowError(400, stakeCaps.code, stakeCaps.message);
+      }
       const totalRequired = betCents + totalSideBetCents;
       const currentBalance = decimalToCents(user.balance);
       if (currentBalance < totalRequired) {
@@ -605,6 +612,7 @@ export async function settleRound(
       const walletTxs: WalletTransaction[] = [];
       let splitBetStakeTotal = 0n;
       let splitBetPayoutTotal = 0n;
+      const splitBetStatuses: MainBetStatus[] = [];
       if (settledAmountCents > 0n) {
         const kind =
           finalResolution.status === MainBetStatus.PUSH ||
@@ -633,6 +641,7 @@ export async function settleRound(
         const splitSettledCents = decimalToCents(splitSettledAmount);
 
         splitBet.status = splitResolution.status;
+        splitBetStatuses.push(splitResolution.status);
         splitBet.payoutMultiplier = splitResolution.multiplier.toFixed(3);
         splitBet.settledAmount = splitSettledAmount;
         splitBet.settledAt = new Date();
@@ -700,6 +709,41 @@ export async function settleRound(
         }
       }
 
+      const comboBonus = calculateBetceptionComboBonus(
+        sideBetResolutionSteps.map((step) => ({
+          kind: step.kind,
+          status: String(step.status),
+          amountCents: decimalToCents(step.amount),
+          payoutCents: decimalToCents(step.payout ?? '0'),
+          selection: step.selection,
+        })),
+      );
+      if (comboBonus.bonusCents > 0n) {
+        sideBetResolutionSteps.push({
+          id: `combo-${round.id}`,
+          kind: BETCEPTION_COMBO_STEP_KIND,
+          status: SideBetStatus.WON,
+          amount: centsToDecimal(0n),
+          payout: centsToDecimal(comboBonus.bonusCents),
+          multiplier: comboBonus.bonusRate.toFixed(3),
+          selection: {
+            wonCategories: comboBonus.wonCategories,
+            rarityScore: comboBonus.rarityScore,
+          },
+        });
+        walletTxs.push(
+          walletRepo.create({
+            user,
+            kind: WalletTransactionKind.BET_WIN,
+            amount: centsToDecimal(comboBonus.bonusCents),
+            refTable: 'rounds',
+            refId: round.id,
+          }),
+        );
+        pendingCredit += comboBonus.bonusCents;
+        sideBetPayoutTotal += comboBonus.bonusCents;
+      }
+
       if (pendingCredit > 0n) {
         const balance = decimalToCents(user.balance);
         user.balance = centsToDecimal(balance + pendingCredit);
@@ -714,6 +758,17 @@ export async function settleRound(
       const oldLevel = Math.max(1, Math.floor(user.level ?? 1));
       user.xp = Math.max(0, Math.floor(user.xp ?? 0)) + boostedXp;
       user.level = Math.max(Math.max(1, Math.floor(user.level ?? 1)), levelFromXp(user.xp));
+      if (boostedXp > 0) {
+        const xpEventRepo = manager.getRepository(UserXpEvent);
+        await xpEventRepo.save(
+          xpEventRepo.create({
+            user,
+            amount: boostedXp,
+            refTable: 'rounds',
+            refId: round.id,
+          }),
+        );
+      }
 
       let levelUpCrate: { id: string; tier: number; tierLabel: string; acquiredLevel: number } | null = null;
       if (user.level > oldLevel) {
@@ -743,6 +798,19 @@ export async function settleRound(
         sideBetPayoutTotal,
       });
 
+      const unlockedAchievements = await evaluateRoundAchievements(manager, user, {
+        mainBetStatus: mainBet.status,
+        playerHandStatus: playerHand.status,
+        playerCardCount: playerHand.cards?.length ?? 0,
+        splitHandCount: splitHands.length,
+        splitBetStatuses,
+        dealerHandStatus: dealerHand.status,
+        sideBetResolutionSteps,
+        totalStake: betceptionResolution.totalStake,
+        totalPayout: betceptionResolution.totalPayout,
+        triggeredPowerupEffect,
+      });
+
       const progress = {
         xpGained: boostedXp,
         progress: buildLevelProgress(user),
@@ -751,6 +819,7 @@ export async function settleRound(
         triggeredPowerupEffect,
         expiredPowerup,
         betceptionResolution,
+        unlockedAchievements,
       };
       await userRepo.save(user);
 
@@ -778,6 +847,7 @@ export async function settleRound(
       triggeredPowerupEffect: settlementProgress.triggeredPowerupEffect,
       expiredPowerup: settlementProgress.expiredPowerup,
       betceptionResolution: settlementProgress.betceptionResolution,
+      unlockedAchievements: settlementProgress.unlockedAchievements,
     });
   } catch (error) {
     return handleRoundError(res, error);
@@ -1166,7 +1236,7 @@ async function prepareSideBets(
 
     validateSideBetPayload(type, input, index);
     const selectionJson = buildSideBetSelection(type, input, user);
-    const odds = resolvePreparedSideBetOdds(type, user, input);
+    const odds = resolvePreparedSideBetOdds(type, user, selectionJson);
 
     return {
       type,
@@ -1300,22 +1370,14 @@ function buildSideBetSelection(
 function resolvePreparedSideBetOdds(
   type: SidebetType,
   user: User,
-  input?: StartRoundInput['sideBets'][number],
+  selectionJson?: Record<string, unknown> | null,
 ): string | null {
-  if (type.code === 'PILL_TRIGGER') {
-    const code = user.activePowerupType?.code;
-    if (code === 'BLUE_PILL') return '8.000';
-    if (code === 'RED_PILL') return '5.000';
-  }
-  if (type.code === 'SPLIT_COUNT') {
-    const splitCount = readSplitCountSelection(input?.selection);
-    const splitOdds = splitCount === 3 ? 60 : splitCount === 2 ? 18 : 4;
-    return splitOdds.toFixed(3);
-  }
-  if (isBetceptionSideBetCode(type.code)) {
-    return (type.baseOdds ?? DEFAULT_BETCEPTION_ODDS[type.code].toFixed(3));
-  }
-  return type.baseOdds;
+  return calculateBetceptionOdds({
+    code: type.code,
+    selection: normalizedBetceptionSelection(type.code, selectionJson ?? null),
+    activePowerupCode: user.activePowerupType?.code,
+    fallbackOdds: type.baseOdds,
+  });
 }
 
 function readSplitCountSelection(selection: Record<string, unknown> | undefined | null): number | null {
@@ -1830,16 +1892,24 @@ function evaluateSideBet(
 
   const code = sideBet.type.code;
   if (code === 'CARD_EXACT') {
-    const playerCards = getAllUserPlayerCards(round, userId);
+    const playerCards = getInitialUserPlayerCards(round, userId);
+    const suit = (sideBet.selectionJson?.['suit'] as unknown) ?? sideBet.predictedSuit;
+    const rank = (sideBet.selectionJson?.['rank'] as unknown) ?? sideBet.predictedRank;
+    if (!isInitialCardBetSuit(suit) || !isInitialCardBetRank(rank)) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
     const won = playerCards.some(
-      (card) => card.rank === sideBet.predictedRank && card.suit === sideBet.predictedSuit,
+      (card) => card.rank === rank && card.suit === suit,
     );
     return resolveSideBetOutcome(won, oddsValue);
   }
 
   if (code === 'CARD_SUIT') {
-    const suit = (sideBet.selectionJson?.['suit'] as CardSuit | undefined) ?? sideBet.predictedSuit;
-    const won = !!suit && getAllUserPlayerCards(round, userId).some((card) => card.suit === suit);
+    const suit = (sideBet.selectionJson?.['suit'] as unknown) ?? sideBet.predictedSuit;
+    if (!isInitialCardBetSuit(suit)) {
+      return { status: SideBetStatus.REFUNDED, multiplier: 1, isRefund: true };
+    }
+    const won = getInitialUserPlayerCards(round, userId).some((card) => card.suit === suit);
     return resolveSideBetOutcome(won, oddsValue);
   }
 
@@ -1945,8 +2015,9 @@ function getActivePlayerHand(round: RoundWithRelations, userId: string) {
   return (split ?? null) as (Hand & { cards: Card[] }) | null;
 }
 
-function getAllUserPlayerCards(round: RoundWithRelations, userId: string) {
-  return getAllPlayerHands(round, userId).flatMap((hand) => sortCards(hand.cards ?? []));
+function getInitialUserPlayerCards(round: RoundWithRelations, userId: string) {
+  const player = getPlayerHand(round, userId);
+  return player ? sortCards(player.cards ?? []).slice(0, 2) : [];
 }
 
 function getSplitHands(round: RoundWithRelations, userId: string) {
@@ -2039,8 +2110,11 @@ function bufferToBigInt(buffer: Buffer): bigint {
 
 export const roundTestUtils = {
   buildSeededDeck,
+  calculateBetceptionComboBonus,
+  calculateBetceptionOdds,
   drawCardFromSeed,
   evaluateHand,
   resolveMainBet,
   evaluateSideBet,
+  validateBetceptionStakeCaps,
 };

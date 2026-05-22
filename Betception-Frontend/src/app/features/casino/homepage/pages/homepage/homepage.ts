@@ -1,6 +1,6 @@
 import { Component, DestroyRef, HostListener, inject } from '@angular/core';
 import { NgIf, AsyncPipe } from '@angular/common';
-import { Observable, catchError, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { HeroComponent } from '../../components/hero/hero';
@@ -65,6 +65,7 @@ export class HomepageComponent {
   publicProfileUserId: string | null = null;
   walletSummary: WalletSummary | null = null;
   unseenCrateCount = 0;
+  unseenAchievementCount = 0;
   private currentUserIdValue: string | null = null;
 
   constructor() {
@@ -83,21 +84,23 @@ export class HomepageComponent {
 
     this.user$
       .pipe(
-        switchMap((user) =>
-          {
-            this.currentUserIdValue = user?.sub ?? null;
-            return user?.sub
-              ? this.api.listCrates().pipe(catchError(() => of({ items: [] })))
-              : of({ items: [] });
-          }
-        ),
+        switchMap((user) => {
+          this.currentUserIdValue = user?.sub ?? null;
+          return user?.sub
+            ? forkJoin({
+                crates: this.api.listCrates().pipe(catchError(() => of({ items: [] }))),
+                profile: this.api.getOwnProfile().pipe(catchError(() => of(null))),
+              })
+            : of({ crates: { items: [] }, profile: null });
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((response) => {
         this.unseenCrateCount = this.crateNotifications.unseenUnopenedCount(
           this.currentUserId,
-          response.items,
+          response.crates.items,
         );
+        this.unseenAchievementCount = response.profile?.user.unseenAchievementCount ?? 0;
       });
   }
 
@@ -214,6 +217,14 @@ export class HomepageComponent {
 
   onUnseenCrateCountChanged(count: number) {
     this.unseenCrateCount = count;
+  }
+
+  onUnseenAchievementCountChanged(count: number) {
+    this.unseenAchievementCount = count;
+  }
+
+  get profileNoticeCount(): number {
+    return this.unseenCrateCount + this.unseenAchievementCount;
   }
 
   get currentUserId(): string | null {

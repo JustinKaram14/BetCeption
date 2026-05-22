@@ -9,6 +9,9 @@ import {
 import { I18n } from '../../../../../core/i18n/i18n';
 
 const PILL_CODES: PowerPillCode[] = ['RED_PILL', 'BLUE_PILL'];
+const PILL_BANKROLL_PRICE_RATE = 0.05;
+const PILL_LEVEL_PRICE_STEP = 25;
+const PILL_PRICE_ROUNDING = 25;
 
 const PILL_COPY: Record<
   PowerPillCode,
@@ -65,7 +68,11 @@ export class PowerupMenu {
   }
 
   getPrice(code: PowerPillCode): number {
-    return this.getPowerup(code)?.price ?? 300;
+    const basePrice = this.getPowerup(code)?.price ?? 300;
+    const bankrollPrice = (this.balance ?? 0) * PILL_BANKROLL_PRICE_RATE;
+    const levelPrice = basePrice + Math.max(0, this.userLevel - 1) * PILL_LEVEL_PRICE_STEP;
+    const rawPrice = Math.max(basePrice, bankrollPrice, levelPrice);
+    return Math.ceil(rawPrice / PILL_PRICE_ROUNDING) * PILL_PRICE_ROUNDING;
   }
 
   getOwnedQuantity(code: PowerPillCode): number {
