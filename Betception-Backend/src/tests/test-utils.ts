@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import type { EntityManager, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 import { AppDataSource } from '../db/data-source.js';
+import { UserAchievement } from '../entity/UserAchievement.js';
+import { ACHIEVEMENTS, achievementTarget } from '../modules/achievements/achievement-definitions.js';
 
 type MockFn = jest.Mock<any, any>;
 
@@ -36,15 +38,40 @@ export function createMockRepository<T>(overrides: Partial<MockRepository<T>> = 
 export function mockAppDataSourceRepositories(
   repoMap: Map<EntityTarget<any>, MockRepository>,
 ) {
+  const repoFor = <Entity extends ObjectLiteral>(entity: EntityTarget<Entity>, strict: boolean): Repository<Entity> => {
+    const repo = repoMap.get(entity);
+    if (!repo && strict) {
+      throw new Error(`No mock repository registered for ${(entity as any)?.name ?? 'unknown entity'}`);
+    }
+    return (repo ?? defaultLenientRepository(entity)) as unknown as Repository<Entity>;
+  };
+
+  jest
+    .spyOn(AppDataSource.manager, 'getRepository')
+    .mockImplementation(<Entity extends ObjectLiteral>(entity: EntityTarget<Entity>): Repository<Entity> => repoFor(entity, false));
+
   return jest
     .spyOn(AppDataSource, 'getRepository')
-    .mockImplementation(<Entity extends ObjectLiteral>(entity: EntityTarget<Entity>): Repository<Entity> => {
-      const repo = repoMap.get(entity);
-      if (!repo) {
-        throw new Error(`No mock repository registered for ${(entity as any)?.name ?? 'unknown entity'}`);
-      }
-      return repo as unknown as Repository<Entity>;
+    .mockImplementation(<Entity extends ObjectLiteral>(entity: EntityTarget<Entity>): Repository<Entity> => repoFor(entity, true));
+}
+
+function defaultLenientRepository(entity: EntityTarget<any>) {
+  if (entity === UserAchievement) {
+    return createMockRepository({
+      find: jest.fn().mockResolvedValue(
+        ACHIEVEMENTS.map((achievement) => ({
+          id: `achievement-${achievement.code}`,
+          achievementCode: achievement.code,
+          progress: achievementTarget(achievement),
+          unlocked: true,
+          unlockedAt: new Date('2026-01-01T00:00:00Z'),
+          seenAt: new Date('2026-01-01T00:00:00Z'),
+          rewardedAt: new Date('2026-01-01T00:00:00Z'),
+        })),
+      ),
     });
+  }
+  return createMockRepository({ find: jest.fn().mockResolvedValue([]) });
 }
 
 export function mockAppDataSourceTransaction(
@@ -57,7 +84,7 @@ export function mockAppDataSourceTransaction(
       if (repo) return repo as unknown as Repository<any>;
       // Return a lenient default so new controller dependencies don't break
       // existing tests — explicit tests should still register their own repos.
-      return createMockRepository({ find: jest.fn().mockResolvedValue([]) }) as unknown as Repository<any>;
+      return defaultLenientRepository(entity) as unknown as Repository<any>;
     }) as EntityManager['getRepository'],
     query: jest.fn().mockResolvedValue([]),
     ...extraManagerMethods,

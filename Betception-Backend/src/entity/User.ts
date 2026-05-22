@@ -17,6 +17,8 @@ import { DailyRewardClaim } from './DailyRewardClaim.js';
 import { UserPowerup } from './UserPowerup.js';
 import { PowerupConsumption } from './PowerupConsumption.js';
 import { PowerupType } from './PowerupType.js';
+import { UserAchievement } from './UserAchievement.js';
+import { UserXpEvent } from './UserXpEvent.js';
 
 @Entity({ name: 'users' })
 @Index(['email'])
@@ -133,4 +135,10 @@ export class User {
 
   @OneToMany(() => PowerupConsumption, (consumption) => consumption.user)
   powerupConsumptions?: Relation<PowerupConsumption[]>;
+
+  @OneToMany(() => UserAchievement, (achievement) => achievement.user)
+  achievements?: Relation<UserAchievement[]>;
+
+  @OneToMany(() => UserXpEvent, (event) => event.user)
+  xpEvents?: Relation<UserXpEvent[]>;
 }

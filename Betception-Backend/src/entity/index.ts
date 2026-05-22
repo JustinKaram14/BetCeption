@@ -12,8 +12,13 @@ import { PowerupType } from './PowerupType.js';
 import { UserPowerup } from './UserPowerup.js';
 import { PowerupConsumption } from './PowerupConsumption.js';
 import { UserCrate } from './UserCrate.js';
+import { UserAchievement } from './UserAchievement.js';
+import { UserXpEvent } from './UserXpEvent.js';
 import { LeaderboardBalanceView } from './LeaderboardBalanceView.js';
+import { LeaderboardAlltimeWinningsView } from './LeaderboardAlltimeWinningsView.js';
 import { LeaderboardWeeklyWinningsView } from './LeaderboardWeeklyWinningsView.js';
+import { LeaderboardWeeklyBalanceView } from './LeaderboardWeeklyBalanceView.js';
+import { LeaderboardWeeklyLevelView } from './LeaderboardWeeklyLevelView.js';
 import { LeaderboardLevelView } from './LeaderboardLevelView.js';
 import { RateLimitCounter } from './RateLimitCounter.js';
 
@@ -33,8 +38,13 @@ export {
   UserPowerup,
   PowerupConsumption,
   UserCrate,
+  UserAchievement,
+  UserXpEvent,
   LeaderboardBalanceView,
+  LeaderboardAlltimeWinningsView,
   LeaderboardWeeklyWinningsView,
+  LeaderboardWeeklyBalanceView,
+  LeaderboardWeeklyLevelView,
   LeaderboardLevelView,
   RateLimitCounter,
 };
@@ -54,8 +64,13 @@ export const ENTITIES = [
   UserPowerup,
   PowerupConsumption,
   UserCrate,
+  UserAchievement,
+  UserXpEvent,
   LeaderboardBalanceView,
+  LeaderboardAlltimeWinningsView,
   LeaderboardWeeklyWinningsView,
+  LeaderboardWeeklyBalanceView,
+  LeaderboardWeeklyLevelView,
   LeaderboardLevelView,
   RateLimitCounter,
 ];

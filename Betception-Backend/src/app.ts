@@ -18,6 +18,7 @@ import { roundRouter } from './modules/round/round.router.js';
 import { powerupsRouter } from './modules/powerups/powerups.router.js';
 import { fairnessRouter } from './modules/fairness/fairness.router.js';
 import { cratesRouter } from './modules/crates/crates.router.js';
+import { achievementsRouter } from './modules/achievements/achievements.router.js';
 import { requestContext } from './middlewares/requestContext.js';
 import { getMetricsSnapshot } from './observability/metrics.js';
 import { apiKeyGuard } from './middlewares/apiKeyGuard.js';
@@ -54,6 +55,7 @@ app.use('/round', roundRouter);
 app.use('/powerups', powerupsRouter);
 app.use('/fairness', fairnessRouter);
 app.use('/crates', cratesRouter);
+app.use('/achievements', achievementsRouter);
 
 if (env.monitoring.docs.enabled) {
   const guards: RequestHandler[] = [];

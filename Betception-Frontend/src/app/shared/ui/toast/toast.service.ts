@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-export type ToastType = 'error' | 'success' | 'info';
+export type ToastType = 'error' | 'success' | 'info' | 'achievement' | 'crate';
 
 export interface ToastMessage {
   id: string;
   type: ToastType;
   message: string;
   durationMs: number;
+  label?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -18,16 +19,24 @@ export class ToastService {
 
   readonly messages$ = this.messagesSubject.asObservable();
 
-  error(message: string, durationMs = 5200) {
-    this.show('error', message, durationMs);
+  error(message: string, durationMs = 5200, label?: string) {
+    this.show('error', message, durationMs, label);
   }
 
-  success(message: string, durationMs = 4200) {
-    this.show('success', message, durationMs);
+  success(message: string, durationMs = 4200, label?: string) {
+    this.show('success', message, durationMs, label);
   }
 
-  info(message: string, durationMs = 4200) {
-    this.show('info', message, durationMs);
+  info(message: string, durationMs = 4200, label?: string) {
+    this.show('info', message, durationMs, label);
+  }
+
+  achievement(message: string, durationMs = 5600, label?: string) {
+    this.show('achievement', message, durationMs, label);
+  }
+
+  crate(message: string, durationMs = 5200, label?: string) {
+    this.show('crate', message, durationMs, label);
   }
 
   dismiss(id: string) {
@@ -35,12 +44,13 @@ export class ToastService {
     this.messagesSubject.next(this.messagesSubject.value.filter((toast) => toast.id !== id));
   }
 
-  private show(type: ToastType, message: string, durationMs: number) {
+  private show(type: ToastType, message: string, durationMs: number, label?: string) {
     const toast: ToastMessage = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       type,
       message,
       durationMs,
+      label,
     };
 
     const next = [...this.messagesSubject.value, toast];

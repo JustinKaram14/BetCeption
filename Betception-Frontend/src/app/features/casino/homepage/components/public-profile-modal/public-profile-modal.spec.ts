@@ -30,6 +30,39 @@ describe('PublicProfileModalComponent', () => {
         xpToNextLevel: 300,
         progressPercent: 25,
       },
+      achievements: [
+        {
+          code: 'FIRST_ROUND',
+          category: 'starter',
+          titleKey: 'achievement.FIRST_ROUND.title',
+          descriptionKey: 'achievement.FIRST_ROUND.description',
+          icon: 'cards',
+          target: 1,
+          progress: 1,
+          unlocked: true,
+          unlockedAt: '2025-01-01T12:00:00Z',
+          seen: true,
+          rewardCoins: 25,
+          secret: false,
+          sortOrder: 1,
+        },
+        {
+          code: 'SECRET_BLUE_PILL_SAVE',
+          category: 'secret',
+          titleKey: 'achievement.SECRET_BLUE_PILL_SAVE.title',
+          descriptionKey: 'achievement.SECRET_BLUE_PILL_SAVE.description',
+          icon: 'pill',
+          target: 1,
+          progress: 0,
+          unlocked: false,
+          unlockedAt: null,
+          seen: true,
+          rewardCoins: 500,
+          secret: true,
+          sortOrder: 28,
+        },
+      ],
+      unseenAchievementCount: 0,
     },
   };
 
@@ -62,6 +95,17 @@ describe('PublicProfileModalComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Öffentlich');
     expect(fixture.nativeElement.textContent).toContain('trinity');
     expect(fixture.nativeElement.textContent).toContain('2.500 Coins');
+  });
+
+  it('renders public achievements and hides secret descriptions while locked', () => {
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Achievements');
+    expect(text).toContain('Erster Schritt');
+    expect(text).toContain('Zweite Chance');
+    expect(text).not.toContain('Geheimes Achievement');
+    expect(text).not.toContain('blaue Pille eine verlorene Runde retten');
   });
 
   it('does not render private profile sections or sensitive fields', () => {

@@ -12,6 +12,15 @@
         {{ category.label }}
       </button>
     </div>
+    <button
+      type="button"
+      class="leaderboard-period-toggle"
+      [class.weekly]="activePeriod === 'seven_days'"
+      (click)="togglePeriod()"
+      [attr.aria-label]="activePeriodLabel"
+    >
+      {{ activePeriodLabel }}
+    </button>
   </div>
 
   <div class="leaderboard-search" role="search">
@@ -71,8 +80,8 @@
             *ngFor="let column of activeCategory.columns"
             [ngSwitch]="column.format"
           >
-            <span *ngSwitchCase="'currency'">{{ row.metrics[column.key] | number:'1.0-0' }} Coins</span>
-            <span *ngSwitchCase="'number'">{{ row.metrics[column.key] | number:'1.0-0' }}</span>
+            <span *ngSwitchCase="'currency'">{{ (row.metrics[column.key] ?? 0) | number:'1.0-0' }} Coins</span>
+            <span *ngSwitchCase="'number'">{{ (row.metrics[column.key] ?? 0) | number:'1.0-0' }}</span>
             <span *ngSwitchDefault>{{ row.metrics[column.key] ?? '--' }}</span>
           </td>
         </tr>

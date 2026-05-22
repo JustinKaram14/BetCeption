@@ -34,7 +34,7 @@ describe('LeaderboardComponent', () => {
     component = fixture.componentInstance;
 
     expect(component.loading).toBeTrue();
-    expect(apiMock.getBalanceLeaderboard).toHaveBeenCalledWith({ limit: 100 });
+    expect(apiMock.getBalanceLeaderboard).toHaveBeenCalledWith({ limit: 100, period: 'alltime' });
 
     balance$.next({
       total: 1,
@@ -68,6 +68,32 @@ describe('LeaderboardComponent', () => {
     const searchInput: HTMLInputElement = fixture.nativeElement.querySelector('#leaderboard-player-search');
     expect(searchInput).toBeTruthy();
     expect(searchInput.placeholder).toBe('Spieler suchen...');
+  });
+
+  it('renders one compact period toggle that defaults to alltime', () => {
+    apiMock.getBalanceLeaderboard.and.returnValue(
+      of({
+        total: 0,
+        limit: 100,
+        offset: 0,
+        currentUserRank: null,
+        items: [],
+      }),
+    );
+
+    fixture = TestBed.createComponent(LeaderboardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const toggles: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('.leaderboard-period-toggle');
+    expect(toggles.length).toBe(1);
+    expect(toggles[0].textContent).toContain('Alltime');
+
+    toggles[0].click();
+    fixture.detectChanges();
+
+    expect(component.activePeriod).toBe('seven_days');
+    expect(toggles[0].textContent).toContain('7 Tage');
   });
 
   it('filters players by username without changing their original ranks', () => {
@@ -171,7 +197,7 @@ describe('LeaderboardComponent', () => {
     component.selectCategory('level');
 
     expect(component.activeCategory.id).toBe('level');
-    expect(apiMock.getLevelLeaderboard).toHaveBeenCalledWith({ limit: 100 });
+    expect(apiMock.getLevelLeaderboard).toHaveBeenCalledWith({ limit: 100, period: 'alltime' });
   });
 
   it('keeps the search term when switching tabs and applies it to the new leaderboard', () => {
@@ -260,6 +286,44 @@ describe('LeaderboardComponent', () => {
     component.selectCategory('balance');
 
     expect(apiMock.getBalanceLeaderboard).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches the leaderboard period and reloads the active category', () => {
+    apiMock.getBalanceLeaderboard.and.returnValue(
+      of({
+        total: 1,
+        limit: 100,
+        offset: 0,
+        currentUserRank: null,
+        items: [{ rank: 1, userId: 'u1', username: 'neo', balance: 1500 }],
+      }),
+    );
+
+    fixture = TestBed.createComponent(LeaderboardComponent);
+    component = fixture.componentInstance;
+
+    component.selectPeriod('seven_days');
+
+    expect(component.activePeriod).toBe('seven_days');
+    expect(apiMock.getBalanceLeaderboard).toHaveBeenCalledWith({ limit: 100, period: 'seven_days' });
+  });
+
+  it('maps weekly balance rows to the 7-day metric', () => {
+    apiMock.getBalanceLeaderboard.and.returnValue(
+      of({
+        total: 1,
+        limit: 100,
+        offset: 0,
+        currentUserRank: null,
+        items: [{ rank: 1, userId: 'u1', username: 'neo', balance7d: 250 }],
+      }),
+    );
+
+    fixture = TestBed.createComponent(LeaderboardComponent);
+    component = fixture.componentInstance;
+    component.selectPeriod('seven_days');
+
+    expect(component.rows).toEqual([{ rank: 1, userId: 'u1', username: 'neo', metrics: { balance7d: 250 } }]);
   });
 
   it('shows a fallback error message when the request fails without a payload message', () => {

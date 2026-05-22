@@ -65,6 +65,43 @@
           [progress]="profile.levelProgress"
           orientation="horizontal"
         ></app-level-progress>
+
+        <section class="public-achievements">
+          <div class="public-achievements__heading">
+            <h3>{{ i18n.t('profile.tab.achievements') }}</h3>
+            <span>{{ i18n.t('achievement.publicSubtitle') }}</span>
+          </div>
+          <div class="public-achievements__grid">
+            <article
+              class="public-achievement"
+              *ngFor="let achievement of achievementDisplayItems(); trackBy: trackAchievement"
+              [ngClass]="{
+                'is-unlocked': achievementVisibleUnlocked(achievement),
+                'is-locked': !achievementVisibleUnlocked(achievement),
+                'is-secret': achievement.secret,
+                'has-tiers': achievement.tiers.length > 1
+              }"
+            >
+              <div class="public-achievement__icon">
+                <app-achievement-icon [icon]="achievement.icon" [locked]="!achievementVisibleUnlocked(achievement)"></app-achievement-icon>
+              </div>
+              <div class="public-achievement__copy">
+                <h4>{{ achievementTitle(achievement) }}</h4>
+                <div class="public-achievement__stars" *ngIf="achievement.tiers.length > 1" [attr.aria-label]="achievement.completedTiers + ' / ' + achievement.tiers.length">
+                  <span
+                    *ngFor="let tier of achievement.tiers"
+                    [class.active]="tier.unlocked"
+                  >&#9733;</span>
+                </div>
+                <p *ngIf="achievementDescription(achievement) as description">{{ description }}</p>
+                <div class="public-achievement__progress">
+                  <span [style.--progress]="achievementProgressPercent(achievement) + '%'"></span>
+                  <strong>{{ achievementProgressLabel(achievement) }}</strong>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
       </ng-container>
     </div>
   </section>

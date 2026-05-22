@@ -6,6 +6,7 @@ import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { I18n } from '../../../../../core/i18n/i18n';
 import {
   BalanceLeaderboardItem,
+  LeaderboardPeriod,
   LeaderboardResponse,
   LevelLeaderboardItem,
   WinningsLeaderboardItem,
@@ -49,35 +50,57 @@ export class LeaderboardComponent {
   private readonly pageSize = 100;
   private requestSub: Subscription | null = null;
   private activeCategoryId: LeaderboardCategoryId = 'balance';
+  activePeriod: LeaderboardPeriod = 'alltime';
 
   get categories() {
+    const isWeekly = this.activePeriod === 'seven_days';
     return [
       {
         id: 'balance' as LeaderboardCategoryId,
         label: this.i18n.t('controls.balance'),
-        description: this.i18n.t('leaderboard.balanceDescription'),
-        columns: [{ key: 'balance', label: this.i18n.t('controls.balance'), format: 'currency' }] as LeaderboardColumn[],
+        description: this.i18n.t(isWeekly ? 'leaderboard.balanceWeeklyDescription' : 'leaderboard.balanceDescription'),
+        columns: [
+          {
+            key: isWeekly ? 'balance7d' : 'balance',
+            label: this.i18n.t(isWeekly ? 'leaderboard.balance7d' : 'controls.balance'),
+            format: 'currency',
+          },
+        ] as LeaderboardColumn[],
       },
       {
         id: 'level' as LeaderboardCategoryId,
         label: 'Level',
-        description: this.i18n.t('leaderboard.levelDescription'),
-        columns: [
-          { key: 'level', label: 'Level', format: 'number' },
-          { key: 'xp', label: 'XP', format: 'number' },
-        ] as LeaderboardColumn[],
+        description: this.i18n.t(isWeekly ? 'leaderboard.levelWeeklyDescription' : 'leaderboard.levelDescription'),
+        columns: isWeekly
+          ? [{ key: 'xp7d', label: this.i18n.t('leaderboard.xp7d'), format: 'number' }] as LeaderboardColumn[]
+          : [
+            { key: 'level', label: 'Level', format: 'number' },
+            { key: 'xp', label: 'XP', format: 'number' },
+          ] as LeaderboardColumn[],
       },
       {
         id: 'winnings' as LeaderboardCategoryId,
         label: this.i18n.t('leaderboard.winnings'),
-        description: this.i18n.t('leaderboard.winningsDescription'),
-        columns: [{ key: 'netWinnings7d', label: this.i18n.t('leaderboard.netWinnings'), format: 'currency' }] as LeaderboardColumn[],
+        description: this.i18n.t(isWeekly ? 'leaderboard.winningsWeeklyDescription' : 'leaderboard.winningsDescription'),
+        columns: [
+          {
+            key: isWeekly ? 'netWinnings7d' : 'netWinnings',
+            label: this.i18n.t(isWeekly ? 'leaderboard.netWinnings7d' : 'leaderboard.netWinnings'),
+            format: 'currency',
+          },
+        ] as LeaderboardColumn[],
       },
     ];
   }
 
   get activeCategory() {
     return this.categories.find((category) => category.id === this.activeCategoryId) ?? this.categories[0];
+  }
+
+  get activePeriodLabel() {
+    return this.i18n.t(this.activePeriod === 'seven_days'
+      ? 'leaderboard.periodSevenDays'
+      : 'leaderboard.periodAlltime');
   }
 
   loading = false;
@@ -107,6 +130,16 @@ export class LeaderboardComponent {
     }
     this.activeCategoryId = next.id;
     this.loadCategory(id);
+  }
+
+  selectPeriod(period: LeaderboardPeriod) {
+    if (this.activePeriod === period) return;
+    this.activePeriod = period;
+    this.loadCategory(this.activeCategory.id);
+  }
+
+  togglePeriod() {
+    this.selectPeriod(this.activePeriod === 'alltime' ? 'seven_days' : 'alltime');
   }
 
   updateSearch(value: string) {
@@ -149,16 +182,16 @@ export class LeaderboardComponent {
   private createRequest(id: LeaderboardCategoryId): Observable<LeaderboardState> {
     if (id === 'balance') {
       return this.api
-        .getBalanceLeaderboard({ limit: this.pageSize })
+        .getBalanceLeaderboard({ limit: this.pageSize, period: this.activePeriod })
         .pipe(map((response) => this.mapBalanceResponse(response)));
     }
     if (id === 'level') {
       return this.api
-        .getLevelLeaderboard({ limit: this.pageSize })
+        .getLevelLeaderboard({ limit: this.pageSize, period: this.activePeriod })
         .pipe(map((response) => this.mapLevelResponse(response)));
     }
     return this.api
-      .getWinningsLeaderboard({ limit: this.pageSize })
+      .getWinningsLeaderboard({ limit: this.pageSize, period: this.activePeriod })
       .pipe(map((response) => this.mapWinningsResponse(response)));
   }
 
@@ -168,7 +201,9 @@ export class LeaderboardComponent {
         rank: item.rank,
         userId: item.userId,
         username: item.username,
-        metrics: { balance: item.balance },
+        metrics: this.activePeriod === 'seven_days'
+          ? { balance7d: item.balance7d ?? 0 }
+          : { balance: item.balance ?? 0 },
       })),
       currentUserRank: response.currentUserRank,
     };
@@ -180,10 +215,12 @@ export class LeaderboardComponent {
         rank: item.rank,
         userId: item.userId,
         username: item.username,
-        metrics: {
-          level: item.level,
-          xp: item.xp,
-        },
+        metrics: this.activePeriod === 'seven_days'
+          ? { xp7d: item.xp7d ?? 0 }
+          : {
+            level: item.level ?? 0,
+            xp: item.xp ?? 0,
+          },
       })),
       currentUserRank: response.currentUserRank,
     };
@@ -195,9 +232,9 @@ export class LeaderboardComponent {
         rank: item.rank,
         userId: item.userId,
         username: item.username,
-        metrics: {
-          netWinnings7d: item.netWinnings7d,
-        },
+        metrics: this.activePeriod === 'seven_days'
+          ? { netWinnings7d: item.netWinnings7d ?? 0 }
+          : { netWinnings: item.netWinnings ?? 0 },
       })),
       currentUserRank: response.currentUserRank,
     };

@@ -166,6 +166,21 @@ describe('BetceptionApi', () => {
     req.flush({ claimedAmount: 100 });
   });
 
+  it('calls GET /achievements for listAchievements()', () => {
+    service.listAchievements().subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/achievements'));
+    expect(req.request.method).toBe('GET');
+    req.flush({ items: [], unseenCount: 0 });
+  });
+
+  it('calls POST /achievements/seen for markAchievementsSeen()', () => {
+    service.markAchievementsSeen().subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/achievements/seen'));
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush({ items: [], unseenCount: 0 });
+  });
+
   it('calls GET /shop/powerups for listPowerups()', () => {
     service.listPowerups().subscribe();
     const req = httpMock.expectOne((r) => r.url.endsWith('/shop/powerups'));
@@ -188,9 +203,10 @@ describe('BetceptionApi', () => {
   });
 
   it('calls GET /leaderboard/balance for getBalanceLeaderboard()', () => {
-    service.getBalanceLeaderboard().subscribe();
+    service.getBalanceLeaderboard({ period: 'seven_days' }).subscribe();
     const req = httpMock.expectOne((r) => r.url.includes('/leaderboard/balance'));
     expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('period')).toBe('seven_days');
     req.flush({ items: [] });
   });
 

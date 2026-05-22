@@ -8,7 +8,7 @@ import {
   Output,
   inject,
 } from '@angular/core';
-import { DecimalPipe, NgFor, NgIf } from '@angular/common';
+import { DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -31,8 +31,13 @@ import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 import { CrateInventoryComponent } from '../crate-inventory/crate-inventory';
 import { isValidUsername, normalizeUsername } from '../../../../../shared/validation/username';
+import { AchievementIconComponent } from '../../../../../shared/ui/achievement-icon/achievement-icon';
+import {
+  AchievementDisplayItem,
+  buildAchievementDisplayItems,
+} from '../../../../../shared/achievements/achievement-display';
 
-type ProfileTab = 'transactions' | 'crates' | 'profile';
+type ProfileTab = 'transactions' | 'achievements' | 'crates' | 'profile';
 type AccountEditMode = 'username' | 'email' | 'password';
 type AvatarIconOption = {
   id: ProfileAvatarIcon;
@@ -72,17 +77,19 @@ const AVATAR_COLORS: AvatarColorOption[] = [
 @Component({
   selector: 'app-profile-modal',
   standalone: true,
-  imports: [NgIf, NgFor, FormsModule, DecimalPipe, LevelProgressComponent, CrateInventoryComponent],
+  imports: [NgIf, NgFor, NgClass, FormsModule, DecimalPipe, LevelProgressComponent, CrateInventoryComponent, AchievementIconComponent],
   templateUrl: './profile-modal.html',
   styleUrl: './profile-modal.css',
 })
 export class ProfileModalComponent implements OnInit, OnDestroy {
   @Input() userId: string | null | undefined = null;
   @Input() unseenCrateCount = 0;
+  @Input() unseenAchievementCount = 0;
 
   @Output() closed = new EventEmitter<void>();
   @Output() balanceUpdated = new EventEmitter<number>();
   @Output() unseenCrateCountChange = new EventEmitter<number>();
+  @Output() unseenAchievementCountChange = new EventEmitter<number>();
 
   private readonly api = inject(BetceptionApi);
   private readonly authFacade = inject(AuthFacade);
@@ -94,6 +101,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   readonly tabs: Array<{ id: ProfileTab; labelKey: Parameters<I18n['t']>[0] }> = [
     { id: 'profile', labelKey: 'profile.tab.profile' },
     { id: 'crates', labelKey: 'profile.tab.crates' },
+    { id: 'achievements', labelKey: 'profile.tab.achievements' },
     { id: 'transactions', labelKey: 'profile.tab.transactions' },
   ];
 
@@ -155,6 +163,9 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     if (tab === 'profile' && !this.profile && !this.profileLoading) {
       this.loadProfile();
     }
+    if (tab === 'achievements') {
+      this.refreshAchievements();
+    }
   }
 
   close(): void {
@@ -170,7 +181,10 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   showTabNotice(tab: ProfileTab): boolean {
-    return tab === 'crates' && this.unseenCrateCount > 0;
+    return (
+      (tab === 'crates' && this.unseenCrateCount > 0) ||
+      (tab === 'achievements' && this.unseenAchievementCount > 0)
+    );
   }
 
   onCrateBalanceUpdated(balance: number): void {
@@ -275,6 +289,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       .subscribe({
         next: ({ user }) => {
           this.profile = user;
+          this.updateUnseenAchievementCount(user);
           this.profileForm = {
             username: user.username,
             email: user.email,
@@ -571,9 +586,60 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
         return this.i18n.t('profile.transaction.reward');
       case WalletTransactionKind.CRATE_REWARD:
         return this.i18n.t('profile.transaction.crateReward');
+      case WalletTransactionKind.ACHIEVEMENT_REWARD:
+        return this.i18n.t('profile.transaction.achievementReward');
       default:
         return kind;
     }
+  }
+
+  achievementDisplayItems(): AchievementDisplayItem[] {
+    return buildAchievementDisplayItems(this.profile?.achievements ?? []);
+  }
+
+  trackAchievement(_index: number, achievement: AchievementDisplayItem): string {
+    return achievement.code;
+  }
+
+  achievementTitle(achievement: AchievementDisplayItem): string {
+    return this.i18n.t(achievement.displayTitleKey);
+  }
+
+  achievementDescription(achievement: AchievementDisplayItem): string {
+    if (achievement.secret && !achievement.unlocked) {
+      return '';
+    }
+    return this.i18n.t(achievement.displayDescriptionKey);
+  }
+
+  achievementVisibleUnlocked(achievement: AchievementDisplayItem): boolean {
+    return achievement.unlocked || (achievement.tiers.length > 1 && achievement.completedTiers > 0);
+  }
+
+  achievementProgressPercent(achievement: AchievementDisplayItem): number {
+    if (achievement.displayTarget <= 0) return achievement.unlocked ? 100 : 0;
+    return Math.max(0, Math.min(100, (achievement.displayProgress / achievement.displayTarget) * 100));
+  }
+
+  achievementProgressLabel(achievement: AchievementDisplayItem): string {
+    return `${achievement.displayProgress} / ${achievement.displayTarget}`;
+  }
+
+  achievementRewardLabel(achievement: AchievementDisplayItem): string {
+    if (achievement.tiers.length > 1) {
+      if (achievement.unlocked) {
+        return this.i18n.t('achievement.rewardComplete');
+      }
+      return this.i18n.t('achievement.rewardNext', {
+        amount: this.formatCoins(achievement.currentTier.rewardCoins),
+      });
+    }
+    if (achievement.unlocked) {
+      return this.i18n.t('achievement.rewardUnlocked', {
+        amount: this.formatCoins(achievement.rewardCoins),
+      });
+    }
+    return this.i18n.t('achievement.reward', { amount: this.formatCoins(achievement.rewardCoins) });
   }
 
   formatSignedCoins(value: number): string {
@@ -697,6 +763,35 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       }
     }
     return this.i18n.t('home.toast.actionFailed');
+  }
+
+  private refreshAchievements(): void {
+    const request =
+      this.unseenAchievementCount > 0 || this.profile?.achievements?.some((achievement) => achievement.unlocked && !achievement.seen)
+        ? this.api.markAchievementsSeen()
+        : this.api.listAchievements();
+
+    request
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          if (this.profile) {
+            this.profile = {
+              ...this.profile,
+              achievements: response.items,
+              unseenAchievementCount: response.unseenCount,
+            };
+          }
+          this.unseenAchievementCount = response.unseenCount;
+          this.unseenAchievementCountChange.emit(response.unseenCount);
+        },
+      });
+  }
+
+  private updateUnseenAchievementCount(profile: OwnProfile): void {
+    const count = profile.unseenAchievementCount ?? profile.achievements.filter((achievement) => achievement.unlocked && !achievement.seen).length;
+    this.unseenAchievementCount = count;
+    this.unseenAchievementCountChange.emit(count);
   }
 
   private lockBackgroundScroll(): void {

@@ -80,4 +80,5 @@ export enum WalletTransactionKind {
   ADJUSTMENT = 'adjustment',
   REWARD = 'reward',
   CRATE_REWARD = 'crate_reward',
+  ACHIEVEMENT_REWARD = 'achievement_reward',
 }

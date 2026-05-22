@@ -21,6 +21,9 @@ export class ToastContainerComponent {
   }
 
   labelFor(toast: ToastMessage) {
+    if (toast.label) {
+      return toast.label;
+    }
     if (toast.type === 'error') {
       return this.i18n.t('toast.error');
     }

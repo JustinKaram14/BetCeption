@@ -20,6 +20,8 @@ import { AddEmailVerification1700000000014 } from './migrations/1700000000014-Ad
 import { AddPasswordTokens1700000000015 } from './migrations/1700000000015-AddPasswordTokens.js';
 import { AddPasswordChangedAt1700000000016 } from './migrations/1700000000016-AddPasswordChangedAt.js';
 import { AddUserDeletedAt1700000000017 } from './migrations/1700000000017-AddUserDeletedAt.js';
+import { AddAchievements1700000000018 } from './migrations/1700000000018-AddAchievements.js';
+import { AddWeeklyLeaderboards1700000000019 } from './migrations/1700000000019-AddWeeklyLeaderboards.js';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -48,6 +50,8 @@ export const AppDataSource = new DataSource({
     AddPasswordTokens1700000000015,
     AddPasswordChangedAt1700000000016,
     AddUserDeletedAt1700000000017,
+    AddAchievements1700000000018,
+    AddWeeklyLeaderboards1700000000019,
   ],
   synchronize: false,
   logging: env.nodeEnv === 'development',

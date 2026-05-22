@@ -6,12 +6,14 @@ import { WalletTransaction } from '../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../entity/enums.js';
 import { decimalToCents, centsToDecimal } from '../../utils/money.js';
 import {
+  calculatePowerPillPriceCents,
   isPowerPillCode,
   POWER_PILL_USES,
   POWER_PILL_WHERE,
   serializeActivePowerup,
   serializePowerupType,
 } from '../powerups/power-pills.js';
+import { applyAchievementProgress } from '../achievements/achievements.service.js';
 import type { PurchasePowerupInput } from './shop.schema.js';
 
 class ShopError extends Error {
@@ -40,7 +42,7 @@ export async function listPowerups(_req: Request, res: Response) {
   });
 
   return res.json({
-    items: powerups.map(serializePowerupType),
+    items: powerups.map((powerup) => serializePowerupType(powerup)),
   });
 }
 
@@ -58,9 +60,6 @@ export async function purchasePowerup(
         throw new ShopError(404, 'POWERUP_NOT_FOUND', 'Power-up not found');
       }
 
-      const unitPriceCents = decimalToCents(type.price);
-      const totalPriceCents = unitPriceCents * BigInt(quantity);
-
       const userRepo = manager.getRepository(User);
       const user = await userRepo.findOne({
         where: { id: userId },
@@ -77,6 +76,8 @@ export async function purchasePowerup(
         throw new ShopError(409, 'ACTIVE_POWERUP_SLOT_OCCUPIED', 'A power pill is already active');
       }
 
+      const unitPriceCents = calculatePowerPillPriceCents(type, user);
+      const totalPriceCents = unitPriceCents * BigInt(quantity);
       const balanceCents = decimalToCents(user.balance);
       if (balanceCents < totalPriceCents) {
         throw new ShopError(400, 'INSUFFICIENT_FUNDS', 'Insufficient balance');
@@ -97,9 +98,15 @@ export async function purchasePowerup(
       });
       await walletRepo.save(walletTx);
 
+      const unlockedAchievements = await applyAchievementProgress(manager, user, [
+        { code: 'PILL_TRIGGER_1', progress: 1 },
+      ]);
+      await userRepo.save(user);
+
       return {
         newBalance: user.balance,
         activePowerup: serializeActivePowerup(user),
+        unlockedAchievements,
       };
     });
 
@@ -108,6 +115,7 @@ export async function purchasePowerup(
       balance: Number(result.newBalance),
       quantity: 0,
       activePowerup: result.activePowerup,
+      unlockedAchievements: result.unlockedAchievements,
     });
   } catch (error) {
     return handleShopError(res, error);

@@ -67,24 +67,6 @@
 
     <div class="message error" *ngIf="error">{{ error }}</div>
 
-    <!-- Level-Up Crate notification -->
-    <div class="levelup-crate-toast" *ngIf="levelUpCrate">
-      <div class="levelup-crate-inner">
-        <div class="levelup-crate-icon" [attr.data-tier]="levelUpCrate.tier" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <path d="M4 8 12 4l8 4-8 4-8-4Z" />
-            <path d="M4 8v8l8 4 8-4V8" />
-            <path d="M12 12v8" />
-          </svg>
-        </div>
-        <div class="levelup-crate-text">
-          <strong>{{ i18n.t('crate.levelUpTitle') }}</strong>
-          <span>{{ i18n.t('crate.levelUpReceived', { tier: levelUpCrate.tierLabel }) }}</span>
-        </div>
-        <button class="btn levelup-crate-dismiss" (click)="onDismissLevelUpCrate()" [attr.aria-label]="i18n.t('common.close')">X</button>
-      </div>
-    </div>
-
     <!-- Round-over overlay -->
     <div
       class="round-over-overlay"
@@ -147,16 +129,27 @@
         <div class="round-over-dealer" *ngIf="roundOutcome?.dealerInfo">
           {{ roundOutcome?.dealerInfo }}
         </div>
+        <div class="round-over-breakdown" *ngIf="roundOutcome?.mainHeadline || hasBetceptionPayout">
+          <div
+            class="round-over-breakdown__item"
+            *ngIf="roundOutcome?.mainHeadline"
+            [ngClass]="roundOutcome?.mainTone"
+          >
+            <span>{{ i18n.t('blackjack.mainGame') }}</span>
+            <strong>{{ roundOutcome?.mainHeadline }}</strong>
+            <em *ngIf="roundOutcome?.mainDetail">{{ roundOutcome?.mainDetail }}</em>
+          </div>
+          <div class="round-over-breakdown__item won" *ngIf="hasBetceptionPayout">
+            <span>{{ i18n.t('betception.betceptionPayout') }}</span>
+            <strong>{{ betceptionPayoutDisplay }}</strong>
+          </div>
+        </div>
         <div class="round-over-slot-total" *ngIf="finalPayoutAmount > 0" [ngClass]="payoutTier">
-          <span>{{ i18n.t('betception.finalPayout') }}</span>
+          <span>{{ i18n.t('betception.netResult') }}</span>
           <strong>{{ animatedPayoutDisplay }}</strong>
         </div>
         <div class="round-over-amount" *ngIf="roundOutcome?.detail && finalPayoutAmount <= 0">
           {{ roundOutcome?.detail }}
-        </div>
-        <div class="round-over-betception" *ngIf="hasBetceptionPayout">
-          <span>{{ i18n.t('betception.betceptionPayout') }}</span>
-          <strong>{{ betceptionPayoutDisplay }}</strong>
         </div>
         <div class="round-over-actions">
           <button class="btn btn-neue-runde" (click)="onNextRound()">{{ i18n.t('blackjack.newRound') }}</button>
@@ -198,6 +191,8 @@
     (equip)="onEquipPowerup($event)"
     (close)="onClosePowerupMenu()"
   ></app-powerup-menu>
+
+  <app-toast-container></app-toast-container>
 
   <div class="betception-modal" *ngIf="showBetceptionMenu" (click)="onCloseBetceptionMenu()">
     <div class="betception-modal__card" (click)="$event.stopPropagation()">
@@ -284,7 +279,7 @@
             <strong>{{ formatCoins(currentCardMenuBetAmount) }}</strong>
           </div>
           <div class="betception-chip-row">
-            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddCardMenuBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddCardMenuBet(chip)" [disabled]="!canAddSideBetChip(chip, 'CARD')">{{ chip }}</button>
           </div>
           <button class="btn betception-clear" type="button" (click)="onClearSelectedCardMenuBet()" [disabled]="currentCardMenuBetAmount <= 0">{{ i18n.t('betception.clearSelection') }}</button>
         </section>
@@ -299,7 +294,7 @@
             </button>
           </div>
           <div class="betception-chip-row">
-            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddDealerBustBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddDealerBustBet(chip)" [disabled]="!canAddSideBetChip(chip, 'DEALER_BUST')">{{ chip }}</button>
           </div>
           <button class="btn betception-clear" type="button" (click)="onClearDealerBustBet()" [disabled]="dealerBustBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
         </section>
@@ -313,7 +308,7 @@
             <b class="betception-stake-badge" *ngIf="pillTriggerBetAmount > 0">{{ formatCoins(pillTriggerBetAmount) }}</b>
           </div>
           <div class="betception-chip-row">
-            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddPillTriggerBet(chip)" [disabled]="!activePowerup || !canAddSideBetChip(chip)">{{ chip }}</button>
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddPillTriggerBet(chip)" [disabled]="!activePowerup || !canAddSideBetChip(chip, 'PILL_TRIGGER')">{{ chip }}</button>
           </div>
           <button class="btn betception-clear" type="button" (click)="onClearPillTriggerBet()" [disabled]="pillTriggerBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
         </section>
@@ -326,7 +321,7 @@
             <b class="betception-stake-badge" *ngIf="blackjackBetAmount > 0">{{ formatCoins(blackjackBetAmount) }}</b>
           </div>
           <div class="betception-chip-row">
-            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddBlackjackBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddBlackjackBet(chip)" [disabled]="!canAddSideBetChip(chip, 'PLAYER_BLACKJACK')">{{ chip }}</button>
           </div>
           <button class="btn betception-clear" type="button" (click)="onClearBlackjackBet()" [disabled]="blackjackBetAmount <= 0">{{ i18n.t('controls.reset') }}</button>
         </section>
@@ -347,7 +342,7 @@
             </button>
           </div>
           <div class="betception-chip-row">
-            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddSplitCountBet(chip)" [disabled]="!canAddSideBetChip(chip)">{{ chip }}</button>
+            <button *ngFor="let chip of betceptionChips" type="button" (click)="onAddSplitCountBet(chip)" [disabled]="!canAddSideBetChip(chip, 'SPLIT_COUNT')">{{ chip }}</button>
           </div>
           <button class="btn betception-clear" type="button" (click)="onClearSelectedSplitCountBet()" [disabled]="currentSplitCountBetAmount <= 0">{{ i18n.t('betception.clearSelection') }}</button>
         </section>

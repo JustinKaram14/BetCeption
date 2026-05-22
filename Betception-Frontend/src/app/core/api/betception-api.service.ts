@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import {
   BalanceLeaderboardItem,
+  AchievementsResponse,
   ConsumePowerupRequest,
   ConsumePowerupResponse,
   PeekCardResponse,
@@ -227,5 +228,13 @@ export class BetceptionApi {
 
   openCrate(crateId: string) {
     return this.http.post<OpenCrateResponse>(`/crates/${crateId}/open`);
+  }
+
+  listAchievements() {
+    return this.http.get<AchievementsResponse>('/achievements');
+  }
+
+  markAchievementsSeen() {
+    return this.http.post<AchievementsResponse>('/achievements/seen', {});
   }
 }

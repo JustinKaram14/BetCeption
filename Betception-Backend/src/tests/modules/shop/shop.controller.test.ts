@@ -1,6 +1,7 @@
 import { listPowerups, purchasePowerup } from '../../../modules/shop/shop.controller.js';
 import { PowerupType } from '../../../entity/PowerupType.js';
 import { User } from '../../../entity/User.js';
+import { UserAchievement } from '../../../entity/UserAchievement.js';
 import { WalletTransaction } from '../../../entity/WalletTransaction.js';
 import { WalletTransactionKind } from '../../../entity/enums.js';
 import {
@@ -87,7 +88,7 @@ describe('shop.controller', () => {
       } as PowerupType;
       const user = {
         id: '1',
-        level: 5,
+        level: 1,
         balance: '500.00',
         activePowerupType: null,
         activePowerupUsesRemaining: 0,
@@ -104,11 +105,17 @@ describe('shop.controller', () => {
         create: jest.fn().mockImplementation((data) => data),
         save: jest.fn().mockResolvedValue(undefined),
       });
+      const achievementRepo = createMockRepository<UserAchievement>({
+        find: jest.fn().mockResolvedValue([]),
+        create: jest.fn((data) => ({ id: `row-${data.achievementCode}`, ...data })),
+        save: jest.fn((entity) => Promise.resolve(entity)),
+      });
 
       const transactionRepos = new Map<any, any>();
       transactionRepos.set(PowerupType, typeRepo);
       transactionRepos.set(User, userRepo);
       transactionRepos.set(WalletTransaction, walletRepo);
+      transactionRepos.set(UserAchievement, achievementRepo);
       mockAppDataSourceTransaction(transactionRepos);
 
       const req = createMockRequest({
@@ -121,7 +128,7 @@ describe('shop.controller', () => {
 
       expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          balance: '200.00',
+          balance: '500.00',
           activePowerupType: powerupType,
           activePowerupUsesRemaining: 3,
         }),
@@ -132,7 +139,7 @@ describe('shop.controller', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         message: 'Power-up purchased',
-        balance: 200,
+        balance: 500,
         quantity: 0,
         activePowerup: {
           type: {
@@ -146,7 +153,76 @@ describe('shop.controller', () => {
           },
           usesRemaining: 3,
         },
+        unlockedAchievements: [
+          expect.objectContaining({
+            code: 'PILL_TRIGGER_1',
+            unlocked: true,
+          }),
+        ],
       });
+    });
+
+    it('scales the purchase price with level and bankroll', async () => {
+      const powerupType = {
+        id: 2,
+        code: 'BLUE_PILL',
+        title: 'Blue Pill',
+        description: '1:8 chance to trigger safe-round protection (no loss).',
+        price: '300.00',
+        minLevel: 1,
+        effectJson: { color: 'blue', uses: 3 },
+      } as PowerupType;
+      const user = {
+        id: '1',
+        level: 5,
+        balance: '20000.00',
+        activePowerupType: null,
+        activePowerupUsesRemaining: 0,
+      } as User;
+
+      const typeRepo = createMockRepository<PowerupType>({
+        findOne: jest.fn().mockResolvedValue(powerupType),
+      });
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const walletRepo = createMockRepository<WalletTransaction>({
+        create: jest.fn().mockImplementation((data) => data),
+        save: jest.fn().mockResolvedValue(undefined),
+      });
+      const achievementRepo = createMockRepository<UserAchievement>({
+        find: jest.fn().mockResolvedValue([]),
+        create: jest.fn((data) => ({ id: `row-${data.achievementCode}`, ...data })),
+        save: jest.fn((entity) => Promise.resolve(entity)),
+      });
+
+      mockAppDataSourceTransaction(new Map<any, any>([
+        [PowerupType, typeRepo],
+        [User, userRepo],
+        [WalletTransaction, walletRepo],
+        [UserAchievement, achievementRepo],
+      ]));
+
+      const req = createMockRequest({
+        user: { sub: '1' } as any,
+        body: { typeId: 2, quantity: 1 },
+      });
+      const res = createMockResponse();
+
+      await purchasePowerup(req as any, res);
+
+      expect(userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          balance: '19300.00',
+          activePowerupType: powerupType,
+          activePowerupUsesRemaining: 3,
+        }),
+      );
+      expect(walletRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: '-1000.00', kind: WalletTransactionKind.ADJUSTMENT }),
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
     });
 
     it('returns 400 when user does not have enough funds', async () => {
