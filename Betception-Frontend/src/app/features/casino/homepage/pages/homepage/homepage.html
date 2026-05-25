@@ -93,12 +93,35 @@
   <div class="verify-modal" (click)="$event.stopPropagation()">
     <div class="verify-modal__icon">✉</div>
     <h2 class="verify-modal__title">E-Mail bestätigen</h2>
-    <p class="verify-modal__text">
-      Wir haben eine Bestätigungsmail an<br>
-      <strong>{{ verifyEmailAddress }}</strong><br>
-      gesendet. Bitte klicke auf den Link in der Mail, um dich einloggen zu können.
-    </p>
-    <p class="verify-modal__hint">Keine Mail erhalten? Prüfe deinen Spam-Ordner.</p>
+
+    <!-- After registration: we just sent the email -->
+    <ng-container *ngIf="verifyEmailMode === 'registered'">
+      <p class="verify-modal__text">
+        Wir haben eine Bestätigungsmail an<br>
+        <strong>{{ verifyEmailAddress }}</strong><br>
+        gesendet. Bitte klicke auf den Link in der Mail, um dich einloggen zu können.
+      </p>
+      <p class="verify-modal__hint">Keine Mail erhalten? Prüfe deinen Spam-Ordner.</p>
+    </ng-container>
+
+    <!-- After login blocked: no email was auto-sent, offer resend -->
+    <ng-container *ngIf="verifyEmailMode === 'login-blocked'">
+      <p class="verify-modal__text">
+        Deine E-Mail-Adresse<br>
+        <strong>{{ verifyEmailAddress }}</strong><br>
+        wurde noch nicht bestätigt. Bitte klicke auf den Link in der Bestätigungsmail.
+      </p>
+      <p class="verify-modal__hint" *ngIf="!resendDone">Keine Mail erhalten? Prüfe deinen Spam-Ordner oder lass sie erneut senden.</p>
+      <p class="verify-modal__hint verify-modal__hint--success" *ngIf="resendDone">✓ Neue Bestätigungsmail wurde gesendet.</p>
+      <button
+        class="btn verify-modal__btn verify-modal__btn--secondary"
+        type="button"
+        [disabled]="resendLoading || resendDone"
+        (click)="resendVerificationEmail()">
+        {{ resendLoading ? 'Wird gesendet…' : resendDone ? 'Mail gesendet' : 'Bestätigungsmail erneut senden' }}
+      </button>
+    </ng-container>
+
     <button class="btn verify-modal__btn" type="button" (click)="closeVerifyEmailModal()">Verstanden</button>
   </div>
 </div>

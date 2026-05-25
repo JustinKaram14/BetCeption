@@ -62,6 +62,10 @@ export class HomepageComponent {
   showProfileModal = false;
   showVerifyEmailModal = false;
   verifyEmailAddress = '';
+  /** 'registered' = email was just sent; 'login-blocked' = login rejected, resend available */
+  verifyEmailMode: 'registered' | 'login-blocked' = 'registered';
+  resendLoading = false;
+  resendDone = false;
   publicProfileUserId: string | null = null;
   walletSummary: WalletSummary | null = null;
   unseenCrateCount = 0;
@@ -117,6 +121,8 @@ export class HomepageComponent {
           const code = error?.error?.code;
           if (code === 'EMAIL_NOT_VERIFIED') {
             this.verifyEmailAddress = payload.email;
+            this.verifyEmailMode = 'login-blocked';
+            this.resendDone = false;
             this.showVerifyEmailModal = true;
           } else {
             this.toast.error(this.extractErrorMessage(error));
@@ -136,6 +142,8 @@ export class HomepageComponent {
       .subscribe({
         next: () => {
           this.verifyEmailAddress = payload.email;
+          this.verifyEmailMode = 'registered';
+          this.resendDone = false;
           this.showVerifyEmailModal = true;
           this.authLoading = false;
         },
@@ -148,6 +156,23 @@ export class HomepageComponent {
 
   closeVerifyEmailModal() {
     this.showVerifyEmailModal = false;
+  }
+
+  resendVerificationEmail() {
+    if (!this.verifyEmailAddress || this.resendLoading || this.resendDone) return;
+    this.resendLoading = true;
+    this.authFacade.resendVerification(this.verifyEmailAddress)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.resendLoading = false;
+          this.resendDone = true;
+        },
+        error: () => {
+          this.resendLoading = false;
+          this.toast.error('Fehler beim Senden der Bestätigungsmail. Bitte versuche es erneut.');
+        },
+      });
   }
 
   onLogout() {

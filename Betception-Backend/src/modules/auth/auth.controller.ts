@@ -270,6 +270,10 @@ export async function confirmPasswordChange(
     passwordChangeToken: null,
     passwordChangeTokenExpiresAt: null,
     passwordChangedAt: new Date(),
+    // The change-password link is delivered by e-mail, so this proves address ownership.
+    emailVerified: true,
+    emailVerificationToken: null,
+    emailVerificationTokenExpiresAt: null,
   });
   await sessionRepo.createQueryBuilder().delete().where('user_id = :id', { id: user.id }).execute();
 
@@ -331,6 +335,11 @@ export async function resetPassword(
     passwordResetToken: null,
     passwordResetTokenExpiresAt: null,
     passwordChangedAt: new Date(),
+    // Clicking a password-reset link proves ownership of the e-mail address,
+    // so treat it as implicit e-mail verification.
+    emailVerified: true,
+    emailVerificationToken: null,
+    emailVerificationTokenExpiresAt: null,
   });
   await sessionRepo.createQueryBuilder().delete().where('user_id = :id', { id: user.id }).execute();
 
