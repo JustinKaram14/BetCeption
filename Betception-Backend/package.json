@@ -65,7 +65,7 @@
     "jest": "^30.4.2",
     "supertest": "^6.3.4",
     "testcontainers": "^10.10.3",
-    "ts-jest": "^29.4.9",
+    "ts-jest": "^29.4.11",
     "tsx": "^4.22.3",
     "typescript": "^5.9.3"
   },
