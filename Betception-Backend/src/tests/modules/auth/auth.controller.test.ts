@@ -322,6 +322,103 @@ describe('auth.controller', () => {
       expect(res.json).toHaveBeenCalledWith({ accessToken: 'access-token' });
     });
 
+    it('keeps the previous refresh session briefly for concurrent browser refreshes', async () => {
+      const token = 'refresh-token';
+      const hashed = hashToken(token);
+      const user = { id: '1', email: 'user@example.com', username: 'player' } as User;
+      const session = {
+        id: '10',
+        user,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        refreshToken: hashed,
+        userAgent: 'old-agent',
+        ip: '127.0.0.1',
+      } as unknown as Session;
+
+      const sessionRepo = createMockRepository<Session>({
+        findOne: jest.fn().mockResolvedValue(session),
+        save: jest.fn().mockImplementation(async (value) => value),
+      });
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      const repoMap = new Map<any, any>();
+      repoMap.set(Session, sessionRepo);
+      repoMap.set(User, userRepo);
+      mockAppDataSourceRepositories(repoMap);
+
+      jest.spyOn(jwtUtils, 'verifyRefresh').mockResolvedValue({ sub: '1' } as any);
+      jest.spyOn(jwtUtils, 'signAccess').mockResolvedValue('access-token');
+      jest.spyOn(jwtUtils, 'signRefresh').mockResolvedValue('new-refresh-token');
+
+      const before = Date.now();
+      const req = createMockRequest({
+        cookies: { refresh_token: token },
+        headers: { 'user-agent': 'new-agent' },
+        ip: '127.0.0.2',
+      });
+      const res = createMockResponse();
+
+      await refresh(req as any, res);
+
+      expect(sessionRepo.save).toHaveBeenCalledTimes(2);
+      const [oldSession] = sessionRepo.save.mock.calls[0];
+      const [newSession] = sessionRepo.save.mock.calls[1];
+      expect(oldSession).toEqual(expect.objectContaining({
+        refreshToken: hashed,
+      }));
+      expect((oldSession as Session).expiresAt.getTime()).toBeGreaterThanOrEqual(before);
+      expect((oldSession as Session).expiresAt.getTime()).toBeLessThanOrEqual(before + 31_000);
+      expect(newSession).toEqual(expect.objectContaining({
+        refreshToken: hashToken('new-refresh-token'),
+        userAgent: 'new-agent',
+        ip: '127.0.0.2',
+      }));
+    });
+
+    it('does not extend an already shortened previous refresh session', async () => {
+      const token = 'refresh-token';
+      const hashed = hashToken(token);
+      const user = { id: '1', email: 'user@example.com', username: 'player' } as User;
+      const existingGraceExpiresAt = new Date(Date.now() + 5_000);
+      const session = {
+        id: '10',
+        user,
+        expiresAt: existingGraceExpiresAt,
+        refreshToken: hashed,
+        userAgent: 'old-agent',
+        ip: '127.0.0.1',
+      } as unknown as Session;
+
+      const sessionRepo = createMockRepository<Session>({
+        findOne: jest.fn().mockResolvedValue(session),
+        save: jest.fn().mockImplementation(async (value) => value),
+      });
+      const userRepo = createMockRepository<User>({
+        findOne: jest.fn().mockResolvedValue(user),
+      });
+      const repoMap = new Map<any, any>();
+      repoMap.set(Session, sessionRepo);
+      repoMap.set(User, userRepo);
+      mockAppDataSourceRepositories(repoMap);
+
+      jest.spyOn(jwtUtils, 'verifyRefresh').mockResolvedValue({ sub: '1' } as any);
+      jest.spyOn(jwtUtils, 'signAccess').mockResolvedValue('access-token');
+      jest.spyOn(jwtUtils, 'signRefresh').mockResolvedValue('new-refresh-token');
+
+      const req = createMockRequest({
+        cookies: { refresh_token: token },
+        headers: { 'user-agent': 'new-agent' },
+        ip: '127.0.0.2',
+      });
+      const res = createMockResponse();
+
+      await refresh(req as any, res);
+
+      const [oldSession] = sessionRepo.save.mock.calls[0];
+      expect((oldSession as Session).expiresAt).toBe(existingGraceExpiresAt);
+    });
+
     it('rejects missing refresh tokens', async () => {
       const req = createMockRequest();
       const res = createMockResponse();

@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import type { Request, Response } from 'express';
-import { IsNull } from 'typeorm';
+import { IsNull, LessThanOrEqual } from 'typeorm';
 import { AppDataSource } from '../../db/data-source.js';
 import { User } from '../../entity/User.js';
 import { Session } from '../../entity/Session.js';
@@ -17,6 +17,7 @@ const PASSWORD_RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_PATH = '/auth/refresh';
 const REFRESH_TTL_MS = env.jwt.refreshTtlDays * 24 * 60 * 60 * 1000;
+const REFRESH_ROTATION_GRACE_MS = 30_000;
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password';
 const REGISTRATION_CONFLICT_MESSAGE = 'Registration could not be completed';
@@ -354,6 +355,7 @@ export async function refresh(req: Request, res: Response) {
     const payload = await verifyRefresh(token);
     const repo = AppDataSource.getRepository(User);
     const sessionRepo = AppDataSource.getRepository(Session);
+    await sessionRepo.delete({ expiresAt: LessThanOrEqual(new Date()) });
     if (!payload.sub) return res.status(401).json({ message: 'Invalid or expired refresh token' });
     const userId = String(payload.sub);
     const session = await sessionRepo.findOne({
@@ -376,11 +378,16 @@ export async function refresh(req: Request, res: Response) {
     const newRefreshToken = await signRefresh(subject);
     const refreshExpiresAt = new Date(Date.now() + REFRESH_TTL_MS);
 
-    session.refreshToken = hashToken(newRefreshToken);
-    session.expiresAt = refreshExpiresAt;
-    session.userAgent = req.headers['user-agent']?.slice(0, 255) ?? session.userAgent;
-    session.ip = req.ip ?? session.ip;
+    const graceExpiresAt = new Date(Date.now() + REFRESH_ROTATION_GRACE_MS);
+    session.expiresAt = session.expiresAt < graceExpiresAt ? session.expiresAt : graceExpiresAt;
     await sessionRepo.save(session);
+    await sessionRepo.save(sessionRepo.create({
+      user: session.user,
+      refreshToken: hashToken(newRefreshToken),
+      userAgent: req.headers['user-agent']?.slice(0, 255) ?? session.userAgent,
+      ip: req.ip ?? session.ip,
+      expiresAt: refreshExpiresAt,
+    }));
 
     setRefreshTokenCookie(res, newRefreshToken);
 
