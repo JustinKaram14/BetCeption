@@ -22,6 +22,8 @@ import { AddPasswordChangedAt1700000000016 } from './migrations/1700000000016-Ad
 import { AddUserDeletedAt1700000000017 } from './migrations/1700000000017-AddUserDeletedAt.js';
 import { AddAchievements1700000000018 } from './migrations/1700000000018-AddAchievements.js';
 import { AddWeeklyLeaderboards1700000000019 } from './migrations/1700000000019-AddWeeklyLeaderboards.js';
+import { AddBetceptionPresets1700000000020 } from './migrations/1700000000020-AddBetceptionPresets.js';
+import { AllowMultipleBetceptionPresets1700000000021 } from './migrations/1700000000021-AllowMultipleBetceptionPresets.js';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -52,6 +54,8 @@ export const AppDataSource = new DataSource({
     AddUserDeletedAt1700000000017,
     AddAchievements1700000000018,
     AddWeeklyLeaderboards1700000000019,
+    AddBetceptionPresets1700000000020,
+    AllowMultipleBetceptionPresets1700000000021,
   ],
   synchronize: false,
   logging: env.nodeEnv === 'development',

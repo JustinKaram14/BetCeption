@@ -1,0 +1,191 @@
+<div class="preset-overlay" role="dialog" aria-modal="true" (click)="close()">
+  <section class="preset-modal" (click)="stopModalClick($event)">
+    <header class="preset-header">
+      <div>
+        <span>{{ i18n.t('betception.presetEyebrow') }}</span>
+        <h2>{{ i18n.t('betception.presetEditorTitle') }}</h2>
+      </div>
+      <button class="preset-close" type="button" (click)="close()" [attr.aria-label]="i18n.t('common.close')">X</button>
+    </header>
+
+    <div class="preset-state" *ngIf="loading">
+      <i></i><i></i><i></i>
+      <span>{{ i18n.t('profile.loading') }}</span>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <div class="preset-error" *ngIf="error">{{ error }}</div>
+
+      <div class="preset-layout">
+        <section class="preset-builder">
+          <div class="preset-builder__top">
+            <label class="preset-field">
+              <span>{{ i18n.t('betception.presetName') }}</span>
+              <input type="text" [(ngModel)]="name" maxlength="48">
+            </label>
+            <button class="preset-new-btn" type="button" (click)="newPreset()" [disabled]="!canCreatePreset">
+              {{ i18n.t('betception.presetClearDraft') }}
+            </button>
+          </div>
+
+          <div class="preset-mode" role="group">
+            <button
+              *ngFor="let mode of stakeModes"
+              type="button"
+              [class.active]="stakeMode === mode"
+              (click)="setStakeMode(mode)"
+            >
+              {{ presetModeLabel(mode) }}
+            </button>
+          </div>
+
+          <div class="preset-target-grid">
+            <button
+              *ngFor="let option of targetOptions"
+              type="button"
+              [class.active]="selectedTarget === option.code"
+              (click)="selectTarget(option.code)"
+            >
+              <strong>{{ i18n.t(option.labelKey) }}</strong>
+              <small>{{ targetDescription(option) }}</small>
+            </button>
+          </div>
+
+          <div class="preset-config" [class.preset-config--card]="selectedTarget === 'CARD_EXACT' || selectedTarget === 'CARD_SUIT'">
+            <div class="preset-config__head">
+              <strong>{{ i18n.t(selectedTargetOption.labelKey) }}</strong>
+              <span>{{ targetDescription(selectedTargetOption) }}</span>
+            </div>
+
+            <div class="preset-card-selectors" *ngIf="selectedTarget === 'CARD_EXACT' || selectedTarget === 'CARD_SUIT'">
+              <div class="preset-suits">
+                <button
+                  *ngFor="let suit of cardSuits"
+                  type="button"
+                  [class.active]="selectedSuit === suit"
+                  (click)="selectedSuit = suit"
+                >
+                  {{ suitLabel(suit) }}
+                </button>
+              </div>
+              <div class="preset-ranks" *ngIf="selectedTarget === 'CARD_EXACT'">
+                <button
+                  *ngFor="let rank of cardRanks"
+                  type="button"
+                  [class.active]="selectedRank === rank"
+                  (click)="selectedRank = rank"
+                >
+                  {{ rank }}
+                </button>
+              </div>
+            </div>
+
+            <div class="preset-split-selectors" *ngIf="selectedTarget === 'SPLIT_COUNT'">
+              <button
+                *ngFor="let count of splitCountOptions"
+                type="button"
+                [class.active]="selectedSplitCount === count"
+                (click)="selectedSplitCount = count"
+              >
+                {{ i18n.t('betception.splitCountOption', { count }) }}
+              </button>
+            </div>
+
+            <div class="preset-stake-entry">
+              <label *ngIf="stakeMode === 'fixed'">
+                <span>{{ i18n.t('betception.presetAmount') }}</span>
+                <input type="number" min="1" step="1" [(ngModel)]="entryAmount">
+              </label>
+              <label *ngIf="stakeMode === 'percentage'">
+                <span>{{ i18n.t('betception.presetPercent') }}</span>
+                <input type="number" min="0.01" max="200" step="0.01" [(ngModel)]="entryPercent">
+              </label>
+
+              <div class="preset-quick-row" *ngIf="stakeMode === 'fixed'">
+                <button *ngFor="let amount of quickAmounts" type="button" (click)="setAmount(amount)">{{ amount }}</button>
+              </div>
+              <div class="preset-quick-row" *ngIf="stakeMode === 'percentage'">
+                <button *ngFor="let percent of quickPercents" type="button" (click)="setPercent(percent)">{{ percent }}%</button>
+              </div>
+            </div>
+
+            <button class="btn preset-add" type="button" (click)="addOrUpdateItem()">
+              {{ i18n.t('betception.presetAddItem') }}
+            </button>
+          </div>
+
+          <div class="preset-current">
+            <div class="preset-current__head">
+              <strong>{{ i18n.t('betception.presetCurrentItems') }}</strong>
+              <span>{{ itemCountLabel }}</span>
+            </div>
+            <div class="preset-empty preset-empty--compact" *ngIf="items.length === 0">
+              {{ i18n.t('betception.presetEmpty') }}
+            </div>
+            <div class="preset-item-list preset-item-list--compact" *ngIf="items.length > 0">
+              <div class="preset-item" *ngFor="let item of items">
+                <div>
+                  <strong>{{ itemLabel(item) }}</strong>
+                  <span>{{ itemValue(item) }}</span>
+                </div>
+                <button type="button" (click)="removeItem(item)" [attr.aria-label]="i18n.t('common.cancel')">X</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="preset-summary">
+          <div class="preset-summary__head">
+            <strong>{{ i18n.t('betception.presetListTitle') }}</strong>
+            <span>{{ i18n.t('betception.presetItemCount', { count: presets.length }) }}</span>
+          </div>
+          <div class="preset-empty" *ngIf="presets.length === 0">
+            {{ i18n.t('betception.presetListEmpty') }}
+          </div>
+          <div class="preset-list" *ngIf="presets.length > 0">
+            <button
+              class="preset-card"
+              *ngFor="let preset of presets"
+              type="button"
+              [class.selected]="isPresetSelected(preset)"
+              [class.active]="isPresetActive(preset)"
+              (click)="selectPreset(preset)"
+            >
+              <div class="preset-card__main">
+                <strong>{{ preset.name }}</strong>
+                <span>{{ presetModeLabel(preset.stakeMode) }} - {{ presetItemCountLabel(preset) }}</span>
+              </div>
+              <div class="preset-card__meta">
+                <b>{{ presetTotalLabel(preset) }}</b>
+                <span *ngIf="isPresetSelected(preset)" class="preset-selected-badge">{{ i18n.t('betception.presetSelected') }}</span>
+                <span *ngIf="isPresetActive(preset)" class="preset-active-badge">{{ i18n.t('betception.presetActive') }}</span>
+              </div>
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="preset-footer">
+        <button class="btn btn-aufhoeren preset-delete" type="button" (click)="deletePreset()" [disabled]="deleting || saving || !selectedPresetId">
+          {{ deleting ? i18n.t('betception.presetDeleting') : i18n.t('betception.presetDelete') }}
+        </button>
+        <div class="preset-footer__actions">
+          <button class="btn btn-aufhoeren" type="button" (click)="close()" [disabled]="saving || deleting">
+            {{ i18n.t('betception.presetBack') }}
+          </button>
+          <button
+            class="btn btn-aufhoeren"
+            type="button"
+            (click)="saveDraft()"
+            [disabled]="isAddDisabled()"
+          >
+            {{ draftActionLabel }}
+          </button>
+          <button class="btn btn-neue-runde" type="button" (click)="saveAndContinue()" [disabled]="saving || deleting || !selectedPresetId || items.length === 0">
+            {{ primaryActionLabel }}
+          </button>
+        </div>
+      </footer>
+    </ng-container>
+  </section>
+</div>

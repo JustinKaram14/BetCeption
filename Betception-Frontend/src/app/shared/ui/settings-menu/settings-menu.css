@@ -111,3 +111,41 @@
   font-weight: 800;
   letter-spacing: 0.08em;
 }
+
+.settings-action {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 255, 255, 0.24);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.82);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.settings-action:hover {
+  border-color: rgba(0, 255, 255, 0.54);
+  color: #fff;
+  background: rgba(0, 255, 255, 0.08);
+  box-shadow: 0 0 14px rgba(0, 255, 255, 0.16);
+}
+
+.settings-action svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--secondary-glow);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

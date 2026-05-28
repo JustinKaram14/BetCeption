@@ -192,6 +192,12 @@
     (close)="onClosePowerupMenu()"
   ></app-powerup-menu>
 
+  <app-betception-preset-editor
+    *ngIf="showBetceptionPresetEditor"
+    (closed)="onCloseBetceptionPresetEditor()"
+    (presetSaved)="onBetceptionPresetSaved($event)">
+  </app-betception-preset-editor>
+
   <app-toast-container></app-toast-container>
 
   <div class="betception-modal" *ngIf="showBetceptionMenu" (click)="onCloseBetceptionMenu()">
@@ -242,6 +248,28 @@
               <strong>{{ i18n.t('betception.splitCountTitle') }}</strong>
               <small>{{ i18n.t('betception.splitCountSubtitle') }}</small>
               <b>{{ formatCoins(splitCountBetTotal) }}</b>
+            </button>
+            <button
+              class="betception-tile betception-tile--preset"
+              type="button"
+              [class.has-stake]="betceptionPreset && appliedBetceptionPresetId === betceptionPreset.id"
+              [class.is-unavailable]="betceptionPreset && !canApplyBetceptionPreset"
+              (click)="onApplyBetceptionPreset()"
+              [attr.title]="betceptionPresetUnavailableReason"
+            >
+              <span class="betception-tile__icon betception-tile__icon--save" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M5 4h12l2 2v14H5V4Z" />
+                  <path d="M8 4v6h8V4" />
+                  <path d="M8 16h8" />
+                </svg>
+              </span>
+              <strong>{{ betceptionPreset?.name || i18n.t('betception.presetTitle') }}</strong>
+              <small>{{ betceptionPreset ? i18n.t('betception.presetApplySubtitle') : i18n.t('betception.presetCreateSubtitle') }}</small>
+              <b>{{ betceptionPresetTotalLabel }}</b>
+              <span class="betception-tile__edit" role="button" tabindex="0" (click)="onOpenBetceptionPresetEditor($event)">
+                {{ i18n.t('betception.presetEdit') }}
+              </span>
             </button>
           </div>
         </section>

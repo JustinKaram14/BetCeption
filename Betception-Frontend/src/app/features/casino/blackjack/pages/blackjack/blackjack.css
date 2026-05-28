@@ -764,12 +764,6 @@
   animation:tile-rise .34s cubic-bezier(.16,.86,.28,1.18) both;
   overflow:hidden;
 }
-.betception-overview-grid .betception-tile:nth-last-child(2){
-  grid-column:2 / span 2;
-}
-.betception-overview-grid .betception-tile:last-child{
-  grid-column:4 / span 2;
-}
 .betception-tile::after{
   content:"";
   position:absolute;
@@ -839,6 +833,45 @@
   font-size:1.55rem;
   color:var(--secondary-glow);
   text-shadow:0 0 12px var(--secondary-glow);
+}
+.betception-tile__icon svg{
+  width:34px;
+  height:34px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  filter:drop-shadow(0 0 8px rgba(0,255,255,.62));
+}
+.betception-tile--preset{
+  border-color:rgba(0,255,255,.24);
+  background:
+    linear-gradient(145deg,rgba(0,255,255,.06),rgba(255,255,255,.018)),
+    rgba(255,255,255,.018);
+}
+.betception-tile--preset:not(.is-unavailable){
+  box-shadow:0 0 14px rgba(0,255,255,.08),inset 0 0 14px rgba(0,255,255,.04);
+}
+.betception-tile__edit{
+  position:absolute;
+  right:9px;
+  bottom:8px;
+  z-index:2;
+  padding:4px 7px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:6px;
+  background:rgba(0,0,0,.34);
+  color:rgba(255,255,255,.66);
+  font-size:.58rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.betception-tile__edit:hover{
+  border-color:var(--secondary-glow);
+  color:var(--secondary-glow);
+  background:rgba(0,255,255,.08);
 }
 .betception-tile strong{
   font-size:.92rem;
@@ -1491,9 +1524,7 @@
     grid-template-columns:1fr;
     gap:12px;
   }
-  .betception-overview-grid .betception-tile,
-  .betception-overview-grid .betception-tile:nth-last-child(2),
-  .betception-overview-grid .betception-tile:last-child{
+  .betception-overview-grid .betception-tile{
     grid-column:auto;
   }
   .betception-tile{

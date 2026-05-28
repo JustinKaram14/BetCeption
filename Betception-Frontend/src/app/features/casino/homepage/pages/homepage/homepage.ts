@@ -16,6 +16,7 @@ import { DisclaimerFooterComponent } from '../../../../../shared/ui/disclaimer-f
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
 import { SettingsMenuComponent } from '../../../../../shared/ui/settings-menu/settings-menu';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
+import { BetceptionPresetEditorComponent } from '../../../blackjack/components/betception-preset-editor/betception-preset-editor';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { AuthFacade } from '../../../../auth/services/auth-facade';
 import { Wallet } from '../../../../../core/services/wallet/wallet';
@@ -28,7 +29,7 @@ import type { AuthUser } from '../../../../../core/api/api.types';
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, ProfileModalComponent, PublicProfileModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent],
+  imports: [NgIf, AsyncPipe, HeroComponent, NeonCardComponent, LeaderboardComponent, AuthPanelComponent, CtaPanelComponent, DailyRewardModalComponent, HowToPlayModalComponent, ProfileModalComponent, PublicProfileModalComponent, DisclaimerFooterComponent, ToastContainerComponent, SettingsMenuComponent, LevelProgressComponent, BetceptionPresetEditorComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })
@@ -60,6 +61,7 @@ export class HomepageComponent {
   showRewardModal = false;
   showHowToPlayModal = false;
   showProfileModal = false;
+  showBetceptionPresetEditor = false;
   showVerifyEmailModal = false;
   verifyEmailAddress = '';
   /** 'registered' = email was just sent; 'login-blocked' = login rejected, resend available */
@@ -224,6 +226,18 @@ export class HomepageComponent {
 
   closeProfileModal() {
     this.showProfileModal = false;
+  }
+
+  openBetceptionPresetEditor() {
+    if (!this.authFacade.isAuthenticated()) {
+      this.toast.error(this.i18n.t('home.toast.loginRequiredPlay'));
+      return;
+    }
+    this.showBetceptionPresetEditor = true;
+  }
+
+  closeBetceptionPresetEditor() {
+    this.showBetceptionPresetEditor = false;
   }
 
   openPublicProfileModal(userId: string) {

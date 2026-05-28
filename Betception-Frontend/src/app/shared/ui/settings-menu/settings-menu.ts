@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Output, ViewChild, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { I18n, LanguageCode } from '../../../core/i18n/i18n';
 
@@ -10,6 +10,8 @@ import { I18n, LanguageCode } from '../../../core/i18n/i18n';
   styleUrl: './settings-menu.css',
 })
 export class SettingsMenuComponent {
+  @Output() editBetceptionPreset = new EventEmitter<void>();
+
   readonly i18n = inject(I18n);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   @ViewChild('settingsButton') private settingsButton?: ElementRef<HTMLButtonElement>;
@@ -36,6 +38,11 @@ export class SettingsMenuComponent {
 
   nextLanguage() {
     this.changeLanguageBy(1);
+  }
+
+  openBetceptionPresetEditor() {
+    this.editBetceptionPreset.emit();
+    this.close(true);
   }
 
   onTriggerKeydown(event: KeyboardEvent) {
