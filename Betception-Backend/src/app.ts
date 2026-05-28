@@ -19,6 +19,7 @@ import { powerupsRouter } from './modules/powerups/powerups.router.js';
 import { fairnessRouter } from './modules/fairness/fairness.router.js';
 import { cratesRouter } from './modules/crates/crates.router.js';
 import { achievementsRouter } from './modules/achievements/achievements.router.js';
+import { betceptionPresetsRouter } from './modules/betception-presets/betception-presets.router.js';
 import { requestContext } from './middlewares/requestContext.js';
 import { getMetricsSnapshot } from './observability/metrics.js';
 import { apiKeyGuard } from './middlewares/apiKeyGuard.js';
@@ -56,6 +57,7 @@ app.use('/powerups', powerupsRouter);
 app.use('/fairness', fairnessRouter);
 app.use('/crates', cratesRouter);
 app.use('/achievements', achievementsRouter);
+app.use('/betception-presets', betceptionPresetsRouter);
 
 if (env.monitoring.docs.enabled) {
   const guards: RequestHandler[] = [];

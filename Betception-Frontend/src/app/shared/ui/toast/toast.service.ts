@@ -44,6 +44,11 @@ export class ToastService {
     this.messagesSubject.next(this.messagesSubject.value.filter((toast) => toast.id !== id));
   }
 
+  dismissAll() {
+    this.messagesSubject.value.forEach((toast) => this.clearTimer(toast.id));
+    this.messagesSubject.next([]);
+  }
+
   private show(type: ToastType, message: string, durationMs: number, label?: string) {
     const toast: ToastMessage = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,

@@ -181,6 +181,40 @@ describe('BetceptionApi', () => {
     req.flush({ items: [], unseenCount: 0 });
   });
 
+  it('calls GET /betception-presets for getBetceptionPreset()', () => {
+    service.getBetceptionPreset().subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/betception-presets'));
+    expect(req.request.method).toBe('GET');
+    req.flush({ preset: null, presets: [], activePresetId: null });
+  });
+
+  it('calls PUT /betception-presets for saveBetceptionPreset()', () => {
+    const payload = {
+      name: 'Fast Run',
+      stakeMode: 'fixed' as const,
+      items: [{ typeCode: 'DEALER_BUST' as const, amount: 25 }],
+    };
+    service.saveBetceptionPreset(payload).subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/betception-presets'));
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ preset: null, presets: [], activePresetId: null });
+  });
+
+  it('calls POST /betception-presets/:id/activate for activateBetceptionPreset()', () => {
+    service.activateBetceptionPreset('preset-1').subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/betception-presets/preset-1/activate'));
+    expect(req.request.method).toBe('POST');
+    req.flush({ preset: null, presets: [], activePresetId: null });
+  });
+
+  it('calls DELETE /betception-presets/:id for deleteBetceptionPreset()', () => {
+    service.deleteBetceptionPreset('preset-1').subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/betception-presets/preset-1'));
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ success: true, preset: null, presets: [], activePresetId: null });
+  });
+
   it('calls GET /shop/powerups for listPowerups()', () => {
     service.listPowerups().subscribe();
     const req = httpMock.expectOne((r) => r.url.endsWith('/shop/powerups'));

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import {
   BalanceLeaderboardItem,
+  BetceptionPresetResponse,
   AchievementsResponse,
   ConsumePowerupRequest,
   ConsumePowerupResponse,
@@ -39,6 +40,7 @@ import {
   DeleteOwnAccountRequest,
   DeleteOwnAccountResponse,
   UpdateOwnProfileRequest,
+  UpsertBetceptionPresetRequest,
   UserResponse,
 } from './api.types';
 import { HttpClient } from './http-client';
@@ -236,5 +238,22 @@ export class BetceptionApi {
 
   markAchievementsSeen() {
     return this.http.post<AchievementsResponse>('/achievements/seen', {});
+  }
+
+  getBetceptionPreset() {
+    return this.http.get<BetceptionPresetResponse>('/betception-presets');
+  }
+
+  saveBetceptionPreset(payload: UpsertBetceptionPresetRequest) {
+    return this.http.put<BetceptionPresetResponse>('/betception-presets', payload);
+  }
+
+  activateBetceptionPreset(presetId: string) {
+    return this.http.post<BetceptionPresetResponse>(`/betception-presets/${presetId}/activate`, {});
+  }
+
+  deleteBetceptionPreset(presetId?: string) {
+    const path = presetId ? `/betception-presets/${presetId}` : '/betception-presets';
+    return this.http.delete<BetceptionPresetResponse & { success: boolean }>(path);
   }
 }

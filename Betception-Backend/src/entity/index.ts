@@ -14,6 +14,7 @@ import { PowerupConsumption } from './PowerupConsumption.js';
 import { UserCrate } from './UserCrate.js';
 import { UserAchievement } from './UserAchievement.js';
 import { UserXpEvent } from './UserXpEvent.js';
+import { BetceptionPreset } from './BetceptionPreset.js';
 import { LeaderboardBalanceView } from './LeaderboardBalanceView.js';
 import { LeaderboardAlltimeWinningsView } from './LeaderboardAlltimeWinningsView.js';
 import { LeaderboardWeeklyWinningsView } from './LeaderboardWeeklyWinningsView.js';
@@ -40,6 +41,7 @@ export {
   UserCrate,
   UserAchievement,
   UserXpEvent,
+  BetceptionPreset,
   LeaderboardBalanceView,
   LeaderboardAlltimeWinningsView,
   LeaderboardWeeklyWinningsView,
@@ -66,6 +68,7 @@ export const ENTITIES = [
   UserCrate,
   UserAchievement,
   UserXpEvent,
+  BetceptionPreset,
   LeaderboardBalanceView,
   LeaderboardAlltimeWinningsView,
   LeaderboardWeeklyWinningsView,

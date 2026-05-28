@@ -42,5 +42,14 @@
         &#8250;
       </button>
     </div>
+
+    <button class="settings-action" type="button" (click)="openBetceptionPresetEditor()">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 4h12l2 2v14H5V4Z" />
+        <path d="M8 4v6h8V4" />
+        <path d="M8 16h8" />
+      </svg>
+      <span>{{ i18n.t('betception.presetSettingsAction') }}</span>
+    </button>
   </div>
 </div>

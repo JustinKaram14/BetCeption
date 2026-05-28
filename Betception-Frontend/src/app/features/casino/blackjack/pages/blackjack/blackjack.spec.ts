@@ -32,7 +32,7 @@ describe('Blackjack', () => {
   const toastMock = jasmine.createSpyObj<ToastService>('ToastService', ['error', 'success', 'info', 'achievement', 'crate']);
   const apiMock = jasmine.createSpyObj<BetceptionApi>(
     'BetceptionApi',
-    ['purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups'],
+    ['purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups', 'getBetceptionPreset'],
   );
   const levelProgress: LevelProgress = {
     level: 1,
@@ -48,6 +48,7 @@ describe('Blackjack', () => {
     window.localStorage.setItem('betception-language', 'de');
     apiMock.listInventory.and.returnValue(of({ items: [], activePowerup: null }));
     apiMock.listPowerups.and.returnValue(of({ items: [] }));
+    apiMock.getBetceptionPreset.and.returnValue(of({ preset: null, presets: [], activePresetId: null }));
     toastMock.error.calls.reset();
     toastMock.success.calls.reset();
     toastMock.info.calls.reset();
@@ -127,6 +128,7 @@ describe('Blackjack', () => {
     rngMock.getActiveRound.calls.reset();
     apiMock.listInventory.calls.reset();
     apiMock.listPowerups.calls.reset();
+    apiMock.getBetceptionPreset.calls.reset();
 
     fixture = TestBed.createComponent(Blackjack);
     component = fixture.componentInstance;
@@ -689,6 +691,104 @@ describe('Blackjack', () => {
       expect(pillTile.classList.contains('is-unavailable')).toBeTrue();
     });
 
+    it('applies a fixed Betception preset to the draft side bets', () => {
+      component.balance = 1000;
+      component.betAmount = 100;
+      component.betceptionPreset = {
+        id: 'preset-1',
+        name: 'Fast Run',
+        stakeMode: 'fixed',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        items: [
+          { typeCode: 'CARD_EXACT', amount: 25, predictedSuit: CardSuit.HEARTS, predictedRank: CardRank.ACE },
+          { typeCode: 'CARD_SUIT', amount: 10, predictedSuit: CardSuit.SPADES },
+          { typeCode: 'DEALER_BUST', amount: 50 },
+          { typeCode: 'PLAYER_BLACKJACK', amount: 10 },
+          { typeCode: 'SPLIT_COUNT', amount: 20, selection: { splitCount: 2 } },
+        ],
+      };
+
+      component.onApplyBetceptionPreset();
+
+      expect(component.cardBetAmount(CardSuit.HEARTS, CardRank.ACE)).toBe(25);
+      expect(component.suitBetAmount(CardSuit.SPADES)).toBe(10);
+      expect(component.dealerBustBetAmount).toBe(50);
+      expect(component.blackjackBetAmount).toBe(10);
+      expect(component.splitCountBetAmount(2)).toBe(20);
+      expect(toastMock.success).toHaveBeenCalled();
+    });
+
+    it('toggles an applied Betception preset off when clicked again', () => {
+      component.balance = 1000;
+      component.betAmount = 100;
+      component.betceptionPreset = {
+        id: 'preset-1',
+        name: 'Fast Run',
+        stakeMode: 'fixed',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        items: [
+          { typeCode: 'DEALER_BUST', amount: 50 },
+          { typeCode: 'PLAYER_BLACKJACK', amount: 10 },
+        ],
+      };
+
+      component.onApplyBetceptionPreset();
+      component.onApplyBetceptionPreset();
+
+      expect(component.appliedBetceptionPresetId).toBeNull();
+      expect(component.dealerBustBetAmount).toBe(0);
+      expect(component.blackjackBetAmount).toBe(0);
+      expect(component.totalSideBetAmount).toBe(0);
+    });
+
+    it('keeps an over-limit Betception preset from changing the draft', () => {
+      component.balance = 1000;
+      component.betAmount = 100;
+      component.dealerBustBetAmount = 5;
+      component.betceptionPreset = {
+        id: 'preset-1',
+        name: 'Too Much',
+        stakeMode: 'fixed',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        items: [
+          { typeCode: 'DEALER_BUST', amount: 100 },
+        ],
+      };
+
+      component.onApplyBetceptionPreset();
+
+      expect(component.dealerBustBetAmount).toBe(5);
+      expect(toastMock.error).toHaveBeenCalled();
+    });
+
+    it('calculates percentage Betception presets from the main bet', () => {
+      component.balance = 1000;
+      component.betAmount = 200;
+      component.betceptionPreset = {
+        id: 'preset-1',
+        name: 'Percent',
+        stakeMode: 'percentage',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        items: [
+          { typeCode: 'DEALER_BUST', percent: 10 },
+          { typeCode: 'PLAYER_BLACKJACK', percent: 5 },
+        ],
+      };
+
+      component.onApplyBetceptionPreset();
+
+      expect(component.dealerBustBetAmount).toBe(20);
+      expect(component.blackjackBetAmount).toBe(10);
+    });
+
     it('reveals Betception settlement rows one step at a time', fakeAsync(() => {
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
@@ -879,7 +979,7 @@ describe('Blackjack', () => {
     let powerupComponent: Blackjack;
     let powerupFixture: ComponentFixture<Blackjack>;
     const pillApiMock = jasmine.createSpyObj<BetceptionApi>('BetceptionApi', [
-      'purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups',
+      'purchasePowerup', 'equipPowerup', 'listInventory', 'listPowerups', 'getBetceptionPreset',
     ]);
     const rngPowerupMock = jasmine.createSpyObj<Rng>(
       'Rng', ['startRound', 'getActiveRound', 'hit', 'stand', 'dealerStep', 'settle', 'double', 'split'],
@@ -928,6 +1028,7 @@ describe('Blackjack', () => {
       rngPowerupMock.getActiveRound.and.returnValue(of({ round: abortedRound }));
       pillApiMock.listInventory.and.returnValue(of({ items: [], activePowerup: null }));
       pillApiMock.listPowerups.and.returnValue(of({ items: [] }));
+      pillApiMock.getBetceptionPreset.and.returnValue(of({ preset: null, presets: [], activePresetId: null }));
 
       await TestBed.configureTestingModule({
         imports: [Blackjack],
@@ -948,6 +1049,7 @@ describe('Blackjack', () => {
       pillApiMock.equipPowerup.calls.reset();
       pillApiMock.listInventory.calls.reset();
       pillApiMock.listPowerups.calls.reset();
+      pillApiMock.getBetceptionPreset.calls.reset();
     });
 
     it('opens the pill menu and loads inventory when the slot is empty', () => {

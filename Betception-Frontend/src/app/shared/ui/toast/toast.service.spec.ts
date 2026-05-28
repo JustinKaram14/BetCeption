@@ -64,6 +64,19 @@ describe('ToastService', () => {
     expect(toasts.length).toBe(0);
   });
 
+  it('dismisses all active toasts', () => {
+    service.error('first');
+    service.success('second');
+    let toasts: any[] = [];
+    service.messages$.subscribe((msgs) => (toasts = msgs));
+    expect(toasts.length).toBe(2);
+
+    service.dismissAll();
+
+    service.messages$.subscribe((msgs) => (toasts = msgs));
+    expect(toasts).toEqual([]);
+  });
+
   it('auto-dismisses toasts after duration', fakeAsync(() => {
     service.error('auto dismiss', 1000);
     let toasts: any[] = [];

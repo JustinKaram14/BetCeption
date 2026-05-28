@@ -5,6 +5,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ActivePowerup,
   Achievement,
+  BetceptionPreset,
+  BetceptionPresetItem,
+  BetceptionPresetResponse,
   BetceptionResolution,
   BetceptionResolutionStep,
   CardRank,
@@ -33,6 +36,7 @@ import { Wallet } from '../../../../../core/services/wallet/wallet';
 import { Table } from '../../components/table/table';
 import { Controls } from '../../components/controls/controls';
 import { PowerupMenu } from '../../components/powerup-menu/powerup-menu';
+import { BetceptionPresetEditorComponent } from '../../components/betception-preset-editor/betception-preset-editor';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { LevelProgressComponent } from '../../../../../shared/ui/level-progress/level-progress';
 import { ToastContainerComponent } from '../../../../../shared/ui/toast/toast-container';
@@ -73,6 +77,16 @@ type IndexedResolutionStep = {
   step: BetceptionResolutionStep;
   index: number;
 };
+type PresetDraftResult = {
+  ok: boolean;
+  message?: string;
+  cardBets: Record<string, number>;
+  suitBets: Partial<Record<CardSuit, number>>;
+  dealerBustBetAmount: number;
+  pillTriggerBetAmount: number;
+  blackjackBetAmount: number;
+  splitCountBets: Record<number, number>;
+};
 
 const BETCEPTION_TOTAL_STAKE_CAP = 2;
 const BETCEPTION_CATEGORY_STAKE_CAP: Record<BetceptionStakeCategory, number> = {
@@ -86,7 +100,7 @@ const BETCEPTION_CATEGORY_STAKE_CAP: Record<BetceptionStakeCategory, number> = {
 @Component({
   selector: 'app-blackjack',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, NgSwitch, NgSwitchCase, NgSwitchDefault, RouterLink, Table, Controls, PowerupMenu, LevelProgressComponent, ToastContainerComponent],
+  imports: [NgIf, NgFor, NgClass, NgSwitch, NgSwitchCase, NgSwitchDefault, RouterLink, Table, Controls, PowerupMenu, BetceptionPresetEditorComponent, LevelProgressComponent, ToastContainerComponent],
   templateUrl: './blackjack.html',
   styleUrls: ['./blackjack.css']
 })
@@ -134,6 +148,10 @@ export class Blackjack implements OnInit {
   roundResolutionActive = false;
   roundOutcome: RoundOutcome | null = null;
   showPowerupMenu = false;
+  showBetceptionPresetEditor = false;
+  betceptionPreset: BetceptionPreset | null = null;
+  appliedBetceptionPresetId: string | null = null;
+  betceptionPresetLoading = false;
   inventory: InventoryPowerup[] = [];
   availablePowerups: PowerupType[] = [];
   activePowerup: ActivePowerup | null = null;
@@ -193,6 +211,7 @@ export class Blackjack implements OnInit {
   ngOnInit() {
     this.loadBalance();
     this.loadInventory();
+    this.loadBetceptionPreset();
     this.resumeActiveRoundIfAny();
     this.queueLocalWinDemoIfRequested();
     this.queueLocalSplitDemoIfRequested();
@@ -477,6 +496,26 @@ export class Blackjack implements OnInit {
     return `${this.suitSymbol(this.selectedCardSuit)}${this.selectedCardRank}`;
   }
 
+  get betceptionPresetTotalLabel() {
+    if (!this.betceptionPreset || this.betceptionPreset.items.length === 0) {
+      return this.i18n.t('betception.presetEmptyShort');
+    }
+    if (this.betceptionPreset.stakeMode === 'percentage') {
+      const totalPercent = this.betceptionPreset.items.reduce((sum, item) => sum + Number(item.percent ?? 0), 0);
+      return `${Math.round(totalPercent * 100) / 100}%`;
+    }
+    const total = this.betceptionPreset.items.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
+    return this.formatCoins(total);
+  }
+
+  get canApplyBetceptionPreset() {
+    return this.validateBetceptionPreset().ok;
+  }
+
+  get betceptionPresetUnavailableReason() {
+    return this.validateBetceptionPreset().message;
+  }
+
   onPlaceBet(amount: number) {
     if (this.isRoundActive) return;
     const updated = Math.max(0, Math.round((this.betAmount + amount) * 100) / 100);
@@ -505,6 +544,44 @@ export class Blackjack implements OnInit {
     this.betceptionView = 'overview';
   }
 
+  onOpenBetceptionPresetEditor(event?: Event) {
+    event?.stopPropagation();
+    this.showBetceptionPresetEditor = true;
+  }
+
+  onCloseBetceptionPresetEditor() {
+    this.showBetceptionPresetEditor = false;
+  }
+
+  onBetceptionPresetSaved(response: BetceptionPresetResponse) {
+    this.betceptionPreset = response.preset;
+    this.appliedBetceptionPresetId = null;
+  }
+
+  onApplyBetceptionPreset() {
+    if (!this.betceptionPreset) {
+      this.onOpenBetceptionPresetEditor();
+      return;
+    }
+    if (this.appliedBetceptionPresetId === this.betceptionPreset.id) {
+      this.resetBetceptionDraft();
+      return;
+    }
+    const draft = this.buildPresetDraft();
+    if (!draft.ok) {
+      this.toast.error(draft.message ?? this.i18n.t('betception.presetUnavailableGeneric'));
+      return;
+    }
+    this.cardBets = draft.cardBets;
+    this.suitBets = draft.suitBets;
+    this.dealerBustBetAmount = draft.dealerBustBetAmount;
+    this.pillTriggerBetAmount = draft.pillTriggerBetAmount;
+    this.blackjackBetAmount = draft.blackjackBetAmount;
+    this.splitCountBets = draft.splitCountBets;
+    this.appliedBetceptionPresetId = this.betceptionPreset.id;
+    this.toast.success(this.i18n.t('betception.presetApplied'));
+  }
+
   onConfirmBetception() {
     if (this.isBusy || this.betAmount <= 0) return;
     const sideBets = this.buildSideBetPlacements();
@@ -529,6 +606,7 @@ export class Blackjack implements OnInit {
 
   onAddCardBet(amount: number) {
     if (!this.canAddSideBetChip(amount, 'CARD')) return;
+    this.appliedBetceptionPresetId = null;
     const key = this.cardBetKey(this.selectedCardSuit, this.selectedCardRank);
     this.cardBets = {
       ...this.cardBets,
@@ -538,6 +616,7 @@ export class Blackjack implements OnInit {
 
   onAddSuitBet(amount: number) {
     if (!this.canAddSideBetChip(amount, 'CARD')) return;
+    this.appliedBetceptionPresetId = null;
     this.suitBets = {
       ...this.suitBets,
       [this.selectedCardSuit]: Math.round(((this.suitBets[this.selectedCardSuit] ?? 0) + amount) * 100) / 100,
@@ -545,6 +624,7 @@ export class Blackjack implements OnInit {
   }
 
   onClearSelectedCardBet() {
+    this.appliedBetceptionPresetId = null;
     const key = this.cardBetKey(this.selectedCardSuit, this.selectedCardRank);
     const rest = { ...this.cardBets };
     delete rest[key];
@@ -552,6 +632,7 @@ export class Blackjack implements OnInit {
   }
 
   onClearSelectedSuitBet() {
+    this.appliedBetceptionPresetId = null;
     const rest = { ...this.suitBets };
     delete rest[this.selectedCardSuit];
     this.suitBets = rest;
@@ -575,28 +656,34 @@ export class Blackjack implements OnInit {
 
   onAddDealerBustBet(amount: number) {
     if (!this.canAddSideBetChip(amount, 'DEALER_BUST')) return;
+    this.appliedBetceptionPresetId = null;
     this.dealerBustBetAmount = Math.round((this.dealerBustBetAmount + amount) * 100) / 100;
   }
 
   onClearDealerBustBet() {
+    this.appliedBetceptionPresetId = null;
     this.dealerBustBetAmount = 0;
   }
 
   onAddPillTriggerBet(amount: number) {
     if (!this.activePowerup || !this.canAddSideBetChip(amount, 'PILL_TRIGGER')) return;
+    this.appliedBetceptionPresetId = null;
     this.pillTriggerBetAmount = Math.round((this.pillTriggerBetAmount + amount) * 100) / 100;
   }
 
   onClearPillTriggerBet() {
+    this.appliedBetceptionPresetId = null;
     this.pillTriggerBetAmount = 0;
   }
 
   onAddBlackjackBet(amount: number) {
     if (!this.canAddSideBetChip(amount, 'PLAYER_BLACKJACK')) return;
+    this.appliedBetceptionPresetId = null;
     this.blackjackBetAmount = Math.round((this.blackjackBetAmount + amount) * 100) / 100;
   }
 
   onClearBlackjackBet() {
+    this.appliedBetceptionPresetId = null;
     this.blackjackBetAmount = 0;
   }
 
@@ -606,6 +693,7 @@ export class Blackjack implements OnInit {
 
   onAddSplitCountBet(amount: number) {
     if (!this.canAddSideBetChip(amount, 'SPLIT_COUNT')) return;
+    this.appliedBetceptionPresetId = null;
     this.splitCountBets = {
       ...this.splitCountBets,
       [this.selectedSplitCount]: Math.round(((this.splitCountBets[this.selectedSplitCount] ?? 0) + amount) * 100) / 100,
@@ -613,6 +701,7 @@ export class Blackjack implements OnInit {
   }
 
   onClearSelectedSplitCountBet() {
+    this.appliedBetceptionPresetId = null;
     const rest = { ...this.splitCountBets };
     delete rest[this.selectedSplitCount];
     this.splitCountBets = rest;
@@ -668,6 +757,133 @@ export class Blackjack implements OnInit {
     if (category === 'PILL_TRIGGER') return this.pillTriggerBetAmount;
     if (category === 'PLAYER_BLACKJACK') return this.blackjackBetAmount;
     return this.splitCountBetTotal;
+  }
+
+  private validateBetceptionPreset(): { ok: boolean; message?: string } {
+    if (!this.betceptionPreset || this.betceptionPreset.items.length === 0) {
+      return { ok: false, message: this.i18n.t('betception.presetEmptyShort') };
+    }
+    return this.buildPresetDraft();
+  }
+
+  private buildPresetDraft(): PresetDraftResult {
+    const empty = this.emptyPresetDraft();
+    if (!this.betceptionPreset || this.betceptionPreset.items.length === 0) {
+      return { ...empty, ok: false, message: this.i18n.t('betception.presetEmptyShort') };
+    }
+    if (this.betAmount <= 0) {
+      return { ...empty, ok: false, message: this.i18n.t('betception.presetNeedsMainBet') };
+    }
+
+    const draft = empty;
+    for (const item of this.betceptionPreset.items) {
+      const amount = this.presetItemAmount(item);
+      if (amount <= 0) {
+        return { ...draft, ok: false, message: this.i18n.t('betception.presetAmountTooSmall') };
+      }
+      if (item.typeCode === 'PILL_TRIGGER' && !this.activePowerup) {
+        return { ...draft, ok: false, message: this.i18n.t('betception.presetNeedsPill') };
+      }
+      this.addPresetItemToDraft(draft, item, amount);
+      const validation = this.validatePresetDraftLimits(draft);
+      if (!validation.ok) {
+        return { ...draft, ok: false, message: validation.message };
+      }
+    }
+    return { ...draft, ok: true };
+  }
+
+  private emptyPresetDraft(): PresetDraftResult {
+    return {
+      ok: false,
+      cardBets: {},
+      suitBets: {},
+      dealerBustBetAmount: 0,
+      pillTriggerBetAmount: 0,
+      blackjackBetAmount: 0,
+      splitCountBets: {},
+    };
+  }
+
+  private presetItemAmount(item: BetceptionPresetItem) {
+    if (this.betceptionPreset?.stakeMode === 'percentage') {
+      return Math.floor((this.betAmount * Number(item.percent ?? 0)) / 100);
+    }
+    return Math.round(Number(item.amount ?? 0));
+  }
+
+  private addPresetItemToDraft(
+    draft: PresetDraftResult,
+    item: BetceptionPresetItem,
+    amount: number,
+  ) {
+    if (item.typeCode === 'CARD_EXACT' && item.predictedSuit && item.predictedRank) {
+      const key = this.cardBetKey(item.predictedSuit, item.predictedRank);
+      draft.cardBets[key] = Math.round(((draft.cardBets[key] ?? 0) + amount) * 100) / 100;
+      return;
+    }
+    if (item.typeCode === 'CARD_SUIT' && item.predictedSuit) {
+      draft.suitBets[item.predictedSuit] = Math.round(((draft.suitBets[item.predictedSuit] ?? 0) + amount) * 100) / 100;
+      return;
+    }
+    if (item.typeCode === 'DEALER_BUST') {
+      draft.dealerBustBetAmount = Math.round((draft.dealerBustBetAmount + amount) * 100) / 100;
+      return;
+    }
+    if (item.typeCode === 'PILL_TRIGGER') {
+      draft.pillTriggerBetAmount = Math.round((draft.pillTriggerBetAmount + amount) * 100) / 100;
+      return;
+    }
+    if (item.typeCode === 'PLAYER_BLACKJACK') {
+      draft.blackjackBetAmount = Math.round((draft.blackjackBetAmount + amount) * 100) / 100;
+      return;
+    }
+    if (item.typeCode === 'SPLIT_COUNT') {
+      const count = Number(item.selection?.['splitCount'] ?? 0);
+      if ([1, 2, 3].includes(count)) {
+        draft.splitCountBets[count] = Math.round(((draft.splitCountBets[count] ?? 0) + amount) * 100) / 100;
+      }
+    }
+  }
+
+  private validatePresetDraftLimits(draft: PresetDraftResult) {
+    const total = this.presetDraftTotal(draft);
+    if (total > this.betAmount * BETCEPTION_TOTAL_STAKE_CAP) {
+      return { ok: false, message: this.i18n.t('betception.presetLimitExceeded') };
+    }
+    if (this.balance !== null && this.betAmount + total > this.balance) {
+      return { ok: false, message: this.i18n.t('betception.presetInsufficientBalance') };
+    }
+    const categoryAmounts: Record<BetceptionStakeCategory, number> = {
+      CARD: this.presetDraftCardTotal(draft),
+      DEALER_BUST: draft.dealerBustBetAmount,
+      PILL_TRIGGER: draft.pillTriggerBetAmount,
+      PLAYER_BLACKJACK: draft.blackjackBetAmount,
+      SPLIT_COUNT: Object.values(draft.splitCountBets).reduce((sum, amount) => sum + amount, 0),
+    };
+    for (const category of Object.keys(categoryAmounts) as BetceptionStakeCategory[]) {
+      if (categoryAmounts[category] > this.betAmount * BETCEPTION_CATEGORY_STAKE_CAP[category]) {
+        return { ok: false, message: this.i18n.t('betception.presetLimitExceeded') };
+      }
+    }
+    return { ok: true, message: '' };
+  }
+
+  private presetDraftTotal(draft: PresetDraftResult) {
+    return (
+      this.presetDraftCardTotal(draft) +
+      draft.dealerBustBetAmount +
+      draft.pillTriggerBetAmount +
+      draft.blackjackBetAmount +
+      Object.values(draft.splitCountBets).reduce((sum, amount) => sum + amount, 0)
+    );
+  }
+
+  private presetDraftCardTotal(draft: PresetDraftResult) {
+    return (
+      Object.values(draft.cardBets).reduce((sum, amount) => sum + amount, 0) +
+      Object.values(draft.suitBets).reduce((sum, amount) => sum + (amount ?? 0), 0)
+    );
   }
 
   isSuitSelected(suit: CardSuit) {
@@ -806,6 +1022,7 @@ export class Blackjack implements OnInit {
     this.splitCountBets = {};
     this.cardBetTarget = 'card';
     this.betceptionView = 'overview';
+    this.appliedBetceptionPresetId = null;
   }
 
   private cardBetKey(suit: CardSuit, rank: CardRank) {
@@ -1252,6 +1469,27 @@ export class Blackjack implements OnInit {
           this.levelProgress = { ...levelProgress, xpGained };
         },
         error: () => null,
+      });
+  }
+
+  private loadBetceptionPreset() {
+    this.betceptionPresetLoading = true;
+    this.api
+      .getBetceptionPreset()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ preset }) => {
+          this.betceptionPreset = preset;
+          if (this.appliedBetceptionPresetId && this.appliedBetceptionPresetId !== preset?.id) {
+            this.appliedBetceptionPresetId = null;
+          }
+          this.betceptionPresetLoading = false;
+        },
+        error: () => {
+          this.betceptionPreset = null;
+          this.appliedBetceptionPresetId = null;
+          this.betceptionPresetLoading = false;
+        },
       });
   }
 

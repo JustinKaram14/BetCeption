@@ -19,6 +19,7 @@ import { PowerupConsumption } from './PowerupConsumption.js';
 import { PowerupType } from './PowerupType.js';
 import { UserAchievement } from './UserAchievement.js';
 import { UserXpEvent } from './UserXpEvent.js';
+import { BetceptionPreset } from './BetceptionPreset.js';
 
 @Entity({ name: 'users' })
 @Index(['email'])
@@ -141,4 +142,7 @@ export class User {
 
   @OneToMany(() => UserXpEvent, (event) => event.user)
   xpEvents?: Relation<UserXpEvent[]>;
+
+  @OneToMany(() => BetceptionPreset, (preset) => preset.user)
+  betceptionPresets?: Relation<BetceptionPreset[]>;
 }

@@ -3,7 +3,7 @@
     <button class="how-to-play-btn" data-testid="how-to-play-button" type="button" (click)="openHowToPlay()">
       {{ i18n.t('common.howToPlay') }}
     </button>
-    <app-settings-menu></app-settings-menu>
+    <app-settings-menu (editBetceptionPreset)="openBetceptionPresetEditor()"></app-settings-menu>
   </div>
 
   <app-hero></app-hero>
@@ -88,6 +88,11 @@
   (unseenCrateCountChange)="onUnseenCrateCountChanged($event)"
   (unseenAchievementCountChange)="onUnseenAchievementCountChanged($event)">
 </app-profile-modal>
+
+<app-betception-preset-editor
+  *ngIf="showBetceptionPresetEditor"
+  (closed)="closeBetceptionPresetEditor()">
+</app-betception-preset-editor>
 
 <div class="verify-overlay" *ngIf="showVerifyEmailModal" (click)="closeVerifyEmailModal()">
   <div class="verify-modal" (click)="$event.stopPropagation()">

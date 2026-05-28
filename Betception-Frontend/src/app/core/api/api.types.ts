@@ -252,6 +252,41 @@ export type BetceptionSideBetCode =
   | 'PLAYER_BLACKJACK'
   | 'SPLIT_COUNT';
 
+export type BetceptionPresetStakeMode = 'fixed' | 'percentage';
+
+export interface BetceptionPresetItem {
+  typeCode: BetceptionSideBetCode;
+  amount?: number;
+  percent?: number;
+  predictedSuit?: CardSuit;
+  predictedRank?: CardRank;
+  selection?: Record<string, unknown>;
+}
+
+export interface BetceptionPreset {
+  id: string;
+  name: string;
+  stakeMode: BetceptionPresetStakeMode;
+  items: BetceptionPresetItem[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BetceptionPresetResponse {
+  preset: BetceptionPreset | null;
+  presets: BetceptionPreset[];
+  activePresetId: string | null;
+}
+
+export interface UpsertBetceptionPresetRequest {
+  id?: string;
+  name: string;
+  stakeMode: BetceptionPresetStakeMode;
+  items: BetceptionPresetItem[];
+  activate?: boolean;
+}
+
 export enum WalletTransactionKind {
   DEPOSIT = 'deposit',
   WITHDRAW = 'withdraw',
