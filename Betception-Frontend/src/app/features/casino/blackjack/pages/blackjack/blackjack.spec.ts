@@ -350,6 +350,37 @@ describe('Blackjack', () => {
       expect(component.roundOutcome?.mainHeadline).toBeTruthy();
     }));
 
+    it('uses the gross payout as the central round-over amount for a winning round', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.WON);
+      settled.mainBet = { ...settled.mainBet, amount: '50.00', settledAmount: '100.00' };
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+
+      expect(component.finalNetAmount).toBe(50);
+      expect(component.finalPayoutAmount).toBe(100);
+    }));
+
+    it('keeps the central round-over amount at zero for a losing round', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
+      settled.mainBet = { ...settled.mainBet, amount: '50.00', settledAmount: '0.00' };
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+      fixture.detectChanges();
+
+      const amount = fixture.nativeElement.querySelector('.round-over-slot-total strong') as HTMLElement;
+      const label = fixture.nativeElement.querySelector('.round-over-slot-total span') as HTMLElement;
+      expect(component.finalNetAmount).toBe(-50);
+      expect(component.finalPayoutAmount).toBe(0);
+      expect(amount.textContent?.trim()).toBe('0 Coins');
+      expect(label.textContent?.trim()).toBe('Auszahlung');
+    }));
+
     it('separates a lost blackjack game from a positive Betception net result', fakeAsync(() => {
       const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
       const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
@@ -387,8 +418,52 @@ describe('Blackjack', () => {
       expect(component.roundOutcome?.won).toBeTrue();
       expect(component.roundOutcome?.mainTone).toBe('lost');
       expect(component.roundOutcome?.detail).toContain('75');
-      expect(component.finalPayoutAmount).toBe(75);
+      expect(component.finalNetAmount).toBe(75);
+      expect(component.finalPayoutAmount).toBe(200);
       expect(component.betceptionPayoutAmount).toBe(200);
+    }));
+
+    it('includes settled sidebet payouts in the gross payout fallback', fakeAsync(() => {
+      const stood = makeRoundState(RoundStatus.IN_PROGRESS, HandStatus.STOOD);
+      const settled = makeRoundState(RoundStatus.SETTLED, HandStatus.SETTLED, MainBetStatus.LOST);
+      settled.mainBet = { ...settled.mainBet, amount: '50.00', settledAmount: '0.00' };
+      settled.sideBets = [
+        {
+          id: 'side-1',
+          type: 'CARD_SUIT',
+          amount: '25.00',
+          status: SideBetStatus.WON,
+          odds: '2.000',
+          predictedColor: null,
+          predictedSuit: CardSuit.HEARTS,
+          predictedRank: null,
+          targetContext: null as any,
+          selection: { suit: CardSuit.HEARTS },
+          settledAmount: '50.00',
+          settledAt: new Date().toISOString(),
+        },
+        {
+          id: 'side-2',
+          type: 'DEALER_BUST',
+          amount: '25.00',
+          status: SideBetStatus.LOST,
+          odds: '3.000',
+          predictedColor: null,
+          predictedSuit: null,
+          predictedRank: null,
+          targetContext: null as any,
+          selection: null,
+          settledAmount: '0.00',
+          settledAt: new Date().toISOString(),
+        },
+      ];
+      rngMock.settle.and.returnValue(of({ round: settled }));
+      component.round = stood;
+      component.onSettle();
+      tick(650);
+
+      expect(component.finalNetAmount).toBe(-50);
+      expect(component.finalPayoutAmount).toBe(50);
     }));
 
     it('shows a WON outcome without detail when settledAmount is null', fakeAsync(() => {

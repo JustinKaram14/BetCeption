@@ -144,8 +144,8 @@
             <strong>{{ betceptionPayoutDisplay }}</strong>
           </div>
         </div>
-        <div class="round-over-slot-total" *ngIf="finalPayoutAmount > 0" [ngClass]="payoutTier">
-          <span>{{ i18n.t('betception.netResult') }}</span>
+        <div class="round-over-slot-total" [ngClass]="payoutTier">
+          <span>{{ i18n.t('betception.totalPayout') }}</span>
           <strong>{{ animatedPayoutDisplay }}</strong>
         </div>
         <div class="round-over-amount" *ngIf="roundOutcome?.detail && finalPayoutAmount <= 0">
