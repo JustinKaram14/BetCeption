@@ -1852,7 +1852,7 @@ export class Blackjack implements OnInit {
     this.clearPayoutCountTimer();
     this.finalStakeAmount = this.roundTotalStake(settledRound, resolution);
     this.finalNetAmount = this.roundTotalNet(settledRound, resolution);
-    this.finalPayoutAmount = Math.max(0, this.finalNetAmount);
+    this.finalPayoutAmount = this.roundTotalPayout(settledRound, resolution);
     this.animatedPayoutAmount = 0;
     this.lastAnimatedPayoutTier = 'none';
     this.clearPayoutFramePulseTimers();
@@ -2141,6 +2141,7 @@ export class Blackjack implements OnInit {
     const fallback = [
       settledRound.mainBet,
       ...(settledRound.splitBets ?? []),
+      ...(settledRound.sideBets ?? []),
     ].reduce((sum, bet) => sum + Number(bet?.settledAmount ?? 0), 0);
     const total = resolution ? Number(resolution.totalPayout) : fallback;
     return Number.isFinite(total) ? Math.max(0, total) : 0;
@@ -2159,6 +2160,7 @@ export class Blackjack implements OnInit {
     const stake = [
       settledRound.mainBet,
       ...(settledRound.splitBets ?? []),
+      ...(settledRound.sideBets ?? []),
     ].reduce((sum, bet) => sum + Number(bet?.amount ?? 0), 0);
     return Number.isFinite(stake) ? Math.max(0, stake) : 0;
   }
