@@ -92,7 +92,7 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
     }
     if (item.powerupCode === 'RED_PILL') return this.i18n.t('powerup.redPill');
     if (item.powerupCode === 'BLUE_PILL') return this.i18n.t('powerup.bluePill');
-    return item.powerupLabel ?? item.label;
+    return this.i18n.t('daily.mysteryPill');
   }
 
   rewardTone(item: DayRewardScheduleItem): 'coin' | 'pill-red' | 'pill-blue' | 'pill-mixed' {
@@ -121,7 +121,7 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.claiming = false;
-          this.error = err?.error?.message ?? this.i18n.t('daily.claimError');
+          this.error = this.claimErrorMessage(err);
         },
       });
   }
@@ -169,6 +169,19 @@ export class DailyRewardModalComponent implements OnInit, OnDestroy {
       fr: 'fr-FR',
     };
     return locales[this.i18n.language()] ?? 'de-DE';
+  }
+
+  private claimErrorMessage(error: unknown): string {
+    if (error && typeof error === 'object') {
+      const payload = (error as any).error;
+      if (payload && typeof payload === 'object') {
+        if ((payload as any).code === 'NOT_ELIGIBLE') return this.i18n.t('daily.notEligible');
+        if ((payload as any).message === 'Reward already claimed for today') {
+          return this.i18n.t('daily.notEligible');
+        }
+      }
+    }
+    return this.i18n.t('daily.claimError');
   }
 }
 

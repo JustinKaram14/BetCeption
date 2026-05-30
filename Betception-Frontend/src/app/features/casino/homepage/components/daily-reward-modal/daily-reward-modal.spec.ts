@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NEVER } from 'rxjs';
+import { NEVER, throwError } from 'rxjs';
 
 import { DailyRewardModalComponent } from './daily-reward-modal';
 import { BetceptionApi } from '../../../../../core/api/betception-api.service';
@@ -71,6 +71,36 @@ describe('DailyRewardModalComponent', () => {
     component.i18n.setLanguage('de');
     expect(component.rewardKindLabel(redPillReward)).toBe('Pille');
     expect(component.rewardLabel(redPillReward)).toBe('Rote Pille');
+  });
+
+  it('localizes unrevealed daily pill labels instead of using API labels', () => {
+    const unrevealedPillReward = {
+      day: 3,
+      kind: 'powerup' as const,
+      powerupLabel: 'Rote/Blaue Pille',
+      isMilestone: false,
+      label: 'Rote/Blaue Pille',
+      icon: 'PILL',
+    };
+
+    component.i18n.setLanguage('en');
+    expect(component.rewardLabel(unrevealedPillReward)).toBe('Red or blue pill');
+
+    component.i18n.setLanguage('de');
+    expect(component.rewardLabel(unrevealedPillReward)).toBe('Rote oder blaue Pille');
+  });
+
+  it('localizes daily claim errors instead of rendering backend messages', () => {
+    apiMock.claimDailyReward.and.returnValue(
+      throwError(() => ({ error: { message: 'Reward already claimed for today' } })) as any,
+    );
+    component.i18n.setLanguage('de');
+    component.loading = false;
+    component.isEligible = true;
+
+    component.onClaim();
+
+    expect(component.error).toBe('Du hast deine tägliche Belohnung heute schon abgeholt.');
   });
 
   it('renders dialog with correct ARIA attributes', fakeAsync(() => {
