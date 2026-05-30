@@ -156,7 +156,10 @@ type KnownTranslationKey =
   | 'daily.kindPill'
   | 'daily.kicker'
   | 'daily.loading'
+  | 'daily.mysteryPill'
   | 'daily.next'
+  | 'daily.nextIn'
+  | 'daily.notEligible'
   | 'daily.notLoggedCopy'
   | 'daily.notLoggedTitle'
   | 'daily.rewardReceived'
@@ -460,7 +463,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'daily.kindPill': 'Pille',
     'daily.kicker': '30 Tage',
     'daily.loading': 'Belohnung wird geladen...',
+    'daily.mysteryPill': 'Rote oder blaue Pille',
     'daily.next': 'Nächste Belohnung in',
+    'daily.nextIn': 'Nächste Belohnung in {{time}}',
+    'daily.notEligible': 'Du hast deine tägliche Belohnung heute schon abgeholt.',
     'daily.notLoggedCopy': 'Bitte logge dich ein, um deine tägliche Belohnung abzuholen.',
     'daily.notLoggedTitle': 'Nicht eingeloggt',
     'daily.rewardReceived': '{{reward}} erhalten',
@@ -952,7 +958,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'daily.kindPill': 'Pill',
     'daily.kicker': '30 Days',
     'daily.loading': 'Loading reward...',
+    'daily.mysteryPill': 'Red or blue pill',
     'daily.next': 'Next reward in',
+    'daily.nextIn': 'Next reward in {{time}}',
+    'daily.notEligible': 'You already claimed your daily reward today.',
     'daily.notLoggedCopy': 'Please log in to claim your daily reward.',
     'daily.notLoggedTitle': 'Not logged in',
     'daily.rewardReceived': 'Received {{reward}}',
@@ -1444,7 +1453,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'daily.kindPill': 'Píldora',
     'daily.kicker': '30 días',
     'daily.loading': 'Cargando recompensa...',
+    'daily.mysteryPill': 'Píldora roja o azul',
     'daily.next': 'Próxima recompensa en',
+    'daily.nextIn': 'Próxima recompensa en {{time}}',
+    'daily.notEligible': 'Ya reclamaste tu recompensa diaria hoy.',
     'daily.notLoggedCopy': 'Inicia sesión para reclamar tu recompensa diaria.',
     'daily.notLoggedTitle': 'No has iniciado sesión',
     'daily.rewardReceived': 'Has recibido {{reward}}',
@@ -1936,7 +1948,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'daily.kindPill': 'Pilule',
     'daily.kicker': '30 jours',
     'daily.loading': 'Chargement de la récompense...',
+    'daily.mysteryPill': 'Pilule rouge ou bleue',
     'daily.next': 'Prochaine récompense dans',
+    'daily.nextIn': 'Prochaine récompense dans {{time}}',
+    'daily.notEligible': "Tu as déjà récupéré ta récompense quotidienne aujourd'hui.",
     'daily.notLoggedCopy': 'Connecte-toi pour récupérer ta récompense quotidienne.',
     'daily.notLoggedTitle': 'Non connecté',
     'daily.rewardReceived': '{{reward}} reçu',

@@ -66,7 +66,7 @@
       </ng-container>
 
       <ng-container *ngIf="!isEligible || justClaimedDay !== null">
-        <p class="dr-cooldown">{{ i18n.t('daily.next') }} <strong>{{ countdownText }}</strong></p>
+        <p class="dr-cooldown" [innerHTML]="i18n.t('daily.nextIn', { time: '<strong>' + countdownText + '</strong>' })"></p>
         <button class="btn dr-close-btn" type="button" (click)="onClose()">{{ i18n.t('common.ok') }}</button>
       </ng-container>
     </div>
