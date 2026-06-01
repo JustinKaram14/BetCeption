@@ -67,6 +67,9 @@ export interface Achievement {
   unlockedAt: string | null;
   seen: boolean;
   rewardCoins: number;
+  rewardClaimable: boolean;
+  rewardClaimed: boolean;
+  rewardedAt: string | null;
   secret: boolean;
   sortOrder: number;
 }
@@ -98,6 +101,12 @@ export type AchievementIcon =
 export interface AchievementsResponse {
   items: Achievement[];
   unseenCount: number;
+}
+
+export interface AchievementClaimResponse extends AchievementsResponse {
+  achievement: Achievement;
+  balance: number;
+  rewardCoins: number;
 }
 
 export type ProfileAvatarIcon =

@@ -188,6 +188,14 @@ describe('BetceptionApi', () => {
     req.flush({ items: [], unseenCount: 0 });
   });
 
+  it('calls POST /achievements/:code/claim for claimAchievementReward()', () => {
+    service.claimAchievementReward('FIRST_WIN').subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/achievements/FIRST_WIN/claim'));
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    req.flush({ items: [], unseenCount: 0, balance: 100, rewardCoins: 50 });
+  });
+
   it('calls GET /betception-presets for getBetceptionPreset()', () => {
     service.getBetceptionPreset().subscribe();
     const req = httpMock.expectOne((r) => r.url.endsWith('/betception-presets'));

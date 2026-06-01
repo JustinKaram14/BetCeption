@@ -29,6 +29,9 @@ describe('ProfileModalComponent', () => {
     unlockedAt: '2025-01-01T12:00:00Z',
     seen: false,
     rewardCoins: 50,
+    rewardClaimable: true,
+    rewardClaimed: false,
+    rewardedAt: null,
     secret: false,
     sortOrder: 2,
   };
@@ -70,6 +73,7 @@ describe('ProfileModalComponent', () => {
       'openCrate',
       'listAchievements',
       'markAchievementsSeen',
+      'claimAchievementReward',
     ]);
     toastMock = jasmine.createSpyObj<ToastService>('ToastService', ['success', 'error', 'info']);
     authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['requestPasswordChange', 'logout']);
@@ -112,6 +116,13 @@ describe('ProfileModalComponent', () => {
     apiMock.openCrate.and.returnValue(NEVER as any);
     apiMock.listAchievements.and.returnValue(of({ items: [achievement], unseenCount: 0 } as any));
     apiMock.markAchievementsSeen.and.returnValue(of({ items: [{ ...achievement, seen: true }], unseenCount: 0 } as any));
+    apiMock.claimAchievementReward.and.returnValue(of({
+      items: [{ ...achievement, rewardClaimable: false, rewardClaimed: true, rewardedAt: '2026-01-01T00:00:00Z' }],
+      unseenCount: 0,
+      achievement: { ...achievement, rewardClaimable: false, rewardClaimed: true, rewardedAt: '2026-01-01T00:00:00Z' },
+      balance: 1250,
+      rewardCoins: 50,
+    } as any));
     authFacadeMock.logout.and.returnValue(of(void 0));
     routerMock.navigate.and.returnValue(Promise.resolve(true));
 
@@ -577,6 +588,39 @@ describe('ProfileModalComponent', () => {
     expect(apiMock.markAchievementsSeen).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.textContent).toContain('Blut geleckt');
     expect(component.unseenAchievementCount).toBe(0);
+  });
+
+  it('claims an unlocked achievement reward and updates the local balance', () => {
+    createComponent();
+    component.activeTab = 'achievements';
+    fixture.detectChanges();
+
+    const claimButton: HTMLButtonElement = fixture.nativeElement.querySelector('.achievement-card__claim');
+    expect(claimButton).toBeTruthy();
+    expect(claimButton.textContent).toContain('Abholen');
+
+    claimButton.click();
+    fixture.detectChanges();
+
+    expect(apiMock.claimAchievementReward).toHaveBeenCalledWith('FIRST_WIN');
+    expect(component.profile?.balance).toBe(1250);
+    expect(component.profile?.achievements[0].rewardClaimed).toBeTrue();
+    expect(component.profile?.achievements[0].rewardClaimable).toBeFalse();
+    expect(toastMock.success).toHaveBeenCalledWith('Achievement-Belohnung abgeholt: 50 Coins');
+  });
+
+  it('does not render a claim button for already claimed achievement rewards', () => {
+    createComponent();
+    component.profile = {
+      ...profileResponse.user,
+      achievements: [{ ...achievement, rewardClaimable: false, rewardClaimed: true, rewardedAt: '2026-01-01T00:00:00Z' }],
+      unseenAchievementCount: 0,
+    } as any;
+    component.activeTab = 'achievements';
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.achievement-card__claim')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Bonus abgeholt');
   });
 
   it('renders partially completed tier achievements as active with only earned stars highlighted', () => {

@@ -6,6 +6,9 @@ export type AchievementTier = {
   progress: number;
   unlocked: boolean;
   rewardCoins: number;
+  rewardClaimable: boolean;
+  rewardClaimed: boolean;
+  rewardedAt: string | null;
 };
 
 export type AchievementDisplayItem = Achievement & {
@@ -110,6 +113,7 @@ function buildTierGroup(
   const tiers = rawTiers.map(toTier);
   const completedTiers = tiers.filter((tier) => tier.unlocked).length;
   const currentTier = tiers.find((tier) => !tier.unlocked) ?? tiers[tiers.length - 1];
+  const claimableTier = tiers.find((tier) => tier.rewardClaimable);
   const progress = Math.max(...tiers.map((tier) => tier.progress));
   const latestUnlocked = [...rawTiers].reverse().find((achievement) => achievement.unlocked);
   const first = rawTiers[0];
@@ -128,7 +132,10 @@ function buildTierGroup(
     unlocked: completedTiers === tiers.length,
     unlockedAt: latestUnlocked?.unlockedAt ?? null,
     seen: rawTiers.every((achievement) => !achievement.unlocked || achievement.seen),
-    rewardCoins: currentTier.rewardCoins,
+    rewardCoins: claimableTier?.rewardCoins ?? currentTier.rewardCoins,
+    rewardClaimable: tiers.some((tier) => tier.rewardClaimable),
+    rewardClaimed: completedTiers > 0 && tiers.filter((tier) => tier.unlocked).every((tier) => tier.rewardClaimed),
+    rewardedAt: latestUnlocked?.rewardedAt ?? null,
     secret: false,
     sortOrder: group.sortOrder,
     tiers,
@@ -160,5 +167,8 @@ function toTier(achievement: Achievement): AchievementTier {
     progress: achievement.progress,
     unlocked: achievement.unlocked,
     rewardCoins: achievement.rewardCoins,
+    rewardClaimable: achievement.rewardClaimable,
+    rewardClaimed: achievement.rewardClaimed,
+    rewardedAt: achievement.rewardedAt,
   };
 }

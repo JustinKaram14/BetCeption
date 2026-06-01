@@ -35,9 +35,23 @@ export type SerializedAchievement = {
   unlockedAt: Date | null;
   seen: boolean;
   rewardCoins: number;
+  rewardClaimable: boolean;
+  rewardClaimed: boolean;
+  rewardedAt: Date | null;
   secret: boolean;
   sortOrder: number;
 };
+
+export class AchievementClaimError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'AchievementClaimError';
+  }
+}
 
 export type AchievementResolutionStep = {
   kind: string;
@@ -104,6 +118,59 @@ export async function markAchievementsSeen(userId: string, manager: EntityManage
   }
 
   return listAchievementsForUser(userId, manager);
+}
+
+export async function claimAchievementReward(
+  userId: string,
+  achievementCode: string,
+  manager: EntityManager,
+) {
+  const definition = ACHIEVEMENT_BY_CODE.get(achievementCode);
+  if (!definition) {
+    throw new AchievementClaimError(404, 'ACHIEVEMENT_NOT_FOUND', 'Achievement not found');
+  }
+
+  const achievementRepo = manager.getRepository(UserAchievement);
+  const walletRepo = manager.getRepository(WalletTransaction);
+  const userRepo = manager.getRepository(User);
+
+  const row = await achievementRepo.findOne({
+    where: {
+      user: { id: userId },
+      achievementCode,
+    },
+  });
+  if (!row || !row.unlocked) {
+    throw new AchievementClaimError(409, 'ACHIEVEMENT_NOT_UNLOCKED', 'Achievement is not unlocked');
+  }
+  if (definition.rewardCoins <= 0) {
+    throw new AchievementClaimError(409, 'ACHIEVEMENT_NO_REWARD', 'Achievement has no reward');
+  }
+  if (row.rewardedAt) {
+    throw new AchievementClaimError(
+      409,
+      'ACHIEVEMENT_REWARD_ALREADY_CLAIMED',
+      'Achievement reward already claimed',
+    );
+  }
+
+  const user = await userRepo.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new AchievementClaimError(404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  row.rewardedAt = new Date();
+  await grantAchievementReward(walletRepo, user, row, definition);
+  await userRepo.save(user);
+  await achievementRepo.save(row);
+
+  const achievements = await listAchievementsForUser(userId, manager);
+  return {
+    ...achievements,
+    achievement: serializeAchievement(definition, row),
+    balance: Number(user.balance),
+    rewardCoins: definition.rewardCoins,
+  };
 }
 
 export async function evaluateRoundAchievements(
@@ -223,7 +290,6 @@ export async function applyAchievementProgress(
   if (updates.length === 0) return [];
 
   const repo = manager.getRepository(UserAchievement);
-  const walletRepo = manager.getRepository(WalletTransaction);
   const rows = await repo.find({ where: { user: { id: user.id } } });
   const rowByCode = new Map(rows.map((row) => [row.achievementCode, row]));
   const combined = combineUpdates(updates);
@@ -253,14 +319,13 @@ export async function applyAchievementProgress(
     if (!row.unlocked && row.progress >= target) {
       unlockAchievement(row);
       await repo.save(row);
-      await grantAchievementReward(walletRepo, user, row, definition);
       unlocked.push(serializeAchievement(definition, row));
     } else {
       await repo.save(row);
     }
   }
 
-  const completionist = await applyCompletionistProgress(repo, walletRepo, user, rowByCode);
+  const completionist = await applyCompletionistProgress(repo, user, rowByCode);
   if (completionist) {
     unlocked.push(completionist);
   }
@@ -274,6 +339,9 @@ function serializeAchievement(
 ): SerializedAchievement {
   const target = achievementTarget(definition);
   const progress = Math.min(target, Math.max(0, row?.progress ?? 0));
+  const unlocked = row?.unlocked ?? false;
+  const rewardClaimed = unlocked && (definition.rewardCoins <= 0 || !!row?.rewardedAt);
+  const rewardClaimable = unlocked && definition.rewardCoins > 0 && !row?.rewardedAt;
   return {
     code: definition.code,
     category: definition.category,
@@ -282,10 +350,13 @@ function serializeAchievement(
     icon: definition.icon,
     target,
     progress,
-    unlocked: row?.unlocked ?? false,
+    unlocked,
     unlockedAt: row?.unlockedAt ?? null,
     seen: !row?.unlocked || !!row.seenAt,
     rewardCoins: definition.rewardCoins,
+    rewardClaimable,
+    rewardClaimed,
+    rewardedAt: row?.rewardedAt ?? null,
     secret: definition.secret,
     sortOrder: definition.sortOrder,
   };
@@ -306,7 +377,6 @@ function combineUpdates(updates: AchievementProgressUpdate[]) {
 
 async function applyCompletionistProgress(
   repo: Repository<UserAchievement>,
-  walletRepo: Repository<WalletTransaction>,
   user: User,
   rowByCode: Map<string, UserAchievement>,
 ): Promise<SerializedAchievement | null> {
@@ -333,7 +403,6 @@ async function applyCompletionistProgress(
   if (!row.unlocked && row.progress >= target) {
     unlockAchievement(row);
     await repo.save(row);
-    await grantAchievementReward(walletRepo, user, row, definition);
     return serializeAchievement(definition, row);
   }
 
@@ -346,7 +415,7 @@ function unlockAchievement(row: UserAchievement) {
   row.unlocked = true;
   row.unlockedAt = now;
   row.seenAt = null;
-  row.rewardedAt = now;
+  row.rewardedAt = null;
 }
 
 async function grantAchievementReward(

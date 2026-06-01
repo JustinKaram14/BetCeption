@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import {
+  AchievementClaimResponse,
   BalanceLeaderboardItem,
   BetceptionPresetResponse,
   AchievementsResponse,
@@ -238,6 +239,10 @@ export class BetceptionApi {
 
   markAchievementsSeen() {
     return this.http.post<AchievementsResponse>('/achievements/seen', {});
+  }
+
+  claimAchievementReward(achievementCode: string) {
+    return this.http.post<AchievementClaimResponse>(`/achievements/${achievementCode}/claim`, {});
   }
 
   getBetceptionPreset() {
