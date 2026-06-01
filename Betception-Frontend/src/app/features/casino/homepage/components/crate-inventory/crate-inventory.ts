@@ -16,7 +16,6 @@ import { CrateReward, UserCrateItem } from '../../../../../core/api/api.types';
 import { I18n } from '../../../../../core/i18n/i18n';
 import { CrateNotifications } from '../../../../../core/services/crate-notifications/crate-notifications';
 
-const ITEM_SLOT_PX = 118;
 const SPIN_COUNT = 60;
 const WINNER_IDX = 50;
 const SPIN_MS = 5200;
@@ -182,10 +181,15 @@ export class CrateInventoryComponent implements OnInit {
     this.spinPhase = 'spinning';
 
     const t1 = setTimeout(() => {
-      const viewportW = this.spinViewportRef?.nativeElement.offsetWidth ?? 830;
-      const winnerCenter = WINNER_IDX * ITEM_SLOT_PX + Math.floor(ITEM_SLOT_PX / 2);
-      const jitter = Math.floor(Math.random() * 40) - 20;
-      this.spinTranslateX = -(winnerCenter - Math.floor(viewportW / 2)) + jitter;
+      const viewport = this.spinViewportRef?.nativeElement;
+      const viewportW = viewport?.offsetWidth ?? 830;
+      const winnerEl = viewport?.querySelectorAll<HTMLElement>('.spin-item')[WINNER_IDX];
+      const winnerCenter = winnerEl
+        ? winnerEl.offsetLeft + Math.floor(winnerEl.offsetWidth / 2)
+        : Math.floor(viewportW / 2);
+      const maxJitter = Math.max(0, Math.min(16, Math.floor((winnerEl?.offsetWidth ?? 0) * 0.14)));
+      const jitter = maxJitter > 0 ? Math.floor(Math.random() * (maxJitter * 2 + 1)) - maxJitter : 0;
+      this.spinTranslateX = Math.floor(viewportW / 2) - winnerCenter + jitter;
       this.spinAnimating = true;
     }, 80);
 
