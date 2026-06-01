@@ -166,6 +166,13 @@ describe('BetceptionApi', () => {
     req.flush({ claimedAmount: 100 });
   });
 
+  it('calls GET /rewards/daily/status for getDailyRewardStatus()', () => {
+    service.getDailyRewardStatus().subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/rewards/daily/status'));
+    expect(req.request.method).toBe('GET');
+    req.flush({ isEligible: false });
+  });
+
   it('calls GET /achievements for listAchievements()', () => {
     service.listAchievements().subscribe();
     const req = httpMock.expectOne((r) => r.url.endsWith('/achievements'));
@@ -215,6 +222,13 @@ describe('BetceptionApi', () => {
     req.flush({ success: true, preset: null, presets: [], activePresetId: null });
   });
 
+  it('calls DELETE /betception-presets when no preset id is supplied', () => {
+    service.deleteBetceptionPreset().subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/betception-presets'));
+    expect(req.request.method).toBe('DELETE');
+    req.flush({ success: true, preset: null, presets: [], activePresetId: null });
+  });
+
   it('calls GET /shop/powerups for listPowerups()', () => {
     service.listPowerups().subscribe();
     const req = httpMock.expectOne((r) => r.url.endsWith('/shop/powerups'));
@@ -234,6 +248,14 @@ describe('BetceptionApi', () => {
     const req = httpMock.expectOne((r) => r.url.endsWith('/inventory/powerups'));
     expect(req.request.method).toBe('GET');
     req.flush({ items: [] });
+  });
+
+  it('calls POST /inventory/powerups/equip for equipPowerup()', () => {
+    service.equipPowerup({ inventoryId: 'inv-1', equipped: true } as any).subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/inventory/powerups/equip'));
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ inventoryId: 'inv-1', equipped: true });
+    req.flush({ item: {} });
   });
 
   it('calls GET /leaderboard/balance for getBalanceLeaderboard()', () => {
@@ -272,6 +294,13 @@ describe('BetceptionApi', () => {
     req.flush({ round: {} });
   });
 
+  it('calls POST /round/dealer-step/:id for dealerStepRound()', () => {
+    service.dealerStepRound('round-1').subscribe();
+    const req = httpMock.expectOne((r) => r.url.endsWith('/round/dealer-step/round-1'));
+    expect(req.request.method).toBe('POST');
+    req.flush({ round: {} });
+  });
+
   it('calls GET /round/:id for getRound()', () => {
     service.getRound('round-1').subscribe();
     const req = httpMock.expectOne((r) => r.url.endsWith('/round/round-1'));
@@ -284,6 +313,32 @@ describe('BetceptionApi', () => {
     const req = httpMock.expectOne((r) => r.url.endsWith('/round/settle/round-1'));
     expect(req.request.method).toBe('POST');
     req.flush({ round: {} });
+  });
+
+  it('calls the remaining round utility endpoints', () => {
+    service.peekCard('round-1').subscribe();
+    service.swapCard('round-1', 'card-1').subscribe();
+    service.undoHit('round-1').subscribe();
+    service.doubleRound('round-1').subscribe();
+    service.splitRound('round-1').subscribe();
+
+    const peekReq = httpMock.expectOne((r) => r.url.endsWith('/round/peek/round-1'));
+    const swapReq = httpMock.expectOne((r) => r.url.endsWith('/round/swap-card/round-1'));
+    const undoReq = httpMock.expectOne((r) => r.url.endsWith('/round/undo/round-1'));
+    const doubleReq = httpMock.expectOne((r) => r.url.endsWith('/round/double/round-1'));
+    const splitReq = httpMock.expectOne((r) => r.url.endsWith('/round/split/round-1'));
+
+    expect(peekReq.request.method).toBe('GET');
+    expect(swapReq.request.method).toBe('POST');
+    expect(swapReq.request.body).toEqual({ cardId: 'card-1' });
+    expect(undoReq.request.method).toBe('POST');
+    expect(doubleReq.request.method).toBe('POST');
+    expect(splitReq.request.method).toBe('POST');
+    peekReq.flush({});
+    swapReq.flush({ round: {} });
+    undoReq.flush({ round: {} });
+    doubleReq.flush({ round: {} });
+    splitReq.flush({ round: {} });
   });
 
   it('calls POST /powerups/consume for consumePowerup()', () => {
@@ -312,5 +367,18 @@ describe('BetceptionApi', () => {
     const req = httpMock.expectOne((r) => r.url.includes('/fairness/rounds/history'));
     expect(req.request.params.get('limit')).toBe('5');
     req.flush({ items: [] });
+  });
+
+  it('calls crate inventory endpoints', () => {
+    service.listCrates().subscribe();
+    service.openCrate('crate-1').subscribe();
+
+    const listReq = httpMock.expectOne((r) => r.url.endsWith('/crates'));
+    const openReq = httpMock.expectOne((r) => r.url.endsWith('/crates/crate-1/open'));
+
+    expect(listReq.request.method).toBe('GET');
+    expect(openReq.request.method).toBe('POST');
+    listReq.flush({ items: [] });
+    openReq.flush({ crate: {}, balance: 100 });
   });
 });
