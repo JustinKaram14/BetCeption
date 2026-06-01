@@ -128,7 +128,7 @@ describe('shop.controller', () => {
 
       expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          balance: '500.00',
+          balance: '200.00',
           activePowerupType: powerupType,
           activePowerupUsesRemaining: 3,
         }),
@@ -139,7 +139,7 @@ describe('shop.controller', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         message: 'Power-up purchased',
-        balance: 500,
+        balance: 200,
         quantity: 0,
         activePowerup: {
           type: {
@@ -214,7 +214,7 @@ describe('shop.controller', () => {
 
       expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          balance: '19300.00',
+          balance: '19000.00',
           activePowerupType: powerupType,
           activePowerupUsesRemaining: 3,
         }),

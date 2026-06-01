@@ -999,6 +999,9 @@ describe('Blackjack', () => {
         unlockedAt: '2025-01-01T12:00:00Z',
         seen: false,
         rewardCoins: 50,
+        rewardClaimable: true,
+        rewardClaimed: false,
+        rewardedAt: null,
         secret: false,
         sortOrder: 2,
       };

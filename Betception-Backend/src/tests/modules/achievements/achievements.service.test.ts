@@ -5,6 +5,7 @@ import { WalletTransaction } from '../../../entity/WalletTransaction.js';
 import { HandStatus, MainBetStatus, SideBetStatus, WalletTransactionKind } from '../../../entity/enums.js';
 import {
   applyAchievementProgress,
+  claimAchievementReward,
   evaluateRoundAchievements,
   listAchievementsForUser,
   markAchievementsSeen,
@@ -47,6 +48,8 @@ describe('achievements.service', () => {
       progress: 1,
       unlocked: true,
       seen: false,
+      rewardClaimable: false,
+      rewardClaimed: true,
     }));
   });
 
@@ -73,7 +76,7 @@ describe('achievements.service', () => {
     expect(achievementRepo.save).toHaveBeenCalledWith([row]);
   });
 
-  it('unlocks achievements and writes a coin reward transaction', async () => {
+  it('unlocks achievements as claimable without crediting coins immediately', async () => {
     const user = { id: 'user-1', balance: '100.00' } as User;
     const achievementRepo = createMockRepository<UserAchievement>({
       find: jest.fn().mockResolvedValue([]),
@@ -92,11 +95,64 @@ describe('achievements.service', () => {
     const unlocked = await applyAchievementProgress(manager, user, [{ code: 'FIRST_ROUND', increment: 1 }]);
 
     expect(unlocked.map((achievement) => achievement.code)).toContain('FIRST_ROUND');
+    expect(unlocked[0]).toEqual(expect.objectContaining({
+      rewardClaimable: true,
+      rewardClaimed: false,
+      rewardedAt: null,
+    }));
+    expect(user.balance).toBe('100.00');
+    expect(walletRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('claims an unlocked achievement reward and writes a wallet transaction', async () => {
+    const user = { id: 'user-1', balance: '100.00' } as User;
+    const row = {
+      id: 'row-FIRST_ROUND',
+      achievementCode: 'FIRST_ROUND',
+      progress: 1,
+      unlocked: true,
+      unlockedAt: new Date('2026-01-01T00:00:00Z'),
+      seenAt: null,
+      rewardedAt: null,
+    } as UserAchievement;
+    const achievementRepo = createMockRepository<UserAchievement>({
+      findOne: jest.fn().mockResolvedValue(row),
+      find: jest.fn().mockResolvedValue([row]),
+      save: jest.fn((entity) => Promise.resolve(entity)),
+    });
+    const walletRepo = createMockRepository<WalletTransaction>({
+      create: jest.fn((data) => data),
+      save: jest.fn((entity) => Promise.resolve(entity)),
+    });
+    const userRepo = createMockRepository<User>({
+      findOne: jest.fn().mockResolvedValue(user),
+      save: jest.fn((entity) => Promise.resolve(entity)),
+    });
+    const manager = createManager(new Map<any, any>([
+      [UserAchievement, achievementRepo],
+      [WalletTransaction, walletRepo],
+      [User, userRepo],
+    ]));
+
+    const result = await claimAchievementReward('user-1', 'FIRST_ROUND', manager);
+
     expect(user.balance).toBe('150.00');
+    expect(row.rewardedAt).toEqual(expect.any(Date));
+    expect(userRepo.save).toHaveBeenCalledWith(user);
+    expect(achievementRepo.save).toHaveBeenCalledWith(row);
     expect(walletRepo.save).toHaveBeenCalledWith(expect.objectContaining({
       kind: WalletTransactionKind.ACHIEVEMENT_REWARD,
       amount: '50.00',
       refTable: 'user_achievements',
+    }));
+    expect(result).toEqual(expect.objectContaining({
+      balance: 150,
+      rewardCoins: 50,
+      achievement: expect.objectContaining({
+        code: 'FIRST_ROUND',
+        rewardClaimable: false,
+        rewardClaimed: true,
+      }),
     }));
   });
 

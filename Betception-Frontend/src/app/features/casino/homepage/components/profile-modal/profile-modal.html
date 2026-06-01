@@ -365,8 +365,19 @@
                 </div>
                 <strong>{{ achievementProgressLabel(achievement) }}</strong>
               </div>
-              <div class="achievement-card__reward">
-                {{ achievementRewardLabel(achievement) }}
+              <div class="achievement-card__reward-row">
+                <div class="achievement-card__reward">
+                  {{ achievementRewardLabel(achievement) }}
+                </div>
+                <button
+                  class="btn achievement-card__claim"
+                  type="button"
+                  *ngIf="achievementClaimTarget(achievement)"
+                  [disabled]="!!claimingAchievementCode"
+                  (click)="claimAchievementReward(achievement)"
+                >
+                  {{ isClaimingAchievement(achievement) ? i18n.t('achievement.claimingReward') : i18n.t('achievement.claimReward') }}
+                </button>
               </div>
             </div>
           </article>

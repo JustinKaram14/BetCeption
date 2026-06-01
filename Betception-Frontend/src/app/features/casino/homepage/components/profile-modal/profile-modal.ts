@@ -34,6 +34,7 @@ import { isValidUsername, normalizeUsername } from '../../../../../shared/valida
 import { AchievementIconComponent } from '../../../../../shared/ui/achievement-icon/achievement-icon';
 import {
   AchievementDisplayItem,
+  AchievementTier,
   buildAchievementDisplayItems,
 } from '../../../../../shared/achievements/achievement-display';
 
@@ -129,6 +130,7 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
     avatarColor: 'cyan' as ProfileAvatarColor,
   };
   profileSaving = false;
+  claimingAchievementCode: string | null = null;
   passwordChangeSending = false;
   passwordChangeEmailSent = false;
   avatarEditing = false;
@@ -626,6 +628,12 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
   }
 
   achievementRewardLabel(achievement: AchievementDisplayItem): string {
+    const claimTarget = this.achievementClaimTarget(achievement);
+    if (claimTarget) {
+      return this.i18n.t('achievement.rewardClaimable', {
+        amount: this.formatCoins(claimTarget.rewardCoins),
+      });
+    }
     if (achievement.tiers.length > 1) {
       if (achievement.unlocked) {
         return this.i18n.t('achievement.rewardComplete');
@@ -640,6 +648,57 @@ export class ProfileModalComponent implements OnInit, OnDestroy {
       });
     }
     return this.i18n.t('achievement.reward', { amount: this.formatCoins(achievement.rewardCoins) });
+  }
+
+  achievementClaimTarget(achievement: AchievementDisplayItem): AchievementTier | null {
+    return achievement.tiers.find((tier) => tier.rewardClaimable) ?? null;
+  }
+
+  isClaimingAchievement(achievement: AchievementDisplayItem): boolean {
+    const target = this.achievementClaimTarget(achievement);
+    return !!target && this.claimingAchievementCode === target.code;
+  }
+
+  claimAchievementReward(achievement: AchievementDisplayItem): void {
+    const target = this.achievementClaimTarget(achievement);
+    if (!target || this.claimingAchievementCode) {
+      return;
+    }
+
+    this.claimingAchievementCode = target.code;
+    this.api
+      .claimAchievementReward(target.code)
+      .pipe(
+        finalize(() => {
+          this.claimingAchievementCode = null;
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (response) => {
+          if (this.profile) {
+            this.profile = {
+              ...this.profile,
+              balance: response.balance,
+              achievements: response.items,
+              unseenAchievementCount: response.unseenCount,
+            };
+          }
+          this.unseenAchievementCount = response.unseenCount;
+          this.unseenAchievementCountChange.emit(response.unseenCount);
+          this.balanceUpdated.emit(response.balance);
+          this.transactionSummary = null;
+          this.transactions = [];
+          this.transactionTotal = 0;
+          this.toast.success(this.i18n.t('achievement.claimSuccess', {
+            amount: this.formatCoins(response.rewardCoins),
+          }));
+        },
+        error: () => {
+          this.toast.error(this.i18n.t('achievement.claimError'));
+          this.refreshAchievements();
+        },
+      });
   }
 
   formatSignedCoins(value: number): string {

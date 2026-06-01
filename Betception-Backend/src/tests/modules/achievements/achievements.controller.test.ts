@@ -1,13 +1,17 @@
 import {
+  claimOwnAchievementReward,
   listOwnAchievements,
   markOwnAchievementsSeen,
 } from '../../../modules/achievements/achievements.controller.js';
+import { User } from '../../../entity/User.js';
 import { UserAchievement } from '../../../entity/UserAchievement.js';
+import { WalletTransaction } from '../../../entity/WalletTransaction.js';
 import {
   createMockRepository,
   createMockRequest,
   createMockResponse,
   mockAppDataSourceRepositories,
+  mockAppDataSourceTransaction,
 } from '../../test-utils.js';
 
 describe('achievements.controller', () => {
@@ -91,5 +95,84 @@ describe('achievements.controller', () => {
         ]),
       }),
     );
+  });
+
+  it('returns 401 when claiming an achievement reward without an authenticated user', async () => {
+    const req = createMockRequest({ params: { code: 'FIRST_ROUND' } });
+    const res = createMockResponse();
+
+    await claimOwnAchievementReward(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Unauthenticated',
+      code: 'UNAUTHENTICATED',
+    });
+  });
+
+  it('claims an achievement reward for the authenticated user', async () => {
+    const claimableRow = {
+      ...row,
+      rewardedAt: null,
+    } as UserAchievement;
+    const user = { id: 'user-1', balance: '100.00' } as User;
+    const achievementRepo = createMockRepository<UserAchievement>({
+      findOne: jest.fn().mockResolvedValue(claimableRow),
+      find: jest.fn().mockResolvedValue([claimableRow]),
+      save: jest.fn((entity) => Promise.resolve(entity)),
+    });
+    const userRepo = createMockRepository<User>({
+      findOne: jest.fn().mockResolvedValue(user),
+      save: jest.fn((entity) => Promise.resolve(entity)),
+    });
+    const walletRepo = createMockRepository<WalletTransaction>({
+      create: jest.fn((data) => data),
+      save: jest.fn((entity) => Promise.resolve(entity)),
+    });
+    mockAppDataSourceTransaction(new Map<any, any>([
+      [UserAchievement, achievementRepo],
+      [User, userRepo],
+      [WalletTransaction, walletRepo],
+    ]));
+    const req = createMockRequest({
+      user: { sub: 'user-1' } as any,
+      params: { code: 'FIRST_ROUND' },
+    });
+    const res = createMockResponse();
+
+    await claimOwnAchievementReward(req, res);
+
+    expect(user.balance).toBe('150.00');
+    expect(walletRepo.save).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        balance: 150,
+        rewardCoins: 50,
+        achievement: expect.objectContaining({
+          code: 'FIRST_ROUND',
+          rewardClaimed: true,
+        }),
+      }),
+    );
+  });
+
+  it('returns a localized-safe error code when the reward was already claimed', async () => {
+    const achievementRepo = createMockRepository<UserAchievement>({
+      findOne: jest.fn().mockResolvedValue(row),
+    });
+    mockAppDataSourceTransaction(new Map<any, any>([[UserAchievement, achievementRepo]]));
+    const req = createMockRequest({
+      user: { sub: 'user-1' } as any,
+      params: { code: 'FIRST_ROUND' },
+    });
+    const res = createMockResponse();
+
+    await claimOwnAchievementReward(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Achievement reward already claimed',
+      code: 'ACHIEVEMENT_REWARD_ALREADY_CLAIMED',
+    });
   });
 });
