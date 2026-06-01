@@ -112,14 +112,24 @@ describe('CrateInventoryComponent', () => {
   });
 
   it('opens a crate, updates balance and runs the reveal animation', fakeAsync(() => {
+    spyOn(Math, 'random').and.returnValue(0.5);
     const balanceSpy = spyOn(component.balanceUpdated, 'emit');
     fixture.detectChanges();
 
     component.onOpen(component.unopenedCrates[0]);
+    fixture.detectChanges();
+
+    const viewport: HTMLElement = fixture.nativeElement.querySelector('.spin-viewport');
+    const winner: HTMLElement = fixture.nativeElement.querySelectorAll('.spin-item')[50];
+    Object.defineProperty(viewport, 'offsetWidth', { configurable: true, value: 1000 });
+    Object.defineProperty(winner, 'offsetLeft', { configurable: true, value: 50 * 146 });
+    Object.defineProperty(winner, 'offsetWidth', { configurable: true, value: 136 });
+
     tick(80);
     expect(component.spinPhase).toBe('spinning');
     expect(component.spinReward).toEqual(coinReward);
     expect(balanceSpy).toHaveBeenCalledWith(777);
+    expect(component.spinTranslateX + winner.offsetLeft + Math.floor(winner.offsetWidth / 2)).toBe(500);
 
     tick(5200 + 350);
     expect(component.spinPhase).toBe('done');
