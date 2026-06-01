@@ -98,22 +98,36 @@ describe('HowToPlayModalComponent', () => {
     expect(fixture.nativeElement.querySelector('.mini-card')).toBeNull();
   });
 
-  it('keeps Betception tutorial content available in all supported languages', () => {
-    const expectedCopy: Record<LanguageCode, string> = {
-      de: 'Wird noch geändert',
-      en: 'Subject to change',
-      es: 'Se cambiará',
-      fr: 'Sera modifié',
+  it('keeps Betception tutorial content final in all supported languages', () => {
+    const forbiddenCopy: Record<LanguageCode, string[]> = {
+      de: [`Wird noch ${'geändert'}`],
+      en: [`Subject to ${'change'}`],
+      es: [`Se ${'cambiará'}`],
+      fr: [`Sera ${'modifié'}`],
     };
 
-    (Object.keys(expectedCopy) as LanguageCode[]).forEach((language) => {
+    (Object.keys(forbiddenCopy) as LanguageCode[]).forEach((language) => {
       i18n.setLanguage(language);
       component.selectCategory('betception');
-      component.selectStep(1);
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.textContent).toContain(expectedCopy[language]);
+      const copy = component.steps.map((step) => `${step.copy} ${step.hint}`).join(' ');
+      forbiddenCopy[language].forEach((placeholder) => {
+        expect(copy).not.toContain(placeholder);
+      });
       expect(component.steps.length).toBe(7);
     });
+  });
+
+  it('uses the current Betception payout values in the German sidebet tutorial', () => {
+    component.selectCategory('betception');
+
+    const copy = component.steps.map((step) => step.copy).join(' ');
+
+    expect(copy).toContain('Exakte Karten zahlen ca. 24:1, Farben ca. 2:1.');
+    expect(copy).toContain('Die Auszahlung beträgt ca. 3,8:1.');
+    expect(copy).toContain('Die rote Pille zahlt 10,5:1, die blaue Pille 14:1.');
+    expect(copy).toContain('Die Auszahlung beträgt ca. 19:1.');
+    expect(copy).toContain('1x zahlt ca. 6:1, 2x ca. 29:1 und 3x ca. 144:1.');
   });
 });
