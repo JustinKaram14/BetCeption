@@ -31,7 +31,8 @@
 .crate-error{color:var(--loss-color)}
 .crate-spinner,.spin-spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(0,255,255,.16);border-top-color:var(--secondary-glow);animation:spin .72s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.spin-scene{width:min(1080px,97vw);max-width:1080px;padding:30px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:24px;box-shadow:0 0 42px rgba(0,255,255,.14)}
+.spin-scene{position:relative;width:min(1080px,97vw);max-width:1080px;padding:30px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:24px;box-shadow:0 0 42px rgba(0,255,255,.14)}
+.spin-scene--done{animation:crate-frame-impact .68s cubic-bezier(.16,.86,.28,1.18) both}
 .spin-tier-badge{display:inline-flex;align-items:center;min-height:36px;padding:0 16px;border:1px solid rgba(0,255,255,.48);border-radius:8px;color:var(--secondary-glow);background:rgba(0,255,255,.08);font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.1em}
 .spin-loading-wrap{padding:30px 0;display:flex;flex-direction:column;align-items:center;gap:12px;color:rgba(255,255,255,.58)}
 .spin-loading-text{margin:0}
@@ -59,16 +60,20 @@
 .spin-item--winner{border-color:var(--secondary-glow);box-shadow:0 0 22px rgba(0,255,255,.48);animation:winner-pop .72s cubic-bezier(.2,1.2,.35,1) both,winner-glow 1.6s ease-in-out infinite .72s}
 .spin-item--winner:after{content:"";position:absolute;inset:-40%;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.34),transparent 65%);transform:translateX(-70%) rotate(18deg);animation:winner-sheen .9s ease-out .12s both}
 .spin-result{display:flex;flex-direction:column;align-items:center;gap:14px;animation:result-enter .38s ease-out both}
-.spin-result__card{position:relative;min-width:min(420px,88vw);padding:30px 34px;border:1px solid rgba(0,255,255,.44);border-radius:8px;background:linear-gradient(180deg,rgba(0,255,255,.12),rgba(0,255,255,.045));display:flex;flex-direction:column;align-items:center;gap:14px;overflow:hidden;box-shadow:0 0 28px rgba(0,255,255,.16);animation:reward-pulse .9s ease-out both}
-.spin-result__card:before{content:"";position:absolute;inset:-60%;background:conic-gradient(from 0deg,transparent,rgba(0,255,255,.18),transparent,rgba(168,85,247,.2),transparent);animation:reward-spark 2.8s linear infinite}
+.spin-result__card{position:relative;min-width:min(420px,88vw);padding:30px 34px;border:1px solid rgba(0,255,255,.52);border-radius:8px;background:linear-gradient(180deg,rgba(0,255,255,.14),rgba(8,12,24,.92));display:flex;flex-direction:column;align-items:center;gap:14px;overflow:hidden;box-shadow:0 0 28px rgba(0,255,255,.18),0 0 54px rgba(255,0,255,.08),inset 0 0 18px rgba(0,255,255,.08);animation:reward-card-impact .72s cubic-bezier(.16,.86,.28,1.18) both}
+.spin-result__card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.18),rgba(0,255,255,.1) 32%,transparent 68%);opacity:0;animation:reward-flash .82s ease-out both}
+.spin-result__card:after{content:"";position:absolute;top:0;bottom:0;width:44%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:translateX(-175%) skewX(-18deg);animation:reward-sweep .78s ease-out .12s both}
 .spin-result__mark,.spin-result__label{position:relative;z-index:1}
-.spin-result__label{color:#eaffff;font-size:1.02rem;font-weight:900;text-transform:uppercase;text-align:center;letter-spacing:.04em}
+.spin-result__label{color:#eaffff;font-size:1.08rem;font-weight:900;text-transform:uppercase;text-align:center;letter-spacing:.04em;text-shadow:0 0 16px var(--secondary-glow),0 0 34px rgba(255,0,255,.22);animation:reward-label-pop .58s cubic-bezier(.12,.9,.22,1.28) .16s both}
 .spin-result__btn{min-width:170px}
+@keyframes crate-frame-impact{0%{transform:scale(.985);border-color:rgba(0,255,255,.42);box-shadow:0 0 42px rgba(0,255,255,.14);filter:brightness(1)}38%{transform:scale(1.012);border-color:rgba(0,255,255,.82);box-shadow:0 0 54px rgba(0,255,255,.34),0 0 90px rgba(255,0,255,.18),inset 0 0 24px rgba(0,255,255,.12);filter:brightness(1.18)}66%{transform:scale(.997)}100%{transform:scale(1);border-color:rgba(0,255,255,.52);box-shadow:0 0 42px rgba(0,255,255,.2),0 0 70px rgba(255,0,255,.1),inset 0 0 18px rgba(0,255,255,.07);filter:brightness(1)}}
 @keyframes winner-pop{0%{transform:scale(.96);filter:brightness(1)}55%{transform:scale(1.08);filter:brightness(1.35)}100%{transform:scale(1);filter:brightness(1.12)}}
 @keyframes winner-glow{0%,100%{box-shadow:0 0 22px rgba(0,255,255,.48)}50%{box-shadow:0 0 34px rgba(0,255,255,.72)}}
 @keyframes winner-sheen{to{transform:translateX(70%) rotate(18deg)}}
 @keyframes result-enter{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes reward-pulse{0%{transform:scale(.94);box-shadow:0 0 0 rgba(0,255,255,0)}65%{transform:scale(1.03);box-shadow:0 0 36px rgba(0,255,255,.24)}100%{transform:scale(1);box-shadow:0 0 28px rgba(0,255,255,.16)}}
-@keyframes reward-spark{to{transform:rotate(360deg)}}
+@keyframes reward-card-impact{0%{transform:translateY(14px) scale(.76);opacity:0;filter:blur(5px) brightness(1.9)}42%{transform:translateY(-4px) scale(1.08);opacity:1;filter:blur(0) brightness(1.35)}68%{transform:translateY(1px) scale(.98);filter:brightness(1.12)}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
+@keyframes reward-label-pop{0%{transform:translateY(10px) scale(.68);opacity:0;filter:blur(5px) brightness(1.8)}48%{transform:translateY(-3px) scale(1.18);opacity:1;filter:blur(0) brightness(1.28)}72%{transform:translateY(1px) scale(.97)}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
+@keyframes reward-flash{0%{opacity:0;transform:scale(.72)}35%{opacity:.8;transform:scale(1.08)}100%{opacity:.18;transform:scale(1.35)}}
+@keyframes reward-sweep{to{transform:translateX(260%) skewX(-18deg)}}
 @media(max-width:900px){.crate-modal{width:min(860px,96vw)}.spin-scene{padding:24px}.spin-viewport{height:154px}.spin-track{gap:9px;padding:14px 0}.spin-item{width:126px;height:126px}.spin-fade{width:70px}}
 @media(max-width:640px){.crate-overlay,.spin-overlay{padding:10px}.crate-modal__header,.crate-modal__body{padding:16px}.crate-grid{grid-template-columns:1fr 1fr}.crate-card{min-height:150px}.spin-scene{padding:16px;gap:16px}.spin-viewport-wrap{padding:14px 0}.spin-viewport{height:124px}.spin-track{gap:8px;padding:12px 0}.spin-item{width:100px;height:100px}.spin-item__label{max-width:86px;font-size:.62rem}.spin-fade{width:42px}.spin-result__card{padding:24px 18px}.spin-result__label{font-size:.86rem}}

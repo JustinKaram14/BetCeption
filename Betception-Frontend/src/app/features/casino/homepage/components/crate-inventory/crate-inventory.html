@@ -83,7 +83,7 @@
 </div>
 
 <div class="spin-overlay" *ngIf="spinPhase !== 'idle'">
-  <div class="spin-scene">
+  <div class="spin-scene" [class.spin-scene--done]="spinPhase === 'done'">
     <div class="spin-scene__header">
       <span class="spin-tier-badge" [attr.data-tier]="spinTier">
         {{ tierBadgeLabel(spinTier, spinTierLabel) }}
