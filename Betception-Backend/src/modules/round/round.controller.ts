@@ -316,7 +316,7 @@ export async function startRound(
       playerHand.cards = playerHand.cards ?? [];
       dealerHand.cards = dealerHand.cards ?? [];
       recalcHand(playerHand);
-      recalcHand(dealerHand);
+      recalcHand(dealerHand, { suppressBlackjack: true });
       await handRepo.save([playerHand, dealerHand]);
 
       round.status = RoundStatus.IN_PROGRESS;
@@ -1705,7 +1705,7 @@ function getDealerHoleCardId(round: RoundWithRelations) {
 
 function recalcHand(
   hand: Hand,
-  options?: { preserveStanding?: boolean },
+  options?: { preserveStanding?: boolean; suppressBlackjack?: boolean },
 ): HandEvaluation {
   const cards = sortCards(hand.cards ?? []);
   if (!cards.length) {
@@ -1716,7 +1716,7 @@ function recalcHand(
   const evaluation = evaluateHand(cards);
   hand.handValue = evaluation.total;
 
-  if (evaluation.isBlackjack) {
+  if (evaluation.isBlackjack && !options?.suppressBlackjack) {
     hand.status = HandStatus.BLACKJACK;
     return evaluation;
   }
