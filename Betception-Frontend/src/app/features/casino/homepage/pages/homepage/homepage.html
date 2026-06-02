@@ -43,6 +43,10 @@
                 [progress]="walletSummary?.levelProgress ?? null"
                 orientation="horizontal"
               ></app-level-progress>
+              <div class="user-balance" data-testid="homepage-user-balance">
+                <span>{{ i18n.t('controls.balance') }}</span>
+                <strong>{{ formatCoins(walletSummary?.balance) }}</strong>
+              </div>
             </div>
           </ng-container>
         </ng-container>
