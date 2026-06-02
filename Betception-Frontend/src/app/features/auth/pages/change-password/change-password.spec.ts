@@ -15,6 +15,7 @@ describe('ChangePassword', () => {
   let authFacadeMock: jasmine.SpyObj<AuthFacade>;
 
   async function setup(fragment: string | null) {
+    localStorage.setItem('betception-language', 'de');
     authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['confirmPasswordChange']);
 
     await TestBed.configureTestingModule({

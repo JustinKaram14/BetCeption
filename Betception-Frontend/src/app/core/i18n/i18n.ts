@@ -19,6 +19,44 @@ type KnownTranslationKey =
   | 'auth.submitLogin'
   | 'auth.usernameInvalid'
   | 'auth.usernamePlaceholder'
+  | 'authPage.backHomeCta'
+  | 'authPage.changePasswordExpiredCopy'
+  | 'authPage.changePasswordFormCopy'
+  | 'authPage.changePasswordLoading'
+  | 'authPage.changePasswordMismatch'
+  | 'authPage.changePasswordSubmit'
+  | 'authPage.changePasswordSuccessCopy'
+  | 'authPage.changePasswordSuccessTitle'
+  | 'authPage.changePasswordTooShort'
+  | 'authPage.confirmNewPasswordLabel'
+  | 'authPage.confirmPasswordLabel'
+  | 'authPage.confirmPasswordPlaceholder'
+  | 'authPage.currentPasswordLabel'
+  | 'authPage.currentPasswordPlaceholder'
+  | 'authPage.currentPasswordWrong'
+  | 'authPage.expiredTitle'
+  | 'authPage.genericInvalidCopy'
+  | 'authPage.homeCta'
+  | 'authPage.invalidTitle'
+  | 'authPage.loginCta'
+  | 'authPage.newPasswordLabel'
+  | 'authPage.newPasswordPlaceholder'
+  | 'authPage.newPasswordTitle'
+  | 'authPage.resetPasswordExpiredCopy'
+  | 'authPage.resetPasswordFormCopy'
+  | 'authPage.resetPasswordLoading'
+  | 'authPage.resetPasswordMismatch'
+  | 'authPage.resetPasswordSubmit'
+  | 'authPage.resetPasswordSuccessCopy'
+  | 'authPage.resetPasswordSuccessTitle'
+  | 'authPage.resetPasswordTooShort'
+  | 'authPage.verifyAlreadyCopy'
+  | 'authPage.verifyAlreadyTitle'
+  | 'authPage.verifyExpiredCopy'
+  | 'authPage.verifyInvalidCopy'
+  | 'authPage.verifyLoading'
+  | 'authPage.verifySuccessCopy'
+  | 'authPage.verifySuccessTitle'
   | 'blackjack.actionFailed'
   | 'blackjack.completed'
   | 'blackjack.dealerBlackjack'
@@ -278,6 +316,44 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'auth.submitLogin': 'EINLOGGEN',
     'auth.usernameInvalid': 'Benutzername muss 3-32 Zeichen lang sein und darf nur Buchstaben, Zahlen, _ oder - enthalten.',
     'auth.usernamePlaceholder': 'Benutzername (3-32 Zeichen)',
+    'authPage.backHomeCta': 'Zurück zur Startseite',
+    'authPage.changePasswordExpiredCopy': 'Dieser Link war nur 15 Minuten gültig. Bitte fordere einen neuen Änderungslink aus deinem Profil an.',
+    'authPage.changePasswordFormCopy': 'Gib dein aktuelles Passwort und anschließend dein neues Passwort ein.',
+    'authPage.changePasswordLoading': 'Passwort wird geändert...',
+    'authPage.changePasswordMismatch': 'Die neuen Passwörter stimmen nicht überein.',
+    'authPage.changePasswordSubmit': 'Passwort ändern',
+    'authPage.changePasswordSuccessCopy': 'Du kannst dich jetzt mit deinem neuen Passwort einloggen.',
+    'authPage.changePasswordSuccessTitle': 'Passwort erfolgreich geändert!',
+    'authPage.changePasswordTooShort': 'Das neue Passwort muss mindestens 8 Zeichen lang sein.',
+    'authPage.confirmNewPasswordLabel': 'Neues Passwort bestätigen',
+    'authPage.confirmPasswordLabel': 'Passwort bestätigen',
+    'authPage.confirmPasswordPlaceholder': 'Passwort wiederholen',
+    'authPage.currentPasswordLabel': 'Aktuelles Passwort',
+    'authPage.currentPasswordPlaceholder': 'Aktuelles Passwort',
+    'authPage.currentPasswordWrong': 'Das aktuelle Passwort ist falsch.',
+    'authPage.expiredTitle': 'Link abgelaufen',
+    'authPage.genericInvalidCopy': 'Der Link ist ungültig oder wurde bereits verwendet.',
+    'authPage.homeCta': 'Zur Startseite',
+    'authPage.invalidTitle': 'Ungültiger Link',
+    'authPage.loginCta': 'Zum Login',
+    'authPage.newPasswordLabel': 'Neues Passwort',
+    'authPage.newPasswordPlaceholder': 'Mindestens 8 Zeichen',
+    'authPage.newPasswordTitle': 'Neues Passwort festlegen',
+    'authPage.resetPasswordExpiredCopy': 'Dieser Link war nur 15 Minuten gültig. Bitte fordere einen neuen Link auf der Startseite an.',
+    'authPage.resetPasswordFormCopy': 'Wähle ein neues Passwort für deinen Account.',
+    'authPage.resetPasswordLoading': 'Passwort wird zurückgesetzt...',
+    'authPage.resetPasswordMismatch': 'Die Passwörter stimmen nicht überein.',
+    'authPage.resetPasswordSubmit': 'Passwort speichern',
+    'authPage.resetPasswordSuccessCopy': 'Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt einloggen.',
+    'authPage.resetPasswordSuccessTitle': 'Passwort zurückgesetzt!',
+    'authPage.resetPasswordTooShort': 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+    'authPage.verifyAlreadyCopy': 'Deine E-Mail-Adresse wurde bereits verifiziert.',
+    'authPage.verifyAlreadyTitle': 'E-Mail bereits bestätigt',
+    'authPage.verifyExpiredCopy': 'Dein Bestätigungslink ist abgelaufen. Bitte fordere einen neuen an.',
+    'authPage.verifyInvalidCopy': 'Der Bestätigungslink ist ungültig oder wurde bereits verwendet.',
+    'authPage.verifyLoading': 'E-Mail wird bestätigt...',
+    'authPage.verifySuccessCopy': 'Dein Konto ist jetzt aktiv. Du kannst dich einloggen.',
+    'authPage.verifySuccessTitle': 'E-Mail erfolgreich bestätigt!',
     'blackjack.actionFailed': 'Hat nicht geklappt. Versuch es nochmal.',
     'blackjack.completed': 'Runde beendet.',
     'blackjack.dealerBlackjack': 'Blackjack beim Dealer',
@@ -778,6 +854,44 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'auth.submitLogin': 'LOGIN',
     'auth.usernameInvalid': 'Username must be 3-32 characters long and contain only letters, numbers, _ or -.',
     'auth.usernamePlaceholder': 'Username (3-32 characters)',
+    'authPage.backHomeCta': 'Back to homepage',
+    'authPage.changePasswordExpiredCopy': 'This link was only valid for 15 minutes. Please request a new change link from your profile.',
+    'authPage.changePasswordFormCopy': 'Enter your current password and then your new password.',
+    'authPage.changePasswordLoading': 'Changing password...',
+    'authPage.changePasswordMismatch': 'The new passwords do not match.',
+    'authPage.changePasswordSubmit': 'Change password',
+    'authPage.changePasswordSuccessCopy': 'You can now log in with your new password.',
+    'authPage.changePasswordSuccessTitle': 'Password changed!',
+    'authPage.changePasswordTooShort': 'The new password must be at least 8 characters long.',
+    'authPage.confirmNewPasswordLabel': 'Confirm new password',
+    'authPage.confirmPasswordLabel': 'Confirm password',
+    'authPage.confirmPasswordPlaceholder': 'Repeat password',
+    'authPage.currentPasswordLabel': 'Current password',
+    'authPage.currentPasswordPlaceholder': 'Current password',
+    'authPage.currentPasswordWrong': 'The current password is incorrect.',
+    'authPage.expiredTitle': 'Link expired',
+    'authPage.genericInvalidCopy': 'This link is invalid or has already been used.',
+    'authPage.homeCta': 'Homepage',
+    'authPage.invalidTitle': 'Invalid link',
+    'authPage.loginCta': 'Go to login',
+    'authPage.newPasswordLabel': 'New password',
+    'authPage.newPasswordPlaceholder': 'At least 8 characters',
+    'authPage.newPasswordTitle': 'Set new password',
+    'authPage.resetPasswordExpiredCopy': 'This link was only valid for 15 minutes. Please request a new link on the homepage.',
+    'authPage.resetPasswordFormCopy': 'Choose a new password for your account.',
+    'authPage.resetPasswordLoading': 'Resetting password...',
+    'authPage.resetPasswordMismatch': 'The passwords do not match.',
+    'authPage.resetPasswordSubmit': 'Save password',
+    'authPage.resetPasswordSuccessCopy': 'Your password was changed successfully. You can now log in.',
+    'authPage.resetPasswordSuccessTitle': 'Password reset!',
+    'authPage.resetPasswordTooShort': 'The password must be at least 8 characters long.',
+    'authPage.verifyAlreadyCopy': 'Your email address has already been verified.',
+    'authPage.verifyAlreadyTitle': 'Email already verified',
+    'authPage.verifyExpiredCopy': 'Your verification link has expired. Please request a new one.',
+    'authPage.verifyInvalidCopy': 'The verification link is invalid or has already been used.',
+    'authPage.verifyLoading': 'Verifying email...',
+    'authPage.verifySuccessCopy': 'Your account is active. You can log in.',
+    'authPage.verifySuccessTitle': 'Email verified!',
     'blackjack.actionFailed': 'Action failed. Please try again.',
     'blackjack.completed': 'Round completed.',
     'blackjack.dealerBlackjack': 'Dealer blackjack',
@@ -1278,6 +1392,44 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'auth.submitLogin': 'ENTRAR',
     'auth.usernameInvalid': 'El nombre de usuario debe tener 3-32 caracteres y solo puede incluir letras, números, _ o -.',
     'auth.usernamePlaceholder': 'Usuario (3-32 caracteres)',
+    'authPage.backHomeCta': 'Volver al inicio',
+    'authPage.changePasswordExpiredCopy': 'Este link solo era válido durante 15 minutos. Solicita un nuevo link de cambio desde tu perfil.',
+    'authPage.changePasswordFormCopy': 'Introduce tu contraseña actual y después la nueva.',
+    'authPage.changePasswordLoading': 'Cambiando contraseña...',
+    'authPage.changePasswordMismatch': 'Las nuevas contraseñas no coinciden.',
+    'authPage.changePasswordSubmit': 'Cambiar contraseña',
+    'authPage.changePasswordSuccessCopy': 'Ya puedes iniciar sesión con tu nueva contraseña.',
+    'authPage.changePasswordSuccessTitle': 'Contraseña cambiada!',
+    'authPage.changePasswordTooShort': 'La nueva contraseña debe tener al menos 8 caracteres.',
+    'authPage.confirmNewPasswordLabel': 'Confirmar nueva contraseña',
+    'authPage.confirmPasswordLabel': 'Confirmar contraseña',
+    'authPage.confirmPasswordPlaceholder': 'Repetir contraseña',
+    'authPage.currentPasswordLabel': 'Contraseña actual',
+    'authPage.currentPasswordPlaceholder': 'Contraseña actual',
+    'authPage.currentPasswordWrong': 'La contraseña actual es incorrecta.',
+    'authPage.expiredTitle': 'Link caducado',
+    'authPage.genericInvalidCopy': 'Este link es inválido o ya fue usado.',
+    'authPage.homeCta': 'Inicio',
+    'authPage.invalidTitle': 'Link inválido',
+    'authPage.loginCta': 'Ir al login',
+    'authPage.newPasswordLabel': 'Nueva contraseña',
+    'authPage.newPasswordPlaceholder': 'Mínimo 8 caracteres',
+    'authPage.newPasswordTitle': 'Definir nueva contraseña',
+    'authPage.resetPasswordExpiredCopy': 'Este link solo era válido durante 15 minutos. Solicita uno nuevo en la página de inicio.',
+    'authPage.resetPasswordFormCopy': 'Elige una nueva contraseña para tu cuenta.',
+    'authPage.resetPasswordLoading': 'Restableciendo contraseña...',
+    'authPage.resetPasswordMismatch': 'Las contraseñas no coinciden.',
+    'authPage.resetPasswordSubmit': 'Guardar contraseña',
+    'authPage.resetPasswordSuccessCopy': 'Tu contraseña se cambió correctamente. Ya puedes iniciar sesión.',
+    'authPage.resetPasswordSuccessTitle': 'Contraseña restablecida!',
+    'authPage.resetPasswordTooShort': 'La contraseña debe tener al menos 8 caracteres.',
+    'authPage.verifyAlreadyCopy': 'Tu dirección de email ya fue verificada.',
+    'authPage.verifyAlreadyTitle': 'Email ya confirmado',
+    'authPage.verifyExpiredCopy': 'Tu link de confirmación ha caducado. Solicita uno nuevo.',
+    'authPage.verifyInvalidCopy': 'El link de confirmación es inválido o ya fue usado.',
+    'authPage.verifyLoading': 'Confirmando email...',
+    'authPage.verifySuccessCopy': 'Tu cuenta ya está activa. Puedes iniciar sesión.',
+    'authPage.verifySuccessTitle': 'Email confirmado!',
     'blackjack.actionFailed': 'No se pudo hacer la jugada. Inténtalo de nuevo.',
     'blackjack.completed': 'Ronda terminada.',
     'blackjack.dealerBlackjack': 'Blackjack del dealer',
@@ -1778,6 +1930,44 @@ const TRANSLATIONS: Record<LanguageCode, TranslationMap> = {
     'auth.submitLogin': 'CONNEXION',
     'auth.usernameInvalid': "Le nom d'utilisateur doit contenir 3-32 caractères et seulement des lettres, chiffres, _ ou -.",
     'auth.usernamePlaceholder': "Nom d'utilisateur (3-32 caractères)",
+    'authPage.backHomeCta': "Retour à l'accueil",
+    'authPage.changePasswordExpiredCopy': "Ce lien n'était valable que 15 minutes. Demande un nouveau lien de modification depuis ton profil.",
+    'authPage.changePasswordFormCopy': 'Saisis ton mot de passe actuel puis ton nouveau mot de passe.',
+    'authPage.changePasswordLoading': 'Modification du mot de passe...',
+    'authPage.changePasswordMismatch': 'Les nouveaux mots de passe ne correspondent pas.',
+    'authPage.changePasswordSubmit': 'Modifier le mot de passe',
+    'authPage.changePasswordSuccessCopy': 'Tu peux maintenant te connecter avec ton nouveau mot de passe.',
+    'authPage.changePasswordSuccessTitle': 'Mot de passe modifié!',
+    'authPage.changePasswordTooShort': 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
+    'authPage.confirmNewPasswordLabel': 'Confirmer le nouveau mot de passe',
+    'authPage.confirmPasswordLabel': 'Confirmer le mot de passe',
+    'authPage.confirmPasswordPlaceholder': 'Répéter le mot de passe',
+    'authPage.currentPasswordLabel': 'Mot de passe actuel',
+    'authPage.currentPasswordPlaceholder': 'Mot de passe actuel',
+    'authPage.currentPasswordWrong': 'Le mot de passe actuel est incorrect.',
+    'authPage.expiredTitle': 'Lien expiré',
+    'authPage.genericInvalidCopy': 'Ce lien est invalide ou a déjà été utilisé.',
+    'authPage.homeCta': 'Accueil',
+    'authPage.invalidTitle': 'Lien invalide',
+    'authPage.loginCta': 'Aller à la connexion',
+    'authPage.newPasswordLabel': 'Nouveau mot de passe',
+    'authPage.newPasswordPlaceholder': 'Au moins 8 caractères',
+    'authPage.newPasswordTitle': 'Définir un nouveau mot de passe',
+    'authPage.resetPasswordExpiredCopy': "Ce lien n'était valable que 15 minutes. Demande un nouveau lien sur la page d'accueil.",
+    'authPage.resetPasswordFormCopy': 'Choisis un nouveau mot de passe pour ton compte.',
+    'authPage.resetPasswordLoading': 'Réinitialisation du mot de passe...',
+    'authPage.resetPasswordMismatch': 'Les mots de passe ne correspondent pas.',
+    'authPage.resetPasswordSubmit': 'Enregistrer le mot de passe',
+    'authPage.resetPasswordSuccessCopy': 'Ton mot de passe a été modifié. Tu peux maintenant te connecter.',
+    'authPage.resetPasswordSuccessTitle': 'Mot de passe réinitialisé!',
+    'authPage.resetPasswordTooShort': 'Le mot de passe doit contenir au moins 8 caractères.',
+    'authPage.verifyAlreadyCopy': 'Ton adresse e-mail a déjà été vérifiée.',
+    'authPage.verifyAlreadyTitle': 'E-mail déjà confirmé',
+    'authPage.verifyExpiredCopy': 'Ton lien de confirmation a expiré. Demande-en un nouveau.',
+    'authPage.verifyInvalidCopy': 'Le lien de confirmation est invalide ou a déjà été utilisé.',
+    'authPage.verifyLoading': "Vérification de l'e-mail...",
+    'authPage.verifySuccessCopy': 'Ton compte est maintenant actif. Tu peux te connecter.',
+    'authPage.verifySuccessTitle': 'E-mail confirmé!',
     'blackjack.actionFailed': "Le coup n'est pas passé. Réessaie.",
     'blackjack.completed': 'Manche terminée.',
     'blackjack.dealerBlackjack': 'Blackjack du dealer',

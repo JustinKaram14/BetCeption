@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Output, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild, inject } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { I18n, LanguageCode } from '../../../core/i18n/i18n';
 
@@ -10,6 +10,7 @@ import { I18n, LanguageCode } from '../../../core/i18n/i18n';
   styleUrl: './settings-menu.css',
 })
 export class SettingsMenuComponent {
+  @Input() showPresetAction = true;
   @Output() editBetceptionPreset = new EventEmitter<void>();
 
   readonly i18n = inject(I18n);
