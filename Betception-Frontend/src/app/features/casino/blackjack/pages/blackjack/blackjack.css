@@ -298,7 +298,6 @@
 }
 .message.error{color:var(--loss-color)}
 
-/* Round-over overlay */
 .round-over-overlay{
   position:absolute;
   inset:0;
@@ -1225,8 +1224,9 @@
 .betception-pill-target::before{
   content:"";
   position:absolute;
-  inset:-35%;
-  background:conic-gradient(from 90deg,transparent,rgba(0,255,255,.22),transparent);
+  inset:-217px -100px;
+  border-radius:50%;
+  background:conic-gradient(transparent,rgba(0,255,255,.22),transparent);
   animation:target-orbit 2.4s linear infinite;
   opacity:.55;
 }

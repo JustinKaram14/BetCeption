@@ -262,6 +262,19 @@ export class HomepageComponent {
     this.unseenAchievementCount = count;
   }
 
+  formatCoins(value: number | null | undefined): string {
+    const amount = Number.isFinite(Number(value)) ? Number(value) : 0;
+    const locale = {
+      de: 'de-DE',
+      en: 'en-US',
+      es: 'es-ES',
+      fr: 'fr-FR',
+    }[this.i18n.language()] ?? 'en-US';
+    return `${new Intl.NumberFormat(locale, {
+      maximumFractionDigits: 0,
+    }).format(amount)} ${this.i18n.t('common.coins')}`;
+  }
+
   get profileNoticeCount(): number {
     return this.unseenCrateCount + this.unseenAchievementCount;
   }

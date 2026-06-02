@@ -292,6 +292,22 @@ describe('HomepageComponent', () => {
     expect(fixture.debugElement.query(By.directive(ProfileModalComponent))).toBeNull();
   });
 
+  it('shows the current coin balance in the authenticated user panel', () => {
+    authState$.next(true);
+    userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });
+    fixture.detectChanges();
+
+    const balance = fixture.nativeElement.querySelector('[data-testid="homepage-user-balance"]');
+    expect(balance).toBeTruthy();
+    expect(balance.textContent).toContain('Guthaben');
+    expect(balance.textContent).toContain('1.000 Coins');
+
+    component.onRewardClaimed(1250);
+    fixture.detectChanges();
+
+    expect(balance.textContent).toContain('1.250 Coins');
+  });
+
   it('keeps the profile button wired to the private profile modal only', () => {
     authState$.next(true);
     userState$.next({ sub: 'u1', email: 'tester@example.com', username: 'tester' });

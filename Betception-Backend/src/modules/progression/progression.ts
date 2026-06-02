@@ -1,5 +1,6 @@
 import { HandStatus, MainBetStatus, SideBetStatus } from '../../entity/enums.js';
 import { User } from '../../entity/User.js';
+import { decimalToCents } from '../../utils/money.js';
 
 const BASE_LEVEL_XP = 500;
 const LEVEL_XP_GROWTH = 175;
@@ -18,6 +19,12 @@ export type RoundXpContext = {
   mainBetStatus: MainBetStatus;
   playerHandStatus: HandStatus;
   wonSideBets: number;
+  splitHandCount?: number;
+  wonSplitHands?: number;
+  dealerBust?: boolean;
+  triggeredPowerup?: boolean;
+  totalStake?: string;
+  totalPayout?: string;
 };
 
 export function totalXpForLevel(level: number) {
@@ -84,10 +91,36 @@ export function calculateRoundXp(context: RoundXpContext) {
     xp += 15;
   }
 
+  const splitHandCount = Math.max(0, Math.floor(context.splitHandCount ?? 0));
+  const wonSplitHands = Math.max(0, Math.floor(context.wonSplitHands ?? 0));
+  xp += splitHandCount * 20;
+  xp += wonSplitHands * 25;
+  if (splitHandCount >= 3) xp += 100;
+  if (splitHandCount >= 3 && wonSplitHands >= splitHandCount) xp += 100;
+
+  if (context.dealerBust) xp += 40;
+  if (context.triggeredPowerup) xp += 35;
+
+  xp += netWinXp(context.totalStake, context.totalPayout);
   xp += Math.max(0, context.wonSideBets) * 15;
   return xp;
 }
 
 export function countWonSideBets(sideBetStatuses: SideBetStatus[]) {
   return sideBetStatuses.filter((status) => status === SideBetStatus.WON).length;
+}
+
+function netWinXp(totalStake?: string, totalPayout?: string) {
+  if (!totalStake || !totalPayout) return 0;
+  const stakeCents = decimalToCents(totalStake);
+  const payoutCents = decimalToCents(totalPayout);
+  if (stakeCents <= 0n || payoutCents <= stakeCents) return 0;
+
+  const netCents = payoutCents - stakeCents;
+  const scaledRatio = Number((netCents * 100n) / stakeCents) / 100;
+  if (scaledRatio >= 10) return 220;
+  if (scaledRatio >= 5) return 140;
+  if (scaledRatio >= 2) return 75;
+  if (scaledRatio >= 1) return 40;
+  return 0;
 }

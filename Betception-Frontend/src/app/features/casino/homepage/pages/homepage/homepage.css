@@ -103,6 +103,34 @@ app-disclaimer-footer{
 .user-panel__actions .btn{
   flex:1 1 auto;min-width:120px;
 }
+.user-balance{
+  width:min(100%, 310px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 2px;
+  text-align:left;
+}
+.user-balance span{
+  color:rgba(210,232,255,.68);
+  font-size:.72rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.user-balance strong{
+  min-width:0;
+  color:var(--secondary-glow);
+  font-size:.98rem;
+  line-height:1.1;
+  text-align:right;
+  text-shadow:0 0 10px rgba(0,255,255,.42);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 .profile-btn{
   position:relative;
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -143,7 +171,7 @@ app-disclaimer-footer{
 }
 .user-level-progress{
   width:min(100%, 310px);
-  margin-top:auto;
+  margin-top:0;
   padding-top:4px;
 }
 @media (max-width:900px){
@@ -218,6 +246,12 @@ app-disclaimer-footer{
   .user-panel{
     gap:14px;
     padding:10px 0;
+  }
+  .user-balance{
+    padding:0 2px;
+  }
+  .user-balance strong{
+    font-size:.92rem;
   }
   app-disclaimer-footer{
     margin-top:8px;

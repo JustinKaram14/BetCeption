@@ -749,12 +749,37 @@ export async function settleRound(
         user.balance = centsToDecimal(balance + pendingCredit);
       }
 
+      if (isPowerPillCode(activePowerupCode)) {
+        user.activePowerupUsesRemaining = Math.max(0, user.activePowerupUsesRemaining - 1);
+        if (user.activePowerupUsesRemaining === 0) {
+          expiredPowerup = { code: activePowerupCode, color: getPowerPillColor(activePowerupCode) };
+          user.activePowerupType = null;
+        }
+      }
+
+      const betceptionResolution = buildBetceptionResolution({
+        mainBet,
+        sideBets: playerSideBets,
+        sideBetResolutionSteps,
+        mainBetPayoutCents: settledAmountCents,
+        splitBetStakeTotal,
+        splitBetPayoutTotal,
+        sideBetPayoutTotal,
+      });
+
       const baseXp = calculateRoundXp({
         mainBetStatus: finalResolution.status,
         playerHandStatus: playerHand.status,
         wonSideBets: countWonSideBets(settledSideBetStatuses),
+        splitHandCount: splitHands.length,
+        wonSplitHands: splitBetStatuses.filter((status) => status === MainBetStatus.WON).length,
+        dealerBust: dealerHand.status === HandStatus.BUSTED,
+        triggeredPowerup: triggeredPowerupEffect !== null,
+        totalStake: betceptionResolution.totalStake,
+        totalPayout: betceptionResolution.totalPayout,
       });
-      const boostedXp = baseXp;
+      const hasActiveXpBoost = user.xpBoostExpiresAt instanceof Date && user.xpBoostExpiresAt.getTime() > Date.now();
+      const boostedXp = hasActiveXpBoost ? baseXp * 2 : baseXp;
       const oldLevel = Math.max(1, Math.floor(user.level ?? 1));
       user.xp = Math.max(0, Math.floor(user.xp ?? 0)) + boostedXp;
       user.level = Math.max(Math.max(1, Math.floor(user.level ?? 1)), levelFromXp(user.xp));
@@ -779,24 +804,6 @@ export async function settleRound(
         await crateRepo.save(crate);
         levelUpCrate = { id: crate.id, tier, tierLabel: TIER_LABELS[tier - 1] ?? 'Common', acquiredLevel: user.level };
       }
-
-      if (isPowerPillCode(activePowerupCode)) {
-        user.activePowerupUsesRemaining = Math.max(0, user.activePowerupUsesRemaining - 1);
-        if (user.activePowerupUsesRemaining === 0) {
-          expiredPowerup = { code: activePowerupCode, color: getPowerPillColor(activePowerupCode) };
-          user.activePowerupType = null;
-        }
-      }
-
-      const betceptionResolution = buildBetceptionResolution({
-        mainBet,
-        sideBets: playerSideBets,
-        sideBetResolutionSteps,
-        mainBetPayoutCents: settledAmountCents,
-        splitBetStakeTotal,
-        splitBetPayoutTotal,
-        sideBetPayoutTotal,
-      });
 
       const unlockedAchievements = await evaluateRoundAchievements(manager, user, {
         mainBetStatus: mainBet.status,
