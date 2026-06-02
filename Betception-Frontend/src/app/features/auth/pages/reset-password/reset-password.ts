@@ -3,19 +3,22 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { AuthFacade } from '../../services/auth-facade';
+import { I18n } from '../../../../core/i18n/i18n';
+import { SettingsMenuComponent } from '../../../../shared/ui/settings-menu/settings-menu';
 
 type PageState = 'form' | 'loading' | 'success' | 'expired' | 'error';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [NgIf, FormsModule, RouterLink],
+  imports: [NgIf, FormsModule, RouterLink, SettingsMenuComponent],
   templateUrl: './reset-password.html',
   styleUrl: './reset-password.css',
 })
 export class ResetPassword implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly authFacade = inject(AuthFacade);
+  readonly i18n = inject(I18n);
 
   readonly state = signal<PageState>('form');
   private token = '';
@@ -40,11 +43,11 @@ export class ResetPassword implements OnInit {
 
   submit(): void {
     if (this.newPassword !== this.confirmPassword) {
-      this.errorMessage = 'Die Passwörter stimmen nicht überein.';
+      this.errorMessage = this.i18n.t('authPage.resetPasswordMismatch');
       return;
     }
     if (this.newPassword.length < 8) {
-      this.errorMessage = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
+      this.errorMessage = this.i18n.t('authPage.resetPasswordTooShort');
       return;
     }
 

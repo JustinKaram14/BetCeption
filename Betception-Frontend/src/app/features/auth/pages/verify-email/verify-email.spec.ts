@@ -12,6 +12,7 @@ describe('VerifyEmail', () => {
   let token: string | null;
 
   beforeEach(async () => {
+    localStorage.setItem('betception-language', 'de');
     token = null;
     authFacadeMock = jasmine.createSpyObj<AuthFacade>('AuthFacade', ['verifyEmail']);
     authFacadeMock.verifyEmail.and.returnValue(of({ message: 'Email verified' } as any));

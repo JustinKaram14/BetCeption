@@ -1,41 +1,63 @@
 <div class="verify-container">
+  <app-settings-menu class="auth-settings" [showPresetAction]="false"></app-settings-menu>
   @switch (state()) {
     @case ('loading') {
       <div class="verify-card">
         <div class="spinner"></div>
-        <p>E-Mail wird bestätigt…</p>
+        <p>{{ i18n.t('authPage.verifyLoading') }}</p>
       </div>
     }
     @case ('success') {
       <div class="verify-card verify-success">
-        <div class="icon">✓</div>
-        <h2>E-Mail erfolgreich bestätigt!</h2>
-        <p>Dein Konto ist jetzt aktiv. Du kannst dich einloggen.</p>
-        <a routerLink="/homepage" class="btn-primary">Zur Startseite</a>
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <h2>{{ i18n.t('authPage.verifySuccessTitle') }}</h2>
+        <p>{{ i18n.t('authPage.verifySuccessCopy') }}</p>
+        <a routerLink="/homepage" class="btn-primary">{{ i18n.t('authPage.homeCta') }}</a>
       </div>
     }
     @case ('already_verified') {
       <div class="verify-card verify-success">
-        <div class="icon">✓</div>
-        <h2>E-Mail bereits bestätigt</h2>
-        <p>Deine E-Mail-Adresse wurde bereits verifiziert.</p>
-        <a routerLink="/homepage" class="btn-primary">Zur Startseite</a>
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <h2>{{ i18n.t('authPage.verifyAlreadyTitle') }}</h2>
+        <p>{{ i18n.t('authPage.verifyAlreadyCopy') }}</p>
+        <a routerLink="/homepage" class="btn-primary">{{ i18n.t('authPage.homeCta') }}</a>
       </div>
     }
     @case ('expired') {
       <div class="verify-card verify-error">
-        <div class="icon">⏰</div>
-        <h2>Link abgelaufen</h2>
-        <p>Dein Bestätigungslink ist abgelaufen. Bitte fordere einen neuen an.</p>
-        <a routerLink="/homepage" class="btn-secondary">Zurück zur Startseite</a>
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <circle cx="12" cy="13" r="8" />
+            <path d="M12 9v5l3 2" />
+            <path d="M5 3 2 6" />
+            <path d="m19 3 3 3" />
+            <path d="M12 21v-2" />
+          </svg>
+        </div>
+        <h2>{{ i18n.t('authPage.expiredTitle') }}</h2>
+        <p>{{ i18n.t('authPage.verifyExpiredCopy') }}</p>
+        <a routerLink="/homepage" class="btn-secondary">{{ i18n.t('authPage.backHomeCta') }}</a>
       </div>
     }
     @default {
       <div class="verify-card verify-error">
-        <div class="icon">✕</div>
-        <h2>Ungültiger Link</h2>
-        <p>Der Bestätigungslink ist ungültig oder wurde bereits verwendet.</p>
-        <a routerLink="/homepage" class="btn-secondary">Zurück zur Startseite</a>
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="m18 6-12 12" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </div>
+        <h2>{{ i18n.t('authPage.invalidTitle') }}</h2>
+        <p>{{ i18n.t('authPage.verifyInvalidCopy') }}</p>
+        <a routerLink="/homepage" class="btn-secondary">{{ i18n.t('authPage.backHomeCta') }}</a>
       </div>
     }
   }

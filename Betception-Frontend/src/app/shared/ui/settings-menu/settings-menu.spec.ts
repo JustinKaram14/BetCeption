@@ -49,6 +49,16 @@ describe('SettingsMenuComponent', () => {
     expect(i18n.language()).toBe('de');
   });
 
+  it('hides the preset action when configured as language-only menu', () => {
+    component.showPresetAction = false;
+    component.open = true;
+    fixture.detectChanges();
+
+    const presetAction: HTMLButtonElement | null = fixture.nativeElement.querySelector('.settings-action');
+
+    expect(presetAction).toBeNull();
+  });
+
   it('closes on escape and restores focus to the trigger', fakeAsync(() => {
     component.toggle();
     fixture.detectChanges();

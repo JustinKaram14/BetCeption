@@ -3,19 +3,22 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { AuthFacade } from '../../services/auth-facade';
+import { I18n } from '../../../../core/i18n/i18n';
+import { SettingsMenuComponent } from '../../../../shared/ui/settings-menu/settings-menu';
 
 type PageState = 'form' | 'loading' | 'success' | 'expired' | 'error';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
-  imports: [NgIf, FormsModule, RouterLink],
+  imports: [NgIf, FormsModule, RouterLink, SettingsMenuComponent],
   templateUrl: './change-password.html',
   styleUrl: './change-password.css',
 })
 export class ChangePassword implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly authFacade = inject(AuthFacade);
+  readonly i18n = inject(I18n);
 
   readonly state = signal<PageState>('form');
   private token = '';
@@ -45,11 +48,11 @@ export class ChangePassword implements OnInit {
 
   submit(): void {
     if (this.newPassword !== this.confirmPassword) {
-      this.errorMessage = 'Die neuen Passwörter stimmen nicht überein.';
+      this.errorMessage = this.i18n.t('authPage.changePasswordMismatch');
       return;
     }
     if (this.newPassword.length < 8) {
-      this.errorMessage = 'Das neue Passwort muss mindestens 8 Zeichen lang sein.';
+      this.errorMessage = this.i18n.t('authPage.changePasswordTooShort');
       return;
     }
 
@@ -67,7 +70,7 @@ export class ChangePassword implements OnInit {
         if (code === 'TOKEN_EXPIRED') {
           this.state.set('expired');
         } else if (code === 'INVALID_OLD_PASSWORD') {
-          this.errorMessage = 'Das aktuelle Passwort ist falsch.';
+          this.errorMessage = this.i18n.t('authPage.currentPasswordWrong');
           this.state.set('form');
         } else {
           this.state.set('error');
