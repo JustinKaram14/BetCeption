@@ -74,4 +74,5 @@ Das größte technische Risiko ist eine **Race Condition** im Wallet-System. Wen
 | 1.0 | 2026-04-12 | Initiale RMMM Tabelle erstellt |
 | 1.1 | 2026-04-21 | R-002 Mitigation korrigiert (randomBytes statt UUIDv4+Timestamp); R-003 auf MITIGATED gesetzt; R-004 von Docker Compose auf Railway umgestellt; R-005 Locking-Strategie korrigiert (pessimistic statt optimistic); R-007 Chat-Referenz entfernt |
 | 2.0 | 2026-05-04 | Versionsnummer auf 2.0 angehoben; Versionshistorie vervollständigt |
-| 2.1 | 2026-06-30 | RMMM mit aktuellem Projektstand abgeglichen; nicht implementierte Maßnahmen als offene Ausbauten formuliert; Deployment-/DB-Risiko allgemeiner gefasst |
+| 2.1 | 2026-06-30 | RMMM mit aktuellem Projektstand abgeglichen; nicht implementierte Maßnahmen als offene Ausbauten formuliert; Deployment-/DB-Risiko allgemeiner   gefasst |
+ 
